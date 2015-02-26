@@ -9,7 +9,10 @@ The script renders text as absolutely positioned html elements. The remaining ar
 ## Table of contents
 
 - [How to install ai2html](#how-to-install-ai2html)
-- [Overview of how to use the script](#overview-of-how-to-use-the-script)
+- [Overview of how to use ai2html](#overview-of-how-to-use-ai2html)
+- [Limitations](#limitations)
+- [Technical reference](#technical-reference)
+  - [Which attributes are converted to html and css](#which-attributes-are-converted-to-html-and-css)
 
 ## How to install ai2html
 
@@ -18,13 +21,44 @@ Move the ai2html.jsx file into the Illustrator folder where scripts are located.
 Applications\Adobe Illustrator CC 2014\Presets\en_US\Scripts\ai2html.jsx
 ```
 
-## Quick overview of how to use ai2html
+## Overview of how to use ai2html
 
 1. Create your Illustrator artwork. Size the artboard to the dimensions that you want the div to appear on the web page.
-2. Make sure your Document Color Mode is set to RGB. This is set from the `File` menu.
+2. Make sure your `Document Color Mode` is set to `RGB`. You can do this from the `File` menu.
 3. Make sure you have already saved your document. The script uses the location of the ai file to put a folder into which the exported html and image files are saved.
 4. Run the script by choosing: `File > Scripts > ai2html`
 5. Go to the folder containing your Illustrator file. Inside will be a folder called `ai2html-output`. Open the html files in your browser to preview your output.
+
+## Limitations
+
+* Because numbers get rounded to whole pixels by the web page when formatting text and positioning elements, the html version of a graphic will not line up exactly with its Illustrator version. Rounding differences are particularly compounded if you have blocks of text that span many lines and have fractional leading in Illustrator.
+* The script currently only sets one style per paragraph, so custom styled words or characters within a paragraph are ignored. Each paragraph’s style is determined by the middle character in the paragraph.
+* The script assumes that text always goes above the art.
+* Artboards should have unique names.
+* Paragraphs with full justification and center/left/right specified will just be “justified” in html.
+* If text is not hidden using the hide command, but rather is hidden because it is behind a mask, it will show up if it is within the artboard.
+* Labels in graph objects will be rendered as part of the image. (Something changed in newer versions of CC in the way text objects inside the graph object are handled.) If you want your chart labels to be shown as html, you will need to ungroup the chart.
+
+## Technical reference
+
+#### Which attributes are converted to html and css
+The script processes each text object in your Illustrator file and translates these attributes into css styles. Each point- or area-text object is converted into a `<div>`. Each paragraph in the text object are converted into `<p>` tags within the `<div>`.
+* Inline styles on the `<div>`
+  * Position
+  * Opacity
+* CSS styles applied to `<p>` tags
+  * Font
+  * Text size
+  * Leading
+  * Paragraph space before and after
+  * Paragraph alignment
+    * This may not behave as expected for point text objects, as there are really no such things in html. If you really want to have different paragraph justification within a single text object, you should do it with an area text object.
+    * The alignment of the first paragraph of a text object determines how it is placed in the html. If the first paragraph is left aligned, then on the web page the whole text object will be absolutely positioned from it’s left edge. If the first paragraph is right aligned, the text object will be positioned from it’s right edge.
+  * Capitalization
+  * Text color
+  * Character tracking
+  * This is important because fonts are rendered slightly differently across browsers and operating systems. This means that in IE on a Windows machine, the font may be a bit larger than in Chrome on a Mac. So a label next to a city dot on a map end up too far away or overlapping the dot if you do not paragraph align the text relative to the dot.
+
 
 
 Features
@@ -42,24 +76,7 @@ Artboard
 Naming to set lower viewports
 Add “-” to front to ignore
 
-ai2html technical reference
-The Basics – What the script converts into html
-The script processes each text object in your Illustrator file and translates information from each into these html settings:
-Position
-Opacity
-Within each text object, the script will process each paragraph and translate these attributes:
-Font
-Text size
-Leading
-Paragraph space before and after
-Paragraph alignment
-This may not behave as expected for point text objects, as there are really no such things in html. If you really want to have different paragraph justification within a single text object, you should do it with an area text object.
-Capitalization (all caps, etc.)
-Text color
-Character tracking
-Paragraph alignment is important
-The alignment of the first paragraph of a text object determines how it is placed in the html. If the first paragraph is left aligned, then on the web page the whole text object will be absolutely positioned from it’s left edge. If the first paragraph is right aligned, the text object will be positioned from it’s right edge.
-This is important because fonts are rendered slightly differently across browsers and operating systems. This means that in IE on a Windows machine, the font may be a bit larger than in Chrome on a Mac. So a label next to a city dot on a map end up too far away or overlapping the dot if you do not paragraph align the text relative to the dot.
+
 
 Options set by where you put your ai file
 If the file is in the ai folder in an ai2html project, the html output automatically goes into the public folder of the Preview project.
