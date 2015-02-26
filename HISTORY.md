@@ -7,7 +7,8 @@
 ## Change log
 
 - v52
-  - In non-NYT mode, export files using defaults even if no settings block exists. 
+  - In non-NYT mode, export files using defaults even if no settings block exists.
+  - Fix error with image path on NYT projects where the html files are being written to the src folder.
 - v51
   - Change settings from two vars to one (consolidated ai2html and yml into a single settings object).
   - Create a new settings block type called ai2html-text for things that get put into variables, but don't want to be considered the main settings block.
@@ -140,6 +141,7 @@
 - Add option to enclose html in <a> so can make it a clickable promo.
 - In ai2html base preview project, change yml so it only has one line: project_type: ai2html
 - In ai2html base preview project, add NYT5 css hacks page to insert into every project and insert into html css if exists.
+- Come up with better solution for writing the image path into the html for non-ai2html preview projects. Right now it's hardcoding
 
 ##### Graphics and SVG
 - Export SVG from layers named "ai2html-svg" and place them in the document in the stacking order with text.
