@@ -6,6 +6,8 @@
 
 ## Change log
 
+- v53
+  - Change png_transparency default to "no" because transparency degrades the quality of the images too much.
 - v52
   - In non-NYT mode, export files using defaults even if no settings block exists.
   - Fix error with image path on NYT projects where the html files are being written to the src folder.

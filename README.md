@@ -1,10 +1,10 @@
 # ai2html
 
-> ai2html is a script for Adobe Illustrator that converts your Illustrator artwork into an html page.
+> ai2html is a script for Adobe Illustrator that converts your Illustrator artwork into html and css.
 
 ## About
 
-The script renders text as absolutely positioned html elements. The remaining art is exported as an image that is placed underneath the text in the html. Each artboard can be rendered as a separate div in a single file, or as separate files. The exported files are html partials, that is, everything is enclosed in a div that can be inserted into a page template. It is also possible to specify an html page template to insert the partial to preview your artwork in the context of your site architecture and css.
+The script renders text as absolutely positioned html elements. The remaining art is exported as an image that is placed underneath the text in the html. Artboards can be rendered as separate divs in a single file, or as separate files. The exported files are html partials, that is, everything is enclosed in a div that can be inserted into a page template. It is also possible to specify an html page template to insert the partial to preview your artwork in the context of your site architecture and css.
 
 ## Table of contents
 
@@ -12,7 +12,9 @@ The script renders text as absolutely positioned html elements. The remaining ar
 - [Overview of how to use ai2html](#overview-of-how-to-use-ai2html)
 - [Limitations](#limitations)
 - [Technical reference](#technical-reference)
+- [How does the script work](#how-does-the-script-work)
   - [Which attributes are converted to html and css](#which-attributes-are-converted-to-html-and-css)
+
 
 ## How to install ai2html
 
@@ -29,20 +31,66 @@ Applications\Adobe Illustrator CC 2014\Presets\en_US\Scripts\ai2html.jsx
 4. Run the script by choosing: `File > Scripts > ai2html`
 5. Go to the folder containing your Illustrator file. Inside will be a folder called `ai2html-output`. Open the html files in your browser to preview your output.
 
-## Limitations
+## How to change the settings
 
-* Because numbers get rounded to whole pixels by the web page when formatting text and positioning elements, the html version of a graphic will not line up exactly with its Illustrator version. Rounding differences are particularly compounded if you have blocks of text that span many lines and have fractional leading in Illustrator.
-* The script currently only sets one style per paragraph, so custom styled words or characters within a paragraph are ignored. Each paragraph’s style is determined by the middle character in the paragraph.
-* The script assumes that text always goes above the art.
-* Artboards should have unique names.
-* Paragraphs with full justification and center/left/right specified will just be “justified” in html.
-* If text is not hidden using the hide command, but rather is hidden because it is behind a mask, it will show up if it is within the artboard.
-* Labels in graph objects will be rendered as part of the image. (Something changed in newer versions of CC in the way text objects inside the graph object are handled.) If you want your chart labels to be shown as html, you will need to ungroup the chart.
+There are several ways of customizing the output of the script:
+- [Special text blocks](#special-text-blocks)
+  - [ai2html-settings](#ai2html-settings)
+  - [ai2html-css](#ai2html-css)
+  - [ai2html-js](#ai2html-js)
+  - [ai2html-html](#ai2html-html)
+  - [ai2html-text](#ai2html-text)
+- [Layer names](#layer-names)
+- [Artboard names](#artboard-names)
+- [Notes in the attributes panel](#notes-in-the-attributes-panel)
 
-## Technical reference
+#### Special text blocks
+
+The script recognizes five special types of text blocks, which begin with “ai2html-” followed by one of the following keywords: settings, css, js, html or text. That text should be the only thing on the first line of the text block. The special text blocks can be placed anywhere in your Illustrator document, but note that if you place them on an artboard their contents will be rendered in your output.
+
+##### ai2html-settings
+
+Most of the script’s options are set in the settings text block. When you run ai2html for the first time in your ai file, the script will place a settings text block to the upper left of all your artboards. Here is a description of the settings:
+
+- **image_format**
+  - <span style="font-variant: small-caps">Possible values</span>: `png` `png24` `jpg`
+  - You can specify more than one image format to be output by listing the desired formats separated by commas. This can be useful if you want to see which image format has the smallest file size. The first format in the list will be the only one referenced in the html. 
+- **responsiveness**
+  - <span style="font-variant: small-caps">Possible values</span>: `fixed` `dynamic`
+  - `dynamic` responsiveness means that the ai2html divs will scale to fill the container they are placed in.
+  - `fixed` responsiveness means that the ai2html div will appear only at the size it was created in Illustrator and will not change sizes if the container it is placed in changes size.
+- **output**
+  - <span style="font-variant: small-caps">Possible values</span>: `one-file` `multiple-files`
+  - `one-file` output means that all artboards will be written into one html file.
+  - `multiple-files` output means that each artboard will be written to separate html files.
+- **html_output_path**
+  - Use this if you want to redirect the output to a different folder. The path should be written relative to the location of the ai file.
+- **html_output_extension**
+- **image_output_path**
+- **local_preview_template**
+- **png_number_of_colors**
+- **jpg_quality**
+- **headline**
+- **leadin**
+- **notes**
+- **sources**
+- **credit**
+
+
+
+http://bit.ly/1BP86RH
+
+
+
+
+
+
+
+
+## How does the script work
 
 #### Which attributes are converted to html and css
-The script processes each text object in your Illustrator file and translates these attributes into css styles. Each point- or area-text object is converted into a `<div>`. Each paragraph in the text object are converted into `<p>` tags within the `<div>`.
+The script processes each text object in your Illustrator file and translates these attributes into inline and css styles. Each point- or area-text object is converted into a `<div>`. Each paragraph in the text object are converted into `<p>` tags within the `<div>`.
 * Inline styles on the `<div>`
   * Position
   * Opacity
@@ -52,12 +100,24 @@ The script processes each text object in your Illustrator file and translates th
   * Leading
   * Paragraph space before and after
   * Paragraph alignment
-    * This may not behave as expected for point text objects, as there are really no such things in html. If you really want to have different paragraph justification within a single text object, you should do it with an area text object.
-    * The alignment of the first paragraph of a text object determines how it is placed in the html. If the first paragraph is left aligned, then on the web page the whole text object will be absolutely positioned from it’s left edge. If the first paragraph is right aligned, the text object will be positioned from it’s right edge.
+    * The alignment of the first paragraph of a text object determines how it is placed in the html. If the first paragraph is left aligned, then on the web page the text object’s div will be absolutely positioned from it’s left edge. If the first paragraph is right aligned, the div will be positioned from its right edge. If the first paragraph is centered, then the div will be positioned from its center.
+    * This is important because fonts are rendered slightly differently across browsers and operating systems. This means that in IE on a Windows machine, the font may be a bit larger than in Chrome on a Mac. So a label next to a city dot on a map end up too far away or overlapping the dot if you do not paragraph align the text relative to the dot.
+    * Setting more than one kind of paragraph alignment on a point text object cannot be translated into html, as there is really no such thing as a point text object in html. If you really want to have different paragraph alignments within a single text object, you should do it with an area text object.
   * Capitalization
   * Text color
   * Character tracking
-  * This is important because fonts are rendered slightly differently across browsers and operating systems. This means that in IE on a Windows machine, the font may be a bit larger than in Chrome on a Mac. So a label next to a city dot on a map end up too far away or overlapping the dot if you do not paragraph align the text relative to the dot.
+  
+## Limitations
+
+* Because numbers get rounded to whole pixels by the web page when formatting text and positioning elements, the html version of a graphic will not line up exactly with its Illustrator version. Rounding differences are particularly compounded if you have blocks of text that span many lines and have fractional leading in Illustrator.
+* The script currently only sets one style per paragraph, so custom styled words or characters within a paragraph are ignored. Each paragraph’s style is determined by the middle character in the paragraph.
+* The script assumes that text always goes above the art.
+* Artboards should have unique names.
+* Paragraphs with full justification and center/left/right specified will just be “justified” in html.
+* If text is not hidden using the hide command, but rather is hidden because it is behind a mask, it will show up if it is within the artboard.
+* Labels in graph objects will be rendered as part of the image. (Something changed in newer versions of CC in the way text objects inside the graph object are handled.) If you want your chart labels to be shown as html, you will need to ungroup the chart.
+* In area text blocks, text that is hidden because it is overflowing the box will appear in the html output. A future version of the script may exclude that text (if I can figure out how to do it).
+
 
 
 
