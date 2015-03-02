@@ -4,16 +4,16 @@
 
 ## About
 
-The script renders text as absolutely positioned html elements. The remaining art is exported as an image that is placed underneath the text in the html. Artboards can be rendered as separate divs in a single file, or as separate files. The exported files are html partials, that is, everything is enclosed in a div that can be inserted into a page template. It is also possible to specify an html page template to insert the partial to preview your artwork in the context of your site architecture and css.
+The script renders text as absolutely positioned html elements. The remaining art is exported as an image that is placed underneath the text in the html. Artboards can be rendered as separate divs in a single file, or as separate files. The exported files are html partials, that is, everything is enclosed in a div that can be inserted into a page template. It is also possible to specify an html page template to insert the html partial to preview your artwork in the context of your site architecture and css.
 
 ## Table of contents
 
 - [How to install ai2html](#how-to-install-ai2html)
 - [Overview of how to use ai2html](#overview-of-how-to-use-ai2html)
+- [Controlling how your text is converted into html](#controlling-how-your-text-is-converted-into-html)
+- [Settings](#settings)
+- [Which attributes are converted to html and css](#which-attributes-are-converted-to-html-and-css)
 - [Limitations](#limitations)
-- [Technical reference](#technical-reference)
-- [How does the script work](#how-does-the-script-work)
-  - [Which attributes are converted to html and css](#which-attributes-are-converted-to-html-and-css)
 
 
 ## How to install ai2html
@@ -31,7 +31,15 @@ Applications\Adobe Illustrator CC 2014\Presets\en_US\Scripts\ai2html.jsx
 4. Run the script by choosing: `File > Scripts > ai2html`
 5. Go to the folder containing your Illustrator file. Inside will be a folder called `ai2html-output`. Open the html files in your browser to preview your output.
 
-## How to change the settings
+## Controlling how your text is converted into html 
+
+Discussion here about:
+- Choosing between point and area text.
+- Choosing the paragraph alignment of the text
+- Limitations because of one style per paragraph
+
+
+## Settings
 
 There are several ways of customizing the output of the script:
 - [Special text blocks](#special-text-blocks)
@@ -40,56 +48,133 @@ There are several ways of customizing the output of the script:
   - [ai2html-js](#ai2html-js)
   - [ai2html-html](#ai2html-html)
   - [ai2html-text](#ai2html-text)
-- [Layer names](#layer-names)
+- [Layer and object names](#layer-and-object-names)
 - [Artboard names](#artboard-names)
 - [Notes in the attributes panel](#notes-in-the-attributes-panel)
 
 #### Special text blocks
 
-The script recognizes five special types of text blocks, which begin with “ai2html-” followed by one of the following keywords: settings, css, js, html or text. That text should be the only thing on the first line of the text block. The special text blocks can be placed anywhere in your Illustrator document, but note that if you place them on an artboard their contents will be rendered in your output.
+The script recognizes five special types of text blocks, which begin with `ai2html-` followed by one of the following keywords: `settings`, `css`, `js`, `html` or `text`. That text should be the only thing on the first line of the text block. The special text blocks can be placed anywhere in your Illustrator document, but note that if you place them on an artboard their contents will be rendered in your output.
 
-##### ai2html-settings
+##### `ai2html-settings`
 
 Most of the script’s options are set in the settings text block. When you run ai2html for the first time in your ai file, the script will place a settings text block to the upper left of all your artboards. Here is a description of the settings:
 
+*Options that are included in the settings text block by default*
+
 - **image_format**
   - <span style="font-variant: small-caps">Possible values</span>: `png` `png24` `jpg`
+  - <span style="font-variant: small-caps">Default</span>: `png`
   - You can specify more than one image format to be output by listing the desired formats separated by commas. This can be useful if you want to see which image format has the smallest file size. The first format in the list will be the only one referenced in the html. 
 - **responsiveness**
   - <span style="font-variant: small-caps">Possible values</span>: `fixed` `dynamic`
+  - <span style="font-variant: small-caps">Default</span>: `fixed`
   - `dynamic` responsiveness means that the ai2html divs will scale to fill the container they are placed in.
   - `fixed` responsiveness means that the ai2html div will appear only at the size it was created in Illustrator and will not change sizes if the container it is placed in changes size.
 - **output**
   - <span style="font-variant: small-caps">Possible values</span>: `one-file` `multiple-files`
+  - <span style="font-variant: small-caps">Default</span>: `one-file`
   - `one-file` output means that all artboards will be written into one html file.
   - `multiple-files` output means that each artboard will be written to separate html files.
 - **html_output_path**
+  - <span style="font-variant: small-caps">Default</span>: `/ai2html-output/`
   - Use this if you want to redirect the output to a different folder. The path should be written relative to the location of the ai file.
 - **html_output_extension**
+  - <span style="font-variant: small-caps">Default</span>: `.html`
+  - Use this if you want to change the extension of the html partial.
 - **image_output_path**
+  - <span style="font-variant: small-caps">Default</span>: `<blank>`
+  - Use this if you want to change the path of the images that are placed behind the html text. This path should be written relative to the location of the `html_output_path`.
 - **local_preview_template**
+  - <span style="font-variant: small-caps">Default</span>: `template.html`
+  - Use this to specify a page template into which the html partial will be inserted to preview your artwork in the context of your site architecture and css. Sample templates can be downloaded from the ai2html Github repo. Any variables from ai2html-settings or ai2html-text blocks can be inserted into the templates using either mustache (eg. `{{headline}}`) or ejs/erb (eg. `<%=headline%>`) notation. The ai2html partial can be inserted using the `{{ai2htmlPartial}}` variable.
 - **png_number_of_colors**
+  - <span style="font-variant: small-caps">Possible values</span>: Any integer from `2` to `256`
+  - <span style="font-variant: small-caps">Default</span>: `128`
+  - Use this to specify the quality of `png` or `png24` images.
 - **jpg_quality**
-- **headline**
-- **leadin**
-- **notes**
-- **sources**
-- **credit**
+  - <span style="font-variant: small-caps">Possible values</span>: Any integer from `0` to `100`
+  - <span style="font-variant: small-caps">Default</span>: `60`
+  - Use this to specify the quality of `jpg` images.
+- **headline**<br>**leadin**<br>**notes**<br>**sources**<br>**credit**
+  - <span style="font-variant: small-caps">Possible values</span>: Text with no line breaks
+  - These fields are used to populate fields in the `local_preview_tempate` and can be written to a “config” text file along with the html. The config file is written in yml can be used to pass parameters to a cms.
+  
+*Options that can be added to the settings text block*
+
+- **max_width**
+  - <span style="font-variant: small-caps">Possible values</span>: Any positive integer
+  - <span style="font-variant: small-caps">Default</span>: `<blank>`
+  - Specifying a `max_width` inserts a max-width css instruction on the div containing the ai2html partial. The width should be specified in pixels.
+- **create_config_file**
+  - <span style="font-variant: small-caps">Possible values</span>: `true` `false`
+  - <span style="font-variant: small-caps">Default</span>: `false`
+  - Specify `true` if you want the script to also output a text file in yml format containing the parameters you want to pass to your cms.
+- **config_file_path**
+  - <span style="font-variant: small-caps">Default</span>: `<blank>`
+  - <span style="font-variant: small-caps">Example</span>: `/ai2html-output/config.yml`
+  - Enter the full path to the file including the filename that you want the config file to be named. The path should be written relative to the location of the Illustrator file.
+- **png_transparent**
+  - <span style="font-variant: small-caps">Possible values</span>: `yes` `no`
+  - <span style="font-variant: small-caps">Default</span>: `no`
+  - This option lets you make transparent any png image that is output by the program. Note that specifying transparent png’s can result in a visibly significant degradation in the image. 
+- **center_html_output**
+  - <span style="font-variant: small-caps">Possible values</span>: `true` `false`
+  - <span style="font-variant: small-caps">Default</span>: `true`
+  - Specifying `true` on this option causes the ai2html div to be centered within the container it is placed in. 
+- **use_2x_images_if_possible**
+  - <span style="font-variant: small-caps">Possible values</span>: `yes` `no`
+  - <span style="font-variant: small-caps">Default</span>: `yes`
+  - Specifying `yes` on this setting tells the script to output images at double the resolution if possible. The script uses limits specified in this [document](http://apple.co/1M1dvES) to determine if the size of the image is too large to make it double resolution.
+- **testing_mode**
+  - <span style="font-variant: small-caps">Possible values</span>: `yes` `no`
+  - <span style="font-variant: small-caps">Default</span>: `no`
+  - Specifying `yes` on this setting causes the text in the file to be rendered both on the image and in the html. This is useful for testing whether the placement of html text is consistent with the Illustrator file.
+
+*If you want to change the default settings, I have been using this [Google spreadsheet](http://bit.ly/1BP86RH) to change the view and change the settings. Feel free to make a copy of the spreadsheet for yourself to roll your own settings.*
+
+##### `ai2html-css`
+
+If you want to add some css that is always inserted into your html partial, include it in a text block somewhere in your Illustrator document, but not on an artboard. Make the first line of the text block reads `ai2html-css`. The css will be added inside `<style>` tags so don’t include `<style>` tags in the text block.
+
+##### `ai2html-js`
+
+If you want to add some javascript that is always inserted into your html partial, include it in a text block somewhere in your Illustrator document, but not on an artboard. Make the first line of the text block reads `ai2html-js`. The js will be added at the end of all the html for each artboard. You will need to include the enclosing `script` tags in the text block.
+
+##### `ai2html-html`
+
+If you want to add some html that is always inserted into your html partial, include it in a text block somewhere in your Illustrator document, but not on an artboard. Make the first line of the text block reads `ai2html-html`. The html will be added at the end of all the html for each artboard.
+
+##### `ai2html-text`
+
+You can store text into variables and insert them into your document using basic mustache or erb/ejs notation. Any variables in the `ai2html-settings` or in `ai2html-text` blocks can be used.
+
+To assign text to a variable, create a text block somewhere in your Illustrator document, but not on an artboard. Make the first line of that text block read `ai2html-text`. Each subsequent paragraph should be in the format of `variable_name: Lorem ipsum dolor.`. Variable names should only be letters, numbers and underscores.
+
+Now you can insert that text anywhere in your document by placing `{{variable_name}}` or `<%=variable_name%>` where you want that text to appear.
+
+Note that you can pass mustache or erb/ejs notation to your html partial as long as the variable names don’t match the variable names in the `ai2html-settings` or `ai2html-text` blocks.
+
+#### Layer and object names
+
+The name of the layer that is the direct parent of a text block is added as a class to the div that corresponds to that text block. This allows you to write custom css targeting all text blocks in a layer. Class names have `ai2html-` appended to the front of the name. (Add example here) 
+
+Another way of targeting a text block is to give that text object a name in the Layers palette. If you give the text object a name, it will be added as an id to the div that corresponds to that text block. In this case `ai2html-` is not appended to the beginning of the id, so take care that you begin the id with letters and not numbers. (Add example here)
+
+#### Artboard names
+
+Artboard names become part of the id of the div corresponding to that artboard.
+
+(Add explanation of colon notation for specifying widths at which to show different artboards.)
+
+#### Notes in the attributes panel
 
 
 
-http://bit.ly/1BP86RH
 
 
 
-
-
-
-
-
-## How does the script work
-
-#### Which attributes are converted to html and css
+## Which attributes are converted to html and css
 The script processes each text object in your Illustrator file and translates these attributes into inline and css styles. Each point- or area-text object is converted into a `<div>`. Each paragraph in the text object are converted into `<p>` tags within the `<div>`.
 * Inline styles on the `<div>`
   * Position
