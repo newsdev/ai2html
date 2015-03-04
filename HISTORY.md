@@ -8,6 +8,8 @@
 
 - v53
   - Change png_transparency default to "no" because transparency degrades the quality of the images too much.
+  - Change a few other defaults.
+  - Change var name ai2htmlStub to ai2htmlPartial for consistency.
 - v52
   - In non-NYT mode, export files using defaults even if no settings block exists.
   - Fix error with image path on NYT projects where the html files are being written to the src folder.
@@ -133,6 +135,7 @@
 (Will move these to issues at some point.)
 
 ##### General
+- Get rid of namespacing on classes added from layer names -- or maybe not -- need to think this thru again.
 - Add a settings version check.
 - Add data information for min and max widths to show artboard.
 - Add a warning to the user that there are artboards with duplicate names.

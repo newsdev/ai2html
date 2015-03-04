@@ -86,7 +86,7 @@ Most of the script’s options are set in the settings text block. When you run 
   - <span style="font-variant: small-caps">Default</span>: `<blank>`
   - Use this if you want to change the path of the images that are placed behind the html text. This path should be written relative to the location of the `html_output_path`.
 - **local_preview_template**
-  - <span style="font-variant: small-caps">Default</span>: `template.html`
+  - <span style="font-variant: small-caps">Default</span>: `<blank>`
   - Use this to specify a page template into which the html partial will be inserted to preview your artwork in the context of your site architecture and css. Sample templates can be downloaded from the ai2html Github repo. Any variables from ai2html-settings or ai2html-text blocks can be inserted into the templates using either mustache (eg. `{{headline}}`) or ejs/erb (eg. `<%=headline%>`) notation. The ai2html partial can be inserted using the `{{ai2htmlPartial}}` variable.
 - **png_number_of_colors**
   - <span style="font-variant: small-caps">Possible values</span>: Any integer from `2` to `256`
@@ -165,9 +165,11 @@ Another way of targeting a text block is to give that text object a name in the 
 
 Artboard names become part of the id of the div corresponding to that artboard.
 
-(Add explanation of colon notation for specifying widths at which to show different artboards.)
+#### Attribute notes
 
-#### Notes in the attributes panel
+When you set `responsiveness: dynamic`, text objects stay anchored to the top-left, top-right or top-center of the text object bounding box depending on whether the text is left, right or center aligned. If you want to have the text align to the bottom instead of the top, add this line to the `notes` field of the `Attributes` palette:
+`valign:bottom`
+
 
 
 
