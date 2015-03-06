@@ -30,7 +30,9 @@ Paragraphs are styled using css classes that are consolidated across each artboa
 
 ## How to install ai2html
 
-Move the ai2html.jsx file into the Illustrator folder where scripts are located. For example, on Mac OS&nbsp;X running Adobe Illustrator CC 2014, the path would be:
+Download the [latest version of the script here](https://github.com/newsdev/ai2html/blob/master/ai2html.jsx). 
+
+Move the `ai2html.jsx` file into the Illustrator folder where scripts are located. For example, on Mac OS&nbsp;X running Adobe Illustrator CC 2014, the path would be:
 ```
 Applications/Adobe Illustrator CC 2014/Presets/en_US/Scripts/ai2html.jsx
 ```
@@ -234,4 +236,10 @@ The script processes each text object in your Illustrator file and translates th
 - If text is not hidden using the hide command, but rather is hidden because it is behind a mask, it will show up if it is within the artboard.
 - Labels in graph objects will be rendered as part of the image. (Something changed in newer versions of CC in the way text objects inside the graph object are handled.) If you want your chart labels to be shown as html, you will need to ungroup the chart.
 - In area text blocks, text that is hidden because it is overflowing the box will appear in the html output.
+
+## Contributing to this project
+
+The Github repository for this site is available at newsdev/archieml.org, and you can use its Issues page to submit questions or bugs on the spec itself.
+
+
 
