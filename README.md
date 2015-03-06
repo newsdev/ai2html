@@ -1,10 +1,16 @@
 # ai2html
 
-> ai2html is a script for Adobe Illustrator that converts your Illustrator artwork into html and css.
+> ai2html is a script for Adobe Illustrator that converts your Illustrator document into html and css.
 
 ## About
 
-The script renders text as absolutely positioned html elements. The remaining art is exported as an image that is placed underneath the text in the html. Artboards can be rendered as separate divs in a single file, or as separate files. The exported files are html partials, that is, everything is enclosed in a div that can be inserted into a page template. It is also possible to specify an html page template to insert the html partial to preview your artwork in the context of your site architecture and css.
+The script renders text as absolutely positioned html elements. The remaining art is exported as an image that is placed underneath the text in the html. Artboards can be rendered as separate divs in a single file, or as separate files. The exported files are html partials, that is, everything is enclosed in a div that can be inserted into a page template. It is also possible to specify an html page template into which the script will insert the html partial so you can preview your artwork in the context of your site architecture and css.
+
+Text styles are applied at the paragraph level. Each paragraph is given the character and paragraph attributes of the middle character of the paragraph. Other character styles within a paragraph are ignored — though I'm hoping to add this as a feature in the future. A work-around for this limitation is to enclose text in classed `<span>` tags and define styles for those classes in an `ai2html-css` text block (described below).
+
+Paragraphs are styled using css classes that are consolidated across each artboard. This means that all paragraphs with the same style attributes are styled with a single css class. Text blocks in the output are ordered top-to-bottom, left-to-right so that the document is somewhat readable.
+
+[Here are examples](https://delicious.com/archietse/ai2html) of how we’ve used the script at The New York Times.
 
 ## Table of contents
 
@@ -25,11 +31,10 @@ Applications\Adobe Illustrator CC 2014\Presets\en_US\Scripts\ai2html.jsx
 
 ## Overview of how to use ai2html
 
-1. Create your Illustrator artwork. Size the artboard to the dimensions that you want the div to appear on the web page.
-2. Make sure your `Document Color Mode` is set to `RGB`. You can do this from the `File` menu.
-3. Make sure you have already saved your document. The script uses the location of the ai file to put a folder into which the exported html and image files are saved.
-4. Run the script by choosing: `File > Scripts > ai2html`
-5. Go to the folder containing your Illustrator file. Inside will be a folder called `ai2html-output`. Open the html files in your browser to preview your output.
+1. Create your Illustrator artwork. Size the artboard to the dimensions that you want the div to appear on the web page. Make sure your `Document Color Mode` is set to `RGB` and that your document is saved.
+2. Run the script by choosing: `File > Scripts > ai2html`
+3. Go to the folder containing your Illustrator file. Inside will be a folder called `ai2html-output`. Open the html files in your browser to preview your output.
+4. To edit or further customize the output, just go back to your Illustrator document, make changes to the text and artwork, or to the settings text block that is placed in the Illustrator document the first time you run the script on a file. Rerun the script.  
 
 ## Controlling how your text is converted into html 
 
@@ -48,13 +53,13 @@ There are several ways of customizing the output of the script:
   - [ai2html-js](#ai2html-js)
   - [ai2html-html](#ai2html-html)
   - [ai2html-text](#ai2html-text)
-- [Layer and object names](#layer-and-object-names)
-- [Artboard names](#artboard-names)
-- [Notes in the attributes panel](#notes-in-the-attributes-panel)
+- [Layers palette](#layers-palette)
+- [Artboards palette](#artboards-palette)
+- [Attributes palette](#attributes-palette)
 
 #### Special text blocks
 
-The script recognizes five special types of text blocks, which begin with `ai2html-` followed by one of the following keywords: `settings`, `css`, `js`, `html` or `text`. That text should be the only thing on the first line of the text block. The special text blocks can be placed anywhere in your Illustrator document, but note that if you place them on an artboard their contents will be rendered in your output.
+The script recognizes five special types of text blocks. The first line of the text block should begin with `ai2html-` followed by one of the following keywords: `settings`, `css`, `js`, `html` or `text`. This should be the only thing on the first line of the text block. The special text blocks can be placed anywhere in your Illustrator document, but note that if you place them on an artboard, their contents will be rendered in your output.
 
 ##### `ai2html-settings`
 
@@ -100,7 +105,7 @@ Most of the script’s options are set in the settings text block. When you run 
   - <span style="font-variant: small-caps">Possible values</span>: Text with no line breaks
   - These fields are used to populate fields in the `local_preview_tempate` and can be written to a “config” text file along with the html. The config file is written in yml can be used to pass parameters to a cms.
   
-*Options that can be added to the settings text block*
+*Other options that can be added to the settings text block:*
 
 - **max_width**
   - <span style="font-variant: small-caps">Possible values</span>: Any positive integer
@@ -131,19 +136,19 @@ Most of the script’s options are set in the settings text block. When you run 
   - <span style="font-variant: small-caps">Default</span>: `no`
   - Specifying `yes` on this setting causes the text in the file to be rendered both on the image and in the html. This is useful for testing whether the placement of html text is consistent with the Illustrator file.
 
-*If you want to change the default settings, I have been using this [Google spreadsheet](http://bit.ly/1BP86RH) to change the view and change the settings. Feel free to make a copy of the spreadsheet for yourself to roll your own settings.*
+*If you want to edit the script to change the default settings, you may find it helpful to make a copy of this [Google spreadsheet](http://bit.ly/1BP86RH) which makes it easier to view and edit the settings.*
 
 ##### `ai2html-css`
 
-If you want to add some css that is always inserted into your html partial, include it in a text block somewhere in your Illustrator document, but not on an artboard. Make the first line of the text block reads `ai2html-css`. The css will be added inside `<style>` tags so don’t include `<style>` tags in the text block.
+If you want to add some css that is always inserted into your html partial, include it in a text block somewhere in your Illustrator document, but not on an artboard. Make the first line of the text block read `ai2html-css`. The css will be added inside `<style>` tags so don’t include `<style>` tags in the text block.
 
 ##### `ai2html-js`
 
-If you want to add some javascript that is always inserted into your html partial, include it in a text block somewhere in your Illustrator document, but not on an artboard. Make the first line of the text block reads `ai2html-js`. The js will be added at the end of all the html for each artboard. You will need to include the enclosing `script` tags in the text block.
+If you want to add some javascript that is always inserted into your html partial, include it in a text block somewhere in your Illustrator document, but not on an artboard. Make the first line of the text block read `ai2html-js`. The js will be added at the end of all the html for each artboard. You will need to include the enclosing `<script>` tags in the text block.
 
 ##### `ai2html-html`
 
-If you want to add some html that is always inserted into your html partial, include it in a text block somewhere in your Illustrator document, but not on an artboard. Make the first line of the text block reads `ai2html-html`. The html will be added at the end of all the html for each artboard.
+If you want to add some html that is always inserted into your html partial, include it in a text block somewhere in your Illustrator document, but not on an artboard. Make the first line of the text block read `ai2html-html`. The html will be added at the end of all the divs for each artboard.
 
 ##### `ai2html-text`
 
@@ -153,28 +158,33 @@ To assign text to a variable, create a text block somewhere in your Illustrator 
 
 Now you can insert that text anywhere in your document by placing `{{variable_name}}` or `<%=variable_name%>` where you want that text to appear.
 
-Note that you can pass mustache or erb/ejs notation to your html partial as long as the variable names don’t match the variable names in the `ai2html-settings` or `ai2html-text` blocks.
+Note that you can pass mustache or erb/ejs notation untouched to your html partial as long as the variable names don’t match the variable names in the `ai2html-settings` or `ai2html-text` blocks.
 
-#### Layer and object names
+#### Layers palette
 
-The name of the layer that is the direct parent of a text block is added as a class to the div that corresponds to that text block. This allows you to write custom css targeting all text blocks in a layer. Class names have `ai2html-` appended to the front of the name. (Add example here) 
+- **Layer names**
+  - The name of the layer that is the direct parent of a text block is added as a class to the div that corresponds to that text block. This allows you to write custom css that targets all text blocks in a layer. Class names have `ai2html-` appended to the front of the name.
 
-Another way of targeting a text block is to give that text object a name in the Layers palette. If you give the text object a name, it will be added as an id to the div that corresponds to that text block. In this case `ai2html-` is not appended to the beginning of the id, so take care that you begin the id with letters and not numbers. (Add example here)
+- **Object names**
+  - Another way of targeting a text block is to give that text object a name in the Layers palette. If you give the text object a name, it will be added as an `id` to the `div` that corresponds to that text block. Note that `ai2html-` is not appended to the beginning of the `id`, so take care that you begin the `id` with letters and not numbers.
 
-#### Artboard names
+#### Artboards palette
 
-Artboard names become part of the id of the div corresponding to that artboard.
+- **Artboard names**
+  - Artboard names become part of the `id` of the `div` corresponding to that artboard. It is not necessary to rename the artboards from the Illustrator defaults.
 
-#### Attribute notes
+- **Specifying artboards to ignore**
+  - Add a dash, ie. `-`, as the first character of an artboard name to tell the script that you don’t want it to be included in the output.  
 
-When you set `responsiveness: dynamic`, text objects stay anchored to the top-left, top-right or top-center of the text object bounding box depending on whether the text is left, right or center aligned. If you want to have the text align to the bottom instead of the top, add this line to the `notes` field of the `Attributes` palette:
-`valign:bottom`
+#### Attributes palette
 
+Parameters can be attached to a text object and passed to the script using the notes field of the Attributes palette. The variables in the notes field should be in the format of `key: value`. There is currently only one text-object parameter that can be specified here:
 
-
-
-
-
+- **valign**
+  - <span style="font-variant: small-caps">Possible values</span>: `top` `bottom`
+  - <span style="font-variant: small-caps">Default</span>: `top`
+  - Text objects stay anchored to the artboard div relative to the top-left, top-right or top-center of the text block’s bounding box depending on whether the text is left, right or center aligned. If you want the text block to anchor to its bottom edge instead of the top, then set `valign: bottom`.
+  - This setting is mainly useful when you set `responsiveness: dynamic` in the settings text block, but can also make a difference for area-text objects because text often wraps differently in different browsers so that a text block may be four lines in one browser and five lines in another. With the default `valign: top`, the fifth line will be added to the bottom of the text block. With `valign: bottom` the fifth line will cause the entire text block to be shifted up one line.
 
 ## Which attributes are converted to html and css
 The script processes each text object in your Illustrator file and translates these attributes into inline and css styles. Each point- or area-text object is converted into a `<div>`. Each paragraph in the text object are converted into `<p>` tags within the `<div>`.
