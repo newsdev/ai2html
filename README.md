@@ -11,12 +11,12 @@
 - [Which attributes are converted to html and css](#which-attributes-are-converted-to-html-and-css)
 - [How does ai2html work](#how-does-ai2html-work)
 - [Limitations](#limitations)
-- [What works well and what doesn’t](#what-works-well-and-what-doesnt)
+- [What works well and what does not](#what-works-well-and-what-does-not)
 
 
 ## How to install ai2html
 
-Download the [latest version of the script here](https://github.com/newsdev/ai2html/raw/master/ai2html.js) by clicking the link and saving it to your computer. 
+Download the [latest version of the script here](https://github.com/newsdev/ai2html/raw/master/ai2html.js) by clicking the link and saving it to your computer.
 
 Move the `ai2html.js` file into the Illustrator folder where scripts are located. For example, on Mac OS&nbsp;X running Adobe Illustrator CC 2014, the path would be:
 ```
@@ -62,7 +62,7 @@ Most of the script’s options are set in the settings text block. When you run 
 - **image_format**
   - <span style="font-variant: small-caps">Possible values</span>: `png` `png24` `jpg`
   - <span style="font-variant: small-caps">Default</span>: `png`
-  - You can specify more than one image format to be output by listing the desired formats separated by commas. This can be useful if you want to see which image format has the smallest file size. The first format in the list will be the only one referenced in the html. 
+  - You can specify more than one image format to be output by listing the desired formats separated by commas. This can be useful if you want to see which image format has the smallest file size. The first format in the list will be the only one referenced in the html.
 - **responsiveness**
   - <span style="font-variant: small-caps">Possible values</span>: `fixed` `dynamic`
   - <span style="font-variant: small-caps">Default</span>: `fixed`
@@ -96,7 +96,7 @@ Most of the script’s options are set in the settings text block. When you run 
 - **headline**<br>**leadin**<br>**notes**<br>**sources**<br>**credit**
   - <span style="font-variant: small-caps">Possible values</span>: Text with no line breaks
   - These fields are used to populate fields in the `local_preview_tempate` and can be written to a “config” text file along with the html. The config file is written in yml can be used to pass parameters to a cms.
-  
+
 *Other options that can be added to the settings text block:*
 
 - **max_width**
@@ -114,11 +114,11 @@ Most of the script’s options are set in the settings text block. When you run 
 - **png_transparent**
   - <span style="font-variant: small-caps">Possible values</span>: `yes` `no`
   - <span style="font-variant: small-caps">Default</span>: `no`
-  - This option lets you make transparent any png image that is output by the program. Note that specifying transparent png’s can result in a visibly significant degradation in the image. 
+  - This option lets you make transparent any png image that is output by the program. Note that specifying transparent png’s can result in a visibly significant degradation in the image.
 - **center_html_output**
   - <span style="font-variant: small-caps">Possible values</span>: `true` `false`
   - <span style="font-variant: small-caps">Default</span>: `true`
-  - Specifying `true` on this option causes the ai2html div to be centered within the container it is placed in. 
+  - Specifying `true` on this option causes the ai2html div to be centered within the container it is placed in.
 - **use_2x_images_if_possible**
   - <span style="font-variant: small-caps">Possible values</span>: `yes` `no`
   - <span style="font-variant: small-caps">Default</span>: `yes`
@@ -166,7 +166,7 @@ Note that you can pass mustache or erb/ejs notation untouched to your html parti
   - Artboard names become part of the `id` of the `div` corresponding to that artboard. It is not necessary to rename the artboards from the Illustrator defaults.
 
 - **Specifying artboards to ignore**
-  - Add a dash, ie. `-`, as the first character of an artboard name to tell the script that you don’t want it to be included in the output.  
+  - Add a dash, ie. `-`, as the first character of an artboard name to tell the script that you don’t want it to be included in the output.
 
 #### Attributes palette
 
@@ -243,7 +243,7 @@ Paragraphs are styled using css classes that are consolidated across each artboa
 <!-- ## Why not just export an image out Illustrator -->
 
 
-## What works well and what doesn’t
+## What works well and what does not
 
 - **Works well**
   - Diagrams or maps in which labels are placed organically around the artwork.
