@@ -53,6 +53,7 @@ Discussion here about:
 ## Settings
 
 There are several ways of customizing the output of the script:
+
 - [Special text blocks](#special-text-blocks)
   - [ai2html-settings](#ai2html-settings)
   - [ai2html-css](#ai2html-css)
@@ -62,6 +63,7 @@ There are several ways of customizing the output of the script:
 - [Layers palette](#layers-palette)
 - [Artboards palette](#artboards-palette)
 - [Attributes palette](#attributes-palette)
+
 
 #### Special text blocks
 
