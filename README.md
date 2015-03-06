@@ -204,7 +204,7 @@ The script handles point text and area text slightly differently which has ramif
 
 The script processes each text object in your Illustrator file and translates the object and text attributes into inline and css styles. Each point- or area-text object is converted into a `<div>`. Each paragraph is converted into `<p>` tags within the `<div>`.
 
-- **Inline styles on the `<div>`**
+- **Added to inline styles on the `<div>`**
   - Position
   - Opacity
     - Only opacity applied directly to the text object is applied.
@@ -212,7 +212,7 @@ The script processes each text object in your Illustrator file and translates th
   - Width
     - The width is specified in the html output if it is an area-text object. Point-text objects are given no width.
 
-- **CSS classes applied to `<p>` tags**
+- **Added to CSS classes applied to `<p>` tags**
   - Font
     - Fonts are converted from Illustrator to web font names in an array in the script. Edit the `fonts` array to add your custom web fonts.
   - Font size
@@ -232,8 +232,8 @@ The script processes each text object in your Illustrator file and translates th
 - The script currently only sets one style per paragraph, so custom styled words or characters within a paragraph are ignored. Each paragraph’s style is determined by the middle character in the paragraph.
 - The script assumes that text always goes above the art.
 - Artboards should have unique names.
-- Paragraphs with full justification and center/left/right specified will just be “justified” in html.
+- Paragraphs with full justification specified will just be “justified” in html.
 - If text is not hidden using the hide command, but rather is hidden because it is behind a mask, it will show up if it is within the artboard.
 - Labels in graph objects will be rendered as part of the image. (Something changed in newer versions of CC in the way text objects inside the graph object are handled.) If you want your chart labels to be shown as html, you will need to ungroup the chart.
-- In area text blocks, text that is hidden because it is overflowing the box will appear in the html output. A future version of the script may exclude that text (if I can figure out how to do it).
+- In area text blocks, text that is hidden because it is overflowing the box will appear in the html output.
 
