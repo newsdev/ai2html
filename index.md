@@ -238,19 +238,29 @@ The script processes each text object in your Illustrator file and translates th
 - In area text blocks, text that is hidden because it is overflowing the box will appear in the html output.
 
 
+<!-- ## Why not just export an image out Illustrator -->
+
+
 ## What works well and what doesn’t
 
 - **Works well**
   - Diagrams or maps in which labels are placed organically around the artwork.
 
-- **Not so good**
+- **Not so great**
   - Graphics with long blocks of wrapped text or many lines of text.
   - Things that should really be coded up as a table or as columns in which the height of the cells needs to adjust dynamically for long blocks of text that wrap.
+
 
 
 ## Contributing to this project
 
 The Github repository for this site is available at [newsdev/ai2html](https://github.com/newsdev/ai2html).
+
+
+## Thanks
+
+Many thanks to [Jeremy Ashkenas](https://twitter.com/jashkenas), [Matt Ericson](https://twitter.com/mericson), [Tom Giratikanon](https://twitter.com/giratikanon), [Alan McLean](https://twitter.com/alanmclean) and my colleagues in [@nytgraphics](https://twitter.com/nytgraphics) for their patient guidance in the development of this project.
+
 
 
 ---
