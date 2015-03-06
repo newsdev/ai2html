@@ -42,7 +42,6 @@ Applications/Adobe Illustrator CC 2014/Presets/en_US/Scripts/ai2html.jsx
 1. Create your Illustrator artwork. Size the artboard to the dimensions that you want the div to appear on the web page. Make sure your `Document Color Mode` is set to `RGB` and that your document is saved.
 2. Run the script by choosing: `File > Scripts > ai2html`
 3. Go to the folder containing your Illustrator file. Inside will be a folder called `ai2html-output`. Open the html files in your browser to preview your output.
-4. To edit or further customize the output, just go back to your Illustrator document, make changes to the text and artwork, or to the settings text block that is placed in the Illustrator document the first time you run the script on a file. Rerun the script.  
 
 
 ## Settings
@@ -225,7 +224,8 @@ The script processes each text object in your Illustrator file and translates th
   - Capitalization
   - Text color
   - Character tracking
-  
+
+
 ## Limitations
 
 - Because numbers get rounded to whole pixels by the web page when formatting text and positioning elements, the html version of a graphic will not line up exactly with its Illustrator version. Rounding differences are particularly compounded if you have blocks of text that span many lines and have fractional leading in Illustrator.
@@ -237,9 +237,25 @@ The script processes each text object in your Illustrator file and translates th
 - Labels in graph objects will be rendered as part of the image. (Something changed in newer versions of CC in the way text objects inside the graph object are handled.) If you want your chart labels to be shown as html, you will need to ungroup the chart.
 - In area text blocks, text that is hidden because it is overflowing the box will appear in the html output.
 
+
+## What works well and what doesn’t
+
+- **Works well**
+  - Diagrams or maps in which labels are placed organically around the artwork.
+
+- **Not so good**
+  - Graphics with long blocks of wrapped text or many lines of text.
+  - Things that should really be coded up as a table or as columns in which the height of the cells needs to adjust dynamically for long blocks of text that wrap.
+
+
 ## Contributing to this project
 
-The Github repository for this site is available at newsdev/archieml.org, and you can use its Issues page to submit questions or bugs on the spec itself.
+The Github repository for this site is available at [newsdev/ai2html](https://github.com/newsdev/ai2html).
+
+
+---
+
+<p style="font-size:.8em;opacity:0.5;">Created by <a href="https://twitter.com/archietse">Archie Tse</a> / <a href="https://github.com/newsdev">The New York Times</a></p>
 
 
 
