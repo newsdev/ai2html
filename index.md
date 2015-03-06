@@ -23,6 +23,7 @@ Paragraphs are styled using css classes that are consolidated across each artboa
 - [Overview of how to use ai2html](#overview-of-how-to-use-ai2html)
 - [Controlling how your text is converted into html](#controlling-how-your-text-is-converted-into-html)
 - [Settings](#settings)
+- [Point text vs. area text](#point-text-vs-area-text)
 - [Which attributes are converted to html and css](#which-attributes-are-converted-to-html-and-css)
 - [Limitations](#limitations)
 
@@ -31,7 +32,7 @@ Paragraphs are styled using css classes that are consolidated across each artboa
 
 Move the ai2html.jsx file into the Illustrator folder where scripts are located. For example, on Mac OS&nbsp;X running Adobe Illustrator CC 2014, the path would be:
 ```
-Applications\Adobe Illustrator CC 2014\Presets\en_US\Scripts\ai2html.jsx
+Applications/Adobe Illustrator CC 2014/Presets/en_US/Scripts/ai2html.jsx
 ```
 
 ## Overview of how to use ai2html
@@ -191,139 +192,51 @@ Parameters can be attached to a text object and passed to the script using the n
   - Text objects stay anchored to the artboard div relative to the top-left, top-right or top-center of the text block’s bounding box depending on whether the text is left, right or center aligned. If you want the text block to anchor to its bottom edge instead of the top, then set `valign: bottom`.
   - This setting is mainly useful when you set `responsiveness: dynamic` in the settings text block, but can also make a difference for area-text objects because text often wraps differently in different browsers so that a text block may be four lines in one browser and five lines in another. With the default `valign: top`, the fifth line will be added to the bottom of the text block. With `valign: bottom` the fifth line will cause the entire text block to be shifted up one line.
 
+## Point text vs. area text
+
+The script handles point text and area text slightly differently which has ramifications on how text wraps on your web page. Fonts never appear identically in Illustrator and in web browsers. For example, the versions of Arial in Illustrator, in Chrome on a Mac and in Internet Explorer on Windows are not exactly the same so text that fits in a box in Illustrator, may be longer on IE or shorter in Chrome.
+
+- **Point text**
+  - The div containing a point text object is not given any width so that text will flow indefinitely outward from its anchor ([see `valign` discussion](#attributes-palette)).
+
+- **Area text**
+  - The div containing an area text object is given the width of the bounding box so that text will likely wrap differently on different browsers within that width.
+
+
 ## Which attributes are converted to html and css
-The script processes each text object in your Illustrator file and translates these attributes into inline and css styles. Each point- or area-text object is converted into a `<div>`. Each paragraph in the text object are converted into `<p>` tags within the `<div>`.
-* Inline styles on the `<div>`
-  * Position
-  * Opacity
-* CSS styles applied to `<p>` tags
-  * Font
-  * Text size
-  * Leading
-  * Paragraph space before and after
-  * Paragraph alignment
-    * The alignment of the first paragraph of a text object determines how it is placed in the html. If the first paragraph is left aligned, then on the web page the text object’s div will be absolutely positioned from it’s left edge. If the first paragraph is right aligned, the div will be positioned from its right edge. If the first paragraph is centered, then the div will be positioned from its center.
-    * This is important because fonts are rendered slightly differently across browsers and operating systems. This means that in IE on a Windows machine, the font may be a bit larger than in Chrome on a Mac. So a label next to a city dot on a map end up too far away or overlapping the dot if you do not paragraph align the text relative to the dot.
-    * Setting more than one kind of paragraph alignment on a point text object cannot be translated into html, as there is really no such thing as a point text object in html. If you really want to have different paragraph alignments within a single text object, you should do it with an area text object.
-  * Capitalization
-  * Text color
-  * Character tracking
+
+The script processes each text object in your Illustrator file and translates the object and text attributes into inline and css styles. Each point- or area-text object is converted into a `<div>`. Each paragraph is converted into `<p>` tags within the `<div>`.
+
+- **Inline styles on the `<div>`**
+  - Position
+  - Opacity
+    - Only opacity applied directly to the text object is applied.
+    - *Future versions of the script may traverse parent groups and layers to calculate cumulative opacity applied to the text object.*
+  - Width
+    - The width is specified in the html output if it is an area-text object. Point-text objects are given no width.
+
+- **CSS classes applied to `<p>` tags**
+  - Font
+    - Fonts are converted from Illustrator to web font names in an array in the script. Edit the `fonts` array to add your custom web fonts.
+  - Font size
+  - Leading
+  - Paragraph space before and after
+  - Paragraph alignment
+    - The alignment of the first paragraph of a text object determines how it is placed in the html. If the first paragraph is left aligned, then on the web page the text object’s div will be absolutely positioned from it’s left edge. If the first paragraph is right aligned, the div will be positioned from its right edge. If the first paragraph is centered, then the div will be positioned from its center.
+    - This is important because fonts are rendered slightly differently across browsers and operating systems. So a label next to a city dot on a map end up too far away or overlapping the dot if you do not paragraph align the text relative to the dot.
+    - Setting more than one kind of paragraph alignment on a point-text object cannot be translated into html, as there is really no such thing as a point-text object in html. If you really want to have different paragraph alignments within a single text object, you should do it with an area text object.
+  - Capitalization
+  - Text color
+  - Character tracking
   
 ## Limitations
 
-* Because numbers get rounded to whole pixels by the web page when formatting text and positioning elements, the html version of a graphic will not line up exactly with its Illustrator version. Rounding differences are particularly compounded if you have blocks of text that span many lines and have fractional leading in Illustrator.
-* The script currently only sets one style per paragraph, so custom styled words or characters within a paragraph are ignored. Each paragraph’s style is determined by the middle character in the paragraph.
-* The script assumes that text always goes above the art.
-* Artboards should have unique names.
-* Paragraphs with full justification and center/left/right specified will just be “justified” in html.
-* If text is not hidden using the hide command, but rather is hidden because it is behind a mask, it will show up if it is within the artboard.
-* Labels in graph objects will be rendered as part of the image. (Something changed in newer versions of CC in the way text objects inside the graph object are handled.) If you want your chart labels to be shown as html, you will need to ungroup the chart.
-* In area text blocks, text that is hidden because it is overflowing the box will appear in the html output. A future version of the script may exclude that text (if I can figure out how to do it).
+- Because numbers get rounded to whole pixels by the web page when formatting text and positioning elements, the html version of a graphic will not line up exactly with its Illustrator version. Rounding differences are particularly compounded if you have blocks of text that span many lines and have fractional leading in Illustrator.
+- The script currently only sets one style per paragraph, so custom styled words or characters within a paragraph are ignored. Each paragraph’s style is determined by the middle character in the paragraph.
+- The script assumes that text always goes above the art.
+- Artboards should have unique names.
+- Paragraphs with full justification and center/left/right specified will just be “justified” in html.
+- If text is not hidden using the hide command, but rather is hidden because it is behind a mask, it will show up if it is within the artboard.
+- Labels in graph objects will be rendered as part of the image. (Something changed in newer versions of CC in the way text objects inside the graph object are handled.) If you want your chart labels to be shown as html, you will need to ungroup the chart.
+- In area text blocks, text that is hidden because it is overflowing the box will appear in the html output. A future version of the script may exclude that text (if I can figure out how to do it).
 
-
-
-
-Features
-Custom css, js, html
-Adding classes by using layers
-Alignment
-Vertical alignment
-Mustache templating
-Dynamic
-Lazy load
-Image settings
-Promo image auto generated
-Output to one html file or multiple html files.
-Artboard
-Naming to set lower viewports
-Add “-” to front to ignore
-
-
-
-Options set by where you put your ai file
-If the file is in the ai folder in an ai2html project, the html output automatically goes into the public folder of the Preview project.
-If the file is in the ai folder of a Preview project that is not an ai2html project, the html output goes into the src folder of the Preview project.
-The ai2html script determines if the Preview project is an ai2html project by checking to see if “project_type” in the config.yml is set to “ai2html.”
-
-Options set by the ai2html-settings text block
-These are generally not space or tab sensitive. Just separate the setting name from the option with a colon.
-image_format
-Options:
-png
-jpg
-Notes:
-You can specify both png and jpg by typing both of them separated by a comma — as in “png, jpg” — if you want to just generate both and see which one is larger. Only the first one in the list will be used in the output.
-Generally, select png for graphics that have fewer colors, like charts. Select jpg if there are photographic images or many gradients/blends.
-responsiveness
-Options:
-fixed
-dynamic
-Notes:
-The fixed option will generate a static graphic at the size of the artboard.
-If you specify dynamic, the web output will scale to fill the width of the div that you put the html output into.
-output
-Options:
-preview-one-file
-preview-multiple-files
-Notes:
-The one-file option will put the html for all artboards into a single html file called index.html.
-The multiple-file option will generate a separate html file for each artboard. The files will be named a composite of the ai filename and the artboard name.
-use_lazy_loader
-Options:
-yes
-no
-Notes:
-If yes is specified, then a dummy image (a transparent png) is inserted into the html output in place of the image. Data attributes are added to the img tag so that the real image is only loaded if the viewport that uses the image is actually active. This prevents the images from artboards for other viewports from loading, thus allowing the page to load more quickly. This option will also force the inclusion of resizer.js and resizer.css onto the page which is the magic that swaps out the images.
-If no is specifed, then the urls of images for all artboards and viewports are hardcoded in the html. Beware that for pages with large images or many images, choosing this option will make the page load more slowly because it will be loading unnecessary images.
-use_2x_images_if_possible
-Options:
-yes
-no
-Notes:
-If yes, the script will generate double resolution images if the image size does not exceed the pixel limit for older iPhones.
-create_promo_image
-Options
-yes
-no
-Notes:
-If yes, the script will generate a jpg or png (depending on what is specified by image_format) at a very large size to satisfy the requirements of Scoop promo images.
-png_transparent
-Options
-yes
-no
-Notes
-If yes, png images used in the html output will have a transparent background.
-png_number_of_colors
-Options
-A number from 2 to 256
-Default is 128
-Notes
-If png is selected in image_format, this can be used to set the quality of the png. Higher numbers may improve the image quality, but will also increase the file size.
-jpg_quality
-Options
-A number from 0 to 100
-Default is 80
-Notes
-If jpg are selected in image_format, this can be used to set the quality of the png. Higher numbers may improve the image quality, but will also increase the file size.
-
-headline, leadin, notes, credit, sources
-Options
-Text. Cannot contain returns.
-last_updated_text
-Options
-page_template : { useQuoteMarks:false, defaultValue:"nyt5-article-embed" },
-scoop_publish_fields : { useQuoteMarks:false, defaultValue:"true" },
-publish_system : { useQuoteMarks:false, defaultValue:"scoop" }, // or scoop_stg
-scoop_username : { useQuoteMarks:false, defaultValue:"" },
-scoop_slug : { useQuoteMarks:false, defaultValue:"" },
-scoop_external_edit_key : { useQuoteMarks:false, defaultValue:"" },
-scoop_asset_id : { useQuoteMarks:false, defaultValue:"" }
-
-
-Options set by the artboard palette
-
-
-Options set by the layers palette
-
-
-Options set by the object’s “Notes” attribute
