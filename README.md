@@ -18,6 +18,7 @@ Paragraphs are styled using css classes that are consolidated across each artboa
 - [Overview of how to use ai2html](#overview-of-how-to-use-ai2html)
 - [Controlling how your text is converted into html](#controlling-how-your-text-is-converted-into-html)
 - [Settings](#settings)
+- [Point text vs. area text](#point-text-vs-area-text)
 - [Which attributes are converted to html and css](#which-attributes-are-converted-to-html-and-css)
 - [Limitations](#limitations)
 
@@ -26,7 +27,7 @@ Paragraphs are styled using css classes that are consolidated across each artboa
 
 Move the ai2html.jsx file into the Illustrator folder where scripts are located. For example, on Mac OS&nbsp;X running Adobe Illustrator CC 2014, the path would be:
 ```
-Applications\Adobe Illustrator CC 2014\Presets\en_US\Scripts\ai2html.jsx
+Applications/Adobe Illustrator CC 2014/Presets/en_US/Scripts/ai2html.jsx
 ```
 
 ## Overview of how to use ai2html
@@ -186,23 +187,42 @@ Parameters can be attached to a text object and passed to the script using the n
   - Text objects stay anchored to the artboard div relative to the top-left, top-right or top-center of the text block’s bounding box depending on whether the text is left, right or center aligned. If you want the text block to anchor to its bottom edge instead of the top, then set `valign: bottom`.
   - This setting is mainly useful when you set `responsiveness: dynamic` in the settings text block, but can also make a difference for area-text objects because text often wraps differently in different browsers so that a text block may be four lines in one browser and five lines in another. With the default `valign: top`, the fifth line will be added to the bottom of the text block. With `valign: bottom` the fifth line will cause the entire text block to be shifted up one line.
 
+## Point text vs. area text
+
+The script handles point text and area text slightly differently which has ramifications on how text wraps on your web page. Fonts never appear identically in Illustrator and in web browsers. For example, the versions of Arial in Illustrator, in Chrome on a Mac and in Internet Explorer on Windows are not exactly the same so text that fits in a box in Illustrator, may be longer on IE or shorter in Chrome.
+
+- **Point text**
+  - The div containing a point text object is not given any width so that text will flow indefinitely outward from its anchor ([see `valign` discussion](#attributes-palette)).
+
+- **Area text**
+  - The div containing an area text object is given the width of the bounding box so that text will likely wrap differently on different browsers within that width.
+
+
 ## Which attributes are converted to html and css
-The script processes each text object in your Illustrator file and translates these attributes into inline and css styles. Each point- or area-text object is converted into a `<div>`. Each paragraph in the text object are converted into `<p>` tags within the `<div>`.
-* Inline styles on the `<div>`
-  * Position
-  * Opacity
-* CSS styles applied to `<p>` tags
-  * Font
-  * Text size
-  * Leading
-  * Paragraph space before and after
-  * Paragraph alignment
-    * The alignment of the first paragraph of a text object determines how it is placed in the html. If the first paragraph is left aligned, then on the web page the text object’s div will be absolutely positioned from it’s left edge. If the first paragraph is right aligned, the div will be positioned from its right edge. If the first paragraph is centered, then the div will be positioned from its center.
-    * This is important because fonts are rendered slightly differently across browsers and operating systems. This means that in IE on a Windows machine, the font may be a bit larger than in Chrome on a Mac. So a label next to a city dot on a map end up too far away or overlapping the dot if you do not paragraph align the text relative to the dot.
-    * Setting more than one kind of paragraph alignment on a point text object cannot be translated into html, as there is really no such thing as a point text object in html. If you really want to have different paragraph alignments within a single text object, you should do it with an area text object.
-  * Capitalization
-  * Text color
-  * Character tracking
+
+The script processes each text object in your Illustrator file and translates the object and text attributes into inline and css styles. Each point- or area-text object is converted into a `<div>`. Each paragraph is converted into `<p>` tags within the `<div>`.
+
+- **Inline styles on the `<div>`**
+  - Position
+  - Opacity
+    - Only opacity applied directly to the text object is applied.
+    - *Future versions of the script may traverse parent groups and layers to calculate cumulative opacity applied to the text object.*
+  - Width
+    - The width is specified in the html output if it is an area-text object. Point-text objects are given no width.
+
+- **CSS classes applied to `<p>` tags**
+  - Font
+    - Fonts are converted from Illustrator to web font names in an array in the script. Edit the `fonts` array to add your custom web fonts.
+  - Font size
+  - Leading
+  - Paragraph space before and after
+  - Paragraph alignment
+    - The alignment of the first paragraph of a text object determines how it is placed in the html. If the first paragraph is left aligned, then on the web page the text object’s div will be absolutely positioned from it’s left edge. If the first paragraph is right aligned, the div will be positioned from its right edge. If the first paragraph is centered, then the div will be positioned from its center.
+    - This is important because fonts are rendered slightly differently across browsers and operating systems. So a label next to a city dot on a map end up too far away or overlapping the dot if you do not paragraph align the text relative to the dot.
+    - Setting more than one kind of paragraph alignment on a point-text object cannot be translated into html, as there is really no such thing as a point-text object in html. If you really want to have different paragraph alignments within a single text object, you should do it with an area text object.
+  - Capitalization
+  - Text color
+  - Character tracking
   
 ## Limitations
 
