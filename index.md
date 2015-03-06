@@ -261,7 +261,7 @@ The Github repository for this site is available at [newsdev/ai2html](https://gi
 
 Many thanks to [Jeremy Ashkenas](https://twitter.com/jashkenas), [Matt Ericson](https://twitter.com/mericson), [Tom Giratikanon](https://twitter.com/giratikanon), [Alan McLean](https://twitter.com/alanmclean) and my colleagues in [@nytgraphics](https://twitter.com/nytgraphics) for their patient guidance in the development of this project.
 
-
+If you’re learning to write Javascript for Adobe Illustrator, [John Wundes](http://www.wundes.com/JS4AI/), has many wonderful scripts. [explore.js](http://www.wundes.com/JS4AI/explore.js) is particularly helpful for understanding what attributes are attached to Illustrator objects.
 
 ---
 
