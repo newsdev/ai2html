@@ -37,13 +37,6 @@ Applications/Adobe Illustrator CC 2014/Presets/en_US/Scripts/ai2html.jsx
 3. Go to the folder containing your Illustrator file. Inside will be a folder called `ai2html-output`. Open the html files in your browser to preview your output.
 4. To edit or further customize the output, just go back to your Illustrator document, make changes to the text and artwork, or to the settings text block that is placed in the Illustrator document the first time you run the script on a file. Rerun the script.  
 
-## Controlling how your text is converted into html 
-
-Discussion here about:
-- Choosing between point and area text.
-- Choosing the paragraph alignment of the text
-- Limitations because of one style per paragraph
-
 
 ## Settings
 
