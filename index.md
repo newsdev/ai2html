@@ -3,7 +3,7 @@ layout: index
 ---
 
 
-# ai2html Script
+# ai2html
 
 > ai2html is a script for Adobe Illustrator that converts your Illustrator document into html and css.
 
