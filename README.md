@@ -68,7 +68,7 @@ The script recognizes five special types of text blocks. The first line of the t
 
 Most of the script’s options are set in the settings text block. When you run ai2html for the first time in your ai file, the script will place a settings text block to the upper left of all your artboards. Here is a description of the settings:
 
-*Options that are included in the settings text block by default*
+*Options that are included in the settings text block by default:*
 
 - **image_format**
   - <span style="font-variant: small-caps">Possible values</span>: `png` `png24` `jpg`
@@ -95,7 +95,7 @@ Most of the script’s options are set in the settings text block. When you run 
   - Use this if you want to change the path of the images that are placed behind the html text. This path should be written relative to the location of the `html_output_path`.
 - **local_preview_template**
   - <span style="font-variant: small-caps">Default</span>: `<blank>`
-  - Use this to specify a page template into which the html partial will be inserted to preview your artwork in the context of your site architecture and css. Sample templates can be downloaded from the ai2html Github repo. Any variables from ai2html-settings or ai2html-text blocks can be inserted into the templates using either mustache (eg. `{{headline}}`) or ejs/erb (eg. `<%=headline%>`) notation. The ai2html partial can be inserted using the `{{ai2htmlPartial}}` variable.
+  - Use this to specify a page template into which the html partial will be inserted to preview your artwork in the context of your site architecture and css. Sample templates can be downloaded from the ai2html Github repo. Any variables from ai2html-settings or ai2html-text blocks can be inserted into the templates using either mustache (eg. `{{headline}}`) or ejs/erb (eg. `<%=headline%>`) notation. The ai2html partial can be inserted using the `<%=ai2htmlPartial%>` variable.
 - **png_number_of_colors**
   - <span style="font-variant: small-caps">Possible values</span>: Any integer from `2` to `256`
   - <span style="font-variant: small-caps">Default</span>: `128`
