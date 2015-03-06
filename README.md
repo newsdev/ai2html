@@ -2,25 +2,16 @@
 
 > ai2html is a script for Adobe Illustrator that converts your Illustrator document into html and css.
 
-## About
-
-The script renders text as absolutely positioned html elements. The remaining art is exported as an image that is placed underneath the text in the html. Artboards can be rendered as separate divs in a single file, or as separate files. The exported files are html partials, that is, everything is enclosed in a div that can be inserted into a page template. It is also possible to specify an html page template into which the script will insert the html partial so you can preview your artwork in the context of your site architecture and css.
-
-Text styles are applied at the paragraph level. Each paragraph is given the character and paragraph attributes of the middle character of the paragraph. Other character styles within a paragraph are ignored — though I'm hoping to add this as a feature in the future. A work-around for this limitation is to enclose text in classed `<span>` tags and define styles for those classes in an `ai2html-css` text block (described below).
-
-Paragraphs are styled using css classes that are consolidated across each artboard. This means that all paragraphs with the same style attributes are styled with a single css class. Text blocks in the output are ordered top-to-bottom, left-to-right so that the document is somewhat readable.
-
-[Here are examples](https://delicious.com/archietse/ai2html) of how we’ve used the script at The New York Times.
-
 ## Table of contents
 
 - [How to install ai2html](#how-to-install-ai2html)
-- [Overview of how to use ai2html](#overview-of-how-to-use-ai2html)
-- [Controlling how your text is converted into html](#controlling-how-your-text-is-converted-into-html)
+- [How to use ai2html](#how-to-use-ai2html)
 - [Settings](#settings)
 - [Point text vs. area text](#point-text-vs-area-text)
 - [Which attributes are converted to html and css](#which-attributes-are-converted-to-html-and-css)
+- [How does ai2html work](#how-does-ai2html-work)
 - [Limitations](#limitations)
+- [What works well and what doesn’t](#what-works-well-and-what-doesnt)
 
 
 ## How to install ai2html
@@ -32,7 +23,7 @@ Move the `ai2html.jsx` file into the Illustrator folder where scripts are locate
 Applications/Adobe Illustrator CC 2014/Presets/en_US/Scripts/ai2html.jsx
 ```
 
-## Overview of how to use ai2html
+## How to use ai2html
 
 1. Create your Illustrator artwork. Size the artboard to the dimensions that you want the div to appear on the web page. Make sure your `Document Color Mode` is set to `RGB` and that your document is saved.
 2. Run the script by choosing: `File > Scripts > ai2html`
@@ -221,8 +212,20 @@ The script processes each text object in your Illustrator file and translates th
   - Character tracking
 
 
+## How does ai2html work
+
+The script renders text as absolutely positioned html elements. The remaining art is exported as an image that is placed underneath the text in the html. Artboards can be rendered as separate divs in a single file, or as separate files. The exported files are html partials, that is, everything is enclosed in a div that can be inserted into a page template. It is also possible to specify an html page template into which the script will insert the html partial so you can preview your artwork in the context of your site architecture and css.
+
+Text styles are applied at the paragraph level. Each paragraph is given the character and paragraph attributes of the middle character of the paragraph. Other character styles within a paragraph are ignored — though we’re hoping to add this as a feature in the future. A work-around for this limitation is to enclose text in classed `<span>` tags and define styles for those classes in an `ai2html-css` text block (described below).
+
+Paragraphs are styled using css classes that are consolidated across each artboard. This means that all paragraphs with the same style attributes are styled with a single css class. Text blocks in the output are ordered top-to-bottom, left-to-right so that the document is somewhat readable.
+
+[Here are examples](https://delicious.com/archietse/ai2html) of how we’ve used the script at The New York Times.
+
+
 ## Limitations
 
+- Text that has been rotated or skewed is not converted into html, but rather rendered onto the image. *We’re hoping to have a fix for this soon.*
 - Because numbers get rounded to whole pixels by the web page when formatting text and positioning elements, the html version of a graphic will not line up exactly with its Illustrator version. Rounding differences are particularly compounded if you have blocks of text that span many lines and have fractional leading in Illustrator.
 - The script currently only sets one style per paragraph, so custom styled words or characters within a paragraph are ignored. Each paragraph’s style is determined by the middle character in the paragraph.
 - The script assumes that text always goes above the art.
@@ -254,13 +257,15 @@ The Github repository for this site is available at [newsdev/ai2html](https://gi
 
 ## Thanks
 
-Many thanks to [Jeremy Ashkenas](https://twitter.com/jashkenas), [Matt Ericson](https://twitter.com/mericson), [Tom Giratikanon](https://twitter.com/giratikanon), [Alan McLean](https://twitter.com/alanmclean) and my colleagues in [@nytgraphics](https://twitter.com/nytgraphics) for their patient guidance in the development of this project.
+Many thanks to [Jeremy Ashkenas](https://twitter.com/jashkenas), [Matt Ericson](https://twitter.com/mericson), [Tom Giratikanon](https://twitter.com/giratikanon), [Alan McLean](https://twitter.com/alanmclean) and my colleagues in The New York Times [Graphics Department](https://twitter.com/nytgraphics) for their patient guidance in the development of this project.
 
 If you’re learning to write Javascript for Adobe Illustrator, [John Wundes](http://www.wundes.com/JS4AI/), has many wonderful scripts. [explore.js](http://www.wundes.com/JS4AI/explore.js) is particularly helpful for understanding what attributes are attached to Illustrator objects.
 
 ---
 
 <p style="font-size:.8em;opacity:0.5;">Created by <a href="https://twitter.com/archietse">Archie Tse</a> / <a href="https://github.com/newsdev">The New York Times</a></p>
+
+<p style="font-size:.8em;opacity:0.5;">Copyright (c) 2011-2015 The New York Times Company</p>
 
 
 
