@@ -25,7 +25,11 @@ Applications/Adobe Illustrator CC 2014/Presets/en_US/Scripts/ai2html.jsx
 
 ## How to use ai2html
 
-1. Create your Illustrator artwork. Size the artboard to the dimensions that you want the div to appear on the web page. Make sure your `Document Color Mode` is set to `RGB` and that your document is saved.
+1. Create your Illustrator artwork.
+  - Size the artboard to the dimensions that you want the div to appear on the web page.
+  - Make sure your `Document Color Mode` is set to `RGB`.
+  - Make sure your document is saved.
+  - Use Arial or Georgia unless you have added your own fonts to the `fonts` array in the script.
 2. Run the script by choosing: `File > Scripts > ai2html`
 3. Go to the folder containing your Illustrator file. Inside will be a folder called `ai2html-output`. Open the html files in your browser to preview your output.
 
