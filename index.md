@@ -100,7 +100,7 @@ Most of the script’s options are set in the settings text block. When you run 
   - Use this if you want to change the path of the images that are placed behind the html text. This path should be written relative to the location of the `html_output_path`.
 - **local_preview_template**
   - <span style="font-variant: small-caps">Default</span>: `<blank>`
-  - Use this to specify a page template into which the html partial will be inserted to preview your artwork in the context of your site architecture and css. Sample templates can be downloaded from the ai2html Github repo. Any variables from ai2html-settings or ai2html-text blocks can be inserted into the templates using either mustache (eg. &#123;&#123;headline&#125;&#125;) or ejs/erb (eg. `<%=headline%>`) notation. The ai2html partial can be inserted using the `<%=ai2htmlPartial%>` variable.
+  - Use this to specify a page template into which the html partial will be inserted to preview your artwork in the context of your site architecture and css. Sample templates can be downloaded from the ai2html Github repo. Any variables from ai2html-settings or ai2html-text blocks can be inserted into the templates using either mustache (eg. &#123;&#123;headline&#125;&#125; ) or ejs/erb (eg. `<%=headline%>`) notation. The ai2html partial can be inserted using the `<%=ai2htmlPartial%>` variable.
 - **png_number_of_colors**
   - <span style="font-variant: small-caps">Possible values</span>: Any integer from `2` to `256`
   - <span style="font-variant: small-caps">Default</span>: `128`
@@ -164,7 +164,7 @@ You can store text into variables and insert them into your document using basic
 
 To assign text to a variable, create a text block somewhere in your Illustrator document, but not on an artboard. Make the first line of that text block read `ai2html-text`. Each subsequent paragraph should be in the format of `variable_name: Lorem ipsum dolor.`. Variable names should only be letters, numbers and underscores.
 
-Now you can insert that text anywhere in your document by placing `{{variable_name}}` or `<%=variable_name%>` where you want that text to appear.
+Now you can insert that text anywhere in your document by placing &#123;&#123;variable_name&#125;&#125; or `<%=variable_name%>` where you want that text to appear.
 
 Note that you can pass mustache or erb/ejs notation untouched to your html partial as long as the variable names don’t match the variable names in the `ai2html-settings` or `ai2html-text` blocks.
 
