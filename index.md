@@ -21,7 +21,7 @@ layout: index
 
 ## How to install ai2html
 
-Download the [latest version of the script here](https://github.com/newsdev/ai2html/raw/master/ai2html.jsx) clicking the link and saving it to your computer. 
+Download the [latest version of the script here](https://github.com/newsdev/ai2html/raw/master/ai2html.jsx) by clicking the link and saving it to your computer. 
 
 Move the `ai2html.jsx` file into the Illustrator folder where scripts are located. For example, on Mac OS&nbsp;X running Adobe Illustrator CC 2014, the path would be:
 ```
