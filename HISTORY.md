@@ -10,6 +10,7 @@
   - Change png_transparency default to "no" because transparency degrades the quality of the images too much.
   - Change a few other defaults.
   - Change var name ai2htmlStub to ai2htmlPartial for consistency.
+  - Remove Google Analytics option in NYT mode.
 - v52
   - In non-NYT mode, export files using defaults even if no settings block exists.
   - Fix error with image path on NYT projects where the html files are being written to the src folder.
