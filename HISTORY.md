@@ -135,6 +135,8 @@
 (Will move these to issues at some point.)
 
 ##### General
+- Change docSettings.output to only look for multiple-files so otherwise will default to one file.
+- Make legacy settings function that substitutes current names for legacy ones.
 - Get rid of namespacing on classes added from layer names -- or maybe not -- need to think this thru again.
 - Add a settings version check.
 - Add data information for min and max widths to show artboard.
