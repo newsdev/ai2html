@@ -269,7 +269,7 @@ If you’re learning to write Javascript for Adobe Illustrator, [John Wundes](ht
 
 <p style="font-size:.8em;opacity:0.5;">Created by <a href="https://twitter.com/archietse">Archie Tse</a> / <a href="https://github.com/newsdev">The New York Times</a></p>
 
-<p style="font-size:.8em;opacity:0.5;">Copyright (c) 2011-2015 The New York Times Company</p>
+<p style="font-size:.8em;opacity:0.7;">Copyright (c) 2011-2015 The New York Times Company</p>
 
 
 
