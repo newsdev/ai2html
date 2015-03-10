@@ -1,6 +1,6 @@
 # ai2html
 
-> ai2html is a script for Adobe Illustrator that converts your Illustrator document into html and css.
+> ai2html is an open-source script for Adobe Illustrator that converts your Illustrator document into html and css.
 
 ## Table of contents
 
