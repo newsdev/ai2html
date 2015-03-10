@@ -17,6 +17,7 @@ layout: index
 - [How does ai2html work](#how-does-ai2html-work)
 - [Limitations](#limitations)
 - [What works well and what does not](#what-works-well-and-what-does-not)
+- [Frequently asked questions](#requently-asked-questions)
 
 
 ## How to install ai2html
