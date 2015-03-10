@@ -245,7 +245,7 @@ Paragraphs are styled using css classes that are consolidated across each artboa
 - In area text blocks, text that is hidden because it is overflowing the box will appear in the html output.
 
 
-<!-- ## Why not just export an image out Illustrator -->
+<!-- ## Why not just export an image out of Illustrator -->
 
 
 ## What works well and what does not
@@ -256,6 +256,15 @@ Paragraphs are styled using css classes that are consolidated across each artboa
 - **Not so great**
   - Graphics with long blocks of wrapped text or many lines of text.
   - Things that should really be coded up as a table or as columns in which the height of the cells needs to adjust dynamically for long blocks of text that wrap.
+
+
+## Frequently asked questions FAQ
+
+- Why not just export my Illustrator file as an SVG?
+
+  Two main reasons:
+  - SVG text scales as you scale the the SVG object so the text becomes unreadable pretty quickly as the artwork scales down, or looks hilariously large as it scales up. By rendering the text as html, we can scale the "graphic" up and down, but keep the text readable at the same font-size and line-height. This is important because we are trying to reduce the number of versions of the artwork that we have to create in order to accommodate viewports that range from mobile phones up to giant desktop monitors. An example of this is here: http://nyti.ms/1CQdkwq Change your window size when you view the page and you'll see the artwork scale but the text stays the same size. More examples here: https://delicious.com/archietse/ai2html,responsive
+  - When Illustrator saves the SVG, every line of text is broken into separate SVG elements which makes editing the text very difficult. By having the text rendered in HTML, it is much easier for editors to go into the CMS and make edits without having to wade through a tangle of SVG code.
 
 
 
