@@ -1,6 +1,8 @@
 # ai2html
 
-> ai2html is an open-source script for Adobe Illustrator that converts your Illustrator document into html and css.
+> ai2html is an open-source script for Adobe Illustrator that converts your Illustrator documents into html and css.
+
+[Here are examples](https://delicious.com/archietse/ai2html) of how we’ve used the script at The New York Times.
 
 ## Table of contents
 
@@ -224,8 +226,6 @@ The script renders text as absolutely positioned html elements. The remaining ar
 Text styles are applied at the paragraph level. Each paragraph is given the character and paragraph attributes of the middle character of the paragraph. Other character styles within a paragraph are ignored — though we’re hoping to add this as a feature in the future. A work-around for this limitation is to enclose text in classed `<span>` tags and define styles for those classes in an `ai2html-css` text block (described below).
 
 Paragraphs are styled using css classes that are consolidated across each artboard. This means that all paragraphs with the same style attributes are styled with a single css class. Text blocks in the output are ordered top-to-bottom, left-to-right so that the document is somewhat readable.
-
-[Here are examples](https://delicious.com/archietse/ai2html) of how we’ve used the script at The New York Times.
 
 
 ## Limitations
