@@ -5,9 +5,13 @@ layout: index
 
 # ai2html
 
+<<<<<<< HEAD
 > ai2html is an open-source script for Adobe Illustrator that converts your Illustrator documents into html and css.
 
 [Here are examples](https://delicious.com/archietse/ai2html) of how we’ve used the script at The New York Times.
+=======
+> ai2html is an open-source script for Adobe Illustrator that converts your Illustrator document into html and css.
+>>>>>>> 1bee96f1e7453ec30e2ecda6e4a87b0b7ebc8ef3
 
 ## Table of contents
 
