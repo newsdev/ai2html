@@ -5,7 +5,9 @@ layout: index
 
 # ai2html
 
-> ai2html is an open-source script for Adobe Illustrator that converts your Illustrator document into html and css.
+> ai2html is an open-source script for Adobe Illustrator that converts your Illustrator documents into html and css.
+
+[Here are examples](https://delicious.com/archietse/ai2html) of how we’ve used the script at The New York Times.
 
 ## Table of contents
 
@@ -17,6 +19,7 @@ layout: index
 - [How does ai2html work](#how-does-ai2html-work)
 - [Limitations](#limitations)
 - [What works well and what does not](#what-works-well-and-what-does-not)
+- [Frequently asked questions](#frequently-asked-questions)
 
 
 ## How to install ai2html
@@ -229,8 +232,6 @@ Text styles are applied at the paragraph level. Each paragraph is given the char
 
 Paragraphs are styled using css classes that are consolidated across each artboard. This means that all paragraphs with the same style attributes are styled with a single css class. Text blocks in the output are ordered top-to-bottom, left-to-right so that the document is somewhat readable.
 
-[Here are examples](https://delicious.com/archietse/ai2html) of how we’ve used the script at The New York Times.
-
 
 ## Limitations
 
@@ -258,13 +259,11 @@ Paragraphs are styled using css classes that are consolidated across each artboa
   - Things that should really be coded up as a table or as columns in which the height of the cells needs to adjust dynamically for long blocks of text that wrap.
 
 
-## Frequently asked questions FAQ
+## Frequently asked questions
 
-- Why not just export my Illustrator file as an SVG?
-
-  Two main reasons:
-  - SVG text scales as you scale the the SVG object so the text becomes unreadable pretty quickly as the artwork scales down, or looks hilariously large as it scales up. By rendering the text as html, we can scale the "graphic" up and down, but keep the text readable at the same font-size and line-height. This is important because we are trying to reduce the number of versions of the artwork that we have to create in order to accommodate viewports that range from mobile phones up to giant desktop monitors. An example of this is here: http://nyti.ms/1CQdkwq Change your window size when you view the page and you'll see the artwork scale but the text stays the same size. More examples here: https://delicious.com/archietse/ai2html,responsive
-  - When Illustrator saves the SVG, every line of text is broken into separate SVG elements which makes editing the text very difficult. By having the text rendered in HTML, it is much easier for editors to go into the CMS and make edits without having to wade through a tangle of SVG code.
+- Why not just export my Illustrator file as an image or an SVG?
+  - Text in images and SVGs scale as you scale the image — so your text becomes unreadable pretty quickly as the artwork scales down, or looks hilariously large as it scales up. By rendering the text as html, we can scale the “graphic” up and down, but keep the text readable at the same font-size and line-height. This is important because we are trying to reduce the number of versions of the artwork that we have to create in order to accommodate viewports that range from mobile phones up to giant desktop monitors. An example of this is here: http://nyti.ms/1CQdkwq Change your window size when you view the page and you'll see the artwork scale but the text stays the same size. More examples here: https://delicious.com/archietse/ai2html,responsive
+  - When Illustrator saves an SVG, every line of text is broken into separate SVG elements which makes editing the text very difficult. By having the text rendered in HTML, it is much easier for editors to go into the CMS and make edits without having to wade through a tangle of SVG code.
 
 
 
