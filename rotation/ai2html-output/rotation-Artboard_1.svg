@@ -7,37 +7,41 @@
 	<rect x="-3.898" y="-2.243" style="fill:#FEE9C8;" width="727.508" height="567.051"/>
 	<circle style="fill:#F0FF17;stroke:#000000;stroke-miterlimit:10;" cx="338.667" cy="285.667" r="113.333"/>
 	<text transform="matrix(1 0 0 1 477.334 286.9995)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(0.9397 0.342 -0.342 0.9397 467.5789 334.3548)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(0.981 0.1941 -0.1941 0.981 471.5467 311.1862)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(0.9879 -0.1549 0.1549 0.9879 477.3441 261.5174)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(0.766 0.6428 -0.6428 0.766 442.1571 375.5269)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(0.6011 0.7992 -0.7992 0.6011 426.2759 394.6875)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(0.3785 0.9256 -0.9256 0.3785 389.8686 441.1911)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(0.5 0.866 -0.866 0.5 404.1321 405.5476)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(0.9397 0.342 -0.342 0.9397 467.5782 334.3551)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(0.981 0.1941 -0.1941 0.981 471.5468 311.1859)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(0.9879 -0.1549 0.1549 0.9879 477.3441 261.5177)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(0.766 0.6428 -0.6428 0.766 442.1571 375.5262)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(0.6011 0.7992 -0.7992 0.6011 426.2759 394.6905)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(0.3785 0.9256 -0.9256 0.3785 389.8676 441.1925)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(0.5 0.866 -0.866 0.5 404.134 405.5476)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
 	<text transform="matrix(0.1736 0.9848 -0.9848 0.1736 358.2854 420.8117)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
 	<text transform="matrix(-0.1736 0.9848 -0.9848 -0.1736 309.9251 419.3596)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
 	<text transform="matrix(-0.5 0.866 -0.866 -0.5 264.9185 401.5632)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(-0.766 0.6428 -0.6428 -0.766 228.8612 369.4963)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(-0.9397 0.342 -0.342 -0.9397 205.7837 326.7069)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(-1 0 0 -1 198.8806 278.9529)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(-0.9397 -0.342 0.342 -0.9397 208.625 231.6125)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(-0.766 -0.6428 0.6428 -0.766 234.0743 190.2348)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(-0.5 -0.866 0.866 -0.5 271.9648 160.2981)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(-0.1736 -0.9848 0.9848 -0.1736 317.8866 145.1209)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(0.1736 -0.9848 0.9848 0.1736 366.274 146.5243)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(0.5 -0.866 0.866 0.5 410.0274 162.7122)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(-0.766 0.6428 -0.6428 -0.766 228.8612 369.4973)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(-0.9397 0.342 -0.342 -0.9397 205.7896 326.7128)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(-1 0 0 -1 198.8821 278.9514)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(-0.9397 -0.342 0.342 -0.9397 208.6279 231.6125)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(-0.766 -0.6428 0.6428 -0.766 234.0772 190.2407)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(-0.5 -0.866 0.866 -0.5 271.9663 160.2981)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(-0.1736 -0.9848 0.9848 -0.1736 317.8856 145.1209)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(0.1736 -0.9848 0.9848 0.1736 366.2738 146.5243)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(0.5 -0.866 0.866 0.5 410.0274 162.7151)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
 	<text transform="matrix(0.6395 -0.7688 0.7688 0.6395 442.1448 186.6961)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
 	<text transform="matrix(0.9397 -0.342 0.342 0.9397 474.2021 235.7531)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
 	<text transform="matrix(0.866 0.5 -0.5 0.866 456.7644 357.9041)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(-4.371139e-08 1 -1 -4.371139e-08 331.8351 426.6623)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(-4.371139e-08 1 -1 -4.371139e-08 331.8361 426.6611)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
 	<text transform="matrix(-0.866 0.5 -0.5 -0.866 209.8338 352.7383)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(-0.866 -0.5 0.5 -0.866 212.639 210.0752)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(-4.371139e-08 -1 1 -4.371139e-08 337.7115 141.5788)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(0.866 -0.5 0.5 0.866 459.7214 215.3628)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(-0.866 -0.5 0.5 -0.866 212.6419 210.0811)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(-4.371139e-08 -1 1 -4.371139e-08 337.7115 141.5768)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(0.866 -0.5 0.5 0.866 459.7214 215.3613)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
 	<text transform="matrix(1 0 0 1 286.5684 286.9995)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
 	<text transform="matrix(0.7154 0 0.6987 0.7154 602.1255 112.9622)" style="font-family:'ArialMT'; font-size:20.9679;">Skewed</text>
 	<text transform="matrix(0.5059 -0.5059 0.9999 0.0118 516.6353 532.294)" style="font-family:'ArialMT'; font-size:30.9679;">Skewed and rotated.</text>
-	<text transform="matrix(0.2924 0.6529 -0.3673 0.9301 59.687 339.411)" style="font-family:'ArialMT'; font-size:60.9679;">Skewed and rotated.</text>
+	<g>
+		<text transform="matrix(0.2924 0.6529 -0.3673 0.9301 59.722 339.4136)" style="font-family:'ArialMT'; font-size:32.5776;">Skewed and rotated.</text>
+		
+			<text transform="matrix(0.2924 0.6529 -0.3673 0.9301 59.722 339.4136)" style="fill:#231F20; font-family:'ArialMT'; font-size:32.5776;">Skewed and rotated.</text>
+	</g>
 	<line style="fill:none;" x1="396" y1="179" x2="410" y2="179"/>
 </g>
 <g id="ai2html-settings">
