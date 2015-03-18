@@ -7,40 +7,40 @@
 	<rect x="-3.898" y="-2.243" style="fill:#FEE9C8;" width="727.508" height="567.051"/>
 	<circle style="fill:#F0FF17;stroke:#000000;stroke-miterlimit:10;" cx="338.667" cy="285.667" r="113.333"/>
 	<text transform="matrix(1 0 0 1 477.334 286.9995)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(0.981 0.194 -0.194 0.981 471.5371 311.1837)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(0.766 0.6428 -0.6428 0.766 442.1435 375.4966)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(0.5 0.866 -0.866 0.5 404.0442 405.5334)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(0.1736 0.9848 -0.9848 0.1736 358.2502 420.836)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(-0.1736 0.9848 -0.9848 -0.1736 309.8802 419.3303)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(-0.5 0.866 -0.866 -0.5 264.8306 401.5886)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(-0.766 0.6428 -0.6428 -0.766 228.8573 369.6106)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(-0.9397 0.342 -0.342 -0.9397 205.7114 326.6464)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(-1 0 0 -1 198.886 278.9495)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(-0.9397 -0.342 0.342 -0.9397 208.6191 231.6496)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(-0.766 -0.6428 0.6428 -0.766 234.13 190.1118)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(-0.5 -0.866 0.866 -0.5 271.9609 160.2103)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(-0.1736 -0.9848 0.9848 -0.1736 317.8732 145.0799)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(0.1736 -0.9848 0.9848 0.1736 366.2992 146.4892)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(0.5 -0.866 0.866 0.5 410.0142 162.6028)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(0.6395 -0.7688 0.7688 0.6395 442.1314 186.6633)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(0.9397 -0.342 0.342 0.9397 474.2111 235.7592)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(0.866 0.5 -0.5 0.866 456.7507 357.9285)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(-4.371139e-08 1 -1 -4.371139e-08 331.8077 426.6896)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(-0.866 0.5 -0.5 -0.866 209.783 352.6523)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(-0.866 -0.5 0.5 -0.866 212.4935 209.9072)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
-	<text transform="matrix(-4.371139e-08 -1 1 -4.371139e-08 337.7132 141.6393)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(0.981 0.194 -0.194 0.981 471.5371 311.2027)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(0.766 0.6428 -0.6428 0.766 442.1254 375.4705)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(0.5 0.866 -0.866 0.5 403.9446 405.5197)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(0.1736 0.9848 -0.9848 0.1736 358.2131 420.8596)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(-0.1736 0.9848 -0.9848 -0.1736 309.8352 419.301)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(-0.5 0.866 -0.866 -0.5 264.7427 401.614)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(-0.766 0.6428 -0.6428 -0.766 228.8533 369.7239)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(-0.9397 0.342 -0.342 -0.9397 205.6021 326.5487)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(-1 0 0 -1 198.8884 278.949)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(-0.9397 -0.342 0.342 -0.9397 208.5957 231.6867)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(-0.766 -0.6428 0.6428 -0.766 234.1681 189.9536)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(-0.5 -0.866 0.866 -0.5 271.9482 160.1224)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(-0.1736 -0.9848 0.9848 -0.1736 317.8644 145.0389)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(0.1736 -0.9848 0.9848 0.1736 366.3248 146.454)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(0.5 -0.866 0.866 0.5 410.001 162.4759)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(0.6395 -0.7688 0.7688 0.6395 442.1158 186.6623)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(0.9397 -0.342 0.342 0.9397 474.2199 235.767)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(0.866 0.5 -0.5 0.866 456.7619 357.9524)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(-4.371139e-08 1 -1 -4.371139e-08 331.7697 426.7275)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(-0.866 0.5 -0.5 -0.866 209.7322 352.5664)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(-0.866 -0.5 0.5 -0.866 212.3304 209.7041)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
+	<text transform="matrix(-4.371139e-08 -1 1 -4.371139e-08 337.7142 141.7184)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
 	<text transform="matrix(1 0 0 1 286.5684 286.9995)" style="font-family:'ArialMT'; font-size:15;">Some text here.</text>
 	<text transform="matrix(0.7154 0 0.6987 0.7154 602.1255 112.9622)" style="font-family:'ArialMT'; font-size:20.9679;">Skewed</text>
-	<text transform="matrix(0.5059 -0.5059 0.9999 0.0118 516.6345 532.2921)" style="font-family:'ArialMT'; font-size:30.9679;">Skewed and rotated.</text>
+	<text transform="matrix(0.5059 -0.5059 0.9999 0.0118 516.634 532.2159)" style="font-family:'ArialMT'; font-size:30.9679;">Skewed and rotated.</text>
 	<g>
-		<text transform="matrix(0.2924 0.6529 -0.3673 0.9301 59.7752 339.3669)" style="font-family:'ArialMT'; font-size:32.5775;">Skewed and rotated.</text>
+		<text transform="matrix(0.2924 0.6529 -0.3673 0.9301 59.7303 339.324)" style="font-family:'ArialMT'; font-size:32.5775;">Skewed and rotated.</text>
 		
-			<text transform="matrix(0.2924 0.6529 -0.3673 0.9301 59.7752 339.3669)" style="fill:#231F20; font-family:'ArialMT'; font-size:32.5775;">Skewed and rotated.</text>
+			<text transform="matrix(0.2924 0.6529 -0.3673 0.9301 59.7303 339.324)" style="fill:#231F20; font-family:'ArialMT'; font-size:32.5775;">Skewed and rotated.</text>
 	</g>
 	<line style="fill:none;" x1="396" y1="179" x2="410" y2="179"/>
 </g>
 <g id="ai2html-settings">
 	<rect x="-912" y="-107.667" style="fill:none;" width="400" height="462"/>
-	<text transform="matrix(1 0 0 1 -912.0004 -97.0166)" style="display:none;"><tspan x="0" y="0" style="display:inline; font-family:'MyriadPro-Regular'; font-size:15;">ai2html-settings</tspan><tspan x="0" y="18" style="display:inline; font-family:'MyriadPro-Regular'; font-size:15;">settings_version: 0.51</tspan><tspan x="0" y="36" style="display:inline; font-family:'MyriadPro-Regular'; font-size:15;">image_format: svg</tspan><tspan x="0" y="54" style="display:inline; font-family:'MyriadPro-Regular'; font-size:15;">responsiveness: fixed</tspan><tspan x="0" y="72" style="display:inline; font-family:'MyriadPro-Regular'; font-size:15;">output: one-file</tspan><tspan x="0" y="90" style="display:inline; font-family:'MyriadPro-Regular'; font-size:15;">html_output_path: /ai2html-output/</tspan><tspan x="0" y="108" style="display:inline; font-family:'MyriadPro-Regular'; font-size:15;">html_output_extension: .html</tspan><tspan x="0" y="126" style="display:inline; font-family:'MyriadPro-Regular'; font-size:15;">image_output_path: </tspan><tspan x="0" y="144" style="display:inline; font-family:'MyriadPro-Regular'; font-size:15;">local_preview_template: template.html</tspan><tspan x="0" y="162" style="display:inline; font-family:'MyriadPro-Regular'; font-size:15;">png_number_of_czolors: 128</tspan><tspan x="0" y="180" style="display:inline; font-family:'MyriadPro-Regular'; font-size:15;">jpg_quality: 80</tspan><tspan x="0" y="198" style="display:inline; font-family:'MyriadPro-Regular'; font-size:15;">headline: Ai Graphic Headline</tspan><tspan x="0" y="216" style="display:inline; font-family:'MyriadPro-Regular'; font-size:15;">leadin: Introductory text here.</tspan><tspan x="0" y="234" style="display:inline; font-family:'MyriadPro-Regular'; font-size:15;">notes: Notes: Text goes here.</tspan><tspan x="0" y="252" style="display:inline; font-family:'MyriadPro-Regular'; font-size:15;">sources: Source: Name goes here.</tspan><tspan x="0" y="270" style="display:inline; font-family:'MyriadPro-Regular'; font-size:15;">credit: By ai2html</tspan><tspan x="0" y="288" style="display:inline; font-family:'MyriadPro-Regular'; font-size:15;">render_rotated_skewed_text_as: html</tspan><tspan x="0" y="306" style="display:inline; font-family:'MyriadPro-Regular'; font-size:15;">testing_mode: yes</tspan></text>
+	<text transform="matrix(1 0 0 1 -912.0004 -97.0166)" style="display:none;"><tspan x="0" y="0" style="display:inline; font-family:'MyriadPro-Regular'; font-size:15;">ai2html-settings</tspan><tspan x="0" y="18" style="display:inline; font-family:'MyriadPro-Regular'; font-size:15;">settings_version: 0.51</tspan><tspan x="0" y="36" style="display:inline; font-family:'MyriadPro-Regular'; font-size:15;">image_format: svg</tspan><tspan x="0" y="54" style="display:inline; font-family:'MyriadPro-Regular'; font-size:15;">responsiveness: dynamic</tspan><tspan x="0" y="72" style="display:inline; font-family:'MyriadPro-Regular'; font-size:15;">output: one-file</tspan><tspan x="0" y="90" style="display:inline; font-family:'MyriadPro-Regular'; font-size:15;">html_output_path: /ai2html-output/</tspan><tspan x="0" y="108" style="display:inline; font-family:'MyriadPro-Regular'; font-size:15;">html_output_extension: .html</tspan><tspan x="0" y="126" style="display:inline; font-family:'MyriadPro-Regular'; font-size:15;">image_output_path: </tspan><tspan x="0" y="144" style="display:inline; font-family:'MyriadPro-Regular'; font-size:15;">local_preview_template: template.html</tspan><tspan x="0" y="162" style="display:inline; font-family:'MyriadPro-Regular'; font-size:15;">png_number_of_czolors: 128</tspan><tspan x="0" y="180" style="display:inline; font-family:'MyriadPro-Regular'; font-size:15;">jpg_quality: 80</tspan><tspan x="0" y="198" style="display:inline; font-family:'MyriadPro-Regular'; font-size:15;">headline: Ai Graphic Headline</tspan><tspan x="0" y="216" style="display:inline; font-family:'MyriadPro-Regular'; font-size:15;">leadin: Introductory text here.</tspan><tspan x="0" y="234" style="display:inline; font-family:'MyriadPro-Regular'; font-size:15;">notes: Notes: Text goes here.</tspan><tspan x="0" y="252" style="display:inline; font-family:'MyriadPro-Regular'; font-size:15;">sources: Source: Name goes here.</tspan><tspan x="0" y="270" style="display:inline; font-family:'MyriadPro-Regular'; font-size:15;">credit: By ai2html</tspan><tspan x="0" y="288" style="display:inline; font-family:'MyriadPro-Regular'; font-size:15;">render_rotated_skewed_text_as: html</tspan><tspan x="0" y="306" style="display:inline; font-family:'MyriadPro-Regular'; font-size:15;">testing_mode: yes</tspan></text>
 </g>
 </svg>
