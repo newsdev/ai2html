@@ -6,6 +6,8 @@
 
 ## Change log
 
+- v54
+  - Added docName var to docSettings to make it easy to refer to filename.
 - v53
   - Change png_transparency default to "no" because transparency degrades the quality of the images too much.
   - Change a few other defaults.
