@@ -1,4 +1,4 @@
-// ai2html.js
+﻿// ai2html.js
 var scriptVersion     = "0.54";
 // var scriptEnvironment = "nyt";
 var scriptEnvironment = "";
@@ -1003,7 +1003,10 @@ docSettings.preview_image_path = "_assets/";
 // ================================================
 
 // check for ai2html and preview project folders
-if ( parentFolder[0]==="ai/" && publicFolder.exists ) {
+if (parentFolder === null) {
+	alertHed = "The Script Stopped Because of an Error";
+	errors.push('You need to save your Illustrator file before running this script');
+} else if ( parentFolder[0]==="ai/" && publicFolder.exists ) {
 	aiFileInPreviewProject = true;
 	// alert("ai file is in a preview project");
 };
@@ -1843,11 +1846,13 @@ for (var i = lockedObjects.length-1; i>=0; i--) {
 };
 
 // Save the document
-var saveOptions = new IllustratorSaveOptions();
-saveOptions.pdfCompatible = false;
-// if (!doc.saved) { doc.save() };
-if (!doc.saved) { doc.saveAs( origFile , saveOptions ) };
-feedback.push("Your Illustrator file was saved.")
+if (parentFolder !== null) {
+	var saveOptions = new IllustratorSaveOptions();
+	saveOptions.pdfCompatible = false;
+	// if (!doc.saved) { doc.save() };
+	if (!doc.saved) { doc.saveAs( origFile , saveOptions ) };
+	feedback.push("Your Illustrator file was saved.")
+}
 
 // ==============================
 // alert box
