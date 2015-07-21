@@ -27,7 +27,7 @@ var scriptEnvironment = "";
 // How to install ai2html
 // =====================================
 
-// - Move the ai2html.js file into the Illustrator folder where scripts are located. 
+// - Move the ai2html.js file into the Illustrator folder where scripts are located.
 // - For example, on Mac OS X running Adobe Illustrator CC 2014, the path would be: // Adobe Illustrator CC 2014/Presets/en_US/Scripts/ai2html.jsx
 
 // =====================================
@@ -40,7 +40,7 @@ var scriptEnvironment = "";
 // - Make sure your document is saved.
 // - Use Arial or Georgia unless you have added your own fonts to the fonts array in the script.
 // - Run the script by choosing: File > Scripts > ai2html
-// - Go to the folder containing your Illustrator file. Inside will be a folder called ai2html-output. 
+// - Go to the folder containing your Illustrator file. Inside will be a folder called ai2html-output.
 // - Open the html files in your browser to preview your output.
 
 
