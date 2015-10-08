@@ -1665,7 +1665,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 				};
 			};
 
-			var imageDestinationFolder = docPath + docSettings.html_output_path + docSettings.image_output_path;
+			var imageDestinationFolder = docPath + docSettings.image_output_path;
 			checkForOutputFolder(imageDestinationFolder, "image_output_path");
 			var imageDestination = imageDestinationFolder + docArtboardName;
 			// alert ("imageDestination\n" +
