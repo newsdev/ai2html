@@ -266,7 +266,7 @@ Paragraphs are styled using css classes that are consolidated across each artboa
 
 ## Using fonts other than Arial and Georgia
 
-If you want to use fonts other than Arial and Georgia, you can add them to the `fonts` array in the `constants` section of the script. You will need to know how Illustrator refers to the font. Enter the name as the `aifont` property. Each Illustrator font corresponds to a specific font-family, weight and style in css.
+If you want to use fonts other than Arial and Georgia, you can add them to the `fonts` array in the `constants` section of the script. You will need to know how Illustrator refers to the font. Enter the name as the `aifont` property. Each Illustrator font will correspond to a specific font-family, weight and style in css.
 
 For example, the Illustrator font name `Arial-BoldItalicMT` corresponds to this css:
 ```
