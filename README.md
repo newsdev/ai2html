@@ -261,16 +261,16 @@ Paragraphs are styled using css classes that are consolidated across each artboa
 
 ## Using fonts other than Arial and Georgia
 
-If you want to use fonts other than Arial and Georgia, you can add them to the `fonts` array in the `constants` section of the script. You will need to know how Illustrator refers to the font. Enter the name as the `aifont` property. Each Illustrator font will correspond to a specific font-family, weight and style in css.
+If you want to use fonts other than Arial and Georgia, you can add them to the `fonts` array in the `constants` section of the script. You will need to know how Illustrator refers to the font. Enter the name as the `aifont` property.
 
-For example, the Illustrator font name `Arial-BoldItalicMT` corresponds to this css:
+You can find the names that Illustrator uses for all the fonts used in your document by choosing `Find Font…` from the `Type` menu. You can also use the [aifontname scrip](https://raw.githubusercontent.com/newsdev/ai2html/master/utilities/aifontname.js), which will tell you only the fonts used in selected text blocks.
+
+Each Illustrator font will correspond to a specific font-family, weight and style in css. For example, the Illustrator font name `Arial-BoldItalicMT` corresponds to this css:
 ```
 font-family: arial,helvetica,sans-serif;
 font-weight: bold;
 font-style: italic;
 ```
-
-You can find the names that Illustrator uses for all the fonts used in your document by choosing `Find Font…` from the `Type` menu. You can also use the `aifontname` Illustrator script in the [github repo](https://github.com/newsdev/ai2html) for this project.
 
 You may find it helpful to make a copy of this [Google spreadsheet](http://bit.ly/1BP86RH). The `fonts` worksheet can make it easier to create additional font objects to add to the array.
 
