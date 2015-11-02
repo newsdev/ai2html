@@ -6,6 +6,9 @@
 
 ## Change log
 
+
+- v55
+  - Removed nyt5 attribute from fonts array and added instructions on how to add custom fonts.
 - v54
   - Added docName var to docSettings to make it easy to refer to filename.
 - v53

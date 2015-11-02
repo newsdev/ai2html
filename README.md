@@ -8,13 +8,14 @@ Here are [examples of how we’ve used the script](https://delicious.com/archiet
 
 - [How to install ai2html](#how-to-install-ai2html)
 - [How to use ai2html](#how-to-use-ai2html)
+- [Frequently asked questions](#frequently-asked-questions)
 - [Settings](#settings)
 - [Point text vs. area text](#point-text-vs-area-text)
 - [Which attributes are converted to html and css](#which-attributes-are-converted-to-html-and-css)
 - [How does ai2html work](#how-does-ai2html-work)
 - [Limitations](#limitations)
 - [What works well and what does not](#what-works-well-and-what-does-not)
-- [Frequently asked questions](#frequently-asked-questions)
+- [Using fonts other than Arial and Georgia](#using-fonts-other-than-arial-and-georgia)
 
 
 ## How to install ai2html
@@ -35,6 +36,13 @@ Applications/Adobe Illustrator CC 2014/Presets/en_US/Scripts/ai2html.jsx
   - Use Arial or Georgia unless you have added your own fonts to the `fonts` array in the script.
 2. Run the script by choosing: `File > Scripts > ai2html`
 3. Go to the folder containing your Illustrator file. Inside will be a folder called `ai2html-output`. Open the html files in your browser to preview your output.
+
+
+## Frequently asked questions
+
+- **Why not just export my Illustrator file as an image or an SVG?**
+  - Text in images and SVGs scale as you scale the image — so your text becomes unreadable pretty quickly as the artwork scales down, or looks hilariously large as it scales up. By rendering the text as html, we can scale the “graphic” up and down, but keep the text readable at the same font-size and line-height. This is important because we are trying to reduce the number of versions of the artwork that we have to create in order to accommodate viewports that range from mobile phones up to giant desktop monitors. An example of this is here: http://nyti.ms/1CQdkwq Change your window size when you view the page and you'll see the artwork scale but the text stays the same size. More examples here: https://delicious.com/archietse/ai2html,responsive
+  - When Illustrator saves an SVG, every line of text is broken into separate SVG elements which makes editing the text very difficult. By having the text rendered in HTML, it is much easier for editors to go into the CMS and make edits without having to wade through a tangle of SVG code.
 
 
 ## Settings
@@ -251,11 +259,18 @@ Paragraphs are styled using css classes that are consolidated across each artboa
   - Things that should really be coded up as a table or as columns in which the height of the cells needs to adjust dynamically for long blocks of text that wrap.
 
 
-## Frequently asked questions
+## Using fonts other than Arial and Georgia
 
-- **Why not just export my Illustrator file as an image or an SVG?**
-  - Text in images and SVGs scale as you scale the image — so your text becomes unreadable pretty quickly as the artwork scales down, or looks hilariously large as it scales up. By rendering the text as html, we can scale the “graphic” up and down, but keep the text readable at the same font-size and line-height. This is important because we are trying to reduce the number of versions of the artwork that we have to create in order to accommodate viewports that range from mobile phones up to giant desktop monitors. An example of this is here: http://nyti.ms/1CQdkwq Change your window size when you view the page and you'll see the artwork scale but the text stays the same size. More examples here: https://delicious.com/archietse/ai2html,responsive
-  - When Illustrator saves an SVG, every line of text is broken into separate SVG elements which makes editing the text very difficult. By having the text rendered in HTML, it is much easier for editors to go into the CMS and make edits without having to wade through a tangle of SVG code.
+If you want to use fonts other than Arial and Georgia, you can add them to the `fonts` array in the `constants` section of the script. You will need to know how Illustrator refers to the font. Enter the name as the `aifont` property. Each Illustrator font corresponds to a specific font-family, weight and style in css.
+
+For example, the Illustrator font name `Arial-BoldItalicMT` corresponds to this css:
+```
+font-family: arial,helvetica,sans-serif;
+font-weight: bold;
+font-style: italic;
+```
+
+You may find it helpful to make a copy of this [Google spreadsheet](http://bit.ly/1BP86RH). The `fonts` worksheet can make it easier to create additional font objects to add to the array.
 
 
 ## Contributing to this project
