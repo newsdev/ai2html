@@ -111,7 +111,7 @@ Most of the script’s options are set in the settings text block. When you run 
   - Use this to specify the quality of `jpg` images.
 - **headline**<br>**leadin**<br>**notes**<br>**sources**<br>**credit**
   - <span style="font-variant: small-caps">Possible values</span>: Text with no line breaks
-  - These fields are used to populate fields in the `local_preview_tempate` and can be written to a “config” text file along with the html. The config file is written in yml can be used to pass parameters to a cms.
+  - These fields are used to populate fields in the `local_preview_template` and can be written to a “config” text file along with the html. The config file is written in yml can be used to pass parameters to a cms.
 
 *Other options that can be added to the settings text block:*
 
