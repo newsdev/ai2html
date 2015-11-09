@@ -6,7 +6,9 @@
 
 ## Change log
 
-
+- v56
+  - Added “write_image_files” setting.
+  - Added “show_completion_dialog_box” setting.
 - v55
   - Removed nyt5 attribute from fonts array and added instructions on how to add custom fonts.
 - v54
