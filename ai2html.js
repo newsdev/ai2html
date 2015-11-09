@@ -43,7 +43,7 @@ var scriptEnvironment = "nyt";
 // - Go to the folder containing your Illustrator file. Inside will be a folder called ai2html-output.
 // - Open the html files in your browser to preview your output.
 
-var keepDebugElements = true;
+var keepDebugElements = !true;
 var debugSelection = [];
 
 // =====================================
@@ -1571,17 +1571,6 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 
 				// var frameLayers = addLayerClasses(getParentLayers(thisFrame.layer));
 
-				// check if text is transformed
-				if (textIsTransformed(thisFrame)) {
-					// find transformed anchor point pre-transformation
-					var u_bounds = getUntransformedTextBounds(thisFrame),
-						t_anchor = getAnchorPoint(u_bounds, thisFrame.matrix, alignment, thisFrameAttributes.valign || 'top'),
-						t_scale_x = thisFrame.textRange.characterAttributes.horizontalScale;
-
-					
-				}
-
-
 				var j = i+1;
 				var thisFrameId = nameSpace+"ai"+abNumber+"-" + j;
 				if (thisFrame.name!="") {
@@ -1589,55 +1578,106 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 				};
 				html[6] += "\t\t\t<div id='"+thisFrameId;
 				html[6] += "' class='"+nameSpace+frameLayer+" "+nameSpace+"aiAbs' style='";
-				if (outputType=="abs") {
-					html[6] += "top:" + Math.round(htmlY) + "px;";
-					if (alignment=="left") {
-						html[6] += "left:"  + Math.round(htmlL) + "px;";
-						html[6] += "width:" + Math.round(htmlW) + "px;";
-					} else if (alignment=="right") {
-						html[6] += "right:" + Math.round(htmlR) + "px;";
-						html[6] += "width:" + Math.round(htmlW) + "px;";
-					} if (alignment=="center") {
-						html[6] += "left:"  + Math.round(htmlL) + "px;";
-						html[6] += "width:" + Math.round(htmlW) + "px;";
-						html[6] += "margin-left:" + Math.round(htmlLM) + "px;";
-					};
-				} else if (outputType=="pct") {
-					if (thisFrameAttributes.valign==="bottom") {
-						html[6] += "bottom:" + (100-(htmlB/abH*100)).toFixed(pctPrecision) + "%;";
-					} else {
-						html[6] += "top:" + (htmlT/abH*100).toFixed(pctPrecision) + "%;";
-					};
-					if (alignment=="right") {
-						html[6] += "right:" + (htmlR/abW*100).toFixed(pctPrecision) + "%;";
-						if (kind=="area") {
-							html[6] += "width:" + (htmlW/abW*100).toFixed(pctPrecision) + "%;";
+
+				// check if text is transformed
+				if (textIsTransformed(thisFrame)) {
+					// find transformed anchor point pre-transformation
+					var t_bounds = thisFrame.visibleBounds,
+						u_bounds = getUntransformedTextBounds(thisFrame),
+						u_width = u_bounds[2] - u_bounds[0],
+						t_width = t_bounds[2] - t_bounds[0],
+						u_height = u_bounds[3] - u_bounds[1],
+						t_height = t_bounds[3] - t_bounds[1],
+						v_align = thisFrameAttributes.valign || 'top',
+						t_anchor = getAnchorPoint(u_bounds, thisFrame.matrix, alignment, v_align),
+						t_scale_x = thisFrame.textRange.characterAttributes.horizontalScale / 100,
+						t_trans_x = 0,
+						t_trans_y = 0;
+
+					// position on transformed anchor point
+					html[6] += "left:" + ((t_anchor[0]-abX)/abW*100).toFixed(pctPrecision) + "%;";
+					html[6] += "top:" + ((-t_anchor[1]-abY)/abH*100).toFixed(pctPrecision) + "%;";
+					// html[6] += "width:" + ()
+
+					if (alignment == 'center') t_trans_x -= u_width * 0.5;
+					else if (alignment == 'right') t_trans_x -= u_width;
+					
+					if (v_align == 'center' || v_align == 'middle') t_trans_y -= u_height * 0.5;
+					else if (v_align == 'bottom') t_trans_y -= u_height;
+
+					var mat, mat0 = thisFrame.matrix;
+					
+					mat0 = app.concatenateTranslationMatrix(mat0, -mat0.mValueTX, -mat0.mValueTY);
+
+					
+					mat = app.concatenateMatrix(app.getTranslationMatrix(t_trans_x, t_trans_y), mat0);
+
+					// if (t_trans_x) alert(showMatrix('before', mat0)+showMatrix('after', mat)+'\n'+t_trans_x+','+t_trans_y);
+
+					var transform = "matrix("+mat.mValueA+','+(-1*mat.mValueB)+','+(-1*mat.mValueC)+','+mat.mValueD+','+t_trans_x+','+(-t_trans_y)+')'+
+						"scaleX("+t_scale_x+");";
+					var transformOrigin = alignment + ' '+v_align;
+
+
+					html[6] += "-webkit-transform: "+transform+";";
+					html[6] += "-webkit-transform-origin: "+transformOrigin+";";
+					// factor in pre-transform translation into matrix
+
+				} else {
+
+					if (outputType=="abs") {
+						html[6] += "top:" + Math.round(htmlY) + "px;";
+						if (alignment=="left") {
+							html[6] += "left:"  + Math.round(htmlL) + "px;";
+							html[6] += "width:" + Math.round(htmlW) + "px;";
+						} else if (alignment=="right") {
+							html[6] += "right:" + Math.round(htmlR) + "px;";
+							html[6] += "width:" + Math.round(htmlW) + "px;";
+						} if (alignment=="center") {
+							html[6] += "left:"  + Math.round(htmlL) + "px;";
+							html[6] += "width:" + Math.round(htmlW) + "px;";
+							html[6] += "margin-left:" + Math.round(htmlLM) + "px;";
 						};
-					} else if (alignment=="center") {
-						html[6] += "left:"  + (htmlL/abW*100).toFixed(pctPrecision) + "%;";
-						html[6] += "width:" + (htmlW/abW*100).toFixed(pctPrecision) + "%;";
-						html[6] += "margin-left:" + (htmlLM/abW*100).toFixed(pctPrecision) + "%;";
-					} else {
-						html[6] += "left:"  + (htmlL/abW*100).toFixed(pctPrecision) + "%;";
-						if (kind=="area") {
-							html[6] += "width:" + (htmlW/abW*100).toFixed(pctPrecision) + "%;";
+					} else if (outputType=="pct") {
+						if (thisFrameAttributes.valign==="bottom") {
+							html[6] += "bottom:" + (100-(htmlB/abH*100)).toFixed(pctPrecision) + "%;";
+						} else {
+							html[6] += "top:" + (htmlT/abH*100).toFixed(pctPrecision) + "%;";
 						};
+						if (alignment=="right") {
+							html[6] += "right:" + (htmlR/abW*100).toFixed(pctPrecision) + "%;";
+							if (kind=="area") {
+								html[6] += "width:" + (htmlW/abW*100).toFixed(pctPrecision) + "%;";
+							};
+						} else if (alignment=="center") {
+							html[6] += "left:"  + (htmlL/abW*100).toFixed(pctPrecision) + "%;";
+							html[6] += "width:" + (htmlW/abW*100).toFixed(pctPrecision) + "%;";
+							html[6] += "margin-left:" + (htmlLM/abW*100).toFixed(pctPrecision) + "%;";
+						} else {
+							html[6] += "left:"  + (htmlL/abW*100).toFixed(pctPrecision) + "%;";
+							if (kind=="area") {
+								html[6] += "width:" + (htmlW/abW*100).toFixed(pctPrecision) + "%;";
+							};
+						};
+
+						// not used anymore
+						// if (!(thisFrame.matrix.mValueA==1 && thisFrame.matrix.mValueB==0 && thisFrame.matrix.mValueC==0 && thisFrame.matrix.mValueD==1)) {
+						// 	html[6] += "-webkit-transform:matrix(" +
+						// 		thisFrame.matrix.mValueA      + ", " +
+						// 		(-1*thisFrame.matrix.mValueB) + ", " +
+						// 		(-1*thisFrame.matrix.mValueC) + ", " +
+						// 		thisFrame.matrix.mValueD      + ", " +
+						// 		0 + ", " +
+						// 		0 + ");";
+						// 		// (thisFrame.matrix.mValueTX+7934) + ", " +
+						// 		// (thisFrame.matrix.mValueTY-7894) + ");";
+						// 	html[6] += "transform-origin: left bottom;"
+						// };
+
 					};
 
-					if (!(thisFrame.matrix.mValueA==1 && thisFrame.matrix.mValueB==0 && thisFrame.matrix.mValueC==0 && thisFrame.matrix.mValueD==1)) {
-						html[6] += "-webkit-transform:matrix(" +
-							thisFrame.matrix.mValueA      + ", " +
-							(-1*thisFrame.matrix.mValueB) + ", " +
-							(-1*thisFrame.matrix.mValueC) + ", " +
-							thisFrame.matrix.mValueD      + ", " +
-							0 + ", " +
-							0 + ");";
-							// (thisFrame.matrix.mValueTX+7934) + ", " +
-							// (thisFrame.matrix.mValueTY-7894) + ");";
-						html[6] += "transform-origin: left bottom;"
-					};
+				}
 
-				};
 				html[6] += "'>\r"; // close div tag for text frame
 
 				var numChars = thisFrame.characters.length;
@@ -2034,11 +2074,12 @@ function getUntransformedTextBounds(textFrame) {
 		textFrameCopy.translate(old_center_x - new_center_x, old_center_y - new_center_y);
 	}
 
+	var bounds = textFrameCopy.visibleBounds;
+	
 	textFrameCopy.textRange.characterAttributes.fillColor = getRGBColor(250, 50, 50);
 	if (keepDebugElements) debugSelection.push(textFrameCopy);
 	else textFrameCopy.remove();
 	
-	var bounds = textFrameCopy.visibleBounds;
 	// reset selection
 	activeDocument.selection = oldSelection;
 	return bounds;
@@ -2075,4 +2116,8 @@ function addDot(left, top, radius, color) {
 	var c = activeDocument.pathItems.ellipse(top + radius, left - radius, radius*2, radius*2);
 	c.fillColor = color || getRGBColor(200,100,0);
 	debugSelection.push(c);
+}
+
+function showMatrix(name, m) {
+    return name+' <- matrix(c('+m.mValueA+','+m.mValueB+',0,'+m.mValueC+','+m.mValueD+',0,'+m.mValueTX+','+m.mValueTY+',1),3)\n';
 }
