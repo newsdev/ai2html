@@ -1,7 +1,7 @@
 ﻿// ai2html.js
 var scriptVersion     = "0.55";
 // var scriptEnvironment = "nyt";
-var scriptEnvironment = "";
+var scriptEnvironment = "nyt";
 
 // ai2html is a script for Adobe Illustrator that converts your Illustrator document into html and css.
 
@@ -43,8 +43,8 @@ var scriptEnvironment = "";
 // - Go to the folder containing your Illustrator file. Inside will be a folder called ai2html-output.
 // - Open the html files in your browser to preview your output.
 
-
-
+var keepDebugElements = true;
+var debugSelection = [];
 
 // =====================================
 // functions
@@ -188,7 +188,7 @@ var exportImageFiles = function(dest,width,height,formats,initialScaling,doubler
 			svgExportOptions.embedRasterImages     = (docSettings.svg_embed_images==="yes") ? true : false;
 			// svgExportOptions.horizontalScale       = initialScaling;
 			// svgExportOptions.verticalScale         = initialScaling;
-			svgExportOptions.saveMultipleArtboards = false;
+			svgExp0ortOptions.saveMultipleArtboards = false;
 			svgExportOptions.DTD                   = SVGDTDVersion.SVG1_1; // SVG1_0 SVGTINY1_1 <=default SVG1_1 SVGTINY1_1PLUS SVGBASIC1_1 SVGTINY1_2
 			svgExportOptions.cssProperties         = SVGCSSPropertyLocation.STYLEATTRIBUTES; // ENTITIES STYLEATTRIBUTES <=default PRESENTATIONATTRIBUTES STYLEELEMENTS
 			app.activeDocument.exportFile( svgFileSpec, svgType, svgExportOptions );
@@ -1325,10 +1325,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 						docSettings.render_rotated_skewed_text_as=="html" ||
 						(
 							docSettings.render_rotated_skewed_text_as=="image" &&
-							thisFrame.matrix.mValueA==1 &&
-							thisFrame.matrix.mValueB==0 &&
-							thisFrame.matrix.mValueC==0 &&
-							thisFrame.matrix.mValueD==1
+							!textIsTransformed(thisFrame)
 						)
 					) &&
 					(thisFrame.kind=="TextType.AREATEXT" || thisFrame.kind=="TextType.POINTTEXT")
@@ -1573,6 +1570,16 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 				// }
 
 				// var frameLayers = addLayerClasses(getParentLayers(thisFrame.layer));
+
+				// check if text is transformed
+				if (textIsTransformed(thisFrame)) {
+					// find transformed anchor point pre-transformation
+					var u_bounds = getUntransformedTextBounds(thisFrame),
+						t_anchor = getAnchorPoint(u_bounds, thisFrame.matrix, alignment, thisFrameAttributes.valign || 'top'),
+						t_scale_x = thisFrame.textRange.characterAttributes.horizontalScale;
+
+					
+				}
 
 
 				var j = i+1;
@@ -1982,5 +1989,90 @@ if (feedback.length > 0) {
 		alertText += "• " + feedback[f] + "\r";
 	};
 };
-alert(alertHed + "\n" + alertText + "\n\n\n================\nai2html-nyt5 v"+scriptVersion);
 
+// alert(alertHed + "\n" + alertText + "\n\n\n================\nai2html-nyt5 v"+scriptVersion);
+
+activeDocument.selection = debugSelection;
+
+function textIsTransformed(textFrame) {
+	return !(textFrame.matrix.mValueA==1 &&
+		textFrame.matrix.mValueB==0 &&
+		textFrame.matrix.mValueC==0 &&
+		textFrame.matrix.mValueD==1);
+}
+
+function getUntransformedTextBounds(textFrame) {
+	var oldSelection = activeDocument.selection;
+	
+	activeDocument.selection = [textFrame];
+	
+	app.copy();
+	app.paste();
+
+	var textFrameCopy = activeDocument.selection[0];
+
+	// move to same position
+	textFrameCopy.left = textFrame.left;
+	textFrameCopy.top = textFrame.top;
+
+	var bnds = textFrameCopy.visibleBounds;
+
+	var old_center_x = (bnds[0] + bnds[2]) * 0.5,
+		old_center_y = (bnds[1] + bnds[3]) * 0.5;
+
+	// inverse transformation of copied text frame
+	textFrameCopy.transform(app.invertMatrix(textFrame.matrix));
+
+	// move transformed text frame back to old center point
+	var new_center_x, new_center_y;
+	var max_iter = 5;
+
+	while (--max_iter > 0) {
+		bnds = textFrameCopy.visibleBounds;
+		new_center_x = (bnds[0] + bnds[2]) * 0.5;
+		new_center_y = (bnds[1] + bnds[3]) * 0.5;
+		textFrameCopy.translate(old_center_x - new_center_x, old_center_y - new_center_y);
+	}
+
+	textFrameCopy.textRange.characterAttributes.fillColor = getRGBColor(250, 50, 50);
+	if (keepDebugElements) debugSelection.push(textFrameCopy);
+	else textFrameCopy.remove();
+	
+	var bounds = textFrameCopy.visibleBounds;
+	// reset selection
+	activeDocument.selection = oldSelection;
+	return bounds;
+}
+
+function getRGBColor(r,g,b) {
+	var col = new RGBColor();
+	col.red = r || 0;
+	col.green = g || 0;
+	col.blue = b || 0;
+	return col;
+}
+
+function getAnchorPoint(untransformedBounds, matrix, hAlign, vAlign) {
+	var center_x = (untransformedBounds[0] + untransformedBounds[2]) * 0.5,
+		center_y = (untransformedBounds[1] + untransformedBounds[3]) * 0.5,
+		anchor_x = (hAlign == 'left' ? untransformedBounds[0] : 
+			(hAlign == 'center' ? center_x : untransformedBounds[2])),
+		anchor_y = (vAlign == 'top' ? untransformedBounds[1] : 
+			(vAlign == 'bottom' ? untransformedBounds[3] : center_y)),
+		anchor_dx = anchor_x - center_x,
+		anchor_dy = anchor_y - center_y;
+
+	var t_anchor_x = center_x + matrix.mValueA * anchor_dx + matrix.mValueC * anchor_dy,
+		t_anchor_y = center_y + matrix.mValueB * anchor_dx + matrix.mValueD * anchor_dy;
+
+	if (keepDebugElements) addDot(anchor_x, anchor_y, 2, getRGBColor(250,0,0));
+	if (keepDebugElements) addDot(t_anchor_x, t_anchor_y, 3, getRGBColor(50,0,50));
+
+	return [t_anchor_x, t_anchor_y];
+}
+
+function addDot(left, top, radius, color) {
+	var c = activeDocument.pathItems.ellipse(top + radius, left - radius, radius*2, radius*2);
+	c.fillColor = color || getRGBColor(200,100,0);
+	debugSelection.push(c);
+}
