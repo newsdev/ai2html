@@ -1484,6 +1484,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 				if (pHash['opacity']!=1.0 ) { pStyleCss += "\t\t\t\t-ms-filter:'progid:DXImageTransform.Microsoft.Alpha(Opacity=" + (pHash['opacity']*100) + ")';\r"; };
 				if (pHash['opacity']!=1.0 ) { pStyleCss += "\t\t\t\topacity:" + pHash['opacity'] + ";\r"; };
 				pStyleCss += "\t\t\t\tcolor:#" + pHash['r'] + pHash['g'] + pHash['b'] + ";\r";
+				pStyleCss += "\t\t\t\twhite-space:nowrap;\r";
 				pStyleCss += "\t\t\t}\r";
 			};
 
@@ -1621,6 +1622,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 
 					html[6] += "-webkit-transform: "+transform+";";
 					html[6] += "-webkit-transform-origin: "+transformOrigin+";";
+					// html[6] += "width: "+(u_width * (1+(extraWidthPct/100)))+"px";
 					// factor in pre-transform translation into matrix
 
 				} else {
@@ -2038,7 +2040,7 @@ function textIsTransformed(textFrame) {
 	return !(textFrame.matrix.mValueA==1 &&
 		textFrame.matrix.mValueB==0 &&
 		textFrame.matrix.mValueC==0 &&
-		textFrame.matrix.mValueD==1);
+		textFrame.matrix.mValueD==1) || textFrame.textRange.characterAttributes.horizontalScale != 100;
 }
 
 function getUntransformedTextBounds(textFrame) {
