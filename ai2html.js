@@ -1484,11 +1484,12 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 				if (pHash['opacity']!=1.0 ) { pStyleCss += "\t\t\t\t-ms-filter:'progid:DXImageTransform.Microsoft.Alpha(Opacity=" + (pHash['opacity']*100) + ")';\r"; };
 				if (pHash['opacity']!=1.0 ) { pStyleCss += "\t\t\t\topacity:" + pHash['opacity'] + ";\r"; };
 				pStyleCss += "\t\t\t\tcolor:#" + pHash['r'] + pHash['g'] + pHash['b'] + ";\r";
-				pStyleCss += "\t\t\t\twhite-space:nowrap;\r";
 				pStyleCss += "\t\t\t}\r";
 			};
 
 			html[2] += pStyleCss;
+
+			html[2] += '\t\t\t.g-aiPtransformed p { white-space: nowrap; }\r';
 
 			// Output html for each text frame
 			for (var i=0;i<selectFrames.length;i++) {
@@ -1578,7 +1579,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 					thisFrameId = makeKeyword(thisFrame.name);
 				};
 				html[6] += "\t\t\t<div id='"+thisFrameId;
-				html[6] += "' class='"+nameSpace+frameLayer+" "+nameSpace+"aiAbs' style='";
+				html[6] += "' class='"+nameSpace+frameLayer+" "+nameSpace+"aiAbs"+(textIsTransformed(thisFrame) ? ' g-aiPtransformed' : '')+"' style='";
 
 				// check if text is transformed
 				if (textIsTransformed(thisFrame)) {
@@ -1592,6 +1593,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 						v_align = thisFrameAttributes.valign || 'top',
 						t_anchor = getAnchorPoint(u_bounds, thisFrame.matrix, alignment, v_align),
 						t_scale_x = thisFrame.textRange.characterAttributes.horizontalScale / 100,
+						t_scale_y = thisFrame.textRange.characterAttributes.verticalScale / 100,
 						t_trans_x = 0,
 						t_trans_y = 0;
 
@@ -1616,12 +1618,14 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 					// if (t_trans_x) alert(showMatrix('before', mat0)+showMatrix('after', mat)+'\n'+t_trans_x+','+t_trans_y);
 
 					var transform = "matrix("+mat.mValueA+','+(-1*mat.mValueB)+','+(-1*mat.mValueC)+','+mat.mValueD+','+t_trans_x+','+(-t_trans_y)+')'+
-						"scaleX("+t_scale_x+");";
+						"scaleX("+t_scale_x+") scaleY("+t_scale_y+");";
 					var transformOrigin = alignment + ' '+v_align;
 
 
 					html[6] += "-webkit-transform: "+transform+";";
 					html[6] += "-webkit-transform-origin: "+transformOrigin+";";
+
+					// html[6] += '" class="g-aiPtransformed'
 					// html[6] += "width: "+(u_width * (1+(extraWidthPct/100)))+"px";
 					// factor in pre-transform translation into matrix
 
@@ -2040,7 +2044,9 @@ function textIsTransformed(textFrame) {
 	return !(textFrame.matrix.mValueA==1 &&
 		textFrame.matrix.mValueB==0 &&
 		textFrame.matrix.mValueC==0 &&
-		textFrame.matrix.mValueD==1) || textFrame.textRange.characterAttributes.horizontalScale != 100;
+		textFrame.matrix.mValueD==1) ||
+		textFrame.textRange.characterAttributes.horizontalScale != 100 ||
+		textFrame.textRange.characterAttributes.verticalScale != 100;
 }
 
 function getUntransformedTextBounds(textFrame) {
