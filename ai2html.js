@@ -1601,7 +1601,6 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 					// position on transformed anchor point
 					html[6] += "left:" + ((t_anchor[0]-abX)/abW*100).toFixed(pctPrecision) + "%;";
 					html[6] += "top:" + ((-t_anchor[1]-abY)/abH*100).toFixed(pctPrecision) + "%;";
-					// html[6] += "width:" + ()
 
 					if (alignment == 'center') t_trans_x -= u_width * 0.5;
 					else if (alignment == 'right') t_trans_x -= u_width;
@@ -1610,13 +1609,8 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 					else if (v_align == 'bottom') t_trans_y -= u_height;
 
 					var mat, mat0 = thisFrame.matrix;
-					
 					mat0 = app.concatenateTranslationMatrix(mat0, -mat0.mValueTX, -mat0.mValueTY);
-
-					
 					mat = app.concatenateMatrix(app.getTranslationMatrix(t_trans_x, t_trans_y), mat0);
-
-					// if (t_trans_x) alert(showMatrix('before', mat0)+showMatrix('after', mat)+'\n'+t_trans_x+','+t_trans_y);
 
 					var transform = "matrix("+mat.mValueA+','+(-1*mat.mValueB)+','+(-1*mat.mValueC)+','+mat.mValueD+','+t_trans_x+','+(-t_trans_y)+')'+
 						"scaleX("+t_scale_x+") scaleY("+t_scale_y+");";
@@ -1625,11 +1619,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 					html[6] += "-webkit-transform: "+transform+";";
 					html[6] += "-webkit-transform-origin: "+transformOrigin+";";
 
-
-					if (kind == 'area') html[6] += "width: "+u_width+"px;";
-					// html[6] += '" class="g-aiPtransformed'
-					// html[6] += "width: "+(u_width * (1+(extraWidthPct/100)))+"px";
-					// factor in pre-transform translation into matrix
+					if (kind == 'area') html[6] += "width: "+(u_width * (1+(extraWidthPct/100)))+"px;";
 
 				} else {
 
@@ -1667,20 +1657,6 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 								html[6] += "width:" + (htmlW/abW*100).toFixed(pctPrecision) + "%;";
 							};
 						};
-
-						// not used anymore
-						// if (!(thisFrame.matrix.mValueA==1 && thisFrame.matrix.mValueB==0 && thisFrame.matrix.mValueC==0 && thisFrame.matrix.mValueD==1)) {
-						// 	html[6] += "-webkit-transform:matrix(" +
-						// 		thisFrame.matrix.mValueA      + ", " +
-						// 		(-1*thisFrame.matrix.mValueB) + ", " +
-						// 		(-1*thisFrame.matrix.mValueC) + ", " +
-						// 		thisFrame.matrix.mValueD      + ", " +
-						// 		0 + ", " +
-						// 		0 + ");";
-						// 		// (thisFrame.matrix.mValueTX+7934) + ", " +
-						// 		// (thisFrame.matrix.mValueTY-7894) + ");";
-						// 	html[6] += "transform-origin: left bottom;"
-						// };
 
 					};
 
@@ -2128,6 +2104,3 @@ function addDot(left, top, radius, color) {
 	debugSelection.push(c);
 }
 
-function showMatrix(name, m) {
-    return name+' <- matrix(c('+m.mValueA+','+m.mValueB+',0,'+m.mValueC+','+m.mValueD+',0,'+m.mValueTX+','+m.mValueTY+',1),3)\n';
-}
