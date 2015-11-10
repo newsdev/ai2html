@@ -188,7 +188,7 @@ var exportImageFiles = function(dest,width,height,formats,initialScaling,doubler
 			svgExportOptions.embedRasterImages     = (docSettings.svg_embed_images==="yes") ? true : false;
 			// svgExportOptions.horizontalScale       = initialScaling;
 			// svgExportOptions.verticalScale         = initialScaling;
-			svgExp0ortOptions.saveMultipleArtboards = false;
+			svgExportOptions.saveMultipleArtboards = false;
 			svgExportOptions.DTD                   = SVGDTDVersion.SVG1_1; // SVG1_0 SVGTINY1_1 <=default SVG1_1 SVGTINY1_1PLUS SVGBASIC1_1 SVGTINY1_2
 			svgExportOptions.cssProperties         = SVGCSSPropertyLocation.STYLEATTRIBUTES; // ENTITIES STYLEATTRIBUTES <=default PRESENTATIONATTRIBUTES STYLEELEMENTS
 			app.activeDocument.exportFile( svgFileSpec, svgType, svgExportOptions );
@@ -1579,7 +1579,8 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 					thisFrameId = makeKeyword(thisFrame.name);
 				};
 				html[6] += "\t\t\t<div id='"+thisFrameId;
-				html[6] += "' class='"+nameSpace+frameLayer+" "+nameSpace+"aiAbs"+(textIsTransformed(thisFrame) ? ' g-aiPtransformed' : '')+"' style='";
+				html[6] += "' class='"+nameSpace+frameLayer+" "+nameSpace+"aiAbs"+
+					(textIsTransformed(thisFrame) && kind == "point" ? ' g-aiPtransformed' : '')+"' style='";
 
 				// check if text is transformed
 				if (textIsTransformed(thisFrame)) {
@@ -1591,9 +1592,9 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 						u_height = u_bounds[3] - u_bounds[1],
 						t_height = t_bounds[3] - t_bounds[1],
 						v_align = thisFrameAttributes.valign || 'top',
-						t_anchor = getAnchorPoint(u_bounds, thisFrame.matrix, alignment, v_align),
 						t_scale_x = thisFrame.textRange.characterAttributes.horizontalScale / 100,
 						t_scale_y = thisFrame.textRange.characterAttributes.verticalScale / 100,
+						t_anchor = getAnchorPoint(u_bounds, thisFrame.matrix, alignment, v_align, t_scale_x, t_scale_y),
 						t_trans_x = 0,
 						t_trans_y = 0;
 
@@ -1619,12 +1620,13 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 
 					var transform = "matrix("+mat.mValueA+','+(-1*mat.mValueB)+','+(-1*mat.mValueC)+','+mat.mValueD+','+t_trans_x+','+(-t_trans_y)+')'+
 						"scaleX("+t_scale_x+") scaleY("+t_scale_y+");";
-					var transformOrigin = alignment + ' '+v_align;
-
+					var transformOrigin = alignment + ' '+(v_align == 'middle' ? 'center' : v_align);
 
 					html[6] += "-webkit-transform: "+transform+";";
 					html[6] += "-webkit-transform-origin: "+transformOrigin+";";
 
+
+					if (kind == 'area') html[6] += "width: "+u_width+"px;";
 					// html[6] += '" class="g-aiPtransformed'
 					// html[6] += "width: "+(u_width * (1+(extraWidthPct/100)))+"px";
 					// factor in pre-transform translation into matrix
@@ -2053,16 +2055,12 @@ function getUntransformedTextBounds(textFrame) {
 	var oldSelection = activeDocument.selection;
 	
 	activeDocument.selection = [textFrame];
-	
 	app.copy();
 	app.paste();
-
 	var textFrameCopy = activeDocument.selection[0];
-
 	// move to same position
 	textFrameCopy.left = textFrame.left;
 	textFrameCopy.top = textFrame.top;
-
 	var bnds = textFrameCopy.visibleBounds;
 
 	var old_center_x = (bnds[0] + bnds[2]) * 0.5,
@@ -2070,7 +2068,9 @@ function getUntransformedTextBounds(textFrame) {
 
 	// inverse transformation of copied text frame
 	textFrameCopy.transform(app.invertMatrix(textFrame.matrix));
-
+	// remove scale
+	textFrameCopy.textRange.characterAttributes.horizontalScale = 100;
+	textFrameCopy.textRange.characterAttributes.verticalScale = 100;
 	// move transformed text frame back to old center point
 	var new_center_x, new_center_y;
 	var max_iter = 5;
@@ -2101,18 +2101,20 @@ function getRGBColor(r,g,b) {
 	return col;
 }
 
-function getAnchorPoint(untransformedBounds, matrix, hAlign, vAlign) {
+function getAnchorPoint(untransformedBounds, matrix, hAlign, vAlign, sx, sy) {
 	var center_x = (untransformedBounds[0] + untransformedBounds[2]) * 0.5,
 		center_y = (untransformedBounds[1] + untransformedBounds[3]) * 0.5,
 		anchor_x = (hAlign == 'left' ? untransformedBounds[0] : 
 			(hAlign == 'center' ? center_x : untransformedBounds[2])),
 		anchor_y = (vAlign == 'top' ? untransformedBounds[1] : 
 			(vAlign == 'bottom' ? untransformedBounds[3] : center_y)),
-		anchor_dx = anchor_x - center_x,
-		anchor_dy = anchor_y - center_y;
+		anchor_dx = (anchor_x - center_x),
+		anchor_dy = (anchor_y - center_y);
 
-	var t_anchor_x = center_x + matrix.mValueA * anchor_dx + matrix.mValueC * anchor_dy,
-		t_anchor_y = center_y + matrix.mValueB * anchor_dx + matrix.mValueD * anchor_dy;
+	var mat = app.concatenateMatrix(app.getScaleMatrix(sx*100, sy*100), matrix);
+
+	var t_anchor_x = center_x + mat.mValueA * anchor_dx + mat.mValueC * anchor_dy,
+		t_anchor_y = center_y + mat.mValueB * anchor_dx + mat.mValueD * anchor_dy;
 
 	if (keepDebugElements) addDot(anchor_x, anchor_y, 2, getRGBColor(250,0,0));
 	if (keepDebugElements) addDot(t_anchor_x, t_anchor_y, 3, getRGBColor(50,0,50));
