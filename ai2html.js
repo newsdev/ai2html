@@ -2038,9 +2038,9 @@ if (feedback.length > 0) {
 	};
 };
 
-// alert(alertHed + "\n" + alertText + "\n\n\n================\nai2html-nyt5 v"+scriptVersion);
+alert(alertHed + "\n" + alertText + "\n\n\n================\nai2html-nyt5 v"+scriptVersion);
 
-activeDocument.selection = debugSelection;
+if (keepDebugElements) activeDocument.selection = debugSelection;
 
 function textIsTransformed(textFrame) {
 	return !(textFrame.matrix.mValueA==1 &&
