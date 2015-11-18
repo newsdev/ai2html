@@ -1616,8 +1616,12 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 						"scaleX("+t_scale_x+") scaleY("+t_scale_y+");";
 					var transformOrigin = alignment + ' '+(v_align == 'middle' ? 'center' : v_align);
 
+					html[6] += "transform: "+transform+";";
+					html[6] += "transform-origin: "+transformOrigin+";";
 					html[6] += "-webkit-transform: "+transform+";";
 					html[6] += "-webkit-transform-origin: "+transformOrigin+";";
+					html[6] += "-ms-transform: "+transform+";";
+					html[6] += "-ms-transform-origin: "+transformOrigin+";";
 
 					if (kind == 'area') html[6] += "width: "+(u_width * (1+(extraWidthPct/100)))+"px;";
 
