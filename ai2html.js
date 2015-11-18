@@ -1585,7 +1585,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 				// check if text is transformed
 				if (textIsTransformed(thisFrame)) {
 					// find transformed anchor point pre-transformation
-					var t_bounds = thisFrame.visibleBounds,
+					var t_bounds = thisFrame.geometricBounds,
 						u_bounds = getUntransformedTextBounds(thisFrame),
 						u_width = u_bounds[2] - u_bounds[0],
 						t_width = t_bounds[2] - t_bounds[0],
@@ -2022,9 +2022,9 @@ function textIsTransformed(textFrame) {
 	return !(textFrame.matrix.mValueA==1 &&
 		textFrame.matrix.mValueB==0 &&
 		textFrame.matrix.mValueC==0 &&
-		textFrame.matrix.mValueD==1) ||
-		textFrame.textRange.characterAttributes.horizontalScale != 100 ||
-		textFrame.textRange.characterAttributes.verticalScale != 100;
+		textFrame.matrix.mValueD==1);
+		// || textFrame.textRange.characterAttributes.horizontalScale != 100
+		// || textFrame.textRange.characterAttributes.verticalScale != 100;
 }
 
 function getUntransformedTextBounds(textFrame) {
@@ -2037,7 +2037,7 @@ function getUntransformedTextBounds(textFrame) {
 	// move to same position
 	textFrameCopy.left = textFrame.left;
 	textFrameCopy.top = textFrame.top;
-	var bnds = textFrameCopy.visibleBounds;
+	var bnds = textFrameCopy.geometricBounds;
 
 	var old_center_x = (bnds[0] + bnds[2]) * 0.5,
 		old_center_y = (bnds[1] + bnds[3]) * 0.5;
@@ -2052,13 +2052,13 @@ function getUntransformedTextBounds(textFrame) {
 	var max_iter = 5;
 
 	while (--max_iter > 0) {
-		bnds = textFrameCopy.visibleBounds;
+		bnds = textFrameCopy.geometricBounds;
 		new_center_x = (bnds[0] + bnds[2]) * 0.5;
 		new_center_y = (bnds[1] + bnds[3]) * 0.5;
 		textFrameCopy.translate(old_center_x - new_center_x, old_center_y - new_center_y);
 	}
 
-	var bounds = textFrameCopy.visibleBounds;
+	var bounds = textFrameCopy.geometricBounds;
 	
 	textFrameCopy.textRange.characterAttributes.fillColor = getRGBColor(250, 50, 50);
 	if (keepDebugElements) debugSelection.push(textFrameCopy);
