@@ -1,5 +1,5 @@
 ﻿// ai2html.js
-var scriptVersion     = "0.55";
+var scriptVersion     = "0.56";
 // var scriptEnvironment = "nyt";
 var scriptEnvironment = "nyt";
 
@@ -193,7 +193,7 @@ var exportImageFiles = function(dest,width,height,formats,initialScaling,doubler
 			svgExportOptions.cssProperties         = SVGCSSPropertyLocation.STYLEATTRIBUTES; // ENTITIES STYLEATTRIBUTES <=default PRESENTATIONATTRIBUTES STYLEELEMENTS
 			app.activeDocument.exportFile( svgFileSpec, svgType, svgExportOptions );
 
-			fixSVG(dest + '.svg');
+			cleanSVGAfterExport(dest + '.svg', docSettings);
 
 		} else if (format=="jpg") {
 			if (jpgImageScaling > maxJpgImageScaling) {
@@ -1773,7 +1773,21 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 			// 		"docSettings.html_output_path = " + docSettings.html_output_path + "\n" +
 			// 		"docSettings.image_output_path = " + docSettings.image_output_path + "\n" +
 			// 		"docArtboardName = " + docArtboardName);
+
+			// if in svg export, hide path elements outside of the current artboard
+			if (docSettings.image_format[0] == 'svg') {
+				// save refs to elements we are hiding 
+				var hiddenItemsOutsideArtboard = hideElementsOutsideArtboardRect(activeArtboard.artboardRect);
+			}
+
 			exportImageFiles(imageDestination,abW,abH,docSettings.image_format,1.0,docSettings.use_2x_images_if_possible);
+
+			if (docSettings.image_format[0] == 'svg' && hiddenItemsOutsideArtboard.length > 0) {
+				// unhide non-text elements hidden before export
+				for (var item_i=0; item_i < hiddenItemsOutsideArtboard.length; item_i++) {
+					hiddenItemsOutsideArtboard[item_i].hidden = false;
+				}
+			}
 
 			// unhide text now if NOT in testing mode
 			if (docSettings.testing_mode!="yes") {
@@ -2111,18 +2125,32 @@ function addDot(left, top, radius, color) {
 	debugSelection.push(c);
 }
 
-function fixSVG(svgFileName) {
+function cleanSVGAfterExport(svgFileName, docSettings) {
 	var inFile = new File(svgFileName),
 		svgText = '';
-	alert('svg file '+svgFileName+' '+(inFile.exists ? 'exists' : 'doesnot exist'));
 	if (inFile.exists) {
 		inFile.open("r");
-		while(!inFile.eof) { svgText += inFile.readln(); };
+		while(!inFile.eof) { svgText += inFile.readln()+'\n'; };
 		inFile.close();
 
-		alert('replacing svg text');
+		// add non-scaling-stroke style to header
 		svgText = svgText.replace('xml:space="preserve">',
 			'xml:space="preserve"><style> path,line,circle,rect,polygon { vector-effect: non-scaling-stroke } </style>');
+
+		// get rid of hidden elements!
+		// first, add <!-- keep --> to hidden elements that have contain elements of same kind
+		svgText = svgText.replace(/(<([a-z\-]+)[^<>]* style=["']display:none[^>]*>.*(<\2).*<\/\2>)$/mgi, '$1<!-- keep -->');
+		// replace elements with display: none
+		svgText = svgText.replace(/<([a-z\-]+)[^<>]* style=["']display:none[^>]*>.*<\/\1>$/mgi, '');
+		// also remove text elements (might be hiding in a hidden group)
+		svgText = svgText.replace(/<text.*<\/text>/gi, '');
+
+		if (docSettings.svg_embed_images != 'yes') {
+			// remove <image> elements
+			svgText = svgText.replace(/<image.*(\n.*)<\/image>/gi, '');
+		}
+		// remove empty lines
+		svgText = svgText.replace(/^\s*\n/gm, '');
 
 		var outFile = new File(svgFileName);
 		outFile.open("w", "TEXT", "TEXT");
@@ -2131,4 +2159,26 @@ function fixSVG(svgFileName) {
 		outFile.writeln(svgText);
 		outFile.close();
 	}
+}
+
+function hideElementsOutsideArtboardRect(artbnds) {
+	var hidden = [];
+	var checkItemGroups = [doc.pathItems, doc.symbolItems, doc.compoundPathItems];
+	for (var cig=0; cig<checkItemGroups.length; cig++) {
+		for (var item_i=0; item_i<checkItemGroups[cig].length; item_i++) {
+			var check_item = checkItemGroups[cig][item_i],
+				item_bnds = check_item.visibleBounds;
+			// bounds are [left,-top,right,-bottom]
+			if (item_bnds[0] > artbnds[2] ||
+				item_bnds[2] < artbnds[0] ||
+				item_bnds[1] < artbnds[3] ||
+				item_bnds[3] > artbnds[1]) {
+				if (!check_item.hidden) {
+					hidden.push(check_item);
+					check_item.hidden = true;	
+				}
+			}
+		}
+	}
+	return hidden;
 }
