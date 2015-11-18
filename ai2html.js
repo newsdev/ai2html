@@ -192,6 +192,9 @@ var exportImageFiles = function(dest,width,height,formats,initialScaling,doubler
 			svgExportOptions.DTD                   = SVGDTDVersion.SVG1_1; // SVG1_0 SVGTINY1_1 <=default SVG1_1 SVGTINY1_1PLUS SVGBASIC1_1 SVGTINY1_2
 			svgExportOptions.cssProperties         = SVGCSSPropertyLocation.STYLEATTRIBUTES; // ENTITIES STYLEATTRIBUTES <=default PRESENTATIONATTRIBUTES STYLEELEMENTS
 			app.activeDocument.exportFile( svgFileSpec, svgType, svgExportOptions );
+
+			fixSVG(dest + '.svg');
+
 		} else if (format=="jpg") {
 			if (jpgImageScaling > maxJpgImageScaling) {
 				jpgImageScaling = maxJpgImageScaling;
@@ -2108,3 +2111,24 @@ function addDot(left, top, radius, color) {
 	debugSelection.push(c);
 }
 
+function fixSVG(svgFileName) {
+	var inFile = new File(svgFileName),
+		svgText = '';
+	alert('svg file '+svgFileName+' '+(inFile.exists ? 'exists' : 'doesnot exist'));
+	if (inFile.exists) {
+		inFile.open("r");
+		while(!inFile.eof) { svgText += inFile.readln(); };
+		inFile.close();
+
+		alert('replacing svg text');
+		svgText = svgText.replace('xml:space="preserve">',
+			'xml:space="preserve"><style> path,line,circle,rect,polygon { vector-effect: non-scaling-stroke } </style>');
+
+		var outFile = new File(svgFileName);
+		outFile.open("w", "TEXT", "TEXT");
+		outFile.lineFeed = "Unix";
+		outFile.encoding = "UTF-8";
+		outFile.writeln(svgText);
+		outFile.close();
+	}
+}
