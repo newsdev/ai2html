@@ -193,8 +193,6 @@ var exportImageFiles = function(dest,width,height,formats,initialScaling,doubler
 			svgExportOptions.cssProperties         = SVGCSSPropertyLocation.STYLEATTRIBUTES; // ENTITIES STYLEATTRIBUTES <=default PRESENTATIONATTRIBUTES STYLEELEMENTS
 			app.activeDocument.exportFile( svgFileSpec, svgType, svgExportOptions );
 
-			cleanSVGAfterExport(dest + '.svg', docSettings);
-
 		} else if (format=="jpg") {
 			if (jpgImageScaling > maxJpgImageScaling) {
 				jpgImageScaling = maxJpgImageScaling;
@@ -2125,41 +2123,6 @@ function addDot(left, top, radius, color) {
 	debugSelection.push(c);
 }
 
-function cleanSVGAfterExport(svgFileName, docSettings) {
-	var inFile = new File(svgFileName),
-		svgText = '';
-	if (inFile.exists) {
-		inFile.open("r");
-		while(!inFile.eof) { svgText += inFile.readln()+'\n'; };
-		inFile.close();
-
-		// add non-scaling-stroke style to header
-		svgText = svgText.replace('xml:space="preserve">',
-			'xml:space="preserve"><style> path,line,circle,rect,polygon { vector-effect: non-scaling-stroke } </style>');
-
-		// get rid of hidden elements!
-		// first, add <!-- keep --> to hidden elements that have contain elements of same kind
-		svgText = svgText.replace(/(<([a-z\-]+)[^<>]* style=["']display:none[^>]*>.*(<\2).*<\/\2>)$/mgi, '$1<!-- keep -->');
-		// replace elements with display: none
-		svgText = svgText.replace(/<([a-z\-]+)[^<>]* style=["']display:none[^>]*>.*<\/\1>$/mgi, '');
-		// also remove text elements (might be hiding in a hidden group)
-		svgText = svgText.replace(/<text.*<\/text>/gi, '');
-
-		if (docSettings.svg_embed_images != 'yes') {
-			// remove <image> elements
-			svgText = svgText.replace(/<image.*(\n.*)<\/image>/gi, '');
-		}
-		// remove empty lines
-		svgText = svgText.replace(/^\s*\n/gm, '');
-
-		var outFile = new File(svgFileName);
-		outFile.open("w", "TEXT", "TEXT");
-		outFile.lineFeed = "Unix";
-		outFile.encoding = "UTF-8";
-		outFile.writeln(svgText);
-		outFile.close();
-	}
-}
 
 function hideElementsOutsideArtboardRect(artbnds) {
 	var hidden = [];
@@ -2167,6 +2130,12 @@ function hideElementsOutsideArtboardRect(artbnds) {
 		var layer = doc.layers[lid];
 		if (layer.visible) { // ignore invisible layers
 			var checkItemGroups = [layer.pathItems, layer.symbolItems, layer.compoundPathItems];
+			var groups = getGroups([], layer.groupItems);
+			for (var g=0; g<groups.length; g++) {
+				checkItemGroups.push(groups[g].pathItems);
+				checkItemGroups.push(groups[g].symbolItems);
+				checkItemGroups.push(groups[g].compoundPathItems);
+			}
 			for (var cig=0; cig<checkItemGroups.length; cig++) {
 				for (var item_i=0; item_i<checkItemGroups[cig].length; item_i++) {
 					var check_item = checkItemGroups[cig][item_i],
@@ -2184,6 +2153,24 @@ function hideElementsOutsideArtboardRect(artbnds) {
 				}
 			}
 		}
+	}
+	function getGroups(res, groupItems) {
+		for (var g=0;g<groupItems.length;g++) {
+			// check group bounds
+			var bnds = groupItems[g].visibleBounds;
+			if (bnds[0] > artbnds[2] || bnds[2] < artbnds[0] || bnds[1] < artbnds[3] || bnds[3] > artbnds[1]) {
+				// group entirely out of artboard, so ignore
+				groupItems[g].hidden = true;
+				hidden.push(groupItems[g]);
+			} else {
+				// recursively check sub-groups
+				res.push(groupItems[g]);
+				if (groupItems[g].groupItems.length > 0) {
+					getGroups(res, groupItems[g].groupItems);
+				}	
+			}
+		}
+		return res;
 	}
 	return hidden;
 }
