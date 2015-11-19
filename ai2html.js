@@ -2163,19 +2163,24 @@ function cleanSVGAfterExport(svgFileName, docSettings) {
 
 function hideElementsOutsideArtboardRect(artbnds) {
 	var hidden = [];
-	var checkItemGroups = [doc.pathItems, doc.symbolItems, doc.compoundPathItems];
-	for (var cig=0; cig<checkItemGroups.length; cig++) {
-		for (var item_i=0; item_i<checkItemGroups[cig].length; item_i++) {
-			var check_item = checkItemGroups[cig][item_i],
-				item_bnds = check_item.visibleBounds;
-			// bounds are [left,-top,right,-bottom]
-			if (item_bnds[0] > artbnds[2] ||
-				item_bnds[2] < artbnds[0] ||
-				item_bnds[1] < artbnds[3] ||
-				item_bnds[3] > artbnds[1]) {
-				if (!check_item.hidden) {
-					hidden.push(check_item);
-					check_item.hidden = true;	
+	for (var lid=0; lid<doc.layers.length; lid++) {
+		var layer = doc.layers[lid];
+		if (layer.visible) { // ignore invisible layers
+			var checkItemGroups = [layer.pathItems, layer.symbolItems, layer.compoundPathItems];
+			for (var cig=0; cig<checkItemGroups.length; cig++) {
+				for (var item_i=0; item_i<checkItemGroups[cig].length; item_i++) {
+					var check_item = checkItemGroups[cig][item_i],
+						item_bnds = check_item.visibleBounds;
+					// bounds are [left,-top,right,-bottom]
+					if (item_bnds[0] > artbnds[2] ||
+						item_bnds[2] < artbnds[0] ||
+						item_bnds[1] < artbnds[3] ||
+						item_bnds[3] > artbnds[1]) {
+						if (!check_item.hidden) {
+							hidden.push(check_item);
+							check_item.hidden = true;	
+						}
+					}
 				}
 			}
 		}
