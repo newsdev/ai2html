@@ -43,8 +43,7 @@ var scriptEnvironment = "nyt";
 // - Go to the folder containing your Illustrator file. Inside will be a folder called ai2html-output.
 // - Open the html files in your browser to preview your output.
 
-var keepDebugElements = !true;
-var debugSelection = [];
+
 
 // =====================================
 // functions
@@ -1574,6 +1573,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 
 				// var frameLayers = addLayerClasses(getParentLayers(thisFrame.layer));
 
+
 				var j = i+1;
 				var thisFrameId = nameSpace+"ai"+abNumber+"-" + j;
 				if (thisFrame.name!="") {
@@ -1599,19 +1599,24 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 						t_trans_x = 0,
 						t_trans_y = 0;
 
-					// position on transformed anchor point
+					// position div on transformed anchor point
 					html[6] += "left:" + ((t_anchor[0]-abX)/abW*100).toFixed(pctPrecision) + "%;";
 					html[6] += "top:" + ((-t_anchor[1]-abY)/abH*100).toFixed(pctPrecision) + "%;";
 
+					// move "back" to left or top to center or right align text
 					if (alignment == 'center') t_trans_x -= u_width * 0.5;
 					else if (alignment == 'right') t_trans_x -= u_width;
-					
 					if (v_align == 'center' || v_align == 'middle') t_trans_y -= u_height * 0.5;
 					else if (v_align == 'bottom') t_trans_y -= u_height;
 
-					var mat, mat0 = thisFrame.matrix;
-					mat0 = app.concatenateTranslationMatrix(mat0, -mat0.mValueTX, -mat0.mValueTY);
-					mat = app.concatenateMatrix(app.getTranslationMatrix(t_trans_x, t_trans_y), mat0);
+					var mat = thisFrame.matrix;
+
+					mat = app.concatenateMatrix(app.getTranslationMatrix(t_trans_x, t_trans_y),
+							app.concatenateTranslationMatrix(mat, -mat.mValueTX, -mat.mValueTY));
+
+					// var mat, mat0 = thisFrame.matrix;
+					// mat0 = app.concatenateTranslationMatrix(mat0, -mat0.mValueTX, -mat0.mValueTY);
+					// mat = app.concatenateMatrix(app.getTranslationMatrix(t_trans_x, t_trans_y), mat0);
 
 					var transform = "matrix("+mat.mValueA+','+(-1*mat.mValueB)+','+(-1*mat.mValueC)+','+mat.mValueD+','+t_trans_x+','+(-t_trans_y)+')'+
 						"scaleX("+t_scale_x+") scaleY("+t_scale_y+");";
@@ -2036,8 +2041,6 @@ if (feedback.length > 0) {
 
 alert(alertHed + "\n" + alertText + "\n\n\n================\nai2html-nyt5 v"+scriptVersion);
 
-if (keepDebugElements) activeDocument.selection = debugSelection;
-
 function textIsTransformed(textFrame) {
 	return !(textFrame.matrix.mValueA==1 &&
 		textFrame.matrix.mValueB==0 &&
@@ -2081,8 +2084,7 @@ function getUntransformedTextBounds(textFrame) {
 	var bounds = textFrameCopy.geometricBounds;
 	
 	textFrameCopy.textRange.characterAttributes.fillColor = getRGBColor(250, 50, 50);
-	if (keepDebugElements) debugSelection.push(textFrameCopy);
-	else textFrameCopy.remove();
+	textFrameCopy.remove();
 	
 	// reset selection
 	activeDocument.selection = oldSelection;
@@ -2112,16 +2114,7 @@ function getAnchorPoint(untransformedBounds, matrix, hAlign, vAlign, sx, sy) {
 	var t_anchor_x = center_x + mat.mValueA * anchor_dx + mat.mValueC * anchor_dy,
 		t_anchor_y = center_y + mat.mValueB * anchor_dx + mat.mValueD * anchor_dy;
 
-	if (keepDebugElements) addDot(anchor_x, anchor_y, 2, getRGBColor(250,0,0));
-	if (keepDebugElements) addDot(t_anchor_x, t_anchor_y, 3, getRGBColor(50,0,50));
-
 	return [t_anchor_x, t_anchor_y];
-}
-
-function addDot(left, top, radius, color) {
-	var c = activeDocument.pathItems.ellipse(top + radius, left - radius, radius*2, radius*2);
-	c.fillColor = color || getRGBColor(200,100,0);
-	debugSelection.push(c);
 }
 
 
