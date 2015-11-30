@@ -1,7 +1,7 @@
 ﻿// ai2html.js
 var scriptVersion     = "0.56";
 // var scriptEnvironment = "nyt";
-var scriptEnvironment = "nyt";
+var scriptEnvironment = "";
 
 // ai2html is a script for Adobe Illustrator that converts your Illustrator document into html and css.
 
