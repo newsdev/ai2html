@@ -1600,8 +1600,8 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 						t_trans_y = 0;
 
 					// position div on transformed anchor point
-					html[6] += "left:" + ((t_anchor[0]-abX)/abW*100).toFixed(pctPrecision) + "%;";
-					html[6] += "top:" + ((-t_anchor[1]-abY)/abH*100).toFixed(pctPrecision) + "%;";
+					html[6] += "left:" + round((t_anchor[0]-abX)/abW*100, pctPrecision) + "%;";
+					html[6] += "top:" + round((-t_anchor[1]-abY)/abH*100, pctPrecision) + "%;";
 
 					// move "back" to left or top to center or right align text
 					if (alignment == 'center') t_trans_x -= u_width * 0.5;
@@ -1618,8 +1618,16 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 					// mat0 = app.concatenateTranslationMatrix(mat0, -mat0.mValueTX, -mat0.mValueTY);
 					// mat = app.concatenateMatrix(app.getTranslationMatrix(t_trans_x, t_trans_y), mat0);
 
-					var transform = "matrix("+mat.mValueA+','+(-1*mat.mValueB)+','+(-1*mat.mValueC)+','+mat.mValueD+','+t_trans_x+','+(-t_trans_y)+')'+
-						"scaleX("+t_scale_x+") scaleY("+t_scale_y+");";
+					var transform = "matrix("
+							+round(mat.mValueA, pctPrecision)+','
+							+round(-1*mat.mValueB, pctPrecision)+','
+							+round(-1*mat.mValueC, pctPrecision)+','
+							+round(mat.mValueD, pctPrecision)+','
+							+round(t_trans_x, pctPrecision)+','
+							+round(-t_trans_y, pctPrecision)+') '
+							+"scaleX("+round(t_scale_x, pctPrecision)+") "
+							+"scaleY("+round(t_scale_y, pctPrecision)+")";
+
 					var transformOrigin = alignment + ' '+(v_align == 'middle' ? 'center' : v_align);
 
 					html[6] += "transform: "+transform+";";
@@ -1634,37 +1642,37 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 				} else {
 
 					if (outputType=="abs") {
-						html[6] += "top:" + Math.round(htmlY) + "px;";
+						html[6] += "top:" + round(htmlY) + "px;";
 						if (alignment=="left") {
-							html[6] += "left:"  + Math.round(htmlL) + "px;";
-							html[6] += "width:" + Math.round(htmlW) + "px;";
+							html[6] += "left:"  + round(htmlL) + "px;";
+							html[6] += "width:" + round(htmlW) + "px;";
 						} else if (alignment=="right") {
-							html[6] += "right:" + Math.round(htmlR) + "px;";
-							html[6] += "width:" + Math.round(htmlW) + "px;";
+							html[6] += "right:" + round(htmlR) + "px;";
+							html[6] += "width:" + round(htmlW) + "px;";
 						} if (alignment=="center") {
-							html[6] += "left:"  + Math.round(htmlL) + "px;";
-							html[6] += "width:" + Math.round(htmlW) + "px;";
-							html[6] += "margin-left:" + Math.round(htmlLM) + "px;";
+							html[6] += "left:"  + round(htmlL) + "px;";
+							html[6] += "width:" + round(htmlW) + "px;";
+							html[6] += "margin-left:" + round(htmlLM) + "px;";
 						};
 					} else if (outputType=="pct") {
 						if (thisFrameAttributes.valign==="bottom") {
-							html[6] += "bottom:" + (100-(htmlB/abH*100)).toFixed(pctPrecision) + "%;";
+							html[6] += "bottom:" + round(100-(htmlB/abH*100), pctPrecision) + "%;";
 						} else {
-							html[6] += "top:" + (htmlT/abH*100).toFixed(pctPrecision) + "%;";
+							html[6] += "top:" + round(htmlT/abH*100, pctPrecision) + "%;";
 						};
 						if (alignment=="right") {
-							html[6] += "right:" + (htmlR/abW*100).toFixed(pctPrecision) + "%;";
+							html[6] += "right:" + round(htmlR/abW*100, pctPrecision) + "%;";
 							if (kind=="area") {
-								html[6] += "width:" + (htmlW/abW*100).toFixed(pctPrecision) + "%;";
+								html[6] += "width:" + round(htmlW/abW*100, pctPrecision) + "%;";
 							};
 						} else if (alignment=="center") {
-							html[6] += "left:"  + (htmlL/abW*100).toFixed(pctPrecision) + "%;";
-							html[6] += "width:" + (htmlW/abW*100).toFixed(pctPrecision) + "%;";
-							html[6] += "margin-left:" + (htmlLM/abW*100).toFixed(pctPrecision) + "%;";
+							html[6] += "left:" + round(htmlL/abW*100, pctPrecision) + "%;";
+							html[6] += "width:" + round(htmlW/abW*100, pctPrecision) + "%;";
+							html[6] += "margin-left:" + round(htmlLM/abW*100, pctPrecision) + "%;";
 						} else {
-							html[6] += "left:"  + (htmlL/abW*100).toFixed(pctPrecision) + "%;";
+							html[6] += "left:" + round(htmlL/abW*100, pctPrecision) + "%;";
 							if (kind=="area") {
-								html[6] += "width:" + (htmlW/abW*100).toFixed(pctPrecision) + "%;";
+								html[6] += "width:" + round(htmlW/abW*100, pctPrecision) + "%;";
 							};
 						};
 
@@ -2176,3 +2184,9 @@ function hideElementsOutsideArtboardRect(artbnds) {
 
 	return hidden;
 }
+
+function round(number, precision) {
+	var d = Math.pow(10, precision || 0);
+	return Math.round(number * d) / d;
+}
+
