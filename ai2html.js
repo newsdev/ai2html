@@ -45,7 +45,6 @@ var scriptEnvironment = "";
 
 
 
-
 // =====================================
 // functions
 // =====================================
@@ -192,6 +191,7 @@ var exportImageFiles = function(dest,width,height,formats,initialScaling,doubler
 			svgExportOptions.DTD                   = SVGDTDVersion.SVG1_1; // SVG1_0 SVGTINY1_1 <=default SVG1_1 SVGTINY1_1PLUS SVGBASIC1_1 SVGTINY1_2
 			svgExportOptions.cssProperties         = SVGCSSPropertyLocation.STYLEATTRIBUTES; // ENTITIES STYLEATTRIBUTES <=default PRESENTATIONATTRIBUTES STYLEELEMENTS
 			app.activeDocument.exportFile( svgFileSpec, svgType, svgExportOptions );
+
 		} else if (format=="jpg") {
 			if (jpgImageScaling > maxJpgImageScaling) {
 				jpgImageScaling = maxJpgImageScaling;
@@ -413,9 +413,9 @@ if (scriptEnvironment=="nyt") {
         include_resizer_css_js: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
         include_resizer_classes: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
         svg_embed_images: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
-        render_rotated_skewed_text_as: {defaultValue: "image", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "image, html", notes: ""},
         show_completion_dialog_box: {defaultValue: "true", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "trueFalse", possibleValues: "", notes: "Set this to false if you don't want to see the dialog box confirming completion of the script."},
         clickable_link: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: "If you put a url in this field, an <a> tag will be added, wrapping around the output and pointing to that url."},
+        render_rotated_skewed_text_as: {defaultValue: "html", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "image, html", notes: ""},
         testing_mode: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
         last_updated_text: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: ""},
         headline: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: ""},
@@ -460,9 +460,9 @@ if (scriptEnvironment=="nyt") {
         include_resizer_css_js: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
         include_resizer_classes: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
         svg_embed_images: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
-        render_rotated_skewed_text_as: {defaultValue: "image", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "image, html", notes: ""},
         show_completion_dialog_box: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: "Set this to “no” if you don't want to see the dialog box confirming completion of the script."},
         clickable_link: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: "If you put a url in this field, an <a> tag will be added, wrapping around the output and pointing to that url."},
+        render_rotated_skewed_text_as: {defaultValue: "html", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "image, html", notes: ""},
         testing_mode: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
         last_updated_text: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: ""},
         headline: {defaultValue: "Ai Graphic Headline", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: ""},
@@ -490,7 +490,7 @@ if (scriptEnvironment=="nyt") {
 // constants
 // ================================================
 
-// Add to the fonts array to make the script work with your own custom fonts. 
+// Add to the fonts array to make the script work with your own custom fonts.
 // To make it easier to add to this array, use the "fonts" worksheet of this Google Spreadsheet:
 	// https://docs.google.com/spreadsheets/d/13ESQ9ktfkdzFq78FkWLGaZr2s3lNbv2cN25F2pYf5XM/edit?usp=sharing
 	// Make a copy of the spreadsheet for yourself.
@@ -736,13 +736,14 @@ for (setting in ai2htmlBaseSettings) {
 // ================================================
 
 var nyt5Breakpoints = [
-	{ name:"xsmall"    , lowerLimit:  0, upperLimit: 180, artboards:[] },
-	{ name:"small"     , lowerLimit:180, upperLimit: 300, artboards:[] },
-	{ name:"smallplus" , lowerLimit:300, upperLimit: 460, artboards:[] },
-	{ name:"submedium" , lowerLimit:460, upperLimit: 600, artboards:[] },
-	{ name:"medium"    , lowerLimit:600, upperLimit: 720, artboards:[] },
-	{ name:"large"     , lowerLimit:720, upperLimit: 945, artboards:[] },
-	{ name:"xlarge"    , lowerLimit:945, upperLimit:1050, artboards:[] }
+	{ name:"xsmall"    , lowerLimit:   0, upperLimit: 180, artboards:[] },
+	{ name:"small"     , lowerLimit: 180, upperLimit: 300, artboards:[] },
+	{ name:"smallplus" , lowerLimit: 300, upperLimit: 460, artboards:[] },
+	{ name:"submedium" , lowerLimit: 460, upperLimit: 600, artboards:[] },
+	{ name:"medium"    , lowerLimit: 600, upperLimit: 720, artboards:[] },
+	{ name:"large"     , lowerLimit: 720, upperLimit: 945, artboards:[] },
+	{ name:"xlarge"    , lowerLimit: 945, upperLimit:1050, artboards:[] },
+	{ name:"xxlarge"   , lowerLimit:1050, upperLimit:1600, artboards:[] }
 ];
 var breakpoints        = {};
 breakpoints.min        = "";
@@ -1333,10 +1334,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 						docSettings.render_rotated_skewed_text_as=="html" ||
 						(
 							docSettings.render_rotated_skewed_text_as=="image" &&
-							thisFrame.matrix.mValueA==1 &&
-							thisFrame.matrix.mValueB==0 &&
-							thisFrame.matrix.mValueC==0 &&
-							thisFrame.matrix.mValueD==1
+							!textIsTransformed(thisFrame)
 						)
 					) &&
 					(thisFrame.kind=="TextType.AREATEXT" || thisFrame.kind=="TextType.POINTTEXT")
@@ -1500,6 +1498,8 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 
 			html[2] += pStyleCss;
 
+			html[2] += '\t\t\t.g-aiPtransformed p { white-space: nowrap; }\r';
+
 			// Output html for each text frame
 			for (var i=0;i<selectFrames.length;i++) {
 				var thisFrame = selectFrames[i];
@@ -1589,56 +1589,106 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 					thisFrameId = makeKeyword(thisFrame.name);
 				};
 				html[6] += "\t\t\t<div id='"+thisFrameId;
-				html[6] += "' class='"+nameSpace+frameLayer+" "+nameSpace+"aiAbs' style='";
-				if (outputType=="abs") {
-					html[6] += "top:" + Math.round(htmlY) + "px;";
-					if (alignment=="left") {
-						html[6] += "left:"  + Math.round(htmlL) + "px;";
-						html[6] += "width:" + Math.round(htmlW) + "px;";
-					} else if (alignment=="right") {
-						html[6] += "right:" + Math.round(htmlR) + "px;";
-						html[6] += "width:" + Math.round(htmlW) + "px;";
-					} if (alignment=="center") {
-						html[6] += "left:"  + Math.round(htmlL) + "px;";
-						html[6] += "width:" + Math.round(htmlW) + "px;";
-						html[6] += "margin-left:" + Math.round(htmlLM) + "px;";
-					};
-				} else if (outputType=="pct") {
-					if (thisFrameAttributes.valign==="bottom") {
-						html[6] += "bottom:" + (100-(htmlB/abH*100)).toFixed(pctPrecision) + "%;";
-					} else {
-						html[6] += "top:" + (htmlT/abH*100).toFixed(pctPrecision) + "%;";
-					};
-					if (alignment=="right") {
-						html[6] += "right:" + (htmlR/abW*100).toFixed(pctPrecision) + "%;";
-						if (kind=="area") {
-							html[6] += "width:" + (htmlW/abW*100).toFixed(pctPrecision) + "%;";
+				html[6] += "' class='"+nameSpace+frameLayer+" "+nameSpace+"aiAbs"+
+					(textIsTransformed(thisFrame) && kind == "point" ? ' g-aiPtransformed' : '')+"' style='";
+
+				// check if text is transformed
+				if (textIsTransformed(thisFrame)) {
+					// find transformed anchor point pre-transformation
+					var t_bounds = thisFrame.geometricBounds,
+						u_bounds = getUntransformedTextBounds(thisFrame),
+						u_width = u_bounds[2] - u_bounds[0],
+						t_width = t_bounds[2] - t_bounds[0],
+						u_height = u_bounds[3] - u_bounds[1],
+						t_height = t_bounds[3] - t_bounds[1],
+						v_align = thisFrameAttributes.valign || 'top',
+						t_scale_x = thisFrame.textRange.characterAttributes.horizontalScale / 100,
+						t_scale_y = thisFrame.textRange.characterAttributes.verticalScale / 100,
+						t_anchor = getAnchorPoint(u_bounds, thisFrame.matrix, alignment, v_align, t_scale_x, t_scale_y),
+						t_trans_x = 0,
+						t_trans_y = 0;
+
+					// position div on transformed anchor point
+					html[6] += "left:" + round((t_anchor[0]-abX)/abW*100, pctPrecision) + "%;";
+					html[6] += "top:" + round((-t_anchor[1]-abY)/abH*100, pctPrecision) + "%;";
+
+					// move "back" to left or top to center or right align text
+					if (alignment == 'center') t_trans_x -= u_width * 0.5;
+					else if (alignment == 'right') t_trans_x -= u_width;
+					if (v_align == 'center' || v_align == 'middle') t_trans_y -= u_height * 0.5;
+					else if (v_align == 'bottom') t_trans_y -= u_height;
+
+					var mat = thisFrame.matrix;
+
+					mat = app.concatenateMatrix(app.getTranslationMatrix(t_trans_x, t_trans_y),
+							app.concatenateTranslationMatrix(mat, -mat.mValueTX, -mat.mValueTY));
+
+					// var mat, mat0 = thisFrame.matrix;
+					// mat0 = app.concatenateTranslationMatrix(mat0, -mat0.mValueTX, -mat0.mValueTY);
+					// mat = app.concatenateMatrix(app.getTranslationMatrix(t_trans_x, t_trans_y), mat0);
+
+					var transform = "matrix("
+							+round(mat.mValueA, pctPrecision)+','
+							+round(-1*mat.mValueB, pctPrecision)+','
+							+round(-1*mat.mValueC, pctPrecision)+','
+							+round(mat.mValueD, pctPrecision)+','
+							+round(t_trans_x, pctPrecision)+','
+							+round(-t_trans_y, pctPrecision)+') '
+							+"scaleX("+round(t_scale_x, pctPrecision)+") "
+							+"scaleY("+round(t_scale_y, pctPrecision)+")";
+
+					var transformOrigin = alignment + ' '+(v_align == 'middle' ? 'center' : v_align);
+
+					html[6] += "transform: "+transform+";";
+					html[6] += "transform-origin: "+transformOrigin+";";
+					html[6] += "-webkit-transform: "+transform+";";
+					html[6] += "-webkit-transform-origin: "+transformOrigin+";";
+					html[6] += "-ms-transform: "+transform+";";
+					html[6] += "-ms-transform-origin: "+transformOrigin+";";
+
+					if (kind == 'area') html[6] += "width: "+(u_width * (1+(extraWidthPct/100)))+"px;";
+
+				} else {
+
+					if (outputType=="abs") {
+						html[6] += "top:" + round(htmlY) + "px;";
+						if (alignment=="left") {
+							html[6] += "left:"  + round(htmlL) + "px;";
+							html[6] += "width:" + round(htmlW) + "px;";
+						} else if (alignment=="right") {
+							html[6] += "right:" + round(htmlR) + "px;";
+							html[6] += "width:" + round(htmlW) + "px;";
+						} if (alignment=="center") {
+							html[6] += "left:"  + round(htmlL) + "px;";
+							html[6] += "width:" + round(htmlW) + "px;";
+							html[6] += "margin-left:" + round(htmlLM) + "px;";
 						};
-					} else if (alignment=="center") {
-						html[6] += "left:"  + (htmlL/abW*100).toFixed(pctPrecision) + "%;";
-						html[6] += "width:" + (htmlW/abW*100).toFixed(pctPrecision) + "%;";
-						html[6] += "margin-left:" + (htmlLM/abW*100).toFixed(pctPrecision) + "%;";
-					} else {
-						html[6] += "left:"  + (htmlL/abW*100).toFixed(pctPrecision) + "%;";
-						if (kind=="area") {
-							html[6] += "width:" + (htmlW/abW*100).toFixed(pctPrecision) + "%;";
+					} else if (outputType=="pct") {
+						if (thisFrameAttributes.valign==="bottom") {
+							html[6] += "bottom:" + round(100-(htmlB/abH*100), pctPrecision) + "%;";
+						} else {
+							html[6] += "top:" + round(htmlT/abH*100, pctPrecision) + "%;";
 						};
+						if (alignment=="right") {
+							html[6] += "right:" + round(htmlR/abW*100, pctPrecision) + "%;";
+							if (kind=="area") {
+								html[6] += "width:" + round(htmlW/abW*100, pctPrecision) + "%;";
+							};
+						} else if (alignment=="center") {
+							html[6] += "left:" + round(htmlL/abW*100, pctPrecision) + "%;";
+							html[6] += "width:" + round(htmlW/abW*100, pctPrecision) + "%;";
+							html[6] += "margin-left:" + round(htmlLM/abW*100, pctPrecision) + "%;";
+						} else {
+							html[6] += "left:" + round(htmlL/abW*100, pctPrecision) + "%;";
+							if (kind=="area") {
+								html[6] += "width:" + round(htmlW/abW*100, pctPrecision) + "%;";
+							};
+						};
+
 					};
 
-					if (!(thisFrame.matrix.mValueA==1 && thisFrame.matrix.mValueB==0 && thisFrame.matrix.mValueC==0 && thisFrame.matrix.mValueD==1)) {
-						html[6] += "-webkit-transform:matrix(" +
-							thisFrame.matrix.mValueA      + ", " +
-							(-1*thisFrame.matrix.mValueB) + ", " +
-							(-1*thisFrame.matrix.mValueC) + ", " +
-							thisFrame.matrix.mValueD      + ", " +
-							0 + ", " +
-							0 + ");";
-							// (thisFrame.matrix.mValueTX+7934) + ", " +
-							// (thisFrame.matrix.mValueTY-7894) + ");";
-						html[6] += "transform-origin: left bottom;"
-					};
+				}
 
-				};
 				html[6] += "'>\r"; // close div tag for text frame
 
 				var numChars = thisFrame.characters.length;
@@ -1743,9 +1793,24 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 			// 		"docSettings.html_output_path = " + docSettings.html_output_path + "\n" +
 			// 		"docSettings.image_output_path = " + docSettings.image_output_path + "\n" +
 			// 		"docArtboardName = " + docArtboardName);
+
 			if (docSettings.write_image_files=="yes") {
+				// if in svg export, hide path elements outside of the current artboard
+				if (docSettings.image_format[0] == 'svg') {
+					// save refs to elements we are hiding
+					var hiddenItemsOutsideArtboard = hideElementsOutsideArtboardRect(activeArtboardRect);
+				}
+
 				exportImageFiles(imageDestination,abW,abH,docSettings.image_format,1.0,docSettings.use_2x_images_if_possible);
+
+				if (docSettings.image_format[0] == 'svg' && hiddenItemsOutsideArtboard.length > 0) {
+				// unhide non-text elements hidden before export
+					for (var item_i=0; item_i < hiddenItemsOutsideArtboard.length; item_i++) {
+						hiddenItemsOutsideArtboard[item_i].hidden = false;
+					}
+				}
 			};
+
 
 			// unhide text now if NOT in testing mode
 			if (docSettings.testing_mode!="yes") {
@@ -2005,4 +2070,146 @@ if (feedback.length > 0) {
 if (docSettings.show_completion_dialog_box=="yes") {
 	alert(alertHed + "\n" + alertText + "\n\n\n================\nai2html-nyt5 v"+scriptVersion);
 };
+
+
+function textIsTransformed(textFrame) {
+	return !(textFrame.matrix.mValueA==1 &&
+		textFrame.matrix.mValueB==0 &&
+		textFrame.matrix.mValueC==0 &&
+		textFrame.matrix.mValueD==1);
+		// || textFrame.textRange.characterAttributes.horizontalScale != 100
+		// || textFrame.textRange.characterAttributes.verticalScale != 100;
+}
+
+function getUntransformedTextBounds(textFrame) {
+	var oldSelection = activeDocument.selection;
+
+	activeDocument.selection = [textFrame];
+	app.copy();
+	app.paste();
+	var textFrameCopy = activeDocument.selection[0];
+	// move to same position
+	textFrameCopy.left = textFrame.left;
+	textFrameCopy.top = textFrame.top;
+	var bnds = textFrameCopy.geometricBounds;
+
+	var old_center_x = (bnds[0] + bnds[2]) * 0.5,
+		old_center_y = (bnds[1] + bnds[3]) * 0.5;
+
+	// inverse transformation of copied text frame
+	textFrameCopy.transform(app.invertMatrix(textFrame.matrix));
+	// remove scale
+	textFrameCopy.textRange.characterAttributes.horizontalScale = 100;
+	textFrameCopy.textRange.characterAttributes.verticalScale = 100;
+	// move transformed text frame back to old center point
+	var new_center_x, new_center_y;
+	var max_iter = 5;
+
+	while (--max_iter > 0) {
+		bnds = textFrameCopy.geometricBounds;
+		new_center_x = (bnds[0] + bnds[2]) * 0.5;
+		new_center_y = (bnds[1] + bnds[3]) * 0.5;
+		textFrameCopy.translate(old_center_x - new_center_x, old_center_y - new_center_y);
+	}
+
+	var bounds = textFrameCopy.geometricBounds;
+
+	textFrameCopy.textRange.characterAttributes.fillColor = getRGBColor(250, 50, 50);
+	textFrameCopy.remove();
+
+	// reset selection
+	activeDocument.selection = oldSelection;
+	return bounds;
+}
+
+function getRGBColor(r,g,b) {
+	var col = new RGBColor();
+	col.red = r || 0;
+	col.green = g || 0;
+	col.blue = b || 0;
+	return col;
+}
+
+function getAnchorPoint(untransformedBounds, matrix, hAlign, vAlign, sx, sy) {
+	var center_x = (untransformedBounds[0] + untransformedBounds[2]) * 0.5,
+		center_y = (untransformedBounds[1] + untransformedBounds[3]) * 0.5,
+		anchor_x = (hAlign == 'left' ? untransformedBounds[0] :
+			(hAlign == 'center' ? center_x : untransformedBounds[2])),
+		anchor_y = (vAlign == 'top' ? untransformedBounds[1] :
+			(vAlign == 'bottom' ? untransformedBounds[3] : center_y)),
+		anchor_dx = (anchor_x - center_x),
+		anchor_dy = (anchor_y - center_y);
+
+	var mat = app.concatenateMatrix(app.getScaleMatrix(sx*100, sy*100), matrix);
+
+	var t_anchor_x = center_x + mat.mValueA * anchor_dx + mat.mValueC * anchor_dy,
+		t_anchor_y = center_y + mat.mValueB * anchor_dx + mat.mValueD * anchor_dy;
+
+	return [t_anchor_x, t_anchor_y];
+}
+
+
+function hideElementsOutsideArtboardRect(artbnds) {
+	var hidden = [], all_groups;
+	checkLayers(doc.layers);
+
+	function checkLayers(layers) {
+		for (var lid=0; lid<layers.length; lid++) {
+			var layer = layers[lid];
+			if (layer.visible) { // only deal with visible layers
+				var checkItemGroups = [layer.pathItems, layer.symbolItems, layer.compoundPathItems];
+				all_groups = [];
+				traverseGroups(layer);
+				// feedback.push('layer.groupItems '+layer.groupItems.length);
+				// alert('groups: '+groups.length);
+				for (var g=0; g<all_groups.length; g++) {
+					checkItemGroups.push(all_groups[g].pathItems);
+					checkItemGroups.push(all_groups[g].symbolItems);
+					checkItemGroups.push(all_groups[g].compoundPathItems);
+				}
+				for (var cig=0; cig<checkItemGroups.length; cig++) {
+					for (var item_i=0; item_i<checkItemGroups[cig].length; item_i++) {
+						var check_item = checkItemGroups[cig][item_i],
+							item_bnds = check_item.visibleBounds;
+						// bounds are [left,-top,right,-bottom]
+						if (item_bnds[0] > artbnds[2] ||
+							item_bnds[2] < artbnds[0] ||
+							item_bnds[1] < artbnds[3] ||
+							item_bnds[3] > artbnds[1]) {
+							if (!check_item.hidden) {
+								hidden.push(check_item);
+								check_item.hidden = true;
+							}
+						}
+					}
+				}
+				if (layer.layers.length > 0) checkLayers(layer.layers);
+			}
+		}
+		function traverseGroups(groupItems) {
+			for (var g=0;g<groupItems.length;g++) {
+				// check group bounds
+				var bnds = groupItems[g].visibleBounds;
+				if (bnds[0] > artbnds[2] || bnds[2] < artbnds[0] || bnds[1] < artbnds[3] || bnds[3] > artbnds[1]) {
+					// group entirely out of artboard, so ignore
+					groupItems[g].hidden = true;
+					hidden.push(groupItems[g]);
+				} else {
+					// recursively check sub-groups
+					all_groups.push(groupItems[g]);
+					if (groupItems[g].groupItems.length > 0) {
+						getGroups(groupItems[g].groupItems);
+					}
+				}
+			}
+		}
+	}
+
+	return hidden;
+}
+
+function round(number, precision) {
+	var d = Math.pow(10, precision || 0);
+	return Math.round(number * d) / d;
+}
 
