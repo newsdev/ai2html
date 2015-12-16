@@ -1,5 +1,5 @@
 ﻿// ai2html.js
-var scriptVersion     = "0.56";
+var scriptVersion     = "0.57";
 // var scriptEnvironment = "nyt";
 var scriptEnvironment = "";
 
