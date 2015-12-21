@@ -18,10 +18,9 @@ In contrast, `dynamic` responsiveness means that the ai2html divs will scale to 
 
 ## Rotated and sheared HTML labels
 
-
-
 ## SVG artboard
 
 ## Custom CSS
 
+Use the `ai-css` text field for custom CSS to add drop shadows to labels:
 
