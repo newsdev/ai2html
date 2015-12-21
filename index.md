@@ -1,5 +1,11 @@
 ---
 layout: index
+sidebar_menu:
+  \#how-to-install-ai2html: How to install
+  \#how-to-use-ai2html: How to use
+  \#how-does-ai2html-work: How does it work
+  \#table-of-contents: Full table of contents
+  examples.html: Examples
 ---
 
 
@@ -98,6 +104,9 @@ Most of the script’s options are set in the settings text block. When you run 
 - **image_output_path**
   - <span style="font-variant: small-caps">Default</span>: `<blank>`
   - Use this if you want to change the path of the images that are placed behind the html text. This path should be written relative to the location of the `html_output_path`.
+- **image_source_path**
+  - <span style="font-variant: small-caps">Default</span>: if not set, `image_output_path` will be used
+  - In some scenarios the relative path between published html and images is different from how the files are stored. Use `html_source_path` to specify the location from where the images are loaded in the `<img>` tags. This does not change where image files are stored.
 - **local_preview_template**
   - <span style="font-variant: small-caps">Default</span>: `<blank>`
   - Use this to specify a page template into which the html partial will be inserted to preview your artwork in the context of your site architecture and css. Sample templates can be downloaded from the ai2html Github repo. Any variables from ai2html-settings or ai2html-text blocks can be inserted into the templates using either mustache (eg. &#123;&#123;headline&#125;&#125; ) or ejs/erb (eg. `<%=headline%>`) notation. The ai2html partial can be inserted using the `<%=ai2htmlPartial%>` variable.

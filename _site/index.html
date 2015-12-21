@@ -1,26 +1,26 @@
 <!DOCTYPE html>
 <html en="en">
 <head>
-  <title>Archie Markup Language (ArchieML)</title>
+  <title>ai2html</title>
 
   <meta charset='utf-8'>
   <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
   <meta http-equiv="X-UA-Compatible" content="chrome=1" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
-  <meta name="description" content="ArchieML is a text format optimized for human writability. It was designed for users unfamiliar with existing serialization formats, and defines a forgiving, incremental parser that does not throw syntax errors.">
+  <meta name="description" content="ai2html is a script for Adobe Illustrator that converts your Illustrator artwork into html and css.">
   <meta name="twitter:card" content="summary">
-  <meta name="twitter:url" content="http://archieml.org/">
-  <meta name="twitter:title" content="Archie Markup Language (ArchieML)">
-  <meta name="twitter:description" content="ArchieML is a text format optimized for human writability, with a syntax designed to be as simple as possible.">
-  <meta name="twitter:image" content="http://archieml.org/assets/twittercard.png">
-  <meta name="og:image" content="http://archieml.org/assets/facebookshare.png">
-  <meta name="og:site_name" content="ArchieML.org">
-  <meta name="og:url" content="http://archieml.org/">
+  <meta name="twitter:url" content="http://ai2html.org/">
+  <meta name="twitter:title" content="ai2html">
+  <meta name="twitter:description" content="ai2html is a script for Adobe Illustrator that converts your Illustrator artwork into html and css.">
+  <meta name="twitter:image" content="http://ai2html.org/twittercard.png">
+  <meta name="og:image" content="http://ai2html.org/facebookshare.png">
+  <meta name="og:site_name" content="ai2html.org">
+  <meta name="og:url" content="http://ai2html.org/">
 
-  <link rel="canonical" href="http://archieml.org/" />
+  <link rel="canonical" href="http://ai2html.org/" />
   <link href="poole.css" media="all" rel="stylesheet" />
   <link href="hyde.css" media="all" rel="stylesheet" />
-  <link href="archieml.css" media="all" rel="stylesheet" />
+  <link href="ai2html.css" media="all" rel="stylesheet" />
 
   <script type="text/javascript" src="http://typeface.nytimes.com/zam5nzz.js"></script>
   <script type="text/javascript">try{Typekit.load();}catch(e){}</script>
@@ -36,9 +36,17 @@
     </div>
 
     <ul class="sidebar-nav">
-      <li class="sidebar-nav-item sidebar-nav-hash"><a href="#how-to-install-ai2html">Install</a></li>
-      <li class="sidebar-nav-item sidebar-nav-hash"><a href="#settings">Settings</a></li>
-      <li class="sidebar-nav-item sidebar-nav-hash"><a href="#limitations">Limitations</a></li>
+      
+      <li class="sidebar-nav-item sidebar-nav-hash"><a href="\#how-to-install-ai2html">How to install</a></li>
+      
+      <li class="sidebar-nav-item sidebar-nav-hash"><a href="\#how-to-use-ai2html">How to use</a></li>
+      
+      <li class="sidebar-nav-item sidebar-nav-hash"><a href="\#how-does-ai2html-work">How does it work</a></li>
+      
+      <li class="sidebar-nav-item sidebar-nav-hash"><a href="\#table-of-contents">Full table of contents</a></li>
+      
+      <li class="sidebar-nav-item sidebar-nav-hash"><a href="examples.html">Examples</a></li>
+      
     </ul>
   </div>
 </div>
@@ -48,425 +56,79 @@
 <h1 id="ai2html">ai2html</h1>
 
 <blockquote>
-<p>ai2html is a script for Adobe Illustrator that converts your Illustrator artwork into html and css.</p>
+<p>ai2html is an open-source script for Adobe Illustrator that converts your Illustrator documents into html and css.</p>
 </blockquote>
 
-<h2 id="about">About</h2>
-
-<p>The script renders text as absolutely positioned html elements. The remaining art is exported as an image that is placed underneath the text in the html. Artboards can be rendered as separate divs in a single file, or as separate files. The exported files are html partials, that is, everything is enclosed in a div that can be inserted into a page template. It is also possible to specify an html page template to insert the html partial to preview your artwork in the context of your site architecture and css.</p>
+<p>Here are <a href="https://delicious.com/archietse/ai2html,nyt">examples of how we’ve used the script</a> at The New York Times and <a href="https://delicious.com/archietse/ai2html,others">examples of how others</a> have used it. Share your ai2html projects on Twitter, Delicious, etc. using #ai2html.</p>
 
 <h2 id="table-of-contents">Table of contents</h2>
 
 <ul>
 <li><a href="#how-to-install-ai2html">How to install ai2html</a></li>
-<li><a href="#overview-of-how-to-use-ai2html">Overview of how to use ai2html</a></li>
-<li><a href="#controlling-how-your-text-is-converted-into-html">Controlling how your text is converted into html</a></li>
+<li><a href="#how-to-use-ai2html">How to use ai2html</a></li>
+<li><a href="#frequently-asked-questions">Frequently asked questions</a></li>
 <li><a href="#settings">Settings</a></li>
+<li><a href="#point-text-vs-area-text">Point text vs. area text</a></li>
 <li><a href="#which-attributes-are-converted-to-html-and-css">Which attributes are converted to html and css</a></li>
+<li><a href="#how-does-ai2html-work">How does ai2html work</a></li>
 <li><a href="#limitations">Limitations</a></li>
+<li><a href="#what-works-well-and-what-does-not">What works well and what does not</a></li>
+<li><a href="#using-fonts-other-than-arial-and-georgia">Using fonts other than Arial and Georgia</a></li>
 </ul>
 
 <h2 id="how-to-install-ai2html">How to install ai2html</h2>
 
-<p>Move the ai2html.jsx file into the Illustrator folder where scripts are located. For example, on Mac OS&nbsp;X running Adobe Illustrator CC 2014, the path would be:
+<p>Download the <a href="https://github.com/newsdev/ai2html/raw/master/ai2html.js">latest version of the script here</a> by clicking the link and saving the file to your computer.</p>
+
+<p>Move the <code>ai2html.js</code> file into the Illustrator folder where scripts are located. For example, on Mac OS&nbsp;X running Adobe Illustrator CC 2014, the path would be:
 <code>
-Applications\Adobe Illustrator CC 2014\Presets\en_US\Scripts\ai2html.jsx
+Applications/Adobe Illustrator CC 2014/Presets/en_US/Scripts/ai2html.jsx
 </code></p>
 
-<h2 id="overview-of-how-to-use-ai2html">Overview of how to use ai2html</h2>
+<h2 id="how-to-use-ai2html">How to use ai2html</h2>
 
 <ol>
-<li>Create your Illustrator artwork. Size the artboard to the dimensions that you want the div to appear on the web page.</li>
-<li>Make sure your <code>Document Color Mode</code> is set to <code>RGB</code>. You can do this from the <code>File</code> menu.</li>
-<li>Make sure you have already saved your document. The script uses the location of the ai file to put a folder into which the exported html and image files are saved.</li>
+<li>Create your Illustrator artwork.
+
+<ul>
+<li>Size the artboard to the dimensions that you want the div to appear on the web page.</li>
+<li>Make sure your <code>Document Color Mode</code> is set to <code>RGB</code>.</li>
+<li>Make sure your document is saved.</li>
+<li>Use Arial or Georgia unless you have added your own fonts to the <code>fonts</code> array in the script.</li>
+</ul></li>
 <li>Run the script by choosing: <code>File &gt; Scripts &gt; ai2html</code></li>
 <li>Go to the folder containing your Illustrator file. Inside will be a folder called <code>ai2html-output</code>. Open the html files in your browser to preview your output.</li>
 </ol>
 
-<h2 id="controlling-how-your-text-is-converted-into-html">Controlling how your text is converted into html</h2>
+<h2 id="frequently-asked-questions">Frequently asked questions</h2>
 
-<p>Discussion here about:
-- Choosing between point and area text.
-- Choosing the paragraph alignment of the text
-- Limitations because of one style per paragraph</p>
+<ul>
+<li><strong>Why not just export my Illustrator file as an image or an SVG?</strong>
+
+<ul>
+<li>Text in images and SVGs scale as you scale the image — so your text becomes unreadable pretty quickly as the artwork scales down, or looks hilariously large as it scales up. By rendering the text as html, we can scale the “graphic” up and down, but keep the text readable at the same font-size and line-height. This is important because we are trying to reduce the number of versions of the artwork that we have to create in order to accommodate viewports that range from mobile phones up to giant desktop monitors. An example of this is here: <a href="http://nyti.ms/1CQdkwq">http://nyti.ms/1CQdkwq</a> Change your window size when you view the page and you&#39;ll see the artwork scale but the text stays the same size. More examples here: <a href="https://delicious.com/archietse/ai2html,responsive">https://delicious.com/archietse/ai2html,responsive</a></li>
+<li>When Illustrator saves an SVG, every line of text is broken into separate SVG elements which makes editing the text very difficult. By having the text rendered in HTML, it is much easier for editors to go into the CMS and make edits without having to wade through a tangle of SVG code.</li>
+</ul></li>
+</ul>
 
 <h2 id="settings">Settings</h2>
 
-<p>There are several ways of customizing the output of the script:
-- <a href="#special-text-blocks">Special text blocks</a>
-  - <a href="#ai2html-settings">ai2html-settings</a>
-  - <a href="#ai2html-css">ai2html-css</a>
-  - <a href="#ai2html-js">ai2html-js</a>
-  - <a href="#ai2html-html">ai2html-html</a>
-  - <a href="#ai2html-text">ai2html-text</a>
-- <a href="#layer-and-object-names">Layer and object names</a>
-- <a href="#artboard-names">Artboard names</a>
-- <a href="#notes-in-the-attributes-panel">Notes in the attributes panel</a></p>
-
-<h4 id="special-text-blocks">Special text blocks</h4>
-
-<p>The script recognizes five special types of text blocks, which begin with <code>ai2html-</code> followed by one of the following keywords: <code>settings</code>, <code>css</code>, <code>js</code>, <code>html</code> or <code>text</code>. That text should be the only thing on the first line of the text block. The special text blocks can be placed anywhere in your Illustrator document, but note that if you place them on an artboard their contents will be rendered in your output.</p>
-
-<h5 id="ai2html-settings"><code>ai2html-settings</code></h5>
-
-<p>Most of the script’s options are set in the settings text block. When you run ai2html for the first time in your ai file, the script will place a settings text block to the upper left of all your artboards. Here is a description of the settings:</p>
-
-<p><em>Options that are included in the settings text block by default</em></p>
+<p>There are several ways of customizing the output of the script:</p>
 
 <ul>
-<li><strong>image_format</strong>
+<li><a href="#special-text-blocks">Special text blocks</a>
 
 <ul>
-<li><span style="font-variant: small-caps">Possible values</span>: <code>png</code> <code>png24</code> <code>jpg</code></li>
-<li><span style="font-variant: small-caps">Default</span>: <code>png</code></li>
-<li>You can specify more than one image format to be output by listing the desired formats separated by commas. This can be useful if you want to see which image format has the smallest file size. The first format in the list will be the only one referenced in the html. </li>
+<li><a href="#ai2html-settings">ai2html-settings</a></li>
+<li><a href="#ai2html-css">ai2html-css</a></li>
+<li><a href="#ai2html-js">ai2html-js</a></li>
+<li><a href="#ai2html-html">ai2html-html</a></li>
+<li><a href="#ai2html-text">ai2html-text</a></li>
 </ul></li>
-<li><strong>responsiveness</strong>
-
-<ul>
-<li><span style="font-variant: small-caps">Possible values</span>: <code>fixed</code> <code>dynamic</code></li>
-<li><span style="font-variant: small-caps">Default</span>: <code>fixed</code></li>
-<li><code>dynamic</code> responsiveness means that the ai2html divs will scale to fill the container they are placed in.</li>
-<li><code>fixed</code> responsiveness means that the ai2html div will appear only at the size it was created in Illustrator and will not change sizes if the container it is placed in changes size.</li>
-</ul></li>
-<li><strong>output</strong>
-
-<ul>
-<li><span style="font-variant: small-caps">Possible values</span>: <code>one-file</code> <code>multiple-files</code></li>
-<li><span style="font-variant: small-caps">Default</span>: <code>one-file</code></li>
-<li><code>one-file</code> output means that all artboards will be written into one html file.</li>
-<li><code>multiple-files</code> output means that each artboard will be written to separate html files.</li>
-</ul></li>
-<li><strong>html_output_path</strong>
-
-<ul>
-<li><span style="font-variant: small-caps">Default</span>: <code>/ai2html-output/</code></li>
-<li>Use this if you want to redirect the output to a different folder. The path should be written relative to the location of the ai file.</li>
-</ul></li>
-<li><strong>html_output_extension</strong>
-
-<ul>
-<li><span style="font-variant: small-caps">Default</span>: <code>.html</code></li>
-<li>Use this if you want to change the extension of the html partial.</li>
-</ul></li>
-<li><strong>image_output_path</strong>
-
-<ul>
-<li><span style="font-variant: small-caps">Default</span>: <code>&lt;blank&gt;</code></li>
-<li>Use this if you want to change the path of the images that are placed behind the html text. This path should be written relative to the location of the <code>html_output_path</code>.</li>
-</ul></li>
-<li><strong>local_preview_template</strong>
-
-<ul>
-<li><span style="font-variant: small-caps">Default</span>: <code>template.html</code></li>
-<li>Use this to specify a page template into which the html partial will be inserted to preview your artwork in the context of your site architecture and css. Sample templates can be downloaded from the ai2html Github repo. Any variables from ai2html-settings or ai2html-text blocks can be inserted into the templates using either mustache (eg. <code>) or ejs/erb (eg. `&lt;%=headline%&gt;`) notation. The ai2html partial can be inserted using the</code> variable.</li>
-</ul></li>
-<li><strong>png_number_of_colors</strong>
-
-<ul>
-<li><span style="font-variant: small-caps">Possible values</span>: Any integer from <code>2</code> to <code>256</code></li>
-<li><span style="font-variant: small-caps">Default</span>: <code>128</code></li>
-<li>Use this to specify the quality of <code>png</code> or <code>png24</code> images.</li>
-</ul></li>
-<li><strong>jpg_quality</strong>
-
-<ul>
-<li><span style="font-variant: small-caps">Possible values</span>: Any integer from <code>0</code> to <code>100</code></li>
-<li><span style="font-variant: small-caps">Default</span>: <code>60</code></li>
-<li>Use this to specify the quality of <code>jpg</code> images.</li>
-</ul></li>
-<li><strong>headline</strong><br><strong>leadin</strong><br><strong>notes</strong><br><strong>sources</strong><br><strong>credit</strong>
-
-<ul>
-<li><span style="font-variant: small-caps">Possible values</span>: Text with no line breaks</li>
-<li>These fields are used to populate fields in the <code>local_preview_tempate</code> and can be written to a “config” text file along with the html. The config file is written in yml can be used to pass parameters to a cms.</li>
-</ul></li>
+<li><a href="#layers-palette">Layers palette</a></li>
+<li><a href="#artboards-palette">Artboards palette</a></li>
+<li><a href="#attributes-palette">Attributes palette</a></li>
 </ul>
-
-<p><em>Options that can be added to the settings text block</em></p>
-
-<ul>
-<li><strong>max_width</strong>
-
-<ul>
-<li><span style="font-variant: small-caps">Possible values</span>: Any positive integer</li>
-<li><span style="font-variant: small-caps">Default</span>: <code>&lt;blank&gt;</code></li>
-<li>Specifying a <code>max_width</code> inserts a max-width css instruction on the div containing the ai2html partial. The width should be specified in pixels.</li>
-</ul></li>
-<li><strong>create_config_file</strong>
-
-<ul>
-<li><span style="font-variant: small-caps">Possible values</span>: <code>true</code> <code>false</code></li>
-<li><span style="font-variant: small-caps">Default</span>: <code>false</code></li>
-<li>Specify <code>true</code> if you want the script to also output a text file in yml format containing the parameters you want to pass to your cms.</li>
-</ul></li>
-<li><strong>config_file_path</strong>
-
-<ul>
-<li><span style="font-variant: small-caps">Default</span>: <code>&lt;blank&gt;</code></li>
-<li><span style="font-variant: small-caps">Example</span>: <code>/ai2html-output/config.yml</code></li>
-<li>Enter the full path to the file including the filename that you want the config file to be named. The path should be written relative to the location of the Illustrator file.</li>
-</ul></li>
-<li><strong>png_transparent</strong>
-
-<ul>
-<li><span style="font-variant: small-caps">Possible values</span>: <code>yes</code> <code>no</code></li>
-<li><span style="font-variant: small-caps">Default</span>: <code>no</code></li>
-<li>This option lets you make transparent any png image that is output by the program. Note that specifying transparent png’s can result in a visibly significant degradation in the image. </li>
-</ul></li>
-<li><strong>center_html_output</strong>
-
-<ul>
-<li><span style="font-variant: small-caps">Possible values</span>: <code>true</code> <code>false</code></li>
-<li><span style="font-variant: small-caps">Default</span>: <code>true</code></li>
-<li>Specifying <code>true</code> on this option causes the ai2html div to be centered within the container it is placed in. </li>
-</ul></li>
-<li><strong>use_2x_images_if_possible</strong>
-
-<ul>
-<li><span style="font-variant: small-caps">Possible values</span>: <code>yes</code> <code>no</code></li>
-<li><span style="font-variant: small-caps">Default</span>: <code>yes</code></li>
-<li>Specifying <code>yes</code> on this setting tells the script to output images at double the resolution if possible. The script uses limits specified in this <a href="http://apple.co/1M1dvES">document</a> to determine if the size of the image is too large to make it double resolution.</li>
-</ul></li>
-<li><strong>testing_mode</strong>
-
-<ul>
-<li><span style="font-variant: small-caps">Possible values</span>: <code>yes</code> <code>no</code></li>
-<li><span style="font-variant: small-caps">Default</span>: <code>no</code></li>
-<li>Specifying <code>yes</code> on this setting causes the text in the file to be rendered both on the image and in the html. This is useful for testing whether the placement of html text is consistent with the Illustrator file.</li>
-</ul></li>
-</ul>
-
-<p><em>If you want to change the default settings, I have been using this <a href="http://bit.ly/1BP86RH">Google spreadsheet</a> to change the view and change the settings. Feel free to make a copy of the spreadsheet for yourself to roll your own settings.</em></p>
-
-<h5 id="ai2html-css"><code>ai2html-css</code></h5>
-
-<p>If you want to add some css that is always inserted into your html partial, include it in a text block somewhere in your Illustrator document, but not on an artboard. Make the first line of the text block reads <code>ai2html-css</code>. The css will be added inside <code>&lt;style&gt;</code> tags so don’t include <code>&lt;style&gt;</code> tags in the text block.</p>
-
-<h5 id="ai2html-js"><code>ai2html-js</code></h5>
-
-<p>If you want to add some javascript that is always inserted into your html partial, include it in a text block somewhere in your Illustrator document, but not on an artboard. Make the first line of the text block reads <code>ai2html-js</code>. The js will be added at the end of all the html for each artboard. You will need to include the enclosing <code>script</code> tags in the text block.</p>
-
-<h5 id="ai2html-html"><code>ai2html-html</code></h5>
-
-<p>If you want to add some html that is always inserted into your html partial, include it in a text block somewhere in your Illustrator document, but not on an artboard. Make the first line of the text block reads <code>ai2html-html</code>. The html will be added at the end of all the html for each artboard.</p>
-
-<h5 id="ai2html-text"><code>ai2html-text</code></h5>
-
-<p>You can store text into variables and insert them into your document using basic mustache or erb/ejs notation. Any variables in the <code>ai2html-settings</code> or in <code>ai2html-text</code> blocks can be used.</p>
-
-<p>To assign text to a variable, create a text block somewhere in your Illustrator document, but not on an artboard. Make the first line of that text block read <code>ai2html-text</code>. Each subsequent paragraph should be in the format of <code>variable_name: Lorem ipsum dolor.</code>. Variable names should only be letters, numbers and underscores.</p>
-
-<p>Now you can insert that text anywhere in your document by placing `<code>or</code>&lt;%=variable_name%&gt;` where you want that text to appear.</p>
-
-<p>Note that you can pass mustache or erb/ejs notation to your html partial as long as the variable names don’t match the variable names in the <code>ai2html-settings</code> or <code>ai2html-text</code> blocks.</p>
-
-<h4 id="layer-and-object-names">Layer and object names</h4>
-
-<p>The name of the layer that is the direct parent of a text block is added as a class to the div that corresponds to that text block. This allows you to write custom css targeting all text blocks in a layer. Class names have <code>ai2html-</code> appended to the front of the name. (Add example here) </p>
-
-<p>Another way of targeting a text block is to give that text object a name in the Layers palette. If you give the text object a name, it will be added as an id to the div that corresponds to that text block. In this case <code>ai2html-</code> is not appended to the beginning of the id, so take care that you begin the id with letters and not numbers. (Add example here)</p>
-
-<h4 id="artboard-names">Artboard names</h4>
-
-<p>Artboard names become part of the id of the div corresponding to that artboard.</p>
-
-<p>(Add explanation of colon notation for specifying widths at which to show different artboards.)</p>
-
-<h4 id="notes-in-the-attributes-panel">Notes in the attributes panel</h4>
-
-<h2 id="which-attributes-are-converted-to-html-and-css">Which attributes are converted to html and css</h2>
-
-<p>The script processes each text object in your Illustrator file and translates these attributes into inline and css styles. Each point- or area-text object is converted into a <code>&lt;div&gt;</code>. Each paragraph in the text object are converted into <code>&lt;p&gt;</code> tags within the <code>&lt;div&gt;</code>.
-* Inline styles on the <code>&lt;div&gt;</code>
-  * Position
-  * Opacity
-* CSS styles applied to <code>&lt;p&gt;</code> tags
-  * Font
-  * Text size
-  * Leading
-  * Paragraph space before and after
-  * Paragraph alignment
-    * The alignment of the first paragraph of a text object determines how it is placed in the html. If the first paragraph is left aligned, then on the web page the text object’s div will be absolutely positioned from it’s left edge. If the first paragraph is right aligned, the div will be positioned from its right edge. If the first paragraph is centered, then the div will be positioned from its center.
-    * This is important because fonts are rendered slightly differently across browsers and operating systems. This means that in IE on a Windows machine, the font may be a bit larger than in Chrome on a Mac. So a label next to a city dot on a map end up too far away or overlapping the dot if you do not paragraph align the text relative to the dot.
-    * Setting more than one kind of paragraph alignment on a point text object cannot be translated into html, as there is really no such thing as a point text object in html. If you really want to have different paragraph alignments within a single text object, you should do it with an area text object.
-  * Capitalization
-  * Text color
-  * Character tracking</p>
-
-<h2 id="limitations">Limitations</h2>
-
-<ul>
-<li>Because numbers get rounded to whole pixels by the web page when formatting text and positioning elements, the html version of a graphic will not line up exactly with its Illustrator version. Rounding differences are particularly compounded if you have blocks of text that span many lines and have fractional leading in Illustrator.</li>
-<li>The script currently only sets one style per paragraph, so custom styled words or characters within a paragraph are ignored. Each paragraph’s style is determined by the middle character in the paragraph.</li>
-<li>The script assumes that text always goes above the art.</li>
-<li>Artboards should have unique names.</li>
-<li>Paragraphs with full justification and center/left/right specified will just be “justified” in html.</li>
-<li>If text is not hidden using the hide command, but rather is hidden because it is behind a mask, it will show up if it is within the artboard.</li>
-<li>Labels in graph objects will be rendered as part of the image. (Something changed in newer versions of CC in the way text objects inside the graph object are handled.) If you want your chart labels to be shown as html, you will need to ungroup the chart.</li>
-<li>In area text blocks, text that is hidden because it is overflowing the box will appear in the html output. A future version of the script may exclude that text (if I can figure out how to do it).</li>
-</ul>
-
-<p>Features
-Custom css, js, html
-Adding classes by using layers
-Alignment
-Vertical alignment
-Mustache templating
-Dynamic
-Lazy load
-Image settings
-Promo image auto generated
-Output to one html file or multiple html files.
-Artboard
-Naming to set lower viewports
-Add “-” to front to ignore</p>
-
-<p>Options set by where you put your ai file
-If the file is in the ai folder in an ai2html project, the html output automatically goes into the public folder of the Preview project.
-If the file is in the ai folder of a Preview project that is not an ai2html project, the html output goes into the src folder of the Preview project.
-The ai2html script determines if the Preview project is an ai2html project by checking to see if “project_type” in the config.yml is set to “ai2html.”</p>
-
-<p>Options set by the ai2html-settings text block
-These are generally not space or tab sensitive. Just separate the setting name from the option with a colon.
-image_format
-Options:
-png
-jpg
-Notes:
-You can specify both png and jpg by typing both of them separated by a comma — as in “png, jpg” — if you want to just generate both and see which one is larger. Only the first one in the list will be used in the output.
-Generally, select png for graphics that have fewer colors, like charts. Select jpg if there are photographic images or many gradients/blends.
-responsiveness
-Options:
-fixed
-dynamic
-Notes:
-The fixed option will generate a static graphic at the size of the artboard.
-If you specify dynamic, the web output will scale to fill the width of the div that you put the html output into.
-output
-Options:
-preview-one-file
-preview-multiple-files
-Notes:
-The one-file option will put the html for all artboards into a single html file called index.html.
-The multiple-file option will generate a separate html file for each artboard. The files will be named a composite of the ai filename and the artboard name.
-use_lazy_loader
-Options:
-yes
-no
-Notes:
-If yes is specified, then a dummy image (a transparent png) is inserted into the html output in place of the image. Data attributes are added to the img tag so that the real image is only loaded if the viewport that uses the image is actually active. This prevents the images from artboards for other viewports from loading, thus allowing the page to load more quickly. This option will also force the inclusion of resizer.js and resizer.css onto the page which is the magic that swaps out the images.
-If no is specifed, then the urls of images for all artboards and viewports are hardcoded in the html. Beware that for pages with large images or many images, choosing this option will make the page load more slowly because it will be loading unnecessary images.
-use_2x_images_if_possible
-Options:
-yes
-no
-Notes:
-If yes, the script will generate double resolution images if the image size does not exceed the pixel limit for older iPhones.
-create_promo_image
-Options
-yes
-no
-Notes:
-If yes, the script will generate a jpg or png (depending on what is specified by image_format) at a very large size to satisfy the requirements of Scoop promo images.
-png_transparent
-Options
-yes
-no
-Notes
-If yes, png images used in the html output will have a transparent background.
-png_number_of_colors
-Options
-A number from 2 to 256
-Default is 128
-Notes
-If png is selected in image_format, this can be used to set the quality of the png. Higher numbers may improve the image quality, but will also increase the file size.
-jpg_quality
-Options
-A number from 0 to 100
-Default is 80
-Notes
-If jpg are selected in image_format, this can be used to set the quality of the png. Higher numbers may improve the image quality, but will also increase the file size.</p>
-
-<p>headline, leadin, notes, credit, sources
-Options
-Text. Cannot contain returns.
-last_updated_text
-Options
-page_template : { useQuoteMarks:false, defaultValue:&quot;nyt5-article-embed&quot; },
-scoop_publish_fields : { useQuoteMarks:false, defaultValue:&quot;true&quot; },
-publish_system : { useQuoteMarks:false, defaultValue:&quot;scoop&quot; }, // or scoop_stg
-scoop_username : { useQuoteMarks:false, defaultValue:&quot;&quot; },
-scoop_slug : { useQuoteMarks:false, defaultValue:&quot;&quot; },
-scoop_external_edit_key : { useQuoteMarks:false, defaultValue:&quot;&quot; },
-scoop_asset_id : { useQuoteMarks:false, defaultValue:&quot;&quot; }</p>
-
-<p>Options set by the artboard palette</p>
-
-<p>Options set by the layers palette</p>
-
-<p>Options set by the object’s “Notes” attribute# ai2html</p>
-
-<blockquote>
-<p>ai2html is a script for Adobe Illustrator that converts your Illustrator document into html and css.</p>
-</blockquote>
-
-<h2 id="about">About</h2>
-
-<p>The script renders text as absolutely positioned html elements. The remaining art is exported as an image that is placed underneath the text in the html. Artboards can be rendered as separate divs in a single file, or as separate files. The exported files are html partials, that is, everything is enclosed in a div that can be inserted into a page template. It is also possible to specify an html page template into which the script will insert the html partial so you can preview your artwork in the context of your site architecture and css.</p>
-
-<p>Text styles are applied at the paragraph level. Each paragraph is given the character and paragraph attributes of the middle character of the paragraph. Other character styles within a paragraph are ignored — though I&#39;m hoping to add this as a feature in the future. A work-around for this limitation is to enclose text in classed <code>&lt;span&gt;</code> tags and define styles for those classes in an <code>ai2html-css</code> text block (described below).</p>
-
-<p>Paragraphs are styled using css classes that are consolidated across each artboard. This means that all paragraphs with the same style attributes are styled with a single css class. Text blocks in the output are ordered top-to-bottom, left-to-right so that the document is somewhat readable.</p>
-
-<p><a href="https://delicious.com/archietse/ai2html">Here are examples</a> of how we’ve used the script at The New York Times.</p>
-
-<h2 id="table-of-contents">Table of contents</h2>
-
-<ul>
-<li><a href="#how-to-install-ai2html">How to install ai2html</a></li>
-<li><a href="#overview-of-how-to-use-ai2html">Overview of how to use ai2html</a></li>
-<li><a href="#controlling-how-your-text-is-converted-into-html">Controlling how your text is converted into html</a></li>
-<li><a href="#settings">Settings</a></li>
-<li><a href="#which-attributes-are-converted-to-html-and-css">Which attributes are converted to html and css</a></li>
-<li><a href="#limitations">Limitations</a></li>
-</ul>
-
-<h2 id="how-to-install-ai2html">How to install ai2html</h2>
-
-<p>Move the ai2html.jsx file into the Illustrator folder where scripts are located. For example, on Mac OS&nbsp;X running Adobe Illustrator CC 2014, the path would be:
-<code>
-Applications\Adobe Illustrator CC 2014\Presets\en_US\Scripts\ai2html.jsx
-</code></p>
-
-<h2 id="overview-of-how-to-use-ai2html">Overview of how to use ai2html</h2>
-
-<ol>
-<li>Create your Illustrator artwork. Size the artboard to the dimensions that you want the div to appear on the web page. Make sure your <code>Document Color Mode</code> is set to <code>RGB</code> and that your document is saved.</li>
-<li>Run the script by choosing: <code>File &gt; Scripts &gt; ai2html</code></li>
-<li>Go to the folder containing your Illustrator file. Inside will be a folder called <code>ai2html-output</code>. Open the html files in your browser to preview your output.</li>
-<li>To edit or further customize the output, just go back to your Illustrator document, make changes to the text and artwork, or to the settings text block that is placed in the Illustrator document the first time you run the script on a file. Rerun the script.<br></li>
-</ol>
-
-<h2 id="controlling-how-your-text-is-converted-into-html">Controlling how your text is converted into html</h2>
-
-<p>Discussion here about:
-- Choosing between point and area text.
-- Choosing the paragraph alignment of the text
-- Limitations because of one style per paragraph</p>
-
-<h2 id="settings">Settings</h2>
-
-<p>There are several ways of customizing the output of the script:
-- <a href="#special-text-blocks">Special text blocks</a>
-  - <a href="#ai2html-settings">ai2html-settings</a>
-  - <a href="#ai2html-css">ai2html-css</a>
-  - <a href="#ai2html-js">ai2html-js</a>
-  - <a href="#ai2html-html">ai2html-html</a>
-  - <a href="#ai2html-text">ai2html-text</a>
-- <a href="#layers-palette">Layers palette</a>
-- <a href="#artboards-palette">Artboards palette</a>
-- <a href="#attributes-palette">Attributes palette</a></p>
 
 <h4 id="special-text-blocks">Special text blocks</h4>
 
@@ -476,7 +138,7 @@ Applications\Adobe Illustrator CC 2014\Presets\en_US\Scripts\ai2html.jsx
 
 <p>Most of the script’s options are set in the settings text block. When you run ai2html for the first time in your ai file, the script will place a settings text block to the upper left of all your artboards. Here is a description of the settings:</p>
 
-<p><em>Options that are included in the settings text block by default</em></p>
+<p><em>Options that are included in the settings text block by default:</em></p>
 
 <ul>
 <li><strong>image_format</strong>
@@ -484,7 +146,7 @@ Applications\Adobe Illustrator CC 2014\Presets\en_US\Scripts\ai2html.jsx
 <ul>
 <li><span style="font-variant: small-caps">Possible values</span>: <code>png</code> <code>png24</code> <code>jpg</code></li>
 <li><span style="font-variant: small-caps">Default</span>: <code>png</code></li>
-<li>You can specify more than one image format to be output by listing the desired formats separated by commas. This can be useful if you want to see which image format has the smallest file size. The first format in the list will be the only one referenced in the html. </li>
+<li>You can specify more than one image format to be output by listing the desired formats separated by commas. This can be useful if you want to see which image format has the smallest file size. The first format in the list will be the only one referenced in the html.</li>
 </ul></li>
 <li><strong>responsiveness</strong>
 
@@ -520,11 +182,17 @@ Applications\Adobe Illustrator CC 2014\Presets\en_US\Scripts\ai2html.jsx
 <li><span style="font-variant: small-caps">Default</span>: <code>&lt;blank&gt;</code></li>
 <li>Use this if you want to change the path of the images that are placed behind the html text. This path should be written relative to the location of the <code>html_output_path</code>.</li>
 </ul></li>
+<li><strong>image_source_path</strong>
+
+<ul>
+<li><span style="font-variant: small-caps">Default</span>: if not set, <code>image_output_path</code> will be used</li>
+<li>In some scenarios the relative path between published html and images is different from how the files are stored. Use <code>html_source_path</code> to specify the location from where the images are loaded in the <code>&lt;img&gt;</code> tags. This does not change where image files are stored.</li>
+</ul></li>
 <li><strong>local_preview_template</strong>
 
 <ul>
 <li><span style="font-variant: small-caps">Default</span>: <code>&lt;blank&gt;</code></li>
-<li>Use this to specify a page template into which the html partial will be inserted to preview your artwork in the context of your site architecture and css. Sample templates can be downloaded from the ai2html Github repo. Any variables from ai2html-settings or ai2html-text blocks can be inserted into the templates using either mustache (eg. <code>) or ejs/erb (eg. `&lt;%=headline%&gt;`) notation. The ai2html partial can be inserted using the</code> variable.</li>
+<li>Use this to specify a page template into which the html partial will be inserted to preview your artwork in the context of your site architecture and css. Sample templates can be downloaded from the ai2html Github repo. Any variables from ai2html-settings or ai2html-text blocks can be inserted into the templates using either mustache (eg. &#123;&#123;headline&#125;&#125; ) or ejs/erb (eg. <code>&lt;%=headline%&gt;</code>) notation. The ai2html partial can be inserted using the <code>&lt;%=ai2htmlPartial%&gt;</code> variable.</li>
 </ul></li>
 <li><strong>png_number_of_colors</strong>
 
@@ -544,7 +212,7 @@ Applications\Adobe Illustrator CC 2014\Presets\en_US\Scripts\ai2html.jsx
 
 <ul>
 <li><span style="font-variant: small-caps">Possible values</span>: Text with no line breaks</li>
-<li>These fields are used to populate fields in the <code>local_preview_tempate</code> and can be written to a “config” text file along with the html. The config file is written in yml can be used to pass parameters to a cms.</li>
+<li>These fields are used to populate fields in the <code>local_preview_template</code> and can be written to a “config” text file along with the html. The config file is written in yml can be used to pass parameters to a cms.</li>
 </ul></li>
 </ul>
 
@@ -577,14 +245,14 @@ Applications\Adobe Illustrator CC 2014\Presets\en_US\Scripts\ai2html.jsx
 <ul>
 <li><span style="font-variant: small-caps">Possible values</span>: <code>yes</code> <code>no</code></li>
 <li><span style="font-variant: small-caps">Default</span>: <code>no</code></li>
-<li>This option lets you make transparent any png image that is output by the program. Note that specifying transparent png’s can result in a visibly significant degradation in the image. </li>
+<li>This option lets you make transparent any png image that is output by the program. Note that specifying transparent png’s can result in a visibly significant degradation in the image.</li>
 </ul></li>
 <li><strong>center_html_output</strong>
 
 <ul>
 <li><span style="font-variant: small-caps">Possible values</span>: <code>true</code> <code>false</code></li>
 <li><span style="font-variant: small-caps">Default</span>: <code>true</code></li>
-<li>Specifying <code>true</code> on this option causes the ai2html div to be centered within the container it is placed in. </li>
+<li>Specifying <code>true</code> on this option causes the ai2html div to be centered within the container it is placed in.</li>
 </ul></li>
 <li><strong>use_2x_images_if_possible</strong>
 
@@ -622,7 +290,7 @@ Applications\Adobe Illustrator CC 2014\Presets\en_US\Scripts\ai2html.jsx
 
 <p>To assign text to a variable, create a text block somewhere in your Illustrator document, but not on an artboard. Make the first line of that text block read <code>ai2html-text</code>. Each subsequent paragraph should be in the format of <code>variable_name: Lorem ipsum dolor.</code>. Variable names should only be letters, numbers and underscores.</p>
 
-<p>Now you can insert that text anywhere in your document by placing `<code>or</code>&lt;%=variable_name%&gt;` where you want that text to appear.</p>
+<p>Now you can insert that text anywhere in your document by placing &#123;&#123;variable_name&#125;&#125; or <code>&lt;%=variable_name%&gt;</code> where you want that text to appear.</p>
 
 <p>Note that you can pass mustache or erb/ejs notation untouched to your html partial as long as the variable names don’t match the variable names in the <code>ai2html-settings</code> or <code>ai2html-text</code> blocks.</p>
 
@@ -652,7 +320,7 @@ Applications\Adobe Illustrator CC 2014\Presets\en_US\Scripts\ai2html.jsx
 <li><p><strong>Specifying artboards to ignore</strong></p>
 
 <ul>
-<li>Add a dash, ie. <code>-</code>, as the first character of an artboard name to tell the script that you don’t want it to be included in the output.<br></li>
+<li>Add a dash, ie. <code>-</code>, as the first character of an artboard name to tell the script that you don’t want it to be included in the output.</li>
 </ul></li>
 </ul>
 
@@ -671,137 +339,124 @@ Applications\Adobe Illustrator CC 2014\Presets\en_US\Scripts\ai2html.jsx
 </ul></li>
 </ul>
 
+<h2 id="point-text-vs.-area-text">Point text vs. area text</h2>
+
+<p>The script handles point text and area text slightly differently which has ramifications on how text wraps on your web page. Fonts never appear identically in Illustrator and in web browsers. For example, the versions of Arial in Illustrator, in Chrome on a Mac and in Internet Explorer on Windows are not exactly the same so text that fits in a box in Illustrator, may be longer on IE or shorter in Chrome.</p>
+
+<ul>
+<li><p><strong>Point text</strong></p>
+
+<ul>
+<li>The div containing a point text object is not given any width so that text will flow indefinitely outward from its anchor (<a href="#attributes-palette">see <code>valign</code> discussion</a>).</li>
+</ul></li>
+<li><p><strong>Area text</strong></p>
+
+<ul>
+<li>The div containing an area text object is given the width of the bounding box so that text will likely wrap differently on different browsers within that width.</li>
+</ul></li>
+</ul>
+
 <h2 id="which-attributes-are-converted-to-html-and-css">Which attributes are converted to html and css</h2>
 
-<p>The script processes each text object in your Illustrator file and translates these attributes into inline and css styles. Each point- or area-text object is converted into a <code>&lt;div&gt;</code>. Each paragraph in the text object are converted into <code>&lt;p&gt;</code> tags within the <code>&lt;div&gt;</code>.
-* Inline styles on the <code>&lt;div&gt;</code>
-  * Position
-  * Opacity
-* CSS styles applied to <code>&lt;p&gt;</code> tags
-  * Font
-  * Text size
-  * Leading
-  * Paragraph space before and after
-  * Paragraph alignment
-    * The alignment of the first paragraph of a text object determines how it is placed in the html. If the first paragraph is left aligned, then on the web page the text object’s div will be absolutely positioned from it’s left edge. If the first paragraph is right aligned, the div will be positioned from its right edge. If the first paragraph is centered, then the div will be positioned from its center.
-    * This is important because fonts are rendered slightly differently across browsers and operating systems. This means that in IE on a Windows machine, the font may be a bit larger than in Chrome on a Mac. So a label next to a city dot on a map end up too far away or overlapping the dot if you do not paragraph align the text relative to the dot.
-    * Setting more than one kind of paragraph alignment on a point text object cannot be translated into html, as there is really no such thing as a point text object in html. If you really want to have different paragraph alignments within a single text object, you should do it with an area text object.
-  * Capitalization
-  * Text color
-  * Character tracking</p>
+<p>The script processes each text object in your Illustrator file and translates the object and text attributes into inline and css styles. Each point- or area-text object is converted into a <code>&lt;div&gt;</code>. Each paragraph is converted into <code>&lt;p&gt;</code> tags within the <code>&lt;div&gt;</code>.</p>
+
+<ul>
+<li><p><strong>Added to inline styles on the <code>&lt;div&gt;</code></strong></p>
+
+<ul>
+<li>Position</li>
+<li>Opacity</li>
+<li>Only opacity applied directly to the text object is applied.</li>
+<li><em>Future versions of the script may traverse parent groups and layers to calculate cumulative opacity applied to the text object.</em></li>
+<li>Width</li>
+<li>The width is specified in the html output if it is an area-text object. Point-text objects are given no width.</li>
+</ul></li>
+<li><p><strong>Added to CSS classes applied to <code>&lt;p&gt;</code> tags</strong></p>
+
+<ul>
+<li>Font</li>
+<li>Fonts are converted from Illustrator to web font names in an array in the script. Edit the <code>fonts</code> array to add your custom web fonts.</li>
+<li>Font size</li>
+<li>Leading</li>
+<li>Paragraph space before and after</li>
+<li>Paragraph alignment</li>
+<li>The alignment of the first paragraph of a text object determines how it is placed in the html. If the first paragraph is left aligned, then on the web page the text object’s div will be absolutely positioned from it’s left edge. If the first paragraph is right aligned, the div will be positioned from its right edge. If the first paragraph is centered, then the div will be positioned from its center.</li>
+<li>This is important because fonts are rendered slightly differently across browsers and operating systems. So a label next to a city dot on a map end up too far away or overlapping the dot if you do not paragraph align the text relative to the dot.</li>
+<li>Setting more than one kind of paragraph alignment on a point-text object cannot be translated into html, as there is really no such thing as a point-text object in html. If you really want to have different paragraph alignments within a single text object, you should do it with an area text object.</li>
+<li>Capitalization</li>
+<li>Text color</li>
+<li>Character tracking</li>
+</ul></li>
+</ul>
+
+<h2 id="how-does-ai2html-work">How does ai2html work</h2>
+
+<p>The script renders text as absolutely positioned html elements. The remaining art is exported as an image that is placed underneath the text in the html. Artboards can be rendered as separate divs in a single file, or as separate files. The exported files are html partials, that is, everything is enclosed in a div that can be inserted into a page template. It is also possible to specify an html page template into which the script will insert the html partial so you can preview your artwork in the context of your site architecture and css.</p>
+
+<p>Text styles are applied at the paragraph level. Each paragraph is given the character and paragraph attributes of the middle character of the paragraph. Other character styles within a paragraph are ignored — though we’re hoping to add this as a feature in the future. A work-around for this limitation is to enclose text in classed <code>&lt;span&gt;</code> tags and define styles for those classes in an <code>ai2html-css</code> text block (described below).</p>
+
+<p>Paragraphs are styled using css classes that are consolidated across each artboard. This means that all paragraphs with the same style attributes are styled with a single css class. Text blocks in the output are ordered top-to-bottom, left-to-right so that the document is somewhat readable.</p>
 
 <h2 id="limitations">Limitations</h2>
 
 <ul>
+<li>Text that has been rotated or skewed is not converted into html, but rather rendered onto the image. <em>We’re hoping to have a fix for this soon.</em></li>
 <li>Because numbers get rounded to whole pixels by the web page when formatting text and positioning elements, the html version of a graphic will not line up exactly with its Illustrator version. Rounding differences are particularly compounded if you have blocks of text that span many lines and have fractional leading in Illustrator.</li>
 <li>The script currently only sets one style per paragraph, so custom styled words or characters within a paragraph are ignored. Each paragraph’s style is determined by the middle character in the paragraph.</li>
 <li>The script assumes that text always goes above the art.</li>
 <li>Artboards should have unique names.</li>
-<li>Paragraphs with full justification and center/left/right specified will just be “justified” in html.</li>
+<li>Paragraphs with full justification specified will just be “justified” in html.</li>
 <li>If text is not hidden using the hide command, but rather is hidden because it is behind a mask, it will show up if it is within the artboard.</li>
 <li>Labels in graph objects will be rendered as part of the image. (Something changed in newer versions of CC in the way text objects inside the graph object are handled.) If you want your chart labels to be shown as html, you will need to ungroup the chart.</li>
-<li>In area text blocks, text that is hidden because it is overflowing the box will appear in the html output. A future version of the script may exclude that text (if I can figure out how to do it).</li>
+<li>In area text blocks, text that is hidden because it is overflowing the box will appear in the html output.</li>
 </ul>
 
-<p>Features
-Custom css, js, html
-Adding classes by using layers
-Alignment
-Vertical alignment
-Mustache templating
-Dynamic
-Lazy load
-Image settings
-Promo image auto generated
-Output to one html file or multiple html files.
-Artboard
-Naming to set lower viewports
-Add “-” to front to ignore</p>
+<h2 id="what-works-well-and-what-does-not">What works well and what does not</h2>
 
-<p>Options set by where you put your ai file
-If the file is in the ai folder in an ai2html project, the html output automatically goes into the public folder of the Preview project.
-If the file is in the ai folder of a Preview project that is not an ai2html project, the html output goes into the src folder of the Preview project.
-The ai2html script determines if the Preview project is an ai2html project by checking to see if “project_type” in the config.yml is set to “ai2html.”</p>
+<ul>
+<li><p><strong>Works well</strong></p>
 
-<p>Options set by the ai2html-settings text block
-These are generally not space or tab sensitive. Just separate the setting name from the option with a colon.
-image_format
-Options:
-png
-jpg
-Notes:
-You can specify both png and jpg by typing both of them separated by a comma — as in “png, jpg” — if you want to just generate both and see which one is larger. Only the first one in the list will be used in the output.
-Generally, select png for graphics that have fewer colors, like charts. Select jpg if there are photographic images or many gradients/blends.
-responsiveness
-Options:
-fixed
-dynamic
-Notes:
-The fixed option will generate a static graphic at the size of the artboard.
-If you specify dynamic, the web output will scale to fill the width of the div that you put the html output into.
-output
-Options:
-preview-one-file
-preview-multiple-files
-Notes:
-The one-file option will put the html for all artboards into a single html file called index.html.
-The multiple-file option will generate a separate html file for each artboard. The files will be named a composite of the ai filename and the artboard name.
-use_lazy_loader
-Options:
-yes
-no
-Notes:
-If yes is specified, then a dummy image (a transparent png) is inserted into the html output in place of the image. Data attributes are added to the img tag so that the real image is only loaded if the viewport that uses the image is actually active. This prevents the images from artboards for other viewports from loading, thus allowing the page to load more quickly. This option will also force the inclusion of resizer.js and resizer.css onto the page which is the magic that swaps out the images.
-If no is specifed, then the urls of images for all artboards and viewports are hardcoded in the html. Beware that for pages with large images or many images, choosing this option will make the page load more slowly because it will be loading unnecessary images.
-use_2x_images_if_possible
-Options:
-yes
-no
-Notes:
-If yes, the script will generate double resolution images if the image size does not exceed the pixel limit for older iPhones.
-create_promo_image
-Options
-yes
-no
-Notes:
-If yes, the script will generate a jpg or png (depending on what is specified by image_format) at a very large size to satisfy the requirements of Scoop promo images.
-png_transparent
-Options
-yes
-no
-Notes
-If yes, png images used in the html output will have a transparent background.
-png_number_of_colors
-Options
-A number from 2 to 256
-Default is 128
-Notes
-If png is selected in image_format, this can be used to set the quality of the png. Higher numbers may improve the image quality, but will also increase the file size.
-jpg_quality
-Options
-A number from 0 to 100
-Default is 80
-Notes
-If jpg are selected in image_format, this can be used to set the quality of the png. Higher numbers may improve the image quality, but will also increase the file size.</p>
+<ul>
+<li>Diagrams or maps in which labels are placed organically around the artwork.</li>
+</ul></li>
+<li><p><strong>Not so great</strong></p>
 
-<p>headline, leadin, notes, credit, sources
-Options
-Text. Cannot contain returns.
-last_updated_text
-Options
-page_template : { useQuoteMarks:false, defaultValue:&quot;nyt5-article-embed&quot; },
-scoop_publish_fields : { useQuoteMarks:false, defaultValue:&quot;true&quot; },
-publish_system : { useQuoteMarks:false, defaultValue:&quot;scoop&quot; }, // or scoop_stg
-scoop_username : { useQuoteMarks:false, defaultValue:&quot;&quot; },
-scoop_slug : { useQuoteMarks:false, defaultValue:&quot;&quot; },
-scoop_external_edit_key : { useQuoteMarks:false, defaultValue:&quot;&quot; },
-scoop_asset_id : { useQuoteMarks:false, defaultValue:&quot;&quot; }</p>
+<ul>
+<li>Graphics with long blocks of wrapped text or many lines of text.</li>
+<li>Things that should really be coded up as a table or as columns in which the height of the cells needs to adjust dynamically for long blocks of text that wrap.</li>
+</ul></li>
+</ul>
 
-<p>Options set by the artboard palette</p>
+<h2 id="using-fonts-other-than-arial-and-georgia">Using fonts other than Arial and Georgia</h2>
 
-<p>Options set by the layers palette</p>
+<p>If you want to use fonts other than Arial and Georgia, you can add them to the <code>fonts</code> array in the <code>constants</code> section of the script. You will need to know how Illustrator refers to the font. Enter this name as the <code>aifont</code> property.</p>
 
-<p>Options set by the object’s “Notes” attribute</p>
+<p>You can find the names that Illustrator uses for all the fonts used in your document by choosing <code>Find Font…</code> from the <code>Type</code> menu. You can also use the <a href="https://raw.githubusercontent.com/newsdev/ai2html/master/utilities/aifontname.js">aifontname script</a>, which will tell you the fonts used for selected text blocks.</p>
+
+<p>You will need to assign each Illustrator font correspond to a specific font-family, weight and style, which will be used by the script to write the css that will be applied to your text. For example, the Illustrator font name <code>Arial-BoldItalicMT</code> corresponds to this css:
+<code>
+font-family: arial,helvetica,sans-serif;
+font-weight: bold;
+font-style: italic;
+</code></p>
+
+<p>You may find it helpful to make a copy of this <a href="http://bit.ly/1BP86RH">Google spreadsheet</a>. The <code>fonts</code> worksheet can make it easier to create additional font objects to add to the array.</p>
+
+<h2 id="contributing-to-this-project">Contributing to this project</h2>
+
+<p>The Github repository for this site is available at <a href="https://github.com/newsdev/ai2html">newsdev/ai2html</a>.</p>
+
+<h2 id="thanks">Thanks</h2>
+
+<p>Many thanks to <a href="https://twitter.com/jashkenas">Jeremy Ashkenas</a>, <a href="https://twitter.com/mericson">Matt Ericson</a>, <a href="https://twitter.com/giratikanon">Tom Giratikanon</a>, <a href="https://twitter.com/alanmclean">Alan McLean</a> and my colleagues in The New York Times <a href="https://twitter.com/nytgraphics">Graphics Department</a> for their patient guidance in the development of this project.</p>
+
+<p>If you’re learning to write Javascript for Adobe Illustrator, <a href="http://www.wundes.com/JS4AI/">John Wundes</a>, has many wonderful scripts. <a href="http://www.wundes.com/JS4AI/explore.js">explore.js</a> is particularly helpful for understanding what attributes are attached to Illustrator objects.</p>
+
+<hr>
+
+<p style="font-size:.8em;opacity:0.5;">Created by <a href="https://twitter.com/archietse">Archie Tse</a> / <a href="https://github.com/newsdev">The New York Times</a></p>
+
+<p style="font-size:.8em;opacity:0.7;">Copyright (c) 2011-2015 The New York Times Company</p>
 
 
 </div>
