@@ -268,7 +268,7 @@ var createPromoImage = function(abNumber) {
 		abH                  = -activeArtboardRect[3]-abY,
 		artboardAspectRatio  =  abH/abW,
 		artboardName         =  makeKeyword(activeArtboard.name),
-		docArtboardName      =  makeKeyword(filename) + "-" + artboardName + "-" + abNumber,
+		docArtboardName      =  makeKeyword(docSettings.project_name) + "-" + artboardName + "-" + abNumber,
 		imageDestination     =  docPath + docArtboardName + "-promo",
 		promoImageAspect     =  promoImageMinHeight/promoImageMinWidth,
 		promoScale           =  1;
@@ -276,13 +276,13 @@ var createPromoImage = function(abNumber) {
 		promoScale = promoImageMinWidth/abW;
 		if (abH * promoScale > promoImageMaxHeight) {
 			promoScale = promoImageMaxHeight/abH;
-		};
+		}
 	} else {
 		promoScale = promoImageMinHeight/abH;
 		if (abW * promoScale > promoImageMaxWidth) {
 			promoScale = promoImageMaxWidth/abW;
-		};
-	};
+		}
+	}
 
 	var promoW = abW * promoScale;
 	var promoH = abH * promoScale;
@@ -392,12 +392,15 @@ if (scriptEnvironment=="nyt") {
         settings_version: {defaultValue: scriptVersion, includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
         create_promo_image: {defaultValue: "yes", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
         image_format: {defaultValue: ["png"], includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "array", possibleValues: "jpg, png, png24", notes: "Images will be generated in mulitple formats if multiple formats are listed, separated by commas. The first format will be used in the html. Sometimes this is useful to compare which format will have a smaller file size."},
+        write_image_files: {defaultValue: "yes", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: "Set this to “no” to skip writing the image files. Generally only use this after you have run the script once with this setting set to “yes.”"},
         responsiveness: {defaultValue: "fixed", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "fixed, dynamic", notes: "Dynamic responsiveness means ai graphics will scale to fill the container they are placed in."},
-        max_width: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: true, useQuoteMarksInConfigFile: false, inputType: "integer", possibleValues: "", notes: "Blank or any positive number in pixels, but do not write “px” - blank means artboards will set max size, instead it is written to the config file so that the max width can be applied to the template’s container."},
+        max_width: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "integer", possibleValues: "", notes: "Blank or any positive number in pixels, but do not write “px” - blank means artboards will set max size, instead it is written to the config file so that the max width can be applied to the template’s container."},
         output: {defaultValue: "one-file", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "one-file, multiple-files", notes: "One html file containing all the artboards or a separate html file for each artboard."},
+        project_name: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: "Use this to set a custom project name. The project name is being used in output filenames, class names, etc."},
         html_output_path: {defaultValue: "../src/", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "folderPath", possibleValues: "", notes: "Allows user to change folder to write html files, path should be written relative to ai file location. This is ignored if the project_type in the yml is ai2html."},
         html_output_extension: {defaultValue: ".html", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "fileExtension", possibleValues: "", notes: "This is ignored if the project_type in the yml is ai2html."},
         image_output_path: {defaultValue: "../public/_assets/", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "folderPath", possibleValues: "", notes: "_assets/ for preview default. This is where the image files get written to locally and should be written as if the html_output location is the starting point."},
+        image_source_path: {defaultValue: null, includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "folderPath", possibleValues: "", notes: "Use this setting to specify from where the images are being loaded from the HTML file. Defaults to image_output_path"},
         create_config_file: {defaultValue: "true", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "trueFalse", possibleValues: "", notes: "This is ignored in env=nyt."},
         config_file_path: {defaultValue: "../config.yml", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "filePath", possibleValues: "", notes: "This only gets used to write the config file. It’s not used in the nyt mode to read the config.yml. Path should written relative to the ai file location."},
         local_preview_template: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "filePath", possibleValues: "", notes: ""},
@@ -411,6 +414,8 @@ if (scriptEnvironment=="nyt") {
         include_resizer_classes: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
         svg_embed_images: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
         render_rotated_skewed_text_as: {defaultValue: "html", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "image, html", notes: ""},
+        show_completion_dialog_box: {defaultValue: "true", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "trueFalse", possibleValues: "", notes: "Set this to false if you don't want to see the dialog box confirming completion of the script."},
+        clickable_link: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: "If you put a url in this field, an <a> tag will be added, wrapping around the output and pointing to that url."},
         testing_mode: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
         last_updated_text: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: ""},
         headline: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: ""},
@@ -429,19 +434,22 @@ if (scriptEnvironment=="nyt") {
         scoop_username: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
         scoop_slug: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
         scoop_external_edit_key: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""}
-	}
+	};
 } else {
 	var ai2htmlBaseSettings = {
         ai2html_environment: {defaultValue: scriptEnvironment, includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
         settings_version: {defaultValue: scriptVersion, includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
         create_promo_image: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
         image_format: {defaultValue: ["png"], includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "array", possibleValues: "jpg, png, png24", notes: "Images will be generated in mulitple formats if multiple formats are listed, separated by commas. The first format will be used in the html. Sometimes this is useful to compare which format will have a smaller file size."},
+        write_image_files: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: "Set this to “no” to skip writing the image files. Generally only use this after you have run the script once with this setting set to “yes.”"},
         responsiveness: {defaultValue: "fixed", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "fixed, dynamic", notes: "Dynamic responsiveness means ai graphics will scale to fill the container they are placed in."},
         max_width: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "integer", possibleValues: "", notes: "Blank or any positive number in pixels, but do not write “px” - blank means artboards will set max size, the max width is not included in the html stub, instead it is written to the config file so that the max width can be applied to the template’s container."},
         output: {defaultValue: "one-file", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "one-file, multiple-files", notes: "One html file containing all the artboards or a separate html file for each artboard."},
+        project_name: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: "Use this to set a custom project name. The project name is being used in output filenames, class names, etc."},
         html_output_path: {defaultValue: "/ai2html-output/", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "folderPath", possibleValues: "", notes: "Allows user to change folder to write html files, path should be written relative to ai file location. This is ignored if the project_type in the yml is ai2html."},
         html_output_extension: {defaultValue: ".html", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "fileExtension", possibleValues: "", notes: "This is ignored if the project_type in the yml is ai2html."},
-        image_output_path: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "folderPath", possibleValues: "", notes: "_assets/ for preview default. This is where the image files get written to locally and should be written as if the html_output is the starting point."},
+        image_output_path: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "folderPath", possibleValues: "", notes: "This is where the image files get written to locally and should be written as if the html_output is the starting point."},
+        image_source_path: {defaultValue: null, includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "folderPath", possibleValues: "", notes: "Use this setting to specify from where the images are being loaded from the HTML file. Defaults to image_output_path"},
         create_config_file: {defaultValue: "false", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "trueFalse", possibleValues: "", notes: "This is ignored in env=nyt."},
         config_file_path: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "filePath", possibleValues: "", notes: "This only gets used to write the config file. It’s not used in the nyt mode to read the config.yml. Path should written relative to the ai file location."},
         local_preview_template: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "filePath", possibleValues: "", notes: ""},
@@ -455,6 +463,8 @@ if (scriptEnvironment=="nyt") {
         include_resizer_classes: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
         svg_embed_images: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
         render_rotated_skewed_text_as: {defaultValue: "html", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "image, html", notes: ""},
+        show_completion_dialog_box: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: "Set this to “no” if you don't want to see the dialog box confirming completion of the script."},
+        clickable_link: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: "If you put a url in this field, an <a> tag will be added, wrapping around the output and pointing to that url."},
         testing_mode: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
         last_updated_text: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: ""},
         headline: {defaultValue: "Ai Graphic Headline", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: ""},
@@ -473,7 +483,7 @@ if (scriptEnvironment=="nyt") {
         scoop_username: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
         scoop_slug: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
         scoop_external_edit_key: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""}
-	}
+	};
 };
 // End of ai2htmlBaseSettings block copied from Google Spreadsheet.
 
@@ -621,7 +631,7 @@ var aiFileInPreviewProject = false;
 var doc                    = app.activeDocument;
 var docPath                = doc.path + "/";
 // var origFilename           = doc.name;
-var filename               = doc.name.replace(/(.+)\.[aieps]+$/,"$1").replace(/ /g,"-");
+
 var origFile               = new File (docPath + doc.name);
 var parentFolder           = docPath.toString().match( /[^\/]+\/$/ );
 var publicFolder           = new Folder( docPath + "../public/" );
@@ -634,8 +644,8 @@ if (scriptEnvironment=="nyt") {
 } else {
 	var alertHed               = "Nice work!";
 
-};
-var textFramesToUnhide     = []
+}
+var textFramesToUnhide     = [];
 var lockedObjects          = [];
 var largestArtboardIndex;
 var largestArtboardArea    = 0;
@@ -722,6 +732,12 @@ for (setting in ai2htmlBaseSettings) {
 	// };
 	docSettings[setting] = ai2htmlBaseSettings[setting].defaultValue;
 };
+
+if (docSettings.project_name == "") {
+	docSettings.project_name = doc.name.replace(/(.+)\.[aieps]+$/,"$1").replace(/ /g,"-");
+} else {
+	docSettings.project_name = makeKeyword(docSettings.project_name);
+}
 
 // ================================================
 // determine which artboards get which show classes
@@ -1084,6 +1100,10 @@ if (previewProjectType=="ai2html") {
 };
 docSettings.preview_image_path = "_assets/";
 
+if (docSettings.image_source_path === null) {
+	// fall back to image output path
+	docSettings.image_source_path = docSettings.image_output_path;
+}
 
 // ================================================
 // check for things that should/could prevent the script from running, otherwise proceed
@@ -1137,9 +1157,9 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 
 			doc.artboards.setActiveArtboardIndex(abNumber);
 			var activeArtboard      =  doc.artboards[abNumber];
-			docSettings.docName     =  makeKeyword(filename);
+			docSettings.docName     =  makeKeyword(docSettings.project_name);
 			var artboardName        =  makeKeyword(activeArtboard.name.replace( /^(.+):\d+$/ , "$1"));
-			// var docArtboardName     =  makeKeyword(filename) + "-" + artboardName + "-" + abNumber;
+			// var docArtboardName     =  makeKeyword(docSettings.project_name) + "-" + artboardName + "-" + abNumber;
 			var docArtboardName     =  docSettings.docName + "-" + artboardName;
 			var activeArtboardRect  =  activeArtboard.artboardRect;
 			var abX                 =  activeArtboardRect[0];
@@ -1228,7 +1248,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 				if (docSettings.ai2html_environment=="nyt") {
 					html[5] += "\t\t\t\tsrc='"   + docSettings.preview_image_path + docArtboardName + imageExtension + "'\r";
 				} else {
-					html[5] += "\t\t\t\tsrc='"   + docSettings.image_output_path + docArtboardName + imageExtension + "'\r";
+					html[5] += "\t\t\t\tsrc='"   + docSettings.image_source_path + docArtboardName + imageExtension + "'\r";
 				};
 				html[5] += "\t\t\t\twidth="  + Math.round(abW) + "\r";
 				html[5] += "\t\t\t\theight=" + Math.round(abH) + "\r";
@@ -1242,14 +1262,14 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 					if (docSettings.ai2html_environment=="nyt") {
 						html[5] += "\t\t\t\tsrc='"   + docSettings.preview_image_path + docArtboardName + imageExtension + "'\r";
 					} else {
-						html[5] += "\t\t\t\tsrc='"   + docSettings.image_output_path + docArtboardName + imageExtension + "'\r";
+						html[5] += "\t\t\t\tsrc='"   + docSettings.image_source_path + docArtboardName + imageExtension + "'\r";
 					};
 				} else {
                     html[5] += "\t\t\t\tsrc='data:image/gif;base64,R0lGODlhCgAKAIAAAB8fHwAAACH5BAEAAAAALAAAAAAKAAoAAAIIhI+py+0PYysAOw=='\r"; // dummy image to hold space while image loads
 					if (docSettings.ai2html_environment=="nyt") {
 	                    html[5] += "\t\t\t\tdata-src='"   + docSettings.preview_image_path + docArtboardName + imageExtension + "'\r";
 					} else {
-	                    html[5] += "\t\t\t\tdata-src='"   + docSettings.image_output_path + docArtboardName + imageExtension + "'\r";
+	                    html[5] += "\t\t\t\tdata-src='"   + docSettings.image_source_path + docArtboardName + imageExtension + "'\r";
 					};
                     html[5] += "\t\t\t\tdata-height-multiplier='" + roundTo(artboardAspectRatio,4) + "'\r";
 				};
@@ -1824,7 +1844,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 				var htmlFileDestination = "";
 				var headerText          = "<div id='" + nameSpace + docArtboardName + "-box' class='ai2html'>\r";
 				headerText             += "\t<!-- Generated by ai2html v" + scriptVersion + " - " + dateTimeStamp + " -->\r"
-				headerText             += "\t<!-- ai file: " + filename + " -->\r";
+				headerText             += "\t<!-- ai file: " + docSettings.project_name + " -->\r";
 				if (docSettings.ai2html_environment=="nyt") {
 					headerText             += "\t<!-- preview: " + docSettings.preview_slug + " -->\r";
 					headerText             += "\t<!-- scoop  : " + docSettings.scoop_slug_from_config_yml + " -->\r";
@@ -1896,9 +1916,9 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 		var textForFile               = "";
 		var htmlFileDestinationFolder = "";
 		var htmlFileDestination       = "";
-		var headerText                = "<div id='" + nameSpace + makeKeyword(filename) + "-box' class='ai2html'>\r";
+		var headerText                = "<div id='" + nameSpace + makeKeyword(docSettings.project_name) + "-box' class='ai2html'>\r";
 		headerText                   += "\t<!-- Generated by ai2html v" + scriptVersion + " - " + dateTimeStamp + " -->\r"
-		headerText                   += "\t<!-- ai file: " + filename + " -->\r";
+		headerText                   += "\t<!-- ai file: " + docSettings.project_name + " -->\r";
 		if (docSettings.ai2html_environment=="nyt") {
 			headerText               += "\t<!-- preview: " + docSettings.preview_slug + " -->\r";
 			headerText               += "\t<!-- scoop  : " + docSettings.scoop_slug_from_config_yml + " -->\r";
@@ -1906,7 +1926,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 		headerText                   += "\r";
 		headerText                   += "\t<style type='text/css' media='screen,print'>\r";
 		if (docSettings.max_width!="") {
-			headerText               += "\t\t#" + nameSpace + makeKeyword(filename) + " {\r";
+			headerText               += "\t\t#" + nameSpace + makeKeyword(docSettings.project_name) + " {\r";
 			headerText               += "\t\t\tmax-width:" + docSettings.max_width + "px;\r";
 			headerText               += "\t\t}\r";
 		};
@@ -1936,12 +1956,12 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 		if (previewProjectType=="ai2html") {
 			htmlFileDestination     = htmlFileDestinationFolder + "index" + docSettings.html_output_extension;
 		} else if ((previewProjectType!="ai2html"&&srcFolder.exists)||docSettings.ai2html_environment!="nyt") {
-			htmlFileDestination     = htmlFileDestinationFolder + filename + docSettings.html_output_extension;
+			htmlFileDestination     = htmlFileDestinationFolder + docSettings.project_name + docSettings.html_output_extension;
 			if (docSettings.local_preview_template!="") {
 				// var localPreviewTemplateFile = new File(docPath + docSettings.local_preview_template);
 				// var localPreviewTemplateText = readTextFileAndPutIntoAVariable(localPreviewTemplateFile,"","","");
 				docSettings.ai2htmlPartial = textForFile;
-				var localPreviewDestination = htmlFileDestinationFolder + filename + ".preview.html";
+				var localPreviewDestination = htmlFileDestinationFolder + docSettings.project_name + ".preview.html";
 				var localPreviewHtml = applyTemplate(localPreviewTemplateText,docSettings)
 				outputHtml(localPreviewHtml,localPreviewDestination);
 			};
@@ -2175,7 +2195,7 @@ function hideElementsOutsideArtboardRect(artbnds) {
 					// recursively check sub-groups
 					all_groups.push(groupItems[g]);
 					if (groupItems[g].groupItems.length > 0) {
-						getGroups(groupItems[g].groupItems);
+						traverseGroups(groupItems[g].groupItems);
 					}	
 				}
 			}
