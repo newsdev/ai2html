@@ -4,6 +4,8 @@ sidebar_menu:
     '#multiple-sized-artboards': Multiple artboards
     '#responsiveness': Responsiveness
     '#rotated-and-sheared-html-labels': Rotated labels
+    '#svg-artboards': SVG artboards
+    '#custom-css': Custom CSS
     /: Return
 ---
 
@@ -19,7 +21,7 @@ If you set up multiple artboards, ai2html will export them separately so they ca
 
 ## Responsiveness
 
-In some cases it is acceptable to "stretch" the artboards between two sizes to ensure the artboard always fills the parent container. To do so set the responsiveness to `dynamic` in the settings block:
+In some cases it is acceptable to "stretch" the artboards between two sizes to ensure the artboard always fills the parent container. To do so set the `responsiveness` to `dynamic` in the settings block:
 
 {% include dynamic.html %}
 
@@ -33,13 +35,17 @@ If you want don't want the rotated labels to be rendered as HTML, you can restor
 
 {% include rotated-image.html %}
 
-## SVG artboard
+## SVG artboards
+
+Instead of PNG and JPG, ai2html can use SVG for artboard images, too. This makes most sense when you don't have raster layers in your Illustrator file. To activate, simply change `image_format` to `svg` in your settings block.
 
 {% include svg.html %}
 
 ## Custom CSS
 
-Use the `ai-css` text field for custom CSS to add drop shadows to labels:
+Use the `ai2html-css` text field for custom CSS to add drop shadows to labels. You can address different labels by placing them in named layers and then use the layer name as CSS selector.
+
+{% include custom-css.html %}
 
 <style type="text/css">
     .g-artboard {
