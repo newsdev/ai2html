@@ -473,6 +473,7 @@ if (scriptEnvironment=="nyt") {
         use_lazy_loader: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
         include_resizer_css_js: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
         include_resizer_classes: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
+        include_resizer_widths: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: "If set to “yes”, ai2html adds data-min-width and data-max-width attributes to each artboard"},
         svg_embed_images: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
         render_rotated_skewed_text_as: {defaultValue: "html", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "image, html", notes: ""},
         show_completion_dialog_box: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: "Set this to “no” if you don't want to see the dialog box confirming completion of the script."},
@@ -1162,18 +1163,20 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 		var localPreviewTemplateText = readTextFileAndPutIntoAVariable(localPreviewTemplateFile,"","","\n");
 	};
 
-	// measure breakpoints based on artboard widths
 	var uniqueArtboardWidths = [];
-	for (var abNumber = 0; abNumber < doc.artboards.length; abNumber++) {
-		if (artboardsToProcess[abNumber]) {
-			var abRect = doc.artboards[abNumber].artboardRect,
-				abW = Math.round(abRect[2]-abRect[0]),
-				customMinWidth = doc.artboards[abNumber].name.split(':')[1];
-			if (customMinWidth) abW = Math.round(+customMinWidth);
-			if (uniqueArtboardWidths.indexOf(abW) < 0) uniqueArtboardWidths.push(abW);
+	if (docSettings.ai2html_environment!="nyt" && docSettings.include_resizer_widths == "yes") {
+		// measure breakpoints based on artboard widths
+		for (var abNumber = 0; abNumber < doc.artboards.length; abNumber++) {
+			if (artboardsToProcess[abNumber]) {
+				var abRect = doc.artboards[abNumber].artboardRect,
+					abW = Math.round(abRect[2]-abRect[0]),
+					customMinWidth = doc.artboards[abNumber].name.split(':')[1];
+				if (customMinWidth) abW = Math.round(+customMinWidth);
+				if (uniqueArtboardWidths.indexOf(abW) < 0) uniqueArtboardWidths.push(abW);
+			}
 		}
+		uniqueArtboardWidths.sort();
 	}
-	uniqueArtboardWidths.sort();
 
 	// begin main stuff
 	var responsiveHtml = "";
@@ -1235,15 +1238,15 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 			}
 
 			html[1] += "\t<div id='"+nameSpace+docArtboardName+"' class='"+nameSpace+"artboard "+showClass+"'";
-			if (docSettings.ai2html_environment!="nyt") {
+			if (docSettings.ai2html_environment!="nyt" && docSettings.include_resizer_widths == "yes") {
 				// add data-min/max-width attributes
 				// find breakpoints
 				for (var bpIndex = 1; bpIndex < uniqueArtboardWidths.length; bpIndex++) {
 					if (abW < uniqueArtboardWidths[bpIndex]) break;
 				}
-				html[1] += " data-min-width='"+uniqueArtboardWidths[bpIndex-1]+"' ";
+				html[1] += " data-min-width='"+uniqueArtboardWidths[bpIndex-1]+"'";
 				if (bpIndex < uniqueArtboardWidths.length) {
-					html[1] += " data-max-width='"+(uniqueArtboardWidths[bpIndex]-1)+"' ";	
+					html[1] += " data-max-width='"+(uniqueArtboardWidths[bpIndex]-1)+"'";	
 				}
 			}
 			html[1] += ">\r";
