@@ -43,7 +43,19 @@ var scriptEnvironment = "";
 // - Go to the folder containing your Illustrator file. Inside will be a folder called ai2html-output.
 // - Open the html files in your browser to preview your output.
 
-
+// Adding [].indexOf to Illustrator JavaScript 
+if (!Array.prototype.indexOf) {
+    Array.prototype.indexOf = function(elt /*, from*/) {
+        var len = this.length;
+        var from = Number(arguments[1]) || 0;
+        from = (from < 0) ? Math.ceil(from) : Math.floor(from);
+        if (from < 0) from += len;     
+        for (; from < len; from++) {
+            if (from in this && this[from] === elt) return from;
+        }
+        return -1;
+   };
+}
 
 // =====================================
 // functions
@@ -1150,6 +1162,19 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 		var localPreviewTemplateText = readTextFileAndPutIntoAVariable(localPreviewTemplateFile,"","","\n");
 	};
 
+	// measure breakpoints based on artboard widths
+	var uniqueArtboardWidths = [];
+	for (var abNumber = 0; abNumber < doc.artboards.length; abNumber++) {
+		if (artboardsToProcess[abNumber]) {
+			var abRect = doc.artboards[abNumber].artboardRect,
+				abW = Math.round(abRect[2]-abRect[0]),
+				customMinWidth = doc.artboards[abNumber].name.split(':')[1];
+			if (customMinWidth) abW = Math.round(+customMinWidth);
+			if (uniqueArtboardWidths.indexOf(abW) < 0) uniqueArtboardWidths.push(abW);
+		}
+	}
+	uniqueArtboardWidths.sort();
+
 	// begin main stuff
 	var responsiveHtml = "";
 	for (var abNumber = 0; abNumber < doc.artboards.length; abNumber++) {
@@ -1209,7 +1234,19 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 				showClass = "";
 			}
 
-			html[1] += "\t<div id='"+nameSpace+docArtboardName+"' class='"+nameSpace+"artboard "+showClass+"'>\r";
+			html[1] += "\t<div id='"+nameSpace+docArtboardName+"' class='"+nameSpace+"artboard "+showClass+"'";
+			if (docSettings.ai2html_environment!="nyt") {
+				// add data-min/max-width attributes
+				// find breakpoints
+				for (var bpIndex = 1; bpIndex < uniqueArtboardWidths.length; bpIndex++) {
+					if (abW < uniqueArtboardWidths[bpIndex]) break;
+				}
+				html[1] += " data-min-width='"+uniqueArtboardWidths[bpIndex-1]+"' ";
+				if (bpIndex < uniqueArtboardWidths.length) {
+					html[1] += " data-max-width='"+(uniqueArtboardWidths[bpIndex]-1)+"' ";	
+				}
+			}
+			html[1] += ">\r";
 			html[1] += "\t\t<style type='text/css' media='screen,print'>\r";
 			html[1] += "\t\t\t#"+nameSpace+docArtboardName+"{\r";
 			html[1] += "\t\t\t\tposition:relative;\r";
