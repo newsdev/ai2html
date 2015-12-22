@@ -103,7 +103,7 @@ h3 ~ div > div:before {
 h3 ~ div > div:first-child:before {
   content: "ArchieML";
 }
-h3 ~ div > div:last-child:before {
+h3 ~ div > div.g-artboard:before {
   content: "Output";
 }
 

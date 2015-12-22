@@ -37,7 +37,9 @@
 
     <ul class="sidebar-nav">
       {% for item in page.sidebar_menu %}
-      <li class="sidebar-nav-item sidebar-nav-hash"><a href="{{ item[0] }}">{{ item[1] }}</a></li>
+      {% capture first %}{{ item[0] | split:'' | first }}{% endcapture %}
+
+      <li class="sidebar-nav-item sidebar-nav-{% if first == '#' %}hash{% else %}page{% endif %}"><a href="{{ item[0] }}">{{ item[1] }}</a></li>
       {% endfor %}
     </ul>
   </div>
@@ -50,4 +52,4 @@
 </div>
 
 </body>
-</shtml
+</html>

@@ -1,10 +1,10 @@
 ---
 layout: index
 sidebar_menu:
-  \#how-to-install-ai2html: How to install
-  \#how-to-use-ai2html: How to use
-  \#how-does-ai2html-work: How does it work
-  \#table-of-contents: Full table of contents
+  '#how-to-install-ai2html': How to install
+  '#how-to-use-ai2html': How to use
+  '#how-does-ai2html-work': How does it work
+  '#table-of-contents': Full table of contents
   examples.html: Examples
   https://github.com/newsdev/ai2html/blob/master/HISTORY.md: Changelog
 ---

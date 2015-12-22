@@ -10,6 +10,12 @@ html {
   color: #fff;
   margin: 0 8px 0 0;
 }
+.sidebar-nav-page:before {
+  content: "⟩ ";
+  font-family: "nyt-stymie", serif;
+  color: #fff;
+  margin: 0 8px 0 0;
+}
 .lead {
   line-height:1.7rem;
   font-size: 1.1rem;
@@ -100,12 +106,7 @@ h3 ~ div > div:before {
   font-family: "nyt-stymie", serif;
   font-weight: normal;
 }
-h3 ~ div > div:first-child:before {
-  content: "ArchieML";
-}
-h3 ~ div > div:last-child:before {
-  content: "Output";
-}
+
 
 h3 + div > div:first-child:before,
 h3 + p + div > div:first-child:before,
