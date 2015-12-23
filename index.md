@@ -189,15 +189,15 @@ Note that you can pass mustache or erb/ejs notation untouched to your html parti
 #### Layers palette
 
 - **Layer names**
-  - The name of the layer that is the direct parent of a text block is added as a class to the div that corresponds to that text block. This allows you to write custom css that targets all text blocks in a layer. Class names have `ai2html-` appended to the front of the name.
+  - The name of the layer that is the direct parent of a text block is added as a class to the div that corresponds to that text block. This allows you to write custom css that targets all text blocks in a layer. Class names have `g-` appended to the front of the name.
 
 - **Object names**
-  - Another way of targeting a text block is to give that text object a name in the Layers palette. If you give the text object a name, it will be added as an `id` to the `div` that corresponds to that text block. Note that `ai2html-` is not appended to the beginning of the `id`, so take care that you begin the `id` with letters and not numbers.
+  - Another way of targeting a text block is to give that text object a name in the Layers palette. If you give the text object a name, it will be added as an `id` to the `div` that corresponds to that text block. Note that `g-` is not appended to the beginning of the `id`, so take care that you begin the `id` with letters and not numbers.
 
 #### Artboards palette
 
 - **Artboard names**
-  - Artboard names become part of the `id` of the `div` corresponding to that artboard. It is not necessary to rename the artboards from the Illustrator defaults.
+  - Artboard names become part of the `id` of the `div` corresponding to that artboard. It is not necessary to rename the artboards from the Illustrator defaults, though take care not to begin the name with a numeral since html id’s are not recognized if they begin with a number. 
 
 - **Specifying artboards to ignore**
   - Add a dash, ie. `-`, as the first character of an artboard name to tell the script that you don’t want it to be included in the output.
@@ -217,7 +217,7 @@ Parameters can be attached to a text object and passed to the script using the n
 
 ## Point text vs. area text
 
-The script handles point text and area text slightly differently which has ramifications on how text wraps on your web page. Fonts never appear identically in Illustrator and in web browsers. For example, the versions of Arial in Illustrator, in Chrome on a Mac and in Internet Explorer on Windows are not exactly the same so text that fits in a box in Illustrator, may be longer on IE or shorter in Chrome.
+The script handles point text and area text slightly differently which has ramifications on how text wraps on your web page. Fonts never appear identically in Illustrator and in web browsers. For example, the versions of Arial in Illustrator, in Chrome on a Mac and in Internet Explorer on Windows are not exactly the same — so text that fits in a box in Illustrator may be longer on IE or shorter in Chrome.
 
 - **Point text**
   - The div containing a point text object is not given any width so that text will flow indefinitely outward from its anchor ([see `valign` discussion](#attributes-palette)).
@@ -265,10 +265,11 @@ Paragraphs are styled using css classes that are consolidated across each artboa
 ## Limitations
 
 - Because numbers get rounded to whole pixels by the web page when formatting text and positioning elements, the html version of a graphic will not line up exactly with its Illustrator version. Rounding differences are particularly compounded if you have blocks of text that span many lines and have fractional leading in Illustrator.
+- Very large text that is set to valign:bottom doesn’t position correctly. We’re hoping to figure out how to fix this. 
 - The script currently only sets one style per paragraph, so custom styled words or characters within a paragraph are ignored. Each paragraph’s style is determined by the middle character in the paragraph.
 - The script assumes that text always goes above the art.
 - Artboards should have unique names.
-- Paragraphs with full justification specified will just be “justified” in html.
+- Paragraphs with full justification will just be “justified” in html.
 - If text is not hidden using the hide command, but rather is hidden because it is behind a mask, it will show up if it is within the artboard.
 - Labels in graph objects will be rendered as part of the image. (Something changed in newer versions of CC in the way text objects inside the graph object are handled.) If you want your chart labels to be shown as html, you will need to ungroup the chart.
 - In area text blocks, text that is hidden because it is overflowing the box will appear in the html output.
@@ -307,7 +308,7 @@ The Github repository for this site is available at [newsdev/ai2html](https://gi
 
 ## Thanks
 
-Many thanks to [Jeremy Ashkenas](https://twitter.com/jashkenas), [Matt Ericson](https://twitter.com/mericson), [Tom Giratikanon](https://twitter.com/giratikanon), [Alan McLean](https://twitter.com/alanmclean) and my colleagues in The New York Times [Graphics Department](https://twitter.com/nytgraphics) for their patient guidance in the development of this project.
+Many thanks to [Gregor Aisch](https://twitter.com/driven_by_data), [Derek Watkins](https://twitter.com/dwtkns), [Tom Giratikanon](https://twitter.com/giratikanon), [Matt Ericson](https://twitter.com/mericson), [Jeremy Ashkenas](https://twitter.com/jashkenas) and [Alan McLean](https://twitter.com/alanmclean) for their incredible contributions to this project, as well as to my colleagues in The New York Times [Graphics Department](https://twitter.com/nytgraphics) for their patient guidance.
 
 If you’re learning to write Javascript for Adobe Illustrator, [John Wundes](http://www.wundes.com/JS4AI/), has many wonderful scripts. [explore.js](http://www.wundes.com/JS4AI/explore.js) is particularly helpful for understanding what attributes are attached to Illustrator objects.
 
