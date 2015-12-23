@@ -340,6 +340,8 @@ var createPromoImage = function(abNumber) {
 		};
 	};
 
+	pBar.setTitle(artboardName + ': Writing promo image...');
+
 	var tempPNGtransparency = docSettings.png_transparent;
 	docSettings.png_transparent = "no";
 	exportImageFiles(imageDestination,promoW,promoH,promoImageFormats,promoScale,"no");
@@ -388,6 +390,72 @@ var checkForOutputFolder = function(folderPath, nickname) {
 		};
 	};
 };
+
+// ================================================
+// Progress bar
+// ================================================
+
+function progressBar() {
+  this.win = null;
+}
+
+progressBar.prototype.init = function() {
+  var min=0, max=100;
+  
+  var win = new Window("palette", "Ai2html progress", [150, 150, 600, 260]); 
+  this.win = win;
+  
+  win.pnl = win.add("panel", [10, 10, 440, 100], "Progress");
+
+  win.pnl.progBar      = win.pnl.add("progressbar", [20, 35, 410, 60], min, max);
+  win.pnl.progBarLabel = win.pnl.add("statictext", [20, 20, 320, 35], min+"%");
+
+  win.show();
+
+  return true;
+}
+
+progressBar.prototype.setProgress = function(progress) {
+  var win = this.win;
+  var max = win.pnl.progBar.maxvalue,
+      min = win.pnl.progBar.minvalue;
+  
+  // progress is always 0.0 to 1.0
+  var pct = progress * max;
+  win.pnl.progBar.value = pct;
+
+  this.setLabel();
+  win.update();
+}
+
+progressBar.prototype.getProgress = function() {
+  var win = this.win;
+  var max = win.pnl.progBar.maxvalue,
+      min = win.pnl.progBar.minvalue;
+  
+  return this.win.pnl.progBar.value/max;
+}
+
+progressBar.prototype.setLabel = function() {
+  this.win.pnl.progBarLabel.text = Math.round(this.win.pnl.progBar.value) + "%";
+}
+
+progressBar.prototype.setTitle = function(title) {
+  this.win.pnl.text = title;
+  this.win.update();
+}
+
+progressBar.prototype.increment = function(amount) {
+  var amount = amount || 0.01;
+  var win = this.win;
+  this.setProgress(this.getProgress()+amount);
+  win.update();
+}
+
+progressBar.prototype.close = function() {
+	this.win.update();
+	this.win.close();
+}
 
 // ================================================
 // ai2html and config settings
@@ -665,6 +733,9 @@ var largestArtboardArea    = 0;
 var largestArtboardWidth   = 0;
 var	rgbBlackThreshold      = 36; // value between 0 and 255 lower than which if all three RGB values are below then force the RGB to #000 so it is a pure black
 
+var pBar = new progressBar();
+pBar.init();
+
 // work on inlining responsive js and css
 // var responsiveCssFile      = new File( docPath + "../public/assets/resizerStyle.css");
 // var responsiveJsFile       = new File( docPath + "../public/assets/resizerScript.js");
@@ -784,6 +855,7 @@ for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
 // to manually force an artboard to appear at a specific pixel width,
 // append the width to the end of the artboard name with a colon and then the number, eg. "Artboard name:720"
 // old way of doing this: name that artboard with a "ai2html-" followed by the upperlimit of the breakpoint, eg. ai2html-720
+pBar.setTitle('Determining artboards to process...')
 for (var abNumber = 0; abNumber < doc.artboards.length; abNumber++) {
 	if (doc.artboards[abNumber].name.search(/^-/)==-1) {
 		artboardsToProcess.push(true);
@@ -829,6 +901,7 @@ var artboardsTop  = artboardsTops[artboardsTops.length-1];
 var breakpointsWithNoNativeArtboard = [];
 var overrideArtboardWidth           = false;
 var maxArtboardWidth                = 0;
+pBar.setTitle('Assigning artboards to breakpoints...')
 for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
 	var currentBreakpoint = nyt5Breakpoints[bpNumber];
 	for (var abNumber = 0; abNumber < doc.artboards.length; abNumber++) {
@@ -901,7 +974,7 @@ for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
 // ================================================
 // add settings text block if one does not exist
 // ================================================
-
+pBar.setTitle('Processing settings text blocks...');
 // check for settings text block
 for (var tfNumber=0;tfNumber<doc.textFrames.length;tfNumber++) {
 	var thisFrame = doc.textFrames[tfNumber];
@@ -1182,7 +1255,6 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 	var responsiveHtml = "";
 	for (var abNumber = 0; abNumber < doc.artboards.length; abNumber++) {
 		if (artboardsToProcess[abNumber]) {
-
 			doc.artboards.setActiveArtboardIndex(abNumber);
 			var activeArtboard      =  doc.artboards[abNumber];
 			docSettings.docName     =  makeKeyword(docSettings.project_name);
@@ -1195,6 +1267,9 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 			var abW                 =  Math.round(activeArtboardRect[2]-abX);
 			var abH                 = -activeArtboardRect[3]-abY;
 			var artboardAspectRatio =  abH/abW;
+
+			pBar.setTitle(docArtboardName + ': Starting to generate HTML...');
+			pBar.setProgress(abNumber/(doc.artboards.length-1));
 
 			// for determining which artboard to use for promo image
 			// if (abW>=largestArtboardWidth) {
@@ -1411,6 +1486,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 			var pSize      = [];
 			var pLeading   = [];
 
+			pBar.setTitle(docArtboardName + ': Finding unique text styles...');
 			for (var i=0;i<selectFrames.length;i++) {
 				var thisFrame = selectFrames[i];
 				var numChars = thisFrame.characters.length;
@@ -1475,6 +1551,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 			// Write css for each style key
 			var pStyleCss = "";
 			// var cStyleCss = "";
+			pBar.setTitle(docArtboardName + ': Writing CSS for text styles...');		
 			for (var i=0;i<pStyleKeys.length;i++) {
 				var thisKey = pStyleKeys[i];
 				var pArray = thisKey.split("\t");
@@ -1552,7 +1629,13 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 			html[2] += '\t\t\t.g-aiPtransformed p { white-space: nowrap; }\r';
 
 			// Output html for each text frame
-			for (var i=0;i<selectFrames.length;i++) {
+			pBar.setTitle(docArtboardName + ': Writing HTML for text blocks...');
+			var oneArtboard = 1/(doc.artboards.length),
+					oneBlock    = 1/(selectFrames.length),
+					oneBlockNormalized = oneBlock * oneArtboard;
+
+			for (var i=0;i<selectFrames.length;i++) {				
+				pBar.increment(oneBlockNormalized); // Keeps text frames progress from overshooting current overall progress.
 				var thisFrame = selectFrames[i];
 				var vFactor = .5; // This is an adjustment to correct for vertical placement.
 				var thisFrameAttributes = {};
@@ -1852,6 +1935,8 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 				var hiddenItemsOutsideArtboard = hideElementsOutsideArtboardRect(activeArtboardRect);
 			}
 
+			pBar.setTitle(docArtboardName + ': Writing image...');
+
 			exportImageFiles(imageDestination,abW,abH,docSettings.image_format,1.0,docSettings.use_2x_images_if_possible);
 
 			if (docSettings.image_format[0] == 'svg' && hiddenItemsOutsideArtboard.length > 0) {
@@ -1920,6 +2005,8 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 				checkForOutputFolder(htmlFileDestinationFolder, "html_output_path");
 				htmlFileDestination = htmlFileDestinationFolder + docArtboardName + docSettings.html_output_extension;
 				if (docSettings.local_preview_template!="") {
+					pBar.setTitle(docArtboardName + ': Writing HTML file...');
+
 					docSettings.ai2htmlPartial     = textForFile;
 					var localPreviewDestination = htmlFileDestinationFolder + docArtboardName + ".preview.html";
 					var localPreviewHtml        = applyTemplate(localPreviewTemplateText,docSettings)
@@ -2000,6 +2087,8 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 			if (docSettings.local_preview_template!="") {
 				// var localPreviewTemplateFile = new File(docPath + docSettings.local_preview_template);
 				// var localPreviewTemplateText = readTextFileAndPutIntoAVariable(localPreviewTemplateFile,"","","");
+				pBar.setTitle('Writing HTML file...');
+				
 				docSettings.ai2htmlPartial = textForFile;
 				var localPreviewDestination = htmlFileDestinationFolder + docSettings.project_name + ".preview.html";
 				var localPreviewHtml = applyTemplate(localPreviewTemplateText,docSettings)
@@ -2056,6 +2145,8 @@ for (var i = lockedObjects.length-1; i>=0; i--) {
 	lockedObjects[i].locked = true;
 };
 
+pBar.setTitle('Saving Illustrator document...');
+pBar.setProgress(1.0);
 // Save the document
 if (parentFolder !== null) {
 	var saveOptions = new IllustratorSaveOptions();
@@ -2107,6 +2198,7 @@ if (feedback.length > 0) {
 	};
 };
 
+pBar.close();
 alert(alertHed + "\n" + alertText + "\n\n\n================\nai2html-nyt5 v"+scriptVersion);
 
 function textIsTransformed(textFrame) {
