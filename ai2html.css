@@ -3,7 +3,36 @@ html {
 }
 .sidebar-about h1 {
   font-size: 3rem;
+  max-width: 240px;
+  margin-left: auto!important;
+  margin-right: auto!important;
 }
+
+#g-ai2html-black {
+  max-width: 260px;
+}
+
+@media (min-width: 48rem) {
+  .sidebar-sticky {
+    position: absolute;
+    right:  1rem;
+    bottom: 1rem;
+    left:   1rem;
+
+  }
+
+  .sidebar-about h1 {
+    margin-left: 0!important;
+    max-width: 200px;
+  }
+}
+
+@media (min-width: 58rem) {
+  .sidebar-about h1 {
+    max-width: 230px;
+  }
+}
+
 .sidebar-nav-hash:before {
   content: "#";
   font-family: "nyt-stymie", serif;
@@ -140,4 +169,8 @@ acronym {
 footer {
   font-size: 0.8rem;
   color: #888;
+}
+
+.g-artboard {
+    margin-left: 0!important;
 }
