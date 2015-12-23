@@ -3,6 +3,7 @@ layout: index
 sidebar_menu:
     '#multiple-sized-artboards': Multiple artboards
     '#responsiveness': Responsiveness
+    '#custom-breakpoints': Custom breakpoints
     '#rotated-and-sheared-html-labels': Rotated labels
     '#svg-artboards': SVG artboards
     '#custom-css': Custom CSS
@@ -15,19 +16,30 @@ Note: For some of the examples you will want to resize the browser window to see
 
 ## Multiple sized artboards
 
-If you set up multiple artboards, ai2html will export them separately so they can be switched based on the  size of the outer container. All you have to do is adding this little ["resizer" script](https://gist.github.com/gka/093496b7707110178994) to your website.
+If you create multiple artboards, **ai2html** will export them separately (either in one or multiple files). The idea is that they can be toggled on and off based on the size of the outer container. All you have to do is adding this little ["resizer" script](https://gist.github.com/gka/093496b7707110178994) to your website.
+
+In the example below, 4 artboards are being used. Resize the browser window to see how the different versions are being shown based on the outer width.
 
 {% include artboards.html %}
 
 ## Responsiveness
 
-In some cases it is acceptable to "stretch" the artboards between two sizes to ensure the artboard always fills the parent container. To do so set the `responsiveness` to `dynamic` in the settings block:
+You might have noticed the "jumps" between the different versions in the example above. If you set `responsiveness` to `dynamic` in the settings block, the artboards will be stretchted so they always fill 100% of the container:
 
 {% include dynamic.html %}
 
+The default behaviour for the dynamic scaling shown above is to use the widths of the artboards as breakpoints. If you have a small and large artboard, the small one is being scaled up until the "following" size fits into the container.
+
+## Custom breakpoints
+
+You can define custom breakpoints for each artboard by adding `:MIN_WIDTH` to the artboard name. In the example below, the "medium" artboard is renamed to `medium:420` to tell **ai2html** that this artboard can be used down to container widths of 420px.
+
+{% include breakpoints.html %}
+
+
 ## Rotated and sheared HTML labels
 
-By default, ai2html will now output rotated and sheared labels as HTML white preserving the transformation using CSS `transform`.
+By default, **ai2html** will now output rotated and sheared labels as HTML while preserving the original transformation using CSS transform matrices. This works reasonable well for rotated and sheared text.
 
 {% include rotated.html %}
 
@@ -37,7 +49,7 @@ If you want don't want the rotated labels to be rendered as HTML, you can restor
 
 ## SVG artboards
 
-Instead of PNG and JPG, ai2html can use SVG for artboard images, too. This makes most sense when you don't have raster layers in your Illustrator file. To activate, simply change `image_format` to `svg` in your settings block.
+Instead of PNG and JPG, **ai2html** can use SVG for artboard images, too. This makes most sense when you don't have raster layers in your Illustrator file. To activate, simply change `image_format` to `svg` in your settings block.
 
 {% include svg.html %}
 
