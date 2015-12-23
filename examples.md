@@ -43,7 +43,7 @@ Instead of PNG and JPG, ai2html can use SVG for artboard images, too. This makes
 
 ## Custom CSS
 
-Use the `ai2html-css` text field for custom CSS to add drop shadows to labels. You can address different labels by placing them in named layers and then use the layer name as CSS selector.
+Use the `ai2html-css` text field to add custom CSS styles to the HTML text labels. You can target different labels by using their layer name in the CSS selector.
 
 {% include custom-css.html %}
 
