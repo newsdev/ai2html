@@ -15,6 +15,13 @@
 - v56
   - Added “write_image_files” setting.
   - Added “show_completion_dialog_box” setting.
+  - Added automatic measuring of breakpoints based on artboard widths
+  - Allowed disabling of resizer widths using include_resizer_widths
+  - Added “project_name” setting 
+  - Made rounding to pctPrecision smarter (don't add decimals if number is already round)
+  - Fixed HTML rendering of rotated and skewed text 
+  - Set default value for “render_rotated_skewed_text_as“ to "html"
+  - Hiding elements outside of artboard on SVG export
 - v55
   - Removed nyt5 attribute from fonts array and added instructions on how to add custom fonts.
 - v54
