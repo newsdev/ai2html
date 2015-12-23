@@ -1,5 +1,5 @@
 ﻿// ai2html.js
-var scriptVersion     = "0.57";
+var scriptVersion     = "0.58";
 // var scriptEnvironment = "nyt";
 var scriptEnvironment = "";
 
@@ -344,7 +344,9 @@ var createPromoImage = function(abNumber) {
 
 	var tempPNGtransparency = docSettings.png_transparent;
 	docSettings.png_transparent = "no";
-	exportImageFiles(imageDestination,promoW,promoH,promoImageFormats,promoScale,"no");
+	if (docSettings.write_image_files=="yes") {
+		exportImageFiles(imageDestination,promoW,promoH,promoImageFormats,promoScale,"no");
+		};
 	docSettings.png_transparent = tempPNGtransparency;
 };
 var applyTemplate = function(template,atObject) {
@@ -493,6 +495,8 @@ if (scriptEnvironment=="nyt") {
         include_resizer_css_js: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
         include_resizer_classes: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
         svg_embed_images: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
+        show_completion_dialog_box: {defaultValue: "true", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "trueFalse", possibleValues: "", notes: "Set this to false if you don't want to see the dialog box confirming completion of the script."},
+        clickable_link: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: "If you put a url in this field, an <a> tag will be added, wrapping around the output and pointing to that url."},
         render_rotated_skewed_text_as: {defaultValue: "html", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "image, html", notes: ""},
         show_completion_dialog_box: {defaultValue: "true", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "trueFalse", possibleValues: "", notes: "Set this to false if you don't want to see the dialog box confirming completion of the script."},
         clickable_link: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: "If you put a url in this field, an <a> tag will be added, wrapping around the output and pointing to that url."},
@@ -543,6 +547,8 @@ if (scriptEnvironment=="nyt") {
         include_resizer_classes: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
         include_resizer_widths: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: "If set to “yes”, ai2html adds data-min-width and data-max-width attributes to each artboard"},
         svg_embed_images: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
+        show_completion_dialog_box: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: "Set this to “no” if you don't want to see the dialog box confirming completion of the script."},
+        clickable_link: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: "If you put a url in this field, an <a> tag will be added, wrapping around the output and pointing to that url."},
         render_rotated_skewed_text_as: {defaultValue: "html", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "image, html", notes: ""},
         show_completion_dialog_box: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: "Set this to “no” if you don't want to see the dialog box confirming completion of the script."},
         clickable_link: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: "If you put a url in this field, an <a> tag will be added, wrapping around the output and pointing to that url."},
@@ -573,7 +579,7 @@ if (scriptEnvironment=="nyt") {
 // constants
 // ================================================
 
-// Add to the fonts array to make the script work with your own custom fonts. 
+// Add to the fonts array to make the script work with your own custom fonts.
 // To make it easier to add to this array, use the "fonts" worksheet of this Google Spreadsheet:
 	// https://docs.google.com/spreadsheets/d/13ESQ9ktfkdzFq78FkWLGaZr2s3lNbv2cN25F2pYf5XM/edit?usp=sharing
 	// Make a copy of the spreadsheet for yourself.
@@ -828,13 +834,14 @@ if (docSettings.project_name == "") {
 // ================================================
 
 var nyt5Breakpoints = [
-	{ name:"xsmall"    , lowerLimit:  0, upperLimit: 180, artboards:[] },
-	{ name:"small"     , lowerLimit:180, upperLimit: 300, artboards:[] },
-	{ name:"smallplus" , lowerLimit:300, upperLimit: 460, artboards:[] },
-	{ name:"submedium" , lowerLimit:460, upperLimit: 600, artboards:[] },
-	{ name:"medium"    , lowerLimit:600, upperLimit: 720, artboards:[] },
-	{ name:"large"     , lowerLimit:720, upperLimit: 945, artboards:[] },
-	{ name:"xlarge"    , lowerLimit:945, upperLimit:1050, artboards:[] }
+	{ name:"xsmall"    , lowerLimit:   0, upperLimit: 180, artboards:[] },
+	{ name:"small"     , lowerLimit: 180, upperLimit: 300, artboards:[] },
+	{ name:"smallplus" , lowerLimit: 300, upperLimit: 460, artboards:[] },
+	{ name:"submedium" , lowerLimit: 460, upperLimit: 600, artboards:[] },
+	{ name:"medium"    , lowerLimit: 600, upperLimit: 720, artboards:[] },
+	{ name:"large"     , lowerLimit: 720, upperLimit: 945, artboards:[] },
+	{ name:"xlarge"    , lowerLimit: 945, upperLimit:1050, artboards:[] },
+	{ name:"xxlarge"   , lowerLimit:1050, upperLimit:1600, artboards:[] }
 ];
 var breakpoints        = {};
 breakpoints.min        = "";
@@ -1928,23 +1935,25 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 			// 		"docSettings.image_output_path = " + docSettings.image_output_path + "\n" +
 			// 		"docArtboardName = " + docArtboardName);
 
-			// if in svg export, hide path elements outside of the current artboard
-			if (docSettings.image_format[0] == 'svg') {
-
-				// save refs to elements we are hiding 
-				var hiddenItemsOutsideArtboard = hideElementsOutsideArtboardRect(activeArtboardRect);
-			}
+			if (docSettings.write_image_files=="yes") {
+				// if in svg export, hide path elements outside of the current artboard
+				if (docSettings.image_format[0] == 'svg') {
+					// save refs to elements we are hiding
+					var hiddenItemsOutsideArtboard = hideElementsOutsideArtboardRect(activeArtboardRect);
+				}
 
 			pBar.setTitle(docArtboardName + ': Writing image...');
 
 			exportImageFiles(imageDestination,abW,abH,docSettings.image_format,1.0,docSettings.use_2x_images_if_possible);
 
-			if (docSettings.image_format[0] == 'svg' && hiddenItemsOutsideArtboard.length > 0) {
+				if (docSettings.image_format[0] == 'svg' && hiddenItemsOutsideArtboard.length > 0) {
 				// unhide non-text elements hidden before export
-				for (var item_i=0; item_i < hiddenItemsOutsideArtboard.length; item_i++) {
-					hiddenItemsOutsideArtboard[item_i].hidden = false;
+					for (var item_i=0; item_i < hiddenItemsOutsideArtboard.length; item_i++) {
+						hiddenItemsOutsideArtboard[item_i].hidden = false;
+					}
 				}
-			}
+			};
+
 
 			// unhide text now if NOT in testing mode
 			if (docSettings.testing_mode!="yes") {
@@ -2064,7 +2073,17 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 		};
 		headerText                   += "\t</style>\r";
 		headerText                   += "\r";
-		var footerText                = "\t<!-- End ai2html" + " - " + dateTimeStamp + " -->\r</div>\r";
+		if (docSettings.clickable_link!="") {
+			headerText += "\t<a class='"+nameSpace+"ai2htmlLink' href='"+docSettings.clickable_link+"'>\r";
+		};
+
+
+
+		var footerText = "";
+		if (docSettings.clickable_link!="") {
+			footerText += "\t</a>\r";
+		}
+		footerText                += "\t<!-- End ai2html" + " - " + dateTimeStamp + " -->\r</div>\r";
 
 		textForFile += headerText;
 		if (previewProjectType=="ai2html") { textForFile += responsiveCss; };
@@ -2197,6 +2216,9 @@ if (feedback.length > 0) {
 		alertText += "• " + feedback[f] + "\r";
 	};
 };
+if (docSettings.show_completion_dialog_box=="yes") {
+	alert(alertHed + "\n" + alertText + "\n\n\n================\nai2html-nyt5 v"+scriptVersion);
+};
 
 pBar.close();
 alert(alertHed + "\n" + alertText + "\n\n\n================\nai2html-nyt5 v"+scriptVersion);
@@ -2212,7 +2234,7 @@ function textIsTransformed(textFrame) {
 
 function getUntransformedTextBounds(textFrame) {
 	var oldSelection = activeDocument.selection;
-	
+
 	activeDocument.selection = [textFrame];
 	app.copy();
 	app.paste();
@@ -2242,10 +2264,10 @@ function getUntransformedTextBounds(textFrame) {
 	}
 
 	var bounds = textFrameCopy.geometricBounds;
-	
+
 	textFrameCopy.textRange.characterAttributes.fillColor = getRGBColor(250, 50, 50);
 	textFrameCopy.remove();
-	
+
 	// reset selection
 	activeDocument.selection = oldSelection;
 	return bounds;
@@ -2262,9 +2284,9 @@ function getRGBColor(r,g,b) {
 function getAnchorPoint(untransformedBounds, matrix, hAlign, vAlign, sx, sy) {
 	var center_x = (untransformedBounds[0] + untransformedBounds[2]) * 0.5,
 		center_y = (untransformedBounds[1] + untransformedBounds[3]) * 0.5,
-		anchor_x = (hAlign == 'left' ? untransformedBounds[0] : 
+		anchor_x = (hAlign == 'left' ? untransformedBounds[0] :
 			(hAlign == 'center' ? center_x : untransformedBounds[2])),
-		anchor_y = (vAlign == 'top' ? untransformedBounds[1] : 
+		anchor_y = (vAlign == 'top' ? untransformedBounds[1] :
 			(vAlign == 'bottom' ? untransformedBounds[3] : center_y)),
 		anchor_dx = (anchor_x - center_x),
 		anchor_dy = (anchor_y - center_y);
@@ -2307,7 +2329,7 @@ function hideElementsOutsideArtboardRect(artbnds) {
 							item_bnds[3] > artbnds[1]) {
 							if (!check_item.hidden) {
 								hidden.push(check_item);
-								check_item.hidden = true;	
+								check_item.hidden = true;
 							}
 						}
 					}
@@ -2328,7 +2350,7 @@ function hideElementsOutsideArtboardRect(artbnds) {
 					all_groups.push(groupItems[g]);
 					if (groupItems[g].groupItems.length > 0) {
 						traverseGroups(groupItems[g].groupItems);
-					}	
+					}
 				}
 			}
 		}
