@@ -12,8 +12,8 @@
   <meta name="twitter:url" content="http://ai2html.org/">
   <meta name="twitter:title" content="ai2html">
   <meta name="twitter:description" content="ai2html is a script for Adobe Illustrator that converts your Illustrator artwork into html and css.">
-  <meta name="twitter:image" content="http://ai2html.org/twittercard.png">
-  <meta name="og:image" content="http://ai2html.org/facebookshare.png">
+  <meta name="twitter:image" content="http://ai2html.org/ai2html-logo.png">
+  <meta name="og:image" content="http://ai2html.org/ai2html-logo.png">
   <meta name="og:site_name" content="ai2html.org">
   <meta name="og:url" content="http://ai2html.org/">
 
@@ -451,12 +451,12 @@ Applications/Adobe Illustrator CC 2014/Presets/en_US/Scripts/ai2html.jsx
 <li><p><strong>Layer names</strong></p>
 
 <ul>
-<li>The name of the layer that is the direct parent of a text block is added as a class to the div that corresponds to that text block. This allows you to write custom css that targets all text blocks in a layer. Class names have <code>ai2html-</code> appended to the front of the name.</li>
+<li>The name of the layer that is the direct parent of a text block is added as a class to the div that corresponds to that text block. This allows you to write custom css that targets all text blocks in a layer. Class names have <code>g-</code> appended to the front of the name.</li>
 </ul></li>
 <li><p><strong>Object names</strong></p>
 
 <ul>
-<li>Another way of targeting a text block is to give that text object a name in the Layers palette. If you give the text object a name, it will be added as an <code>id</code> to the <code>div</code> that corresponds to that text block. Note that <code>ai2html-</code> is not appended to the beginning of the <code>id</code>, so take care that you begin the <code>id</code> with letters and not numbers.</li>
+<li>Another way of targeting a text block is to give that text object a name in the Layers palette. If you give the text object a name, it will be added as an <code>id</code> to the <code>div</code> that corresponds to that text block. Note that <code>g-</code> is not appended to the beginning of the <code>id</code>, so take care that you begin the <code>id</code> with letters and not numbers.</li>
 </ul></li>
 </ul>
 
@@ -466,7 +466,7 @@ Applications/Adobe Illustrator CC 2014/Presets/en_US/Scripts/ai2html.jsx
 <li><p><strong>Artboard names</strong></p>
 
 <ul>
-<li>Artboard names become part of the <code>id</code> of the <code>div</code> corresponding to that artboard. It is not necessary to rename the artboards from the Illustrator defaults.</li>
+<li>Artboard names become part of the <code>id</code> of the <code>div</code> corresponding to that artboard. It is not necessary to rename the artboards from the Illustrator defaults, though take care not to begin the name with a numeral since html id’s are not recognized if they begin with a number. </li>
 </ul></li>
 <li><p><strong>Specifying artboards to ignore</strong></p>
 
@@ -497,7 +497,7 @@ Applications/Adobe Illustrator CC 2014/Presets/en_US/Scripts/ai2html.jsx
 
 <h2 id="point-text-vs.-area-text">Point text vs. area text</h2>
 
-<p>The script handles point text and area text slightly differently which has ramifications on how text wraps on your web page. Fonts never appear identically in Illustrator and in web browsers. For example, the versions of Arial in Illustrator, in Chrome on a Mac and in Internet Explorer on Windows are not exactly the same so text that fits in a box in Illustrator, may be longer on IE or shorter in Chrome.</p>
+<p>The script handles point text and area text slightly differently which has ramifications on how text wraps on your web page. Fonts never appear identically in Illustrator and in web browsers. For example, the versions of Arial in Illustrator, in Chrome on a Mac and in Internet Explorer on Windows are not exactly the same — so text that fits in a box in Illustrator may be longer on IE or shorter in Chrome.</p>
 
 <ul>
 <li><p><strong>Point text</strong></p>
@@ -557,10 +557,11 @@ Applications/Adobe Illustrator CC 2014/Presets/en_US/Scripts/ai2html.jsx
 
 <ul>
 <li>Because numbers get rounded to whole pixels by the web page when formatting text and positioning elements, the html version of a graphic will not line up exactly with its Illustrator version. Rounding differences are particularly compounded if you have blocks of text that span many lines and have fractional leading in Illustrator.</li>
+<li>Very large text that is set to valign:bottom doesn’t position correctly. We’re hoping to figure out how to fix this. </li>
 <li>The script currently only sets one style per paragraph, so custom styled words or characters within a paragraph are ignored. Each paragraph’s style is determined by the middle character in the paragraph.</li>
 <li>The script assumes that text always goes above the art.</li>
 <li>Artboards should have unique names.</li>
-<li>Paragraphs with full justification specified will just be “justified” in html.</li>
+<li>Paragraphs with full justification will just be “justified” in html.</li>
 <li>If text is not hidden using the hide command, but rather is hidden because it is behind a mask, it will show up if it is within the artboard.</li>
 <li>Labels in graph objects will be rendered as part of the image. (Something changed in newer versions of CC in the way text objects inside the graph object are handled.) If you want your chart labels to be shown as html, you will need to ungroup the chart.</li>
 <li>In area text blocks, text that is hidden because it is overflowing the box will appear in the html output.</li>
@@ -603,7 +604,7 @@ font-style: italic;
 
 <h2 id="thanks">Thanks</h2>
 
-<p>Many thanks to <a href="https://twitter.com/jashkenas">Jeremy Ashkenas</a>, <a href="https://twitter.com/mericson">Matt Ericson</a>, <a href="https://twitter.com/giratikanon">Tom Giratikanon</a>, <a href="https://twitter.com/alanmclean">Alan McLean</a> and my colleagues in The New York Times <a href="https://twitter.com/nytgraphics">Graphics Department</a> for their patient guidance in the development of this project.</p>
+<p>Many thanks to <a href="https://twitter.com/driven_by_data">Gregor Aisch</a>, <a href="https://twitter.com/dwtkns">Derek Watkins</a>, <a href="https://twitter.com/giratikanon">Tom Giratikanon</a>, <a href="https://twitter.com/mericson">Matt Ericson</a>, <a href="https://twitter.com/jashkenas">Jeremy Ashkenas</a> and <a href="https://twitter.com/alanmclean">Alan McLean</a> for their incredible contributions to this project, as well as to my colleagues in The New York Times <a href="https://twitter.com/nytgraphics">Graphics Department</a> for their patient guidance.</p>
 
 <p>If you’re learning to write Javascript for Adobe Illustrator, <a href="http://www.wundes.com/JS4AI/">John Wundes</a>, has many wonderful scripts. <a href="http://www.wundes.com/JS4AI/explore.js">explore.js</a> is particularly helpful for understanding what attributes are attached to Illustrator objects.</p>
 
