@@ -289,6 +289,13 @@ Applications/Adobe Illustrator CC 2014/Presets/en_US/Scripts/ai2html.jsx
 <li><span style="font-variant: small-caps">Default</span>: <code>html</code></li>
 <li>Specifying <code>image</code> on this setting causes rotated and sheared text in the file to be rendered on the image instead of the html. See <a href="examples.html#rotated-and-sheared-html-labels">example</a>.</li>
 </ul></li>
+<li><strong>project_name</strong>
+
+<ul>
+<li><span style="font-variant: small-caps">Possible values</span>: Any string</li>
+<li><span style="font-variant: small-caps">Default</span>: <code>[ai file name]</code></li>
+<li>By default ai2html will use the filename of your Illustrator document as the project name but you can specify a <code>project_name</code> to overwrite this. The project name will be used to name the exported HTML and image files.</li>
+</ul></li>
 </ul>
 
 <p><em>If you want to edit the script to change the default settings, you may find it helpful to make a copy of this <a href="http://bit.ly/1BP86RH">Google spreadsheet</a> which makes it easier to view and edit the settings.</em></p>
@@ -365,7 +372,7 @@ Applications/Adobe Illustrator CC 2014/Presets/en_US/Scripts/ai2html.jsx
 </ul></li>
 </ul>
 
-<h2 id="point-text-vs-area-text">Point text vs. area text</h2>
+<h2 id="point-text-vs.-area-text">Point text vs. area text</h2>
 
 <p>The script handles point text and area text slightly differently which has ramifications on how text wraps on your web page. Fonts never appear identically in Illustrator and in web browsers. For example, the versions of Arial in Illustrator, in Chrome on a Mac and in Internet Explorer on Windows are not exactly the same so text that fits in a box in Illustrator, may be longer on IE or shorter in Chrome.</p>
 

@@ -157,6 +157,10 @@ Most of the script’s options are set in the settings text block. When you run 
   - <span style="font-variant: small-caps">Possible values</span>: `html` `image`
   - <span style="font-variant: small-caps">Default</span>: `html`
   - Specifying `image` on this setting causes rotated and sheared text in the file to be rendered on the image instead of the html. See [example](examples.html#rotated-and-sheared-html-labels).
+- **project_name**
+  - <span style="font-variant: small-caps">Possible values</span>: Any string
+  - <span style="font-variant: small-caps">Default</span>: `[ai file name]`
+  - By default ai2html will use the filename of your Illustrator document as the project name but you can specify a `project_name` to overwrite this. The project name will be used to name the exported HTML and image files.
 
 *If you want to edit the script to change the default settings, you may find it helpful to make a copy of this [Google spreadsheet](http://bit.ly/1BP86RH) which makes it easier to view and edit the settings.*
 
