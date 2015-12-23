@@ -6,6 +6,12 @@
 
 ## Change log
 
+- v59
+  - Added "summary" setting.
+- v58
+  - Added "xxlarge" artboard width.
+- v57
+  - Added progress bar.
 - v56
   - Added “write_image_files” setting.
   - Added “show_completion_dialog_box” setting.
