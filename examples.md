@@ -18,7 +18,7 @@ For more, check out [examples for how we’ve used ai2html](https://delicious.co
 
 ## Multiple sized artboards
 
-If you create multiple artboards, **ai2html** will export them separately (either in one or multiple files). The idea is that they can be toggled on and off based on the size of the outer container. All you have to do is add this little ["resizer" script](https://gist.github.com/gka/093496b7707110178994) to your website.
+If you create multiple artboards, **ai2html** will export them separately (either in one or multiple files). The idea is that they can be toggled on and off based on the size of the outer container. All you have to do is add our little [resizer script](https://github.com/newsdev/ai2html/blob/gh-pages/_includes/resizer-script.html) to your website.
 
 In the example below, 4 artboards are being used. Resize the browser window to see how the different versions are being shown based on the outer width.
 
