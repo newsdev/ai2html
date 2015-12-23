@@ -38,8 +38,8 @@
     <ul class="sidebar-nav">
       {% for item in page.sidebar_menu %}
       {% capture first %}{{ item[0] | split:'' | first }}{% endcapture %}
-
-      <li class="sidebar-nav-item sidebar-nav-{% if first == '#' %}hash{% else %}page{% endif %}"><a href="{{ item[0] }}">{{ item[1] }}</a></li>
+     
+      <li class="sidebar-nav-item sidebar-nav-{% if first == '#' %}hash{% else %}{% if item[0] == '/' %}return{% else %}page{% endif %}{% endif %}"><a href="{{ item[0] }}">{{ item[1] }}</a></li>
       {% endfor %}
     </ul>
   </div>

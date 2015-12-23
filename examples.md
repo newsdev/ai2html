@@ -32,7 +32,7 @@ The default behaviour for the dynamic scaling shown above is to use the widths o
 
 ## Custom breakpoints
 
-You can define custom breakpoints for each artboard by adding `:MIN_WIDTH` to the artboard name. In the example below, the "medium" artboard is renamed to `medium:420` to tell **ai2html** that this artboard can be used down to container widths of 420px.
+You can define custom breakpoints for each artboard by adding `:MIN_WIDTH` to the artboard name. In the example below, the "medium" artboard is renamed to `medium:420` to tell **ai2html** that this artboard is safe to be scaled down to container widths of 420px.
 
 {% include breakpoints.html %}
 
@@ -49,7 +49,7 @@ If you want don't want the rotated labels to be rendered as HTML, you can restor
 
 ## SVG artboards
 
-Instead of PNG and JPG, **ai2html** can use SVG for artboard images, too. This makes most sense when you don't have raster layers in your Illustrator file. To activate, simply change `image_format` to `svg` in your settings block.
+Instead of PNG and JPG, **ai2html** can use SVG for artboard images, too. This makes most sense when you don't have raster layers in your Illustrator file. To activate, simply change the settings block to `image_format:svg`.
 
 {% include svg.html %}
 

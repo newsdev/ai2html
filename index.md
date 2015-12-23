@@ -14,7 +14,7 @@ sidebar_menu:
 
 > ai2html is an open-source script for Adobe Illustrator that converts your Illustrator documents into html and css.
 
-Here are [examples of how we’ve used the script](https://delicious.com/archietse/ai2html,nyt) at The New York Times and [examples of how others](https://delicious.com/archietse/ai2html,others) have used it. Share your ai2html projects on Twitter, Delicious, etc. using #ai2html.
+Here are [examples of how we’ve used the script](https://delicious.com/archietse/ai2html,nyt) at The New York Times and [examples of how others](https://delicious.com/archietse/ai2html,others) have used it. Share your ai2html projects on Twitter, Delicious, etc. using <a href="https://twitter.com/search?q=%23ai2html&amp;src=typd" target="_blank">#ai2html</a>.
 
 ## Table of contents
 
@@ -83,9 +83,9 @@ Most of the script’s options are set in the settings text block. When you run 
 *Options that are included in the settings text block by default:*
 
 - **image_format**
-  - <span style="font-variant: small-caps">Possible values</span>: `png` `png24` `jpg`
+  - <span style="font-variant: small-caps">Possible values</span>: `png` `png24` `jpg` `svg`
   - <span style="font-variant: small-caps">Default</span>: `png`
-  - You can specify more than one image format to be output by listing the desired formats separated by commas. This can be useful if you want to see which image format has the smallest file size. The first format in the list will be the only one referenced in the html.
+  - You can specify more than one image format to be output by listing the desired formats separated by commas. This can be useful if you want to see which image format has the smallest file size. The first format in the list will be the only one referenced in the html. See [example](examples.html#svg-artboards) for SVG output.
 - **responsiveness**
   - <span style="font-variant: small-caps">Possible values</span>: `fixed` `dynamic`
   - <span style="font-variant: small-caps">Default</span>: `fixed`
@@ -153,12 +153,16 @@ Most of the script’s options are set in the settings text block. When you run 
   - <span style="font-variant: small-caps">Possible values</span>: `yes` `no`
   - <span style="font-variant: small-caps">Default</span>: `no`
   - Specifying `yes` on this setting causes the text in the file to be rendered both on the image and in the html. This is useful for testing whether the placement of html text is consistent with the Illustrator file.
+- **render_rotated_skewed_text_as**
+  - <span style="font-variant: small-caps">Possible values</span>: `html` `image`
+  - <span style="font-variant: small-caps">Default</span>: `html`
+  - Specifying `image` on this setting causes rotated and sheared text in the file to be rendered on the image instead of the html. See [example](examples.html#rotated-and-sheared-html-labels).
 
 *If you want to edit the script to change the default settings, you may find it helpful to make a copy of this [Google spreadsheet](http://bit.ly/1BP86RH) which makes it easier to view and edit the settings.*
 
 ##### `ai2html-css`
 
-If you want to add some css that is always inserted into your html partial, include it in a text block somewhere in your Illustrator document, but not on an artboard. Make the first line of the text block read `ai2html-css`. The css will be added inside `<style>` tags so don’t include `<style>` tags in the text block.
+If you want to [add some css](examples.html#custom-css) that is always inserted into your html partial, include it in a text block somewhere in your Illustrator document, but not on an artboard. Make the first line of the text block read `ai2html-css`. The css will be added inside `<style>` tags so don’t include `<style>` tags in the text block.
 
 ##### `ai2html-js`
 
@@ -193,6 +197,9 @@ Note that you can pass mustache or erb/ejs notation untouched to your html parti
 
 - **Specifying artboards to ignore**
   - Add a dash, ie. `-`, as the first character of an artboard name to tell the script that you don’t want it to be included in the output.
+
+- **Setting a custom artboard breakpoint**
+  - Add a colon `:` followed by the minimum width up to which the artboard can be scaled down to. See [example](examples.html#custom-breakpoints). 
 
 #### Attributes palette
 
@@ -253,7 +260,6 @@ Paragraphs are styled using css classes that are consolidated across each artboa
 
 ## Limitations
 
-- Text that has been rotated or skewed is not converted into html, but rather rendered onto the image. *We’re hoping to have a fix for this soon.*
 - Because numbers get rounded to whole pixels by the web page when formatting text and positioning elements, the html version of a graphic will not line up exactly with its Illustrator version. Rounding differences are particularly compounded if you have blocks of text that span many lines and have fractional leading in Illustrator.
 - The script currently only sets one style per paragraph, so custom styled words or characters within a paragraph are ignored. Each paragraph’s style is determined by the middle character in the paragraph.
 - The script assumes that text always goes above the art.

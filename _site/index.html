@@ -38,27 +38,27 @@
     <ul class="sidebar-nav">
       
       
-
+     
       <li class="sidebar-nav-item sidebar-nav-hash"><a href="#how-to-install-ai2html">How to install</a></li>
       
       
-
+     
       <li class="sidebar-nav-item sidebar-nav-hash"><a href="#how-to-use-ai2html">How to use</a></li>
       
       
-
+     
       <li class="sidebar-nav-item sidebar-nav-hash"><a href="#how-does-ai2html-work">How does it work</a></li>
       
       
-
+     
       <li class="sidebar-nav-item sidebar-nav-hash"><a href="#table-of-contents">Full table of contents</a></li>
       
       
-
+     
       <li class="sidebar-nav-item sidebar-nav-page"><a href="examples.html">Examples</a></li>
       
       
-
+     
       <li class="sidebar-nav-item sidebar-nav-page"><a href="https://github.com/newsdev/ai2html/blob/master/HISTORY.md">Changelog</a></li>
       
     </ul>
@@ -73,7 +73,7 @@
 <p>ai2html is an open-source script for Adobe Illustrator that converts your Illustrator documents into html and css.</p>
 </blockquote>
 
-<p>Here are <a href="https://delicious.com/archietse/ai2html,nyt">examples of how we’ve used the script</a> at The New York Times and <a href="https://delicious.com/archietse/ai2html,others">examples of how others</a> have used it. Share your ai2html projects on Twitter, Delicious, etc. using #ai2html.</p>
+<p>Here are <a href="https://delicious.com/archietse/ai2html,nyt">examples of how we’ve used the script</a> at The New York Times and <a href="https://delicious.com/archietse/ai2html,others">examples of how others</a> have used it. Share your ai2html projects on Twitter, Delicious, etc. using <a href="https://twitter.com/search?q=%23ai2html&amp;src=typd" target="_blank">#ai2html</a>.</p>
 
 <h2 id="table-of-contents">Table of contents</h2>
 
@@ -158,9 +158,9 @@ Applications/Adobe Illustrator CC 2014/Presets/en_US/Scripts/ai2html.jsx
 <li><strong>image_format</strong>
 
 <ul>
-<li><span style="font-variant: small-caps">Possible values</span>: <code>png</code> <code>png24</code> <code>jpg</code></li>
+<li><span style="font-variant: small-caps">Possible values</span>: <code>png</code> <code>png24</code> <code>jpg</code> <code>svg</code></li>
 <li><span style="font-variant: small-caps">Default</span>: <code>png</code></li>
-<li>You can specify more than one image format to be output by listing the desired formats separated by commas. This can be useful if you want to see which image format has the smallest file size. The first format in the list will be the only one referenced in the html.</li>
+<li>You can specify more than one image format to be output by listing the desired formats separated by commas. This can be useful if you want to see which image format has the smallest file size. The first format in the list will be the only one referenced in the html. See <a href="examples.html#svg-artboards">example</a> for SVG output.</li>
 </ul></li>
 <li><strong>responsiveness</strong>
 
@@ -282,13 +282,20 @@ Applications/Adobe Illustrator CC 2014/Presets/en_US/Scripts/ai2html.jsx
 <li><span style="font-variant: small-caps">Default</span>: <code>no</code></li>
 <li>Specifying <code>yes</code> on this setting causes the text in the file to be rendered both on the image and in the html. This is useful for testing whether the placement of html text is consistent with the Illustrator file.</li>
 </ul></li>
+<li><strong>render_rotated_skewed_text_as</strong>
+
+<ul>
+<li><span style="font-variant: small-caps">Possible values</span>: <code>html</code> <code>image</code></li>
+<li><span style="font-variant: small-caps">Default</span>: <code>html</code></li>
+<li>Specifying <code>image</code> on this setting causes rotated and sheared text in the file to be rendered on the image instead of the html. See <a href="examples.html#rotated-and-sheared-html-labels">example</a>.</li>
+</ul></li>
 </ul>
 
 <p><em>If you want to edit the script to change the default settings, you may find it helpful to make a copy of this <a href="http://bit.ly/1BP86RH">Google spreadsheet</a> which makes it easier to view and edit the settings.</em></p>
 
 <h5 id="ai2html-css"><code>ai2html-css</code></h5>
 
-<p>If you want to add some css that is always inserted into your html partial, include it in a text block somewhere in your Illustrator document, but not on an artboard. Make the first line of the text block read <code>ai2html-css</code>. The css will be added inside <code>&lt;style&gt;</code> tags so don’t include <code>&lt;style&gt;</code> tags in the text block.</p>
+<p>If you want to <a href="examples.html#custom-css">add some css</a> that is always inserted into your html partial, include it in a text block somewhere in your Illustrator document, but not on an artboard. Make the first line of the text block read <code>ai2html-css</code>. The css will be added inside <code>&lt;style&gt;</code> tags so don’t include <code>&lt;style&gt;</code> tags in the text block.</p>
 
 <h5 id="ai2html-js"><code>ai2html-js</code></h5>
 
@@ -335,6 +342,11 @@ Applications/Adobe Illustrator CC 2014/Presets/en_US/Scripts/ai2html.jsx
 
 <ul>
 <li>Add a dash, ie. <code>-</code>, as the first character of an artboard name to tell the script that you don’t want it to be included in the output.</li>
+</ul></li>
+<li><p><strong>Setting a custom artboard breakpoint</strong></p>
+
+<ul>
+<li>Add a colon <code>:</code> followed by the minimum width up to which the artboard can be scaled down to. See <a href="examples.html#custom-breakpoints">example</a>. </li>
 </ul></li>
 </ul>
 
@@ -414,7 +426,6 @@ Applications/Adobe Illustrator CC 2014/Presets/en_US/Scripts/ai2html.jsx
 <h2 id="limitations">Limitations</h2>
 
 <ul>
-<li>Text that has been rotated or skewed is not converted into html, but rather rendered onto the image. <em>We’re hoping to have a fix for this soon.</em></li>
 <li>Because numbers get rounded to whole pixels by the web page when formatting text and positioning elements, the html version of a graphic will not line up exactly with its Illustrator version. Rounding differences are particularly compounded if you have blocks of text that span many lines and have fractional leading in Illustrator.</li>
 <li>The script currently only sets one style per paragraph, so custom styled words or characters within a paragraph are ignored. Each paragraph’s style is determined by the middle character in the paragraph.</li>
 <li>The script assumes that text always goes above the art.</li>

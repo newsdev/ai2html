@@ -16,6 +16,12 @@ html {
   color: #fff;
   margin: 0 8px 0 0;
 }
+.sidebar-nav-return:before {
+  content: "⟨ ";
+  font-family: "nyt-stymie", serif;
+  color: #fff;
+  margin: 0 8px 0 0;
+}
 .lead {
   line-height:1.7rem;
   font-size: 1.1rem;
