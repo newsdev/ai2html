@@ -7,34 +7,34 @@ sidebar_menu:
     '#rotated-and-sheared-html-labels': Rotated labels
     '#svg-artboards': SVG artboards
     '#custom-css': Custom CSS
-    /: Return
+    /: Return to main page
 ---
 
 # Examples
 
-We included some examples to demonstrate the effects of different settings in ai2html. You can download all the [Illustrator files from Github](https://github.com/newsdev/ai2html/tree/gh-pages/_ai). 
+We’ve included some examples that demonstrate how different settings in ai2html work. You can download all the [Illustrator files from Github](https://github.com/newsdev/ai2html/tree/gh-pages/_ai). 
 
 For more, check out [examples for how we’ve used ai2html](https://delicious.com/archietse/ai2html,nyt) at The New York Times and [examples of how others have used it](https://delicious.com/archietse/ai2html,others).
 
-## Multiple sized artboards
+## Multiple artboards for responsive web pages
 
-If you create multiple artboards, **ai2html** will export them separately (either in one or multiple files). The idea is that they can be toggled on and off based on the size of the outer container. All you have to do is add our little [resizer script](https://github.com/newsdev/ai2html/blob/gh-pages/_includes/resizer-script.html) to your website.
+If you have multiple artboards in your Illustrator file, **ai2html** will export them by default as separate divs in a single html file. The idea is that each artboard/div can be toggled on and off depending on the size of the outer container. All you have to do is add our little [resizer script](https://github.com/newsdev/ai2html/blob/gh-pages/_includes/resizer-script.html) to your webpage.
 
-In the example below, 4 artboards are being used. Resize the browser window to see how the different versions are being shown based on the outer width.
+The example below was generated from a single Illustrator file with four differently-sized artboards. Resize your browser window to see how the different artboards are turned on and off depending on the outer width.
 
 {% include artboards.html %}
 
 ## Responsiveness
 
-You might have noticed the "jumps" between the different versions in the example above. If you set `responsiveness` to `dynamic` in the settings block, the artboards will be stretchted so they always fill 100% of the container:
+You might have noticed that the art “jumps” in size as you change the width of your window in the example above. If you set `responsiveness: dynamic` in the settings block, the artboards will be stretched so they always fill 100 percent of the width of the container:
 
 {% include dynamic.html %}
 
-The default behaviour for the dynamic scaling shown above is to use the widths of the artboards as breakpoints. If you have a small and large artboard, the small one is being scaled up until the "following" size fits into the container.
+The default behaviour for the dynamic scaling shown above is to use the widths of the artboards as breakpoints. If you have a small and large artboard, the small one is scaled up until the larger artboard can fit into the container.
 
 ## Custom breakpoints
 
-You can define custom breakpoints for each artboard by adding `:MIN_WIDTH` to the artboard name. In the example below, the "medium" artboard is renamed to `medium:420` to tell **ai2html** that this artboard is safe to be scaled down to container widths of 420px.
+You can define custom breakpoints for each artboard by adding `:MIN_WIDTH` to the end of the artboard name, where `MIN_WIDTH` is size of the container at which you want to begin displaying that artboard. In the example below, the “medium” artboard is renamed to `medium:420` to tell **ai2html** that this artboard is safe to be scaled down to container widths of 420px.
 
 {% include breakpoints.html %}
 
@@ -45,19 +45,19 @@ By default, **ai2html** will now output rotated and sheared labels as HTML while
 
 {% include rotated.html %}
 
-If you don't want the rotated labels to be rendered as HTML, you can restore the old behaviour by adding `render_rotated_skewed_text_as: image` to your settings block. The text will be added to the base artboard image.
+If you don't want the rotated labels to be rendered as HTML, you can restore the old behaviour by adding `render_rotated_skewed_text_as: image` to your settings block. The rotated or skewed text will be burned into the artboard base image.
 
 {% include rotated-image.html %}
 
 ## SVG artboards
 
-Instead of PNG and JPG, **ai2html** can use SVG for artboard images, too. This makes most sense when you don't have raster layers in your Illustrator file. To activate, simply change the settings block to `image_format:svg`.
+Instead of PNG and JPG, **ai2html** can export SVG for artboard images, too. Generally use this only if there is no raster artwork in your file and if the vector artwork is not excessively complex. To activate, simply change the settings block to `image_format:svg`.
 
 {% include svg.html %}
 
-[Here's the SVG artboard](images/svg-720.svg) in case you want to check it out.
+[Here’s the SVG artboard](images/svg-720.svg) in case you want to check it out.
 
-Note that the SVG output generated by Illustrator will still include the markup of all elements that were hidden by ai2html before the export. To fix this we wrote a little [Node.js script](https://gist.github.com/gka/c97465e7a25d943e1191#file-clean-ai2html-svg-artboard-js) that removes these hidden elements.
+Note that the SVG export created by Illustrator includes the markup of all elements that were hidden by ai2html before the export. To fix this we wrote a little [Node.js script](https://gist.github.com/gka/c97465e7a25d943e1191#file-clean-ai2html-svg-artboard-js) that removes these hidden elements.
 
 ## Custom CSS
 
