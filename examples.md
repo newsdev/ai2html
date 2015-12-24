@@ -26,7 +26,7 @@ In the example below, 4 artboards are being used. Resize the browser window to s
 
 ## Responsiveness
 
-You might have noticed the "jumps" between the different versions in the example above. If you set `responsiveness` to `dynamic` in the settings block, the artboards will be stretchted so they always fill 100% of the container:
+You might have noticed the "jumps" between the different versions in the example above. If you set `responsiveness` to `dynamic` in the settings block, the artboards will be stretched so they always fill 100% of the container:
 
 {% include dynamic.html %}
 
