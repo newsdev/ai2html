@@ -41,7 +41,7 @@ You can define custom breakpoints for each artboard by adding `:MIN_WIDTH` to th
 
 ## Rotated and sheared HTML labels
 
-By default, **ai2html** will now output rotated and sheared labels as HTML while preserving the original transformation using CSS transform matrices. This works reasonable well for rotated and sheared text.
+By default, **ai2html** will now output rotated and sheared labels as HTML while preserving the original transformation using CSS transform matrices. This works reasonably well for rotated and sheared text.
 
 {% include rotated.html %}
 
