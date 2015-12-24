@@ -55,7 +55,7 @@ Instead of PNG and JPG, **ai2html** can export SVG for artboard images, too. Gen
 
 {% include svg.html %}
 
-[Here's the SVG artboard](images/svg-720.svg) in case you want to check it out.
+[Here’s the SVG artboard](images/svg-720.svg) in case you want to check it out.
 
 Note that the SVG export created by Illustrator includes the markup of all elements that were hidden by ai2html before the export. To fix this we wrote a little [Node.js script](https://gist.github.com/gka/c97465e7a25d943e1191#file-clean-ai2html-svg-artboard-js) that removes these hidden elements.
 
