@@ -1254,7 +1254,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 				if (uniqueArtboardWidths.indexOf(abW) < 0) uniqueArtboardWidths.push(abW);
 			}
 		}
-		uniqueArtboardWidths.sort();
+		uniqueArtboardWidths.sort(function(a,b){return a-b;});
 	}
 
 	// begin main stuff
