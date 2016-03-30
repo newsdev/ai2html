@@ -889,7 +889,8 @@ for (var abNumber = 0; abNumber < doc.artboards.length; abNumber++) {
 			};
 		};
 		if (!artboardWidthMatch && docSettings.include_resizer_classes=="yes" && docSettings.ai2html_environment=="nyt") {
-			warnings.push('The width of the artboard named "' + currentArtboard.name + '" (#' + (abNumber+1) + ") does not match any of the NYT5 breakpoints and may produce unexpected results on your web page. You probably want to adjust the width of this artboard so that it is exactly the width of a breakpoint.");
+			// warnings.push('The width of the artboard named "' + currentArtboard.name + '" (#' + (abNumber+1) + ") does not match any of the NYT5 breakpoints and may produce unexpected results on your web page. OurYou probably want to adjust the width of this artboard so that it is exactly the width of a breakpoint.");
+			warnings.push('The width of the artboard named "' + currentArtboard.name + '" (#' + (abNumber+1) + ") does not match any of the NYT5 breakpoints and may produce unexpected results on your web page. The new script should be able to accommodate this, but please double check just in case.");
 		}
 	} else {
 		artboardsToProcess.push(false);
@@ -2215,8 +2216,10 @@ if (feedback.length > 0) {
 		alertText += "• " + feedback[f] + "\r";
 	};
 };
+
 pBar.close();
-if (docSettings.show_completion_dialog_box=="yes") {
+
+if (docSettings.show_completion_dialog_box=="true") {
 	alert(alertHed + "\n" + alertText + "\n\n\n================\nai2html-nyt5 v"+scriptVersion);
 };
 
