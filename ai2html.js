@@ -1275,7 +1275,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 			var artboardAspectRatio =  abH/abW;
 
 			pBar.setTitle(docArtboardName + ': Starting to generate HTML...');
-			pBar.setProgress(abNumber/(doc.artboards.length-1));
+			pBar.setProgress(abNumber/(doc.artboards.length));
 
 			// for determining which artboard to use for promo image
 			// if (abW>=largestArtboardWidth) {
