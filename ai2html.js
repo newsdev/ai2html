@@ -43,13 +43,13 @@ var scriptEnvironment = "";
 // - Go to the folder containing your Illustrator file. Inside will be a folder called ai2html-output.
 // - Open the html files in your browser to preview your output.
 
-// Adding [].indexOf to Illustrator JavaScript 
+// Adding [].indexOf to Illustrator JavaScript
 if (!Array.prototype.indexOf) {
     Array.prototype.indexOf = function(elt /*, from*/) {
         var len = this.length;
         var from = Number(arguments[1]) || 0;
         from = (from < 0) ? Math.ceil(from) : Math.floor(from);
-        if (from < 0) from += len;     
+        if (from < 0) from += len;
         for (; from < len; from++) {
             if (from in this && this[from] === elt) return from;
         }
@@ -403,10 +403,10 @@ function progressBar() {
 
 progressBar.prototype.init = function() {
   var min=0, max=100;
-  
-  var win = new Window("palette", "Ai2html progress", [150, 150, 600, 260]); 
+
+  var win = new Window("palette", "Ai2html progress", [150, 150, 600, 260]);
   this.win = win;
-  
+
   win.pnl = win.add("panel", [10, 10, 440, 100], "Progress");
 
   win.pnl.progBar      = win.pnl.add("progressbar", [20, 35, 410, 60], min, max);
@@ -421,7 +421,7 @@ progressBar.prototype.setProgress = function(progress) {
   var win = this.win;
   var max = win.pnl.progBar.maxvalue,
       min = win.pnl.progBar.minvalue;
-  
+
   // progress is always 0.0 to 1.0
   var pct = progress * max;
   win.pnl.progBar.value = pct;
@@ -434,7 +434,7 @@ progressBar.prototype.getProgress = function() {
   var win = this.win;
   var max = win.pnl.progBar.maxvalue,
       min = win.pnl.progBar.minvalue;
-  
+
   return this.win.pnl.progBar.value/max;
 }
 
@@ -1328,7 +1328,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 				}
 				html[1] += " data-min-width='"+uniqueArtboardWidths[bpIndex-1]+"'";
 				if (bpIndex < uniqueArtboardWidths.length) {
-					html[1] += " data-max-width='"+(uniqueArtboardWidths[bpIndex]-1)+"'";	
+					html[1] += " data-max-width='"+(uniqueArtboardWidths[bpIndex]-1)+"'";
 				}
 			}
 			html[1] += ">\r";
@@ -1558,7 +1558,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 			// Write css for each style key
 			var pStyleCss = "";
 			// var cStyleCss = "";
-			pBar.setTitle(docArtboardName + ': Writing CSS for text styles...');		
+			pBar.setTitle(docArtboardName + ': Writing CSS for text styles...');
 			for (var i=0;i<pStyleKeys.length;i++) {
 				var thisKey = pStyleKeys[i];
 				var pArray = thisKey.split("\t");
@@ -1641,7 +1641,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 					oneBlock    = 1/(selectFrames.length),
 					oneBlockNormalized = oneBlock * oneArtboard;
 
-			for (var i=0;i<selectFrames.length;i++) {				
+			for (var i=0;i<selectFrames.length;i++) {
 				pBar.increment(oneBlockNormalized); // Keeps text frames progress from overshooting current overall progress.
 				var thisFrame = selectFrames[i];
 				var vFactor = .5; // This is an adjustment to correct for vertical placement.
@@ -1986,7 +1986,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 				headerText             += "\r";
 				headerText             += "\t<style type='text/css' media='screen,print'>\r";
 				if (docSettings.max_width!="") {
-					headerText             += "\t\t#" + nameSpace + docArtboardName + " {\r";
+					headerText             += "\t\t#" + nameSpace + docArtboardName + "-box {\r";
 					headerText             += "\t\t\tmax-width:" + docSettings.max_width + "px;\r";
 					headerText             += "\t\t}\r";
 				};
@@ -2062,7 +2062,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 		headerText                   += "\r";
 		headerText                   += "\t<style type='text/css' media='screen,print'>\r";
 		if (docSettings.max_width!="") {
-			headerText               += "\t\t#" + nameSpace + makeKeyword(docSettings.project_name) + " {\r";
+			headerText               += "\t\t#" + nameSpace + makeKeyword(docSettings.project_name) + "-box {\r";
 			headerText               += "\t\t\tmax-width:" + docSettings.max_width + "px;\r";
 			headerText               += "\t\t}\r";
 		};
@@ -2107,7 +2107,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 				// var localPreviewTemplateFile = new File(docPath + docSettings.local_preview_template);
 				// var localPreviewTemplateText = readTextFileAndPutIntoAVariable(localPreviewTemplateFile,"","","");
 				pBar.setTitle('Writing HTML file...');
-				
+
 				docSettings.ai2htmlPartial = textForFile;
 				var localPreviewDestination = htmlFileDestinationFolder + docSettings.project_name + ".preview.html";
 				var localPreviewHtml = applyTemplate(localPreviewTemplateText,docSettings)
