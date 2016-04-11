@@ -1975,6 +1975,10 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 					responsiveJs        = "";
 					responsiveCss       = "";
 				};
+				if (docSettings.include_resizer_script=="yes") {
+					responsiveJs = '\t' + getResizerScript() + '\n';
+					responsiveCss             = "";
+				}
 				var responsiveTextScoop = responsiveHtml;
 				var textForFile         = "";
 				var htmlFileDestination = "";
