@@ -1,5 +1,5 @@
 ﻿// ai2html.js
-var scriptVersion     = "0.59";
+var scriptVersion     = "0.60";
 // var scriptEnvironment = "nyt";
 var scriptEnvironment = "";
 
@@ -491,10 +491,11 @@ if (scriptEnvironment=="nyt") {
         jpg_quality: {defaultValue: 60, includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "integer", possibleValues: "0 to 100", notes: ""},
         center_html_output: {defaultValue: "true", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: "Adds “margin:0 auto;” to the div containing the ai2html output."},
         use_2x_images_if_possible: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
-        use_lazy_loader: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
+        use_lazy_loader: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
         include_resizer_css_js: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
         include_resizer_classes: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
         include_resizer_widths: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
+        include_resizer_script: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
         svg_embed_images: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
         render_rotated_skewed_text_as: {defaultValue: "html", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "image, html", notes: ""},
         show_completion_dialog_box: {defaultValue: "true", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "trueFalse", possibleValues: "", notes: "Set this to false if you don't want to see the dialog box confirming completion of the script."},
@@ -546,6 +547,7 @@ if (scriptEnvironment=="nyt") {
         include_resizer_css_js: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
         include_resizer_classes: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
         include_resizer_widths: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: "If set to “yes”, ai2html adds data-min-width and data-max-width attributes to each artboard"},
+        include_resizer_script: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
         svg_embed_images: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
         render_rotated_skewed_text_as: {defaultValue: "html", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "image, html", notes: ""},
         show_completion_dialog_box: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: "Set this to “no” if you don't want to see the dialog box confirming completion of the script."},
@@ -1244,7 +1246,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 	};
 
 	var uniqueArtboardWidths = [];
-	if (docSettings.ai2html_environment!="nyt" && docSettings.include_resizer_widths == "yes") {
+	if (docSettings.include_resizer_widths == "yes") {
 		// measure breakpoints based on artboard widths
 		for (var abNumber = 0; abNumber < doc.artboards.length; abNumber++) {
 			if (artboardsToProcess[abNumber]) {
@@ -1319,8 +1321,8 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 				showClass = "";
 			}
 
-			html[1] += "\t<div id='"+nameSpace+docArtboardName+"' class='"+nameSpace+"artboard "+showClass+"'";
-			if (docSettings.ai2html_environment!="nyt" && docSettings.include_resizer_widths == "yes") {
+			html[1] += "\t<div id='"+nameSpace+docArtboardName+"' class='"+nameSpace+"artboard "+nameSpace+"artboard-v3 "+showClass+"'";
+			if (docSettings.include_resizer_widths == "yes") {
 				// add data-min/max-width attributes
 				// find breakpoints
 				for (var bpIndex = 1; bpIndex < uniqueArtboardWidths.length; bpIndex++) {
@@ -2047,6 +2049,10 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 			responsiveJs              = "";
 			responsiveCss             = "";
 		};
+		if (docSettings.include_resizer_script=="yes") {
+			responsiveJs = '\t' + getResizerScript() + '\n';
+			responsiveCss             = "";
+		}
 
 		var responsiveTextScoop       = responsiveHtml;
 		var textForFile               = "";
@@ -2223,6 +2229,84 @@ if (docSettings.show_completion_dialog_box=="true") {
 	alert(alertHed + "\n" + alertText + "\n\n\n================\nai2html-nyt5 v"+scriptVersion);
 };
 
+function getResizerScript() {
+	var resizerScript="";
+	resizerScript += "\n" + "<script type=\"text\/javascript\">";
+	resizerScript += "\n" + "    (function() {";
+	resizerScript += "\n" + "        \/\/ only want one resizer on the page";
+	resizerScript += "\n" + "        if (document.documentElement.className.indexOf(\"g-resizer-v3-init\") > -1) return;";
+	resizerScript += "\n" + "        document.documentElement.className += \" g-resizer-v3-init\";";
+	resizerScript += "\n" + "        \/\/ require IE9+";
+	resizerScript += "\n" + "        if (!(\"querySelector\" in document)) return;";
+	resizerScript += "\n" + "        function resizer() {";
+	resizerScript += "\n" + "            var elements = Array.prototype.slice.call(document.querySelectorAll(\".g-artboard-v3[data-min-width]\")),";
+	resizerScript += "\n" + "                widthById = {};";
+	resizerScript += "\n" + "            elements.forEach(function(el) {";
+	resizerScript += "\n" + "                var parent = el.parentNode,";
+	resizerScript += "\n" + "                    width = widthById[parent.id] || parent.getBoundingClientRect().width,";
+	resizerScript += "\n" + "                    minwidth = el.getAttribute(\"data-min-width\"),";
+	resizerScript += "\n" + "                    maxwidth = el.getAttribute(\"data-max-width\");";
+	resizerScript += "\n" + "                widthById[parent.id] = width;";
+	resizerScript += "\n" + "";
+	resizerScript += "\n" + "                if (+minwidth <= width && (+maxwidth >= width || maxwidth === null)) {";
+	resizerScript += "\n" + "                    el.style.display = \"block\";";
+	resizerScript += "\n" + "                } else {";
+	resizerScript += "\n" + "                    el.style.display = \"none\";";
+	resizerScript += "\n" + "                }";
+	resizerScript += "\n" + "            });";
+	resizerScript += "\n" + "            try {";
+	resizerScript += "\n" + "                if (window.parent && window.parent.$) {";
+	resizerScript += "\n" + "                    window.parent.$(\"body\").trigger(\"resizedcontent\", [window]);";
+	resizerScript += "\n" + "                }";
+	resizerScript += "\n" + "                if (window.require) {";
+	resizerScript += "\n" + "                    require(['foundation\/main'], function() {";
+	resizerScript += "\n" + "                        require(['shared\/interactive\/instances\/app-communicator'], function(AppCommunicator) {";
+	resizerScript += "\n" + "                            AppCommunicator.triggerResize();";
+	resizerScript += "\n" + "                        });";
+	resizerScript += "\n" + "                    });";
+	resizerScript += "\n" + "                }";
+	resizerScript += "\n" + "            } catch(e) { console.log(e); }";
+	resizerScript += "\n" + "        }";
+	resizerScript += "\n" + "";
+	resizerScript += "\n" + "        document.addEventListener('DOMContentLoaded', resizer);";
+	resizerScript += "\n" + "        \/\/ feel free to replace throttle with _.throttle, if available";
+	resizerScript += "\n" + "        window.addEventListener('resize', throttle(resizer, 200));        ";
+	resizerScript += "\n" + "";
+	resizerScript += "\n" + "        function throttle(func, wait) {";
+	resizerScript += "\n" + "            \/\/ from underscore.js";
+	resizerScript += "\n" + "            var _now = Date.now || function() { return new Date().getTime(); },";
+	resizerScript += "\n" + "                context, args, result, timeout = null, previous = 0;";
+	resizerScript += "\n" + "            var later = function() {";
+	resizerScript += "\n" + "                previous = _now();";
+	resizerScript += "\n" + "                timeout = null;";
+	resizerScript += "\n" + "                result = func.apply(context, args);";
+	resizerScript += "\n" + "                if (!timeout) context = args = null;";
+	resizerScript += "\n" + "            };";
+	resizerScript += "\n" + "            return function() {";
+	resizerScript += "\n" + "                var now = _now(), remaining = wait - (now - previous);";
+	resizerScript += "\n" + "                context = this;";
+	resizerScript += "\n" + "                args = arguments;";
+	resizerScript += "\n" + "                if (remaining <= 0 || remaining > wait) {";
+	resizerScript += "\n" + "                    if (timeout) {";
+	resizerScript += "\n" + "                        clearTimeout(timeout);";
+	resizerScript += "\n" + "                        timeout = null;";
+	resizerScript += "\n" + "                    }";
+	resizerScript += "\n" + "                    previous = now;";
+	resizerScript += "\n" + "                    result = func.apply(context, args);";
+	resizerScript += "\n" + "                    if (!timeout) context = args = null;";
+	resizerScript += "\n" + "                } else if (!timeout && options.trailing !== false) {";
+	resizerScript += "\n" + "                    timeout = setTimeout(later, remaining);";
+	resizerScript += "\n" + "                }";
+	resizerScript += "\n" + "                return result;";
+	resizerScript += "\n" + "            };";
+	resizerScript += "\n" + "        }";
+	resizerScript += "\n" + "";
+	resizerScript += "\n" + "       ";
+	resizerScript += "\n" + "    })();";
+	resizerScript += "\n" + "<\/script>";
+	resizerScript += "\n" + "";
+	return resizerScript;
+}
 
 function textIsTransformed(textFrame) {
 	return !(textFrame.matrix.mValueA==1 &&
