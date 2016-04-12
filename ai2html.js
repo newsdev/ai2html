@@ -2258,19 +2258,24 @@ function getResizerScript() {
 	resizerScript += "\n" + "                    el.style.display = \"none\";";
 	resizerScript += "\n" + "                }";
 	resizerScript += "\n" + "            });";
-	resizerScript += "\n" + "            try {";
-	resizerScript += "\n" + "                if (window.parent && window.parent.$) {";
-	resizerScript += "\n" + "                    window.parent.$(\"body\").trigger(\"resizedcontent\", [window]);";
-	resizerScript += "\n" + "                }";
-	resizerScript += "\n" + "                if (window.require) {";
-	resizerScript += "\n" + "                    require(['foundation\/main'], function() {";
-	resizerScript += "\n" + "                        require(['shared\/interactive\/instances\/app-communicator'], function(AppCommunicator) {";
-	resizerScript += "\n" + "                            AppCommunicator.triggerResize();";
-	resizerScript += "\n" + "                        });";
-	resizerScript += "\n" + "                    });";
-	resizerScript += "\n" + "                }";
-	resizerScript += "\n" + "            } catch(e) { console.log(e); }";
-	resizerScript += "\n" + "        }";
+
+
+	if (scriptEnvironment=="nyt") {
+		resizerScript += "\n" + "            try {";
+		resizerScript += "\n" + "                if (window.parent && window.parent.$) {";
+		resizerScript += "\n" + "                    window.parent.$(\"body\").trigger(\"resizedcontent\", [window]);";
+		resizerScript += "\n" + "                }";
+		resizerScript += "\n" + "                document.documentElement.dispatchEvent(new Event('resizedcontent'));";
+		resizerScript += "\n" + "                if (window.require && document.querySelector('meta[name=sourceApp]') && document.querySelector('meta[name=sourceApp]').content == 'nyt-v5') {";
+		resizerScript += "\n" + "                    require(['foundation\/main'], function() {";
+		resizerScript += "\n" + "                        require(['shared\/interactive\/instances\/app-communicator'], function(AppCommunicator) {";
+		resizerScript += "\n" + "                            AppCommunicator.triggerResize();";
+		resizerScript += "\n" + "                        });";
+		resizerScript += "\n" + "                    });";
+		resizerScript += "\n" + "                }";
+		resizerScript += "\n" + "            } catch(e) { console.log(e); }";
+		resizerScript += "\n" + "        }";
+	}
 	resizerScript += "\n" + "";
 	resizerScript += "\n" + "        document.addEventListener('DOMContentLoaded', resizer);";
 	resizerScript += "\n" + "        \/\/ feel free to replace throttle with _.throttle, if available";
