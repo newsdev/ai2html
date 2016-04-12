@@ -2278,8 +2278,9 @@ function getResizerScript() {
 		resizerScript += "\n" + "                    });";
 		resizerScript += "\n" + "                }";
 		resizerScript += "\n" + "            } catch(e) { console.log(e); }";
-		resizerScript += "\n" + "        }";
 	}
+
+	resizerScript += "\n" + "        }";
 	resizerScript += "\n" + "";
 	resizerScript += "\n" + "        resizer();";
 	resizerScript += "\n" + "        document.addEventListener('DOMContentLoaded', resizer);";
