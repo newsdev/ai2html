@@ -1,7 +1,7 @@
 ﻿// ai2html.js
 var scriptVersion     = "0.60";
-// var scriptEnvironment = "nyt";
-var scriptEnvironment = "";
+var scriptEnvironment = "nyt";
+// var scriptEnvironment = "";
 
 // ai2html is a script for Adobe Illustrator that converts your Illustrator document into html and css.
 
@@ -491,7 +491,7 @@ if (scriptEnvironment=="nyt") {
         jpg_quality: {defaultValue: 60, includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "integer", possibleValues: "0 to 100", notes: ""},
         center_html_output: {defaultValue: "true", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: "Adds “margin:0 auto;” to the div containing the ai2html output."},
         use_2x_images_if_possible: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
-        use_lazy_loader: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
+        use_lazy_loader: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
         include_resizer_css_js: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
         include_resizer_classes: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
         include_resizer_widths: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
@@ -2011,7 +2011,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 				textForFile += responsiveTextScoop;
 				if (customHtml.length>0)           { textForFile += customHtml;    };
 				if (customJs.length>0)             { textForFile += customJs;      };
-				if (previewProjectType=="ai2html") { textForFile += responsiveJs;  };
+				if (responsiveJs.length>0)         { textForFile += responsiveJs;  };
 				textForFile += footerText;
 				textForFile  = applyTemplate(textForFile,docSettings);
 				// textForFile  = straightenCurlyQuotesInsideAngleBrackets(textForFile);
@@ -2101,7 +2101,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 		textForFile += responsiveTextScoop;
 		if (customHtml.length>0)           { textForFile += customHtml;    };
 		if (customJs.length>0)             { textForFile += customJs;      };
-		if (previewProjectType=="ai2html") { textForFile += responsiveJs;  };
+		if (responsiveJs.length>0)         { textForFile += responsiveJs;  };
 
 		textForFile += footerText;
 		textForFile  = applyTemplate(textForFile,docSettings);
@@ -2253,6 +2253,10 @@ function getResizerScript() {
 	resizerScript += "\n" + "                widthById[parent.id] = width;";
 	resizerScript += "\n" + "";
 	resizerScript += "\n" + "                if (+minwidth <= width && (+maxwidth >= width || maxwidth === null)) {";
+	resizerScript += "\n" + "                    var img = el.querySelector('.g-aiImg');";
+	resizerScript += "\n" + "                    if (img.getAttribute('data-src') && img.getAttribute('src') != img.getAttribute('data-src')) {";
+	resizerScript += "\n" + "                        img.setAttribute('src', img.getAttribute('data-src'));";
+	resizerScript += "\n" + "                    }";
 	resizerScript += "\n" + "                    el.style.display = \"block\";";
 	resizerScript += "\n" + "                } else {";
 	resizerScript += "\n" + "                    el.style.display = \"none\";";
