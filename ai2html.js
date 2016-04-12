@@ -2281,6 +2281,7 @@ function getResizerScript() {
 		resizerScript += "\n" + "        }";
 	}
 	resizerScript += "\n" + "";
+	resizerScript += "\n" + "        resizer();";
 	resizerScript += "\n" + "        document.addEventListener('DOMContentLoaded', resizer);";
 	resizerScript += "\n" + "        \/\/ feel free to replace throttle with _.throttle, if available";
 	resizerScript += "\n" + "        window.addEventListener('resize', throttle(resizer, 200));        ";
