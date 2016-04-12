@@ -242,6 +242,10 @@ var unlockStuff = function(parentObj) {
 				currentLayer.locked = false;
 				lockedObjects.push(currentLayer);
 			};
+			if (currentLayer.visible==false) {
+				currentLayer.visible = true;
+				hiddenObjects.push(currentLayer);
+			};
 			unlockStuff(currentLayer);
 		};
 	};
@@ -733,6 +737,7 @@ if (scriptEnvironment=="nyt") {
 }
 var textFramesToUnhide     = [];
 var lockedObjects          = [];
+var hiddenObjects		   = [];
 var largestArtboardIndex;
 var largestArtboardArea    = 0;
 var largestArtboardWidth   = 0;
@@ -752,6 +757,11 @@ pBar.init();
 
 // loop thru all layers, groups and textframes to find locked objects and unlock them
 unlockStuff(doc);
+
+//unhide layers that where hidded so objects inside could be locked
+for (var i = hiddenObjects.length-1; i>=0; i--) {
+	hiddenObjects[i].visible = false;
+};
 
 // ================================================
 // read .git/config file to get preview slug
@@ -2159,10 +2169,22 @@ for (var i = 0; i < textFramesToUnhide.length; i++) {
 	var currentFrameToUnhide = textFramesToUnhide[i];
 	currentFrameToUnhide.hidden = false;
 };
+
+// Unhide layers so objects inside can be unlocked
+for (var i = hiddenObjects.length-1; i>=0; i--) {
+	hiddenObjects[i].visible = true;
+};
+
 // Relock stuff that was unlocked during processing
 for (var i = lockedObjects.length-1; i>=0; i--) {
 	lockedObjects[i].locked = true;
 };
+
+// Hide again layers
+for (var i = hiddenObjects.length-1; i>=0; i--) {
+	hiddenObjects[i].visible = false;
+};
+
 
 pBar.setTitle('Saving Illustrator document...');
 pBar.setProgress(1.0);
@@ -2364,4 +2386,3 @@ function round(number, precision) {
 	var d = Math.pow(10, precision || 0);
 	return Math.round(number * d) / d;
 }
-
