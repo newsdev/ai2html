@@ -2091,6 +2091,11 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 			headerText             += "\t\t\tmargin:0 auto;\r";
 			headerText             += "\t\t}\r";
 		};
+    if (docSettings.clickable_link!="") {
+      headerText             += "\t\t."+nameSpace+"ai2htmlLink {\r";
+      headerText             += "\t\t\tdisplay: block;\r";
+      headerText             += "\t\t}\r";
+    };
 		headerText                   += "\t</style>\r";
 		headerText                   += "\r";
 		if (docSettings.clickable_link!="") {
@@ -2265,7 +2270,7 @@ function getResizerScript() {
 	resizerScript += "\n" + "        \/\/ require IE9+";
 	resizerScript += "\n" + "        if (!(\"querySelector\" in document)) return;";
 	resizerScript += "\n" + "        function resizer() {";
-	resizerScript += "\n" + "            var elements = Array.prototype.slice.call(document.querySelectorAll(\".g-artboard-v3[data-min-width]\")),";
+	resizerScript += "\n" + "            var elements = Array.prototype.slice.call(document.querySelectorAll(\".git@github.com:newsdev/ai2html.gitgit@github.com:newsdev/ai2html.gitgit@github.com:newsdev/ai2html.gitgit@github.com:newsdev/ai2html.gitgit@github.com:newsdev/ai2html.gitgit@github.com:newsdev/ai2html.git-artboard-v3[data-min-width]\")),";
 	resizerScript += "\n" + "                widthById = {};";
 	resizerScript += "\n" + "            elements.forEach(function(el) {";
 	resizerScript += "\n" + "                var parent = el.parentNode,";
