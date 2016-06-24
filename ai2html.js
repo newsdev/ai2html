@@ -2091,11 +2091,11 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 			headerText             += "\t\t\tmargin:0 auto;\r";
 			headerText             += "\t\t}\r";
 		};
-    if (docSettings.clickable_link!="") {
-      headerText             += "\t\t."+nameSpace+"ai2htmlLink {\r";
-      headerText             += "\t\t\tdisplay: block;\r";
-      headerText             += "\t\t}\r";
-    };
+		if (docSettings.clickable_link!="") {
+			headerText             += "\t\t."+nameSpace+"ai2htmlLink {\r";
+			headerText             += "\t\t\tdisplay: block;\r";
+			headerText             += "\t\t}\r";
+		};
 		headerText                   += "\t</style>\r";
 		headerText                   += "\r";
 		if (docSettings.clickable_link!="") {
