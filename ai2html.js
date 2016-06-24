@@ -2270,7 +2270,7 @@ function getResizerScript() {
 	resizerScript += "\n" + "        \/\/ require IE9+";
 	resizerScript += "\n" + "        if (!(\"querySelector\" in document)) return;";
 	resizerScript += "\n" + "        function resizer() {";
-	resizerScript += "\n" + "            var elements = Array.prototype.slice.call(document.querySelectorAll(\".git@github.com:newsdev/ai2html.gitgit@github.com:newsdev/ai2html.gitgit@github.com:newsdev/ai2html.gitgit@github.com:newsdev/ai2html.gitgit@github.com:newsdev/ai2html.gitgit@github.com:newsdev/ai2html.git-artboard-v3[data-min-width]\")),";
+	resizerScript += "\n" + "            var elements = Array.prototype.slice.call(document.querySelectorAll(\".g-artboard-v3[data-min-width]\")),";
 	resizerScript += "\n" + "                widthById = {};";
 	resizerScript += "\n" + "            elements.forEach(function(el) {";
 	resizerScript += "\n" + "                var parent = el.parentNode,";
