@@ -1,3 +1,7 @@
+# ai2html-bbg
+
+This is a fork of NYT’s ai2html, configured for the BBG environment. It is provided for convenience and to keep track of changes in the main branch while keeping our very minor customizations.
+
 # [ai2html](http://ai2html.org)
 
 > ai2html is an open-source script for Adobe Illustrator that converts your Illustrator documents into html and css.
