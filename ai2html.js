@@ -831,7 +831,7 @@ if (scriptEnvironment=="nyt") {
 } else if (scriptEnvironment=="bbg") {
 	var alertHed               = "Good job, you're the best.";
         defaultFamily              = "BWHaasText-55Roman,helvetica,sans-serif";
-        nameSpace                  = "b-";
+        nameSpace                  = "dvz-";
 } else {
 	var alertHed               = "Nice work!";
 
