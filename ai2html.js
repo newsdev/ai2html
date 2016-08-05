@@ -126,12 +126,13 @@ var exportImageFiles = function(dest,width,height,formats,initialScaling,doubler
 	// Exports current document to dest as a PNG8 file with specified
 	// options, dest contains the full path including the file name
 	// doubleres is "yes" or "no" whether you want to allow images to be double res
-
-	if (doubleres=="yes") {
+	// if you want to force ai2html to use doubleres, use "always"
+	
+	if (doubleres=="yes" || doubleres=="always") {
 		// if image is too big to use double-res, then just output single-res.
 		var pngImageScaling = 200 * initialScaling;
 		var jpgImageScaling = 200 * initialScaling;
-		if        ( (width*height) < (3*1024*1024/4) ) {
+		if (doubleres == 'always' || ((width*height) < (3*1024*1024/4) || (width >= 945))) {
 			// <3
 			// feedback.push("The jpg and png images are double resolution.");
 		} else if ( (width*height) < (3*1024*1024) ) {
