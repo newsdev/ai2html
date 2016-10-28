@@ -1,4 +1,4 @@
-﻿// ai2html.js
+// ai2html.js
 var scriptVersion     = "0.61";
 var scriptEnvironment = "bbg";
 
@@ -693,7 +693,6 @@ var fonts = [
         {"aifont":"BWDrukXXXCond-Super","family":"BWDrukXXXCond-Super","weight":"","style":""},
         {"aifont":"BWDrukXXXXCond-Super","family":"BWDrukXXXXCond-Super","weight":"","style":""},
         {"aifont":"BWHaasText","family":"BWHaasText-55Roman,HaasText,helvetica,arial,sans-serif","weight":"","style":""}
-
 ];
 
 var caps = [
