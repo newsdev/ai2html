@@ -2341,7 +2341,7 @@ function getResizerScript() {
 	resizerScript += "\n" + "                    previous = now;";
 	resizerScript += "\n" + "                    result = func.apply(context, args);";
 	resizerScript += "\n" + "                    if (!timeout) context = args = null;";
-	resizerScript += "\n" + "                } else if (!timeout && options.trailing !== false) {";
+	resizerScript += "\n" + "                } else if (!timeout) {";
 	resizerScript += "\n" + "                    timeout = setTimeout(later, remaining);";
 	resizerScript += "\n" + "                }";
 	resizerScript += "\n" + "                return result;";
