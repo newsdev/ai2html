@@ -1,3 +1,11 @@
+# NGM-ai2html
+
+This is a fork of the NYTimes ai2html. 
+
+This works nicely with the [NG-ai2html-server](https://github.com/natgeo/ngm-ai2html-server)
+
+---
+
 # [ai2html](http://ai2html.org)
 
 > ai2html is an open-source script for Adobe Illustrator that converts your Illustrator documents into html and css.
