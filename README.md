@@ -1,8 +1,16 @@
 # NGM-ai2html
 
-This is a fork of the NYTimes ai2html. 
+This is a fork of the NYTimes' ai2html. 
 
-This works nicely with the [NG-ai2html-server](https://github.com/natgeo/ngm-ai2html-server)
+This works nicely with the [ngm-ai2html-server](https://github.com/natgeo/ngm-ai2html-server) to provide local AEM previews.
+
+### Enhancements
+
+- Generates font-face definitions for map fonts, supports Verlag and Neue Haas
+- Generates font-smoothing css
+- Classes more tightly namespaced with "NGAI-"
+- Letter tracking within the browser more closely matches Illustrator
+- Leading uses ems instead of px
 
 ---
 
