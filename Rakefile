@@ -14,6 +14,7 @@ task :install do
     if Dir.exist?( install_dir )
       puts "Found it. Installing"
       cp "ai2html.js", "#{install_dir}/ai2html.jsx"
+      cp "utilities/aifontname.js", "#{install_dir}/aifontname.jsx"
     else
       puts "Does not exist."
     end

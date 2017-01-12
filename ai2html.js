@@ -591,19 +591,27 @@ if (scriptEnvironment=="nyt") {
 	// Make a copy of the spreadsheet for yourself.
 	// Modify the settings to taste.
 var fonts = [
-    {"aifont":"Gordita","family":"gordita',helvetica,helvetica-neue,arial,sans-serif","weight":"500","style":""},
-    {"aifont":"Gordita Italic","family":"gordita',helvetica,helvetica-neue,arial,sans-serif","weight":"500","style":"italic"},
-    {"aifont":"Gordita Medium","family":"gordita',helvetica,helvetica-neue,arial,sans-serif","weight":"600","style":""},
-    {"aifont":"Gordita Medium Italic","family":"gordita',helvetica,helvetica-neue,arial,sans-serif","weight":"600","style":"italic"},
-    {"aifont":"Gordita Bold","family":"gordita',helvetica,helvetica-neue,arial,sans-serif","weight":"700","style":""},
-    {"aifont":"Gordita Bold Italic","family":"gordita',helvetica,helvetica-neue,arial,sans-serif","weight":"700","style":"italic"},
-    {"aifont":"Atiza","family":"atiza_textregular', georgia, serif","weight":"500","style":""},
-    {"aifont":"Atiza Italic","family":"atiza_textregular', georgia, serif","weight":"500","style":"italic"},
-    {"aifont":"Atiza Bold","family":"atiza_textregular', georgia, serif","weight":"700","style":""},
-    {"aifont":"Liberation Mono Regular","family":"liberation_monoregular', monospace","weight":"500","style":""},
-    {"aifont":"Liberation Mono Italic","family":"liberation_monoregular_italic', monospace","weight":"500","style":"italic"},
-    {"aifont":"Liberation Mono Bold","family":"liberation_monobold', monospace","weight":"700","style":""},
-    {"aifont":"Liberation Mono Bold Italic","family":"liberation_monobold_italic', monospace","weight":"700","style":"italic"}
+	{"aifont":"ArialMT","family":"arial,helvetica,sans-serif","weight":"","style":""},
+	{"aifont":"Arial-BoldMT","family":"arial,helvetica,sans-serif","weight":"bold","style":""},
+	{"aifont":"Arial-ItalicMT","family":"arial,helvetica,sans-serif","weight":"","style":"italic"},
+	{"aifont":"Arial-BoldItalicMT","family":"arial,helvetica,sans-serif","weight":"bold","style":"italic"},
+	{"aifont":"Georgia","family":"georgia,'times new roman',times,serif","weight":"","style":""},
+	{"aifont":"Georgia-Bold","family":"georgia,'times new roman',times,serif","weight":"bold","style":""},
+	{"aifont":"Georgia-Italic","family":"georgia,'times new roman',times,serif","weight":"","style":"italic"},
+	{"aifont":"Georgia-BoldItalic","family":"georgia,'times new roman',times,serif","weight":"bold","style":"italic"},
+    {"aifont":"GorditaRegular","family":"gordita,helvetica,helvetica-neue,arial,sans-serif","weight":"","style":""},
+    {"aifont":"GorditaItalic","family":"gordita,helvetica,helvetica-neue,arial,sans-serif","weight":"","style":"italic"},
+    {"aifont":"GorditaMedium","family":"gordita,helvetica,helvetica-neue,arial,sans-serif","weight":"","style":""},
+    {"aifont":"GorditaMedium-Italic","family":"gordita,helvetica,helvetica-neue,arial,sans-serif","weight":"","style":"italic"},
+    {"aifont":"GorditaBold","family":"gordita,helvetica,helvetica-neue,arial,sans-serif","weight":"","style":""},
+    {"aifont":"GorditaBold-Italic","family":"gordita,helvetica,helvetica-neue,arial,sans-serif","weight":"","style":"italic"},
+    {"aifont":"AtizaText","family":"atizatext-regular,georgia,serif","weight":"","style":""},
+    {"aifont":"AtizaText-Italic","family":"atizatext-italic,georgia,serif","weight":"","style":"italic"},
+    {"aifont":"AtizaText-Bold","family":"atizatext-bold,georgia,serif","weight":"","style":""},
+    {"aifont":"LiberationMono","family":"liberationmono,monospace","weight":"","style":""},
+    {"aifont":"LiberationMono-Italic","family":"liberationmono-italic,monospace","weight":"","style":"italic"},
+    {"aifont":"LiberationMono-Bold","family":"liberationmono-bold,monospace","weight":"","style":""},
+    {"aifont":"LiberationMono-BoldItalic","family":"liberationmono-bolditalic,monospace","weight":"","style":"italic"}
 ];
 
 var caps = [
@@ -649,7 +657,7 @@ var dateTimeStamp = currYear + "-" + currMonth + "-" + currDate + " - " + currHo
 
 // user inputs, settings, etc
 var defaultFamily       = "gordita,helvetica-neue,helvetica,arial,sans-serif";
-var defaultWeight       = "";
+var defaultWeight       = "400";
 var defaultStyle        = "";
 var defaultSize         = 13;
 var defaultLeading      = 18;
