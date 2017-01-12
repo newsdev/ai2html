@@ -1,6 +1,6 @@
 require 'fileutils'
 
-DIRS = [ 'Adobe Illustrator CC 2017',  
+DIRS = [ 'Adobe Illustrator CC 2017',
          'Adobe Illustrator CC',
          'Adobe Illustrator CS5',
          'Adobe Illustrator CS4',
@@ -13,7 +13,7 @@ task :install do
     puts "\n----\nChecking for existence of #{install_dir}"
     if Dir.exist?( install_dir )
       puts "Found it. Installing"
-      cp "ai2html.jsx", "#{install_dir}/ai2html.jsx"
+      cp "ai2html.js", "#{install_dir}/ai2html.jsx"
     else
       puts "Does not exist."
     end
