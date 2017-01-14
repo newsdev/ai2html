@@ -1,69 +1,41 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-	<title><%= headline %></title>
-</head>
-<body>
+	<meta charset="utf-8">
+	<title>Axios Visuals: <%= subhead %></title>
+	<!--[if lt IE 9]>
+	  <script type="text/javascript" charset="utf-8" src="https://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no" />
+	<link rel="stylesheet" href="//static.axios.com/css/reset.css" media="screen">
+	<link rel="stylesheet" href="//static.axios.com/css/unsub.css" media="screen" />
+	<link rel="stylesheet" type="text/css" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css">
 	<style>
-		.t-ai2htmlPage {
-			/*font-family: arial,sans-serif;*/
-			font-family: georgia,serif;
-			font-size: 14px;
-			line-height: 1.2;
-			color:#333;
-			width: 90%;
-			max-width: 1200px;
-			margin: 0 auto;
+		html, body {
+			background-color: white;
 		}
-		.t-pageTopper,
-		.t-pageFooter {
-			position: relative;
-			width: 100%;
-			height: 50px;
-			background-color: #ddd;
-			letter-spacing: 5px;
-		}
-		.t-pageTopper {
-			margin-bottom:25px;
-		}
-		.t-pageFooter {
-			margin-top:25px;
-		}
-		.t-pageTopperText {
+		.tmpl-ai2htmlPage {
 			text-align: center;
-			text-transform: uppercase;
-			font-size:.8em;
-			height:13px;
-			margin: auto;
-			position: absolute;
-			top: 0; left: 0; bottom: 0; right: 0;
-		}
-		.t-pageHed {
-			font-size: 1.8em;
-			font-weight: normal;
-		}
-		.t-pageIntro,
-		.t-pageNotes,
-		.t-pageSources,
-		.t-pageCredits {
-			margin-top:10px;
 		}
 	</style>
-	<div class="t-ai2htmlPage">
-		<div class="t-pageTopper">
-			<p class="t-pageTopperText">Page Topper</p>
-		</div>
-		<h1 class="t-pageHed"><%= headline %></h1>
-		<p class="t-pageIntro"><%= leadin %></p>
+</head>
+<body>
+	<div class="tmpl-ai2htmlPage">
+		<h1 class="tmpl-pageHed"><%= subhead %></h1>
+		<p class="tmpl-pageIntro"><%= leadin %></p>
 		<div class="g-graphicStub">
 			<%= ai2htmlPartial %>
 		</div>
-		<p  class="t-pageNotes"><%= notes %></p>
-		<p  class="t-pageSources"><%= sources %></p>
-		<p  class="t-pageCredits"><%= credit %></p>
-		<div class="t-pageFooter">
-			<p class="t-pageTopperText">Page Footer</p>
-		</div>
+		<p  class="tmpl-pageNotes"><%= notes %></p>
+		<p  class="tmpl-pageSources"><%= sources %></p>
+		<p  class="tmpl-pageCredits"><%= credit %></p>
 	</div>
+	<script type="text/javascript" src="https://pym.nprapps.org/pym.v1.min.js"></script>
+	<script type="text/javascript">
+		window.onload = function() {
+			var pymChild = new pym.Child({ polling: 500 });
+			pymChild.sendHeight();
+		}
+	</script>
 </body>
 </html>
