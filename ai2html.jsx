@@ -599,19 +599,19 @@ var fonts = [
 	{"aifont":"Georgia-Bold","family":"georgia,'times new roman',times,serif","weight":"bold","style":""},
 	{"aifont":"Georgia-Italic","family":"georgia,'times new roman',times,serif","weight":"","style":"italic"},
 	{"aifont":"Georgia-BoldItalic","family":"georgia,'times new roman',times,serif","weight":"bold","style":"italic"},
-    {"aifont":"GorditaRegular","family":"gordita,helvetica,helvetica-neue,arial,sans-serif","weight":"","style":""},
-    {"aifont":"GorditaItalic","family":"gordita,helvetica,helvetica-neue,arial,sans-serif","weight":"","style":"italic"},
-    {"aifont":"GorditaMedium","family":"gordita,helvetica,helvetica-neue,arial,sans-serif","weight":"500","style":""},
-    {"aifont":"GorditaMedium-Italic","family":"gordita,helvetica,helvetica-neue,arial,sans-serif","weight":"500","style":"italic"},
-    {"aifont":"GorditaBold","family":"gordita,helvetica,helvetica-neue,arial,sans-serif","weight":"600","style":""},
-    {"aifont":"GorditaBold-Italic","family":"gordita,helvetica,helvetica-neue,arial,sans-serif","weight":"600","style":"italic"},
+    {"aifont":"GorditaRegular","family":"'gordita',helvetica,helvetica-neue,arial,sans-serif","weight":"","style":""},
+    {"aifont":"GorditaItalic","family":"'gordita',helvetica,helvetica-neue,arial,sans-serif","weight":"","style":"italic"},
+    {"aifont":"GorditaMedium","family":"'gordita',helvetica,helvetica-neue,arial,sans-serif","weight":"500","style":""},
+    {"aifont":"GorditaMedium-Italic","family":"'gordita',helvetica,helvetica-neue,arial,sans-serif","weight":"500","style":"italic"},
+    {"aifont":"GorditaBold","family":"'gordita',helvetica,helvetica-neue,arial,sans-serif","weight":"600","style":""},
+    {"aifont":"GorditaBold-Italic","family":"'gordita',helvetica,helvetica-neue,arial,sans-serif","weight":"600","style":"italic"},
     {"aifont":"AtizaText","family":"atizatext-regular,georgia,serif","weight":"","style":""},
     {"aifont":"AtizaText-Italic","family":"atizatext-italic,georgia,serif","weight":"","style":"italic"},
     {"aifont":"AtizaText-Bold","family":"atizatext-bold,georgia,serif","weight":"bold","style":""},
     {"aifont":"LiberationMono","family":"liberationmono,monospace","weight":"","style":""},
-    {"aifont":"LiberationMono-Italic","family":"liberationmono-italic,monospace","weight":"","style":"italic"},
-    {"aifont":"LiberationMono-Bold","family":"liberationmono-bold,monospace","weight":"bold","style":""},
-    {"aifont":"LiberationMono-BoldItalic","family":"liberationmono-bolditalic,monospace","weight":"bold","style":"italic"}
+    {"aifont":"LiberationMono-Italic","family":"liberation_monoitalic,monospace","weight":"","style":"italic"},
+    {"aifont":"LiberationMono-Bold","family":"liberation_monobold,monospace","weight":"bold","style":""},
+    {"aifont":"LiberationMono-BoldItalic","family":"liberation_monobold_italic,monospace","weight":"bold","style":"italic"}
 ];
 
 var caps = [
