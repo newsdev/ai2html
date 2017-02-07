@@ -1,6 +1,6 @@
 // ai2html.js
 var scriptVersion     = "0.61";
-var scriptEnvironment = "bbg";
+var scriptEnvironment = "dvz";
 
 // ai2html is a script for Adobe Illustrator that converts your Illustrator document into html and css.
 
@@ -524,7 +524,7 @@ if (scriptEnvironment=="nyt") {
         scoop_slug: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
         scoop_external_edit_key: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""}
 	};
-} else if (scriptEnvironment == "bbg") {
+} else if (scriptEnvironment == "dvz") {
     var ai2htmlBaseSettings = {
         ai2html_environment: {defaultValue: scriptEnvironment, includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
         settings_version: {defaultValue: scriptVersion, includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
@@ -780,7 +780,7 @@ var gitConfigFile          = new File( docPath + "../.git/config");
 var alertText              = "";
 if (scriptEnvironment=="nyt") {
 	var alertHed               = "Actually, that’s not half bad.";
-} else if (scriptEnvironment=="bbg") {
+} else if (scriptEnvironment=="dvz") {
 	var alertHed               = "Good job, you're the best.";
         defaultFamily              = "BWHaasText-55Roman,helvetica,sans-serif";
         nameSpace                  = "dvz-";
