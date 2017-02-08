@@ -605,7 +605,7 @@ var fonts = [
     {"aifont":"GorditaMedium-Italic","family":"'gordita',helvetica,helvetica-neue,arial,sans-serif","weight":"500","style":"italic"},
     {"aifont":"GorditaBold","family":"'gordita',helvetica,helvetica-neue,arial,sans-serif","weight":"600","style":""},
     {"aifont":"GorditaBold-Italic","family":"'gordita',helvetica,helvetica-neue,arial,sans-serif","weight":"600","style":"italic"},
-    {"aifont":"AtizaText","family":"atizatext-regular,georgia,serif","weight":"","style":""},
+    {"aifont":"AtizaText-Regular","family":"atizatext-regular,georgia,serif","weight":"","style":""},
     {"aifont":"AtizaText-Italic","family":"atizatext-italic,georgia,serif","weight":"","style":"italic"},
     {"aifont":"AtizaText-Bold","family":"atizatext-bold,georgia,serif","weight":"bold","style":""},
     {"aifont":"LiberationMono","family":"liberationmono,monospace","weight":"","style":""},
