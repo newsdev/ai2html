@@ -1,4 +1,4 @@
-// ai2html.js
+﻿// ai2html.js
 var scriptVersion     = "0.61";
 var scriptEnvironment = "dvz";
 
