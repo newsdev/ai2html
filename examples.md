@@ -14,7 +14,7 @@ sidebar_menu:
 
 We’ve included some examples that demonstrate how different settings in ai2html work. You can download all the [Illustrator files from Github](https://github.com/newsdev/ai2html/tree/gh-pages/_ai). 
 
-For more, check out [examples for how we’ve used ai2html](https://delicious.com/archietse/ai2html,nyt) at The New York Times and [examples of how others have used it](https://delicious.com/archietse/ai2html,others).
+For more, check out [examples for how we’ve used ai2html](https://del.icio.us/archietse/ai2html+nyt) at The New York Times and [examples of how others have used it](https://del.icio.us/archietse/ai2html+others).
 
 ## Multiple artboards for responsive web pages
 
