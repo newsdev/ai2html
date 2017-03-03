@@ -97,12 +97,6 @@ var firstBy = (function() {
     }
     return extend;
 })();
-Array.prototype.findUniqueValues = function() {
-	var o = {}, i, l = this.length, r = [];
-	for(i=0; i<l;i+=1) o[this[i]] = this[i];
-	for(i in o) r.push(o[i]);
-	return r;
-};
 
 var cleanText = function(text) {
 	for (var i=0; i < htmlCharacterCodes.length; i++) {
@@ -1526,82 +1520,15 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 					};
 				};
 			};
-			pStyleKeys = pStyleKeys.findUniqueValues();
+			pStyleKeys = uniqify(pStyleKeys);
 
 			// Write css for each style key
 			var pStyleCss = "";
 			// var cStyleCss = "";
 			pBar.setTitle(docArtboardName + ': Writing CSS for text styles...');
 			for (var i=0;i<pStyleKeys.length;i++) {
-				var thisKey = pStyleKeys[i];
-				var pArray = thisKey.split("\t");
-				var pHash  = {};
-				for (var j=0;j<pStyleKeyTags.length;j++) {
-					var thisTag = pStyleKeyTags[j];
-					pHash[thisTag] = pArray[j];
-					if (thisTag=="size"||thisTag=="leading"||thisTag=="spacebefore"||thisTag=="spaceafter") {
-						pHash[thisTag] = Math.round(pHash[thisTag]);
-					};
-					if (thisTag=="aifont") {
-						pHash['family'] = defaultFamily;
-						pHash['weight'] = defaultWeight;
-						pHash['style']  = defaultStyle;
-						for (var k=0;k<fonts.length;k++) {
-							if (pHash['aifont']==fonts[k]['aifont']) {
-								pHash['family'] = fonts[k]['family'];
-								pHash['weight'] = fonts[k]['weight'];
-								pHash['style']  = fonts[k]['style'];
-							};
-						};
-						// check for franklin or cheltenham
-						// for (var tempFamily in nytFonts) {
-						// 	for (var fontNo = 0; fontNo < nytFonts[tempFamily].fontList.length; fontNo++) {
-						// 		var tempFont = nytFonts[tempFamily].fontList[fontNo];
-						// 		if (tempFont === pHash['aifont']) { nytFonts[tempFamily].inDoc = true; };
-						// 	};
-						// };
-					};
-					if (thisTag=="r"||thisTag=="g"||thisTag=="b") {
-						if (pHash[thisTag].length==1) { pHash[thisTag] = "0"+pHash[thisTag] };
-					};
-					if (thisTag=="capitalization") {
-						for (var k=0;k<caps.length;k++) {
-							if (pHash['capitalization']==caps[k]['ai']) {
-								pHash['capitalization'] =caps[k]['html'];
-							};
-						};
-					};
-					if (thisTag=="justification") {
-						for (var k=0;k<align.length;k++) {
-							if (pHash['justification']==align[k]['ai']) {
-								pHash['justification'] =align[k]['html'];
-							};
-						};
-					};
-					if (thisTag=="tracking") {
-						// pHash['tracking'] = pHash['tracking']/1000;
-						pHash['tracking'] = pHash['tracking']/1200;
-					};
-					if (thisTag=="opacity") {
-						pHash['opacity'] = pHash['opacity']/100;
-					};
-				};
-				pStyleCss += "\t\t\t#"+nameSpace+docArtboardName+" ."+nameSpace+"aiPstyle" + i + " {\r";
-				if (pHash['family']!=defaultFamily) { pStyleCss += "\t\t\t\tfont-family:" + pHash['family'] + ";\r"; };
-				if (pHash['size']!=defaultSize) { pStyleCss += "\t\t\t\tfont-size:" + pHash['size'] + "px;\r"; };
-				if (pHash['leading']!=defaultLeading) { pStyleCss += "\t\t\t\tline-height:" + pHash['leading'] + "px;\r"; };
-				if (pHash['weight']!="") { pStyleCss += "\t\t\t\tfont-weight:" + pHash['weight'] + ";\r"; };
-				if (pHash['style']!="" ) { pStyleCss += "\t\t\t\tfont-style:" + pHash['style'] + ";\r"; };
-				if (pHash['capitalization']!="" ) { pStyleCss += "\t\t\t\ttext-transform:" + pHash['capitalization'] + ";\r"; };
-				if (pHash['justification']!="" ) { pStyleCss += "\t\t\t\ttext-align:" + pHash['justification'] + ";\r"; };
-				if (pHash['spacebefore']>0 ) { pStyleCss += "\t\t\t\tpadding-top:" + pHash['spacebefore'] + "px;\r"; };
-				if (pHash['spaceafter']>0 ) { pStyleCss += "\t\t\t\tpadding-bottom:" + pHash['spaceafter'] + "px;\r"; };
-				if (pHash['tracking']!=0 ) { pStyleCss += "\t\t\t\tletter-spacing:" + pHash['tracking'] + "em;\r"; };
-				if (pHash['opacity']!=1.0 ) { pStyleCss += "\t\t\t\tfilter: alpha(opacity=" + (pHash['opacity']*100) + ");\r"; };
-				if (pHash['opacity']!=1.0 ) { pStyleCss += "\t\t\t\t-ms-filter:'progid:DXImageTransform.Microsoft.Alpha(Opacity=" + (pHash['opacity']*100) + ")';\r"; };
-				if (pHash['opacity']!=1.0 ) { pStyleCss += "\t\t\t\topacity:" + pHash['opacity'] + ";\r"; };
-				pStyleCss += "\t\t\t\tcolor:#" + pHash['r'] + pHash['g'] + pHash['b'] + ";\r";
-				pStyleCss += "\t\t\t}\r";
+				pStyleCss += "\t\t\t#" + nameSpace + docArtboardName + " ." + nameSpace +
+						"aiPstyle" + i + " " + convertStyleKeyToCss(pStyleKeys[i]);
 			};
 
 			html[2] += pStyleCss;
@@ -2265,6 +2192,8 @@ function getResizerScript() {
 	return resizerScript;
 }
 
+alert(textIsTransformed.toString());
+
 function textIsTransformed(textFrame) {
 	return !(textFrame.matrix.mValueA==1 &&
 		textFrame.matrix.mValueB==0 &&
@@ -2405,6 +2334,96 @@ function round(number, precision) {
 	var d = Math.pow(10, precision || 0);
 	return Math.round(number * d) / d;
 }
+
+function uniqify(arr) {
+	var o = {},
+			r = [],
+			val;
+	for (var i=0, l=arr.length; i<l; i++) {
+		val = arr[i];
+		if (val in o === false) {
+			o[val] = true;
+			r.push(val);
+		}
+	}
+	return r;
+}
+
+function convertStyleKeyToCss(key) {
+	// external vars:
+	// pStyleKeyTags, caps, fonts, align
+	var pArray = key.split("\t");
+	var pHash  = {};
+	var lines = [];
+	for (var j=0; j<pStyleKeyTags.length; j++) {
+		var thisTag = pStyleKeyTags[j];
+		pHash[thisTag] = pArray[j];
+		if (thisTag=="size"||thisTag=="leading"||thisTag=="spacebefore"||thisTag=="spaceafter") {
+			pHash[thisTag] = Math.round(pHash[thisTag]);
+		};
+		if (thisTag=="aifont") {
+			pHash['family'] = defaultFamily;
+			pHash['weight'] = defaultWeight;
+			pHash['style']  = defaultStyle;
+			for (var k=0;k<fonts.length;k++) {
+				if (pHash['aifont']==fonts[k]['aifont']) {
+					pHash['family'] = fonts[k]['family'];
+					pHash['weight'] = fonts[k]['weight'];
+					pHash['style']  = fonts[k]['style'];
+				};
+			};
+			// check for franklin or cheltenham
+			// for (var tempFamily in nytFonts) {
+			// 	for (var fontNo = 0; fontNo < nytFonts[tempFamily].fontList.length; fontNo++) {
+			// 		var tempFont = nytFonts[tempFamily].fontList[fontNo];
+			// 		if (tempFont === pHash['aifont']) { nytFonts[tempFamily].inDoc = true; };
+			// 	};
+			// };
+		};
+		if (thisTag=="r"||thisTag=="g"||thisTag=="b") {
+			if (pHash[thisTag].length==1) { pHash[thisTag] = "0"+pHash[thisTag] };
+		};
+		if (thisTag=="capitalization") {
+			for (var k=0;k<caps.length;k++) {
+				if (pHash['capitalization']==caps[k]['ai']) {
+					pHash['capitalization'] =caps[k]['html'];
+				};
+			};
+		};
+		if (thisTag=="justification") {
+			for (var k=0;k<align.length;k++) {
+				if (pHash['justification']==align[k]['ai']) {
+					pHash['justification'] =align[k]['html'];
+				};
+			};
+		};
+		if (thisTag=="tracking") {
+			// pHash['tracking'] = pHash['tracking']/1000;
+			pHash['tracking'] = pHash['tracking']/1200;
+		};
+		if (thisTag=="opacity") {
+			pHash['opacity'] = pHash['opacity']/100;
+		};
+	}
+	lines.push('{');
+	if (pHash['family'] != defaultFamily) lines.push("font-family:" + pHash['family'] + ";");
+	if (pHash['size'] != defaultSize) lines.push("font-size:" + pHash['size'] + "px;");
+	if (pHash['leading'] != defaultLeading) lines.push("line-height:" + pHash['leading'] + "px;");
+	if (pHash['weight'] != "") lines.push("font-weight:" + pHash['weight'] + ";");
+	if (pHash['style'] != "" ) lines.push("font-style:" + pHash['style'] + ";");
+	if (pHash['capitalization'] != "" ) lines.push("text-transform:" + pHash['capitalization'] + ";");
+	if (pHash['justification'] != "" ) lines.push("text-align:" + pHash['justification'] + ";");
+	if (pHash['spacebefore'] > 0 ) lines.push("padding-top:" + pHash['spacebefore'] + "px;");
+	if (pHash['spaceafter'] > 0 ) lines.push("padding-bottom:" + pHash['spaceafter'] + "px;");
+	if (pHash['tracking'] != 0 ) lines.push("letter-spacing:" + pHash['tracking'] + "em;");
+	if (pHash['opacity'] != 1.0 ) lines.push("filter: alpha(opacity=" + (pHash['opacity']*100) + ");");
+	if (pHash['opacity'] != 1.0 ) lines.push("-ms-filter:'progid:DXImageTransform.Microsoft.Alpha(Opacity=" + (pHash['opacity']*100) + ")';");
+	if (pHash['opacity'] != 1.0 ) lines.push("opacity:" + pHash['opacity'] + ";");
+	lines.push("color:#" + pHash['r'] + pHash['g'] + pHash['b'] + ";");
+
+	return lines.join('\r\t\t\t\t') + "\r\t\t\t}\r";
+}
+
 
 function getParagraphStyleKey(p) {
 	var b = "\t"
