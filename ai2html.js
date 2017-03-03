@@ -1,7 +1,7 @@
 // ai2html.js
 var scriptVersion     = "0.61";
-// var scriptEnvironment = "nyt";
-var scriptEnvironment = "";
+var scriptEnvironment = "nyt";
+// var scriptEnvironment = "";
 
 // ai2html is a script for Adobe Illustrator that converts your Illustrator document into html and css.
 
@@ -127,7 +127,7 @@ var exportImageFiles = function(dest,width,height,formats,initialScaling,doubler
 	// options, dest contains the full path including the file name
 	// doubleres is "yes" or "no" whether you want to allow images to be double res
 	// if you want to force ai2html to use doubleres, use "always"
-	
+
 	if (doubleres=="yes" || doubleres=="always") {
 		// if image is too big to use double-res, then just output single-res.
 		var pngImageScaling = 200 * initialScaling;
@@ -1515,54 +1515,10 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 				var thisFrame = selectFrames[i];
 				var numChars = thisFrame.characters.length;
 				var runningChars = 0;
-				var b = "\t"
 				for (var k=0;k<thisFrame.paragraphs.length;k++) {
 					if (runningChars<numChars && thisFrame.paragraphs[k].characters.length!=0) {
 						// var sampleChar = thisFrame.paragraphs[k].length-1;
-						var sampleChar = Math.round(thisFrame.paragraphs[k].length/2)-1;
-						var pStyleKey = "";
-						pStyleKey += thisFrame.paragraphs[k].characters[sampleChar].textFont.name;
-						pStyleKey += b + Math.round(thisFrame.paragraphs[k].characters[sampleChar].size);
-						pStyleKey += b + thisFrame.paragraphs[k].characters[sampleChar].capitalization;
-
-						if (thisFrame.paragraphs[k].characters[sampleChar].fillColor.typename=="GrayColor") {
-							var grayPct = selectFrames[i].characters[k].fillColor.gray;
-							var rgbPct   = (100-grayPct)/100*255;
-							var redOut   = rgbPct;
-							var greenOut = rgbPct;
-							var blueOut  = rgbPct;
-						} else if (thisFrame.paragraphs[k].characters[sampleChar].fillColor.typename=="RGBColor") {
-							var redOut   = thisFrame.paragraphs[k].characters[sampleChar].fillColor.red;
-							var greenOut = thisFrame.paragraphs[k].characters[sampleChar].fillColor.green;
-							var blueOut  = thisFrame.paragraphs[k].characters[sampleChar].fillColor.blue;
-							if (redOut  <rgbBlackThreshold&&
-								greenOut<rgbBlackThreshold&&
-								blueOut <rgbBlackThreshold) {
-								redOut   = 0;
-								greenOut = 0;
-								blueOut  = 0;
-							};
-						} else if (thisFrame.paragraphs[k].characters[sampleChar].fillColor.typename=="NoColor") {
-							var redOut   = 0;
-							var greenOut = 255;
-							var blueOut  = 0;
-							warnings.push("This text has no fill. Please fill it with an RGB color. It has been filled with green. Text: “" + thisFrame.paragraphs[k].contents + "”");
-						} else {
-							var redOut   = 0;
-							var greenOut = 0;
-							var blueOut  = 0;
-							warnings.push("This text is filled with a non-RGB color. Please fill it with an RGB color. Text: “" + thisFrame.paragraphs[k].contents + "”");
-						};
-						pStyleKey += b + redOut.toString(16);
-						pStyleKey += b + greenOut.toString(16);
-						pStyleKey += b + blueOut.toString(16);
-
-						pStyleKey += b + thisFrame.paragraphs[k].characters[sampleChar].tracking;
-						pStyleKey += b + Math.round(thisFrame.paragraphs[k].leading);
-						pStyleKey += b + Math.round(thisFrame.paragraphs[k].spaceBefore);
-						pStyleKey += b + Math.round(thisFrame.paragraphs[k].spaceAfter);
-						pStyleKey += b + thisFrame.paragraphs[k].justification;
-						pStyleKey += b + Math.round(thisFrame.opacity);
+						var pStyleKey = getParagraphStyleKey(thisFrame.paragraphs[k]);
 						pStyleKeys.push(pStyleKey);
 						runningChars += (thisFrame.paragraphs[k].characters.length)+1;
 					} else {
@@ -1854,53 +1810,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 				for (var k=0;k<thisFrame.paragraphs.length;k++) {
 
 					if (runningChars<numChars && thisFrame.paragraphs[k].characters.length!=0) {
-						// var sampleChar = thisFrame.paragraphs[k].length-1;
-						var sampleChar = Math.round(thisFrame.paragraphs[k].length/2)-1;
-						var pStyleKey = "";
-						pStyleKey += thisFrame.paragraphs[k].characters[sampleChar].textFont.name;
-						pStyleKey += b + Math.round(thisFrame.paragraphs[k].characters[sampleChar].size);
-						pStyleKey += b + thisFrame.paragraphs[k].characters[sampleChar].capitalization;
-
-						if (thisFrame.paragraphs[k].characters[sampleChar].fillColor.typename=="GrayColor") {
-							var grayPct = selectFrames[i].characters[k].fillColor.gray;
-							var rgbPct   = (100-grayPct)/100*255;
-							var redOut   = rgbPct;
-							var greenOut = rgbPct;
-							var blueOut  = rgbPct;
-						} else if (thisFrame.paragraphs[k].characters[sampleChar].fillColor.typename=="RGBColor") {
-							var redOut   = thisFrame.paragraphs[k].characters[sampleChar].fillColor.red;
-							var greenOut = thisFrame.paragraphs[k].characters[sampleChar].fillColor.green;
-							var blueOut  = thisFrame.paragraphs[k].characters[sampleChar].fillColor.blue;
-							if (redOut  <rgbBlackThreshold&&
-								greenOut<rgbBlackThreshold&&
-								blueOut <rgbBlackThreshold) {
-								redOut   = 0;
-								greenOut = 0;
-								blueOut  = 0;
-							};
-						} else if (thisFrame.paragraphs[k].characters[sampleChar].fillColor.typename=="NoColor") {
-							var redOut   = 0;
-							var greenOut = 255;
-							var blueOut  = 0;
-							warnings.push("This text has no fill. Please fill it with an RGB color. It has been filled with green. Text: “" + thisFrame.paragraphs[k].contents + "”");
-						} else {
-							var redOut   = 0;
-							var greenOut = 0;
-							var blueOut  = 0;
-							warnings.push("This text is filled with a non-RGB color. Please fill it with an RGB color. It has been filled with black. Text: “" + thisFrame.paragraphs[k].contents + "”");
-						};
-
-						pStyleKey += b + redOut.toString(16);
-						pStyleKey += b + greenOut.toString(16);
-						pStyleKey += b + blueOut.toString(16);
-
-						pStyleKey += b + thisFrame.paragraphs[k].characters[sampleChar].tracking;
-						pStyleKey += b + Math.round(thisFrame.paragraphs[k].leading);
-						pStyleKey += b + Math.round(thisFrame.paragraphs[k].spaceBefore);
-						pStyleKey += b + Math.round(thisFrame.paragraphs[k].spaceAfter);
-						pStyleKey += b + thisFrame.paragraphs[k].justification;
-						pStyleKey += b + Math.round(thisFrame.opacity);
-
+						var pStyleKey = getParagraphStyleKey(thisFrame.paragraphs[k]);
 						var pStyleKeyId = 0;
 						for (var l=0;l<pStyleKeys.length;l++) {
 							if (pStyleKey==pStyleKeys[l]) {
@@ -2494,4 +2404,56 @@ function hideElementsOutsideArtboardRect(artbnds) {
 function round(number, precision) {
 	var d = Math.pow(10, precision || 0);
 	return Math.round(number * d) / d;
+}
+
+function getParagraphStyleKey(p) {
+	var b = "\t"
+	var sampleChar = p.characters[Math.round(p.length/2)-1];
+	var pStyleKey = "";
+	pStyleKey += sampleChar.textFont.name;
+	pStyleKey += b + Math.round(sampleChar.size);
+	pStyleKey += b + sampleChar.capitalization;
+
+	if (sampleChar.fillColor.typename=="GrayColor") {
+		// looks like a bug
+		// var grayPct = selectFrames[i].characters[k].fillColor.gray;
+		var grayPct = sampleChar.fillColor.gray;
+		var rgbPct   = (100-grayPct)/100*255;
+		var redOut   = rgbPct;
+		var greenOut = rgbPct;
+		var blueOut  = rgbPct;
+	} else if (sampleChar.fillColor.typename=="RGBColor") {
+		var redOut   = sampleChar.fillColor.red;
+		var greenOut = sampleChar.fillColor.green;
+		var blueOut  = sampleChar.fillColor.blue;
+		if (redOut < rgbBlackThreshold &&
+			greenOut < rgbBlackThreshold &&
+			blueOut < rgbBlackThreshold) {
+			redOut   = 0;
+			greenOut = 0;
+			blueOut  = 0;
+		};
+	} else if (sampleChar.fillColor.typename=="NoColor") {
+		var redOut   = 0;
+		var greenOut = 255;
+		var blueOut  = 0;
+		warnings.push("This text has no fill. Please fill it with an RGB color. It has been filled with green. Text: “" + p.contents + "”");
+	} else {
+		var redOut   = 0;
+		var greenOut = 0;
+		var blueOut  = 0;
+		warnings.push("This text is filled with a non-RGB color. Please fill it with an RGB color. Text: “" + p.contents + "”");
+	};
+	pStyleKey += b + redOut.toString(16);
+	pStyleKey += b + greenOut.toString(16);
+	pStyleKey += b + blueOut.toString(16);
+
+	pStyleKey += b + sampleChar.tracking;
+	pStyleKey += b + Math.round(p.leading);
+	pStyleKey += b + Math.round(p.spaceBefore);
+	pStyleKey += b + Math.round(p.spaceAfter);
+	pStyleKey += b + p.justification;
+	pStyleKey += b + Math.round(thisFrame.opacity);
+
+	return pStyleKey;
 }
