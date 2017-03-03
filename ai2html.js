@@ -1284,626 +1284,625 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 	// begin main stuff
 	var responsiveHtml = "";
 	for (var abNumber = 0; abNumber < doc.artboards.length; abNumber++) {
-		if (artboardsToProcess[abNumber]) {
-			doc.artboards.setActiveArtboardIndex(abNumber);
-			var activeArtboard      =  doc.artboards[abNumber];
-			docSettings.docName     =  makeKeyword(docSettings.project_name);
-			var artboardName        =  makeKeyword(activeArtboard.name.replace( /^(.+):\d+$/ , "$1"));
-			// var docArtboardName     =  makeKeyword(docSettings.project_name) + "-" + artboardName + "-" + abNumber;
-			var docArtboardName     =  docSettings.docName + "-" + artboardName;
-			var activeArtboardRect  =  activeArtboard.artboardRect;
-			var abX                 =  activeArtboardRect[0];
-			var abY                 = -activeArtboardRect[1];
-			var abW                 =  Math.round(activeArtboardRect[2]-abX);
-			var abH                 = -activeArtboardRect[3]-abY;
-			var artboardAspectRatio =  abH/abW;
+		if (!artboardsToProcess[abNumber]) continue;
+		doc.artboards.setActiveArtboardIndex(abNumber);
+		var activeArtboard      =  doc.artboards[abNumber];
+		docSettings.docName     =  makeKeyword(docSettings.project_name);
+		var artboardName        =  makeKeyword(activeArtboard.name.replace( /^(.+):\d+$/ , "$1"));
+		// var docArtboardName     =  makeKeyword(docSettings.project_name) + "-" + artboardName + "-" + abNumber;
+		var docArtboardName     =  docSettings.docName + "-" + artboardName;
+		var activeArtboardRect  =  activeArtboard.artboardRect;
+		var abX                 =  activeArtboardRect[0];
+		var abY                 = -activeArtboardRect[1];
+		var abW                 =  Math.round(activeArtboardRect[2]-abX);
+		var abH                 = -activeArtboardRect[3]-abY;
+		var artboardAspectRatio =  abH/abW;
 
-			pBar.setTitle(docArtboardName + ': Starting to generate HTML...');
-			pBar.setProgress(abNumber/(doc.artboards.length));
+		pBar.setTitle(docArtboardName + ': Starting to generate HTML...');
+		pBar.setProgress(abNumber/(doc.artboards.length));
 
-			// for determining which artboard to use for promo image
-			// if (abW>=largestArtboardWidth) {
-				if (abW*abH>largestArtboardArea) {
-					largestArtboardArea  = abW*abH;
-					// largestArtboardWidth = abW;
-					largestArtboardIndex = abNumber;
-				};
-			// };
-
-			var html = [];
-			var numHtmlStrands   = 12;
-			for (var i=0;i<numHtmlStrands;i++) {html[i] = "";};
-
-			// css is in html[2]
-			// user-custom css is in html[3]
-			// html is in html[6]
-			// user-custom html is in html[7]
-			// user-custom js is in html[9]
-			// typekit is in html[10]
-
-			html[0] += "Cut and paste into Scoop\r";
-
-			html[1] += "\r\t<!-- Artboard: " + artboardName + " -->\r"
-
-			var showClass = "";
-
-			for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
-				var nyt5Breakpoint = nyt5Breakpoints[bpNumber];
-				for (var bpArtboardNumber = 0; bpArtboardNumber < nyt5Breakpoint.artboards.length; bpArtboardNumber++) {
-					var bpArtboard = nyt5Breakpoint.artboards[bpArtboardNumber];
-					if (abNumber==bpArtboard) {
-						showClass += (showClass.length>0) ? " ":"";
-						showClass += "g-show-" + nyt5Breakpoint.name;
-					}
-				}
-			}
-
-			if (docSettings.include_resizer_classes=="no") {
-				showClass = "";
-			}
-
-			html[1] += "\t<div id='"+nameSpace+docArtboardName+"' class='"+nameSpace+"artboard "+nameSpace+"artboard-v3 "+showClass+"'";
-			if (docSettings.include_resizer_widths == "yes") {
-				// add data-min/max-width attributes
-				// find breakpoints
-				for (var bpIndex = 1; bpIndex < uniqueArtboardWidths.length; bpIndex++) {
-					if (abW < uniqueArtboardWidths[bpIndex]) break;
-				}
-				html[1] += " data-min-width='"+uniqueArtboardWidths[bpIndex-1]+"'";
-				if (bpIndex < uniqueArtboardWidths.length) {
-					html[1] += " data-max-width='"+(uniqueArtboardWidths[bpIndex]-1)+"'";
-				}
-			}
-			html[1] += ">\r";
-			html[1] += "\t\t<style type='text/css' media='screen,print'>\r";
-			html[1] += "\t\t\t#"+nameSpace+docArtboardName+"{\r";
-			html[1] += "\t\t\t\tposition:relative;\r";
-			html[1] += "\t\t\t\toverflow:hidden;\r";
-			if (docSettings.responsiveness=="fixed") {
-				html[1] += "\t\t\t\twidth:"  + Math.round(abW) + "px;\r";
+		// for determining which artboard to use for promo image
+		// if (abW>=largestArtboardWidth) {
+			if (abW*abH>largestArtboardArea) {
+				largestArtboardArea  = abW*abH;
+				// largestArtboardWidth = abW;
+				largestArtboardIndex = abNumber;
 			};
-			// if (docSettings.max_width!="") {
-			// 	html[1] += "\t\t\t\tmax-width:"  + Math.round(docSettings.max_width) + "px;\r";
-			// };
-			html[1] += "\t\t\t}\r";
-			html[1] += "\t\t\t."+nameSpace+"aiAbs{\r";
-			html[1] += "\t\t\t\tposition:absolute;\r";
-			html[1] += "\t\t\t}\r";
-			html[1] += "\t\t\t."+nameSpace+"aiImg{\r";
-			html[1] += "\t\t\t\tdisplay:block;\r";
-			html[1] += "\t\t\t\twidth:100% !important;\r";
-			html[1] += "\t\t\t}\r";
-			html[1] += "\t\t\t#"+nameSpace+docArtboardName+" p{\r";
-			html[1] += "\t\t\t\tfont-family:" + defaultFamily + ";\r";
-			html[1] += "\t\t\t\tfont-size:" + defaultSize + "px;\r";
-			html[1] += "\t\t\t\tline-height:" + defaultLeading + "px;\r";
-			if (docSettings.testing_mode=="yes") {
-				html[1] += "\t\t\t\tcolor: rgba(209, 0, 0, 0.5) !important;\r";
+		// };
+
+		var html = [];
+		var numHtmlStrands   = 12;
+		for (var i=0;i<numHtmlStrands;i++) {html[i] = "";};
+
+		// css is in html[2]
+		// user-custom css is in html[3]
+		// html is in html[6]
+		// user-custom html is in html[7]
+		// user-custom js is in html[9]
+		// typekit is in html[10]
+
+		html[0] += "Cut and paste into Scoop\r";
+
+		html[1] += "\r\t<!-- Artboard: " + artboardName + " -->\r"
+
+		var showClass = "";
+
+		for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
+			var nyt5Breakpoint = nyt5Breakpoints[bpNumber];
+			for (var bpArtboardNumber = 0; bpArtboardNumber < nyt5Breakpoint.artboards.length; bpArtboardNumber++) {
+				var bpArtboard = nyt5Breakpoint.artboards[bpArtboardNumber];
+				if (abNumber==bpArtboard) {
+					showClass += (showClass.length>0) ? " ":"";
+					showClass += "g-show-" + nyt5Breakpoint.name;
+				}
+			}
+		}
+
+		if (docSettings.include_resizer_classes=="no") {
+			showClass = "";
+		}
+
+		html[1] += "\t<div id='"+nameSpace+docArtboardName+"' class='"+nameSpace+"artboard "+nameSpace+"artboard-v3 "+showClass+"'";
+		if (docSettings.include_resizer_widths == "yes") {
+			// add data-min/max-width attributes
+			// find breakpoints
+			for (var bpIndex = 1; bpIndex < uniqueArtboardWidths.length; bpIndex++) {
+				if (abW < uniqueArtboardWidths[bpIndex]) break;
+			}
+			html[1] += " data-min-width='"+uniqueArtboardWidths[bpIndex-1]+"'";
+			if (bpIndex < uniqueArtboardWidths.length) {
+				html[1] += " data-max-width='"+(uniqueArtboardWidths[bpIndex]-1)+"'";
+			}
+		}
+		html[1] += ">\r";
+		html[1] += "\t\t<style type='text/css' media='screen,print'>\r";
+		html[1] += "\t\t\t#"+nameSpace+docArtboardName+"{\r";
+		html[1] += "\t\t\t\tposition:relative;\r";
+		html[1] += "\t\t\t\toverflow:hidden;\r";
+		if (docSettings.responsiveness=="fixed") {
+			html[1] += "\t\t\t\twidth:"  + Math.round(abW) + "px;\r";
+		};
+		// if (docSettings.max_width!="") {
+		// 	html[1] += "\t\t\t\tmax-width:"  + Math.round(docSettings.max_width) + "px;\r";
+		// };
+		html[1] += "\t\t\t}\r";
+		html[1] += "\t\t\t."+nameSpace+"aiAbs{\r";
+		html[1] += "\t\t\t\tposition:absolute;\r";
+		html[1] += "\t\t\t}\r";
+		html[1] += "\t\t\t."+nameSpace+"aiImg{\r";
+		html[1] += "\t\t\t\tdisplay:block;\r";
+		html[1] += "\t\t\t\twidth:100% !important;\r";
+		html[1] += "\t\t\t}\r";
+		html[1] += "\t\t\t#"+nameSpace+docArtboardName+" p{\r";
+		html[1] += "\t\t\t\tfont-family:" + defaultFamily + ";\r";
+		html[1] += "\t\t\t\tfont-size:" + defaultSize + "px;\r";
+		html[1] += "\t\t\t\tline-height:" + defaultLeading + "px;\r";
+		if (docSettings.testing_mode=="yes") {
+			html[1] += "\t\t\t\tcolor: rgba(209, 0, 0, 0.5) !important;\r";
+		};
+		html[1] += "\t\t\t\tmargin:0;\r";
+		html[1] += "\t\t\t}\r";
+
+		html[4] += "\t\t</style>\r";
+		html[4] += "\t\t<div id='"+nameSpace+docArtboardName+"-graphic'>\r";
+
+		if (outputType=="abs") {
+			// this option appears to not really be needed
+			html[5] += "\t\t\t<img id='" +nameSpace+"ai"+abNumber+"-0'\r";
+			html[5] += "\t\t\t\tclass='" +nameSpace+"aiAbs "+nameSpace+"aiImg'\r";
+			if (docSettings.ai2html_environment=="nyt") {
+				html[5] += "\t\t\t\tsrc='"   + docSettings.preview_image_path + docArtboardName + imageExtension + "'\r";
+			} else {
+				html[5] += "\t\t\t\tsrc='"   + docSettings.image_source_path + docArtboardName + imageExtension + "'\r";
 			};
-			html[1] += "\t\t\t\tmargin:0;\r";
-			html[1] += "\t\t\t}\r";
-
-			html[4] += "\t\t</style>\r";
-			html[4] += "\t\t<div id='"+nameSpace+docArtboardName+"-graphic'>\r";
-
-			if (outputType=="abs") {
-				// this option appears to not really be needed
-				html[5] += "\t\t\t<img id='" +nameSpace+"ai"+abNumber+"-0'\r";
-				html[5] += "\t\t\t\tclass='" +nameSpace+"aiAbs "+nameSpace+"aiImg'\r";
+			html[5] += "\t\t\t\twidth="  + Math.round(abW) + "\r";
+			html[5] += "\t\t\t\theight=" + Math.round(abH) + "\r";
+			html[5] += "\t\t\t\t/>\r";
+		} else if (outputType=="pct") {
+			// this is the default option which seems to work with both fixed and dynamic responsiveness
+			html[5] += "\t\t\t<img id='" +nameSpace+"ai"+abNumber+"-0'\r";
+			html[5] += "\t\t\t\tclass='" +nameSpace+"aiImg'\r";
+			// html[5] += "\t\t\t\tstyle='width:100% !important;'\r";
+			if (docSettings.use_lazy_loader=="no") {
 				if (docSettings.ai2html_environment=="nyt") {
 					html[5] += "\t\t\t\tsrc='"   + docSettings.preview_image_path + docArtboardName + imageExtension + "'\r";
 				} else {
 					html[5] += "\t\t\t\tsrc='"   + docSettings.image_source_path + docArtboardName + imageExtension + "'\r";
 				};
-				html[5] += "\t\t\t\twidth="  + Math.round(abW) + "\r";
-				html[5] += "\t\t\t\theight=" + Math.round(abH) + "\r";
-				html[5] += "\t\t\t\t/>\r";
-			} else if (outputType=="pct") {
-				// this is the default option which seems to work with both fixed and dynamic responsiveness
-				html[5] += "\t\t\t<img id='" +nameSpace+"ai"+abNumber+"-0'\r";
-				html[5] += "\t\t\t\tclass='" +nameSpace+"aiImg'\r";
-				// html[5] += "\t\t\t\tstyle='width:100% !important;'\r";
-				if (docSettings.use_lazy_loader=="no") {
-					if (docSettings.ai2html_environment=="nyt") {
-						html[5] += "\t\t\t\tsrc='"   + docSettings.preview_image_path + docArtboardName + imageExtension + "'\r";
-					} else {
-						html[5] += "\t\t\t\tsrc='"   + docSettings.image_source_path + docArtboardName + imageExtension + "'\r";
-					};
-				} else {
-                    html[5] += "\t\t\t\tsrc='data:image/gif;base64,R0lGODlhCgAKAIAAAB8fHwAAACH5BAEAAAAALAAAAAAKAAoAAAIIhI+py+0PYysAOw=='\r"; // dummy image to hold space while image loads
-					if (docSettings.ai2html_environment=="nyt") {
-	                    html[5] += "\t\t\t\tdata-src='"   + docSettings.preview_image_path + docArtboardName + imageExtension + "'\r";
-					} else {
-	                    html[5] += "\t\t\t\tdata-src='"   + docSettings.image_source_path + docArtboardName + imageExtension + "'\r";
-					};
-                    html[5] += "\t\t\t\tdata-height-multiplier='" + roundTo(artboardAspectRatio,4) + "'\r";
-				};
-				html[5] += "\t\t\t\t/>\r";
-			};
-
-			html[8]  += "\t\t</div>\r"; // closing the nameSpace+docArtboardName div
-			html[11] += "\t</div>\r";
-
-			var docFrames     = doc.textFrames;
-			var selectFrames  = [];
-
-			for (var i=0;i<docFrames.length;i++) {
-				var thisFrame = docFrames[i];
-
-				var visibleLeft   =  thisFrame.visibleBounds[0];
-				var visibleTop    = -thisFrame.visibleBounds[1];
-				var visibleRight  =  thisFrame.visibleBounds[2];
-				var visibleBottom = -thisFrame.visibleBounds[3];
-
-				var abLeft   =  activeArtboardRect[0];
-				var abTop    = -activeArtboardRect[1];
-				var abRight  =  activeArtboardRect[2];
-				var abBottom = -activeArtboardRect[3];
-
-				var frameIsHidden = thisFrame.hidden;
-				var frameIsHiddenAlert = thisFrame.contents;
-				frameIsHiddenAlert += "\n" + thisFrame.typename + " = " + thisFrame.hidden;
-
-				// traverse all parent objects to determine if any of them are hidden or locked
-				if (!frameIsHidden) {
-					var objectParent = thisFrame.parent;
-					while (objectParent.typename!="Document") {
-						if (objectParent.typename=="Layer") {
-							frameIsHiddenAlert += "\n" + objectParent.typename + " = " + !objectParent.visible;
-							if (!objectParent.visible) {
-								frameIsHidden = true;
-							};
-							objectParent = objectParent.parent;
-						} else {
-							frameIsHiddenAlert += "\n" + objectParent.typename + " = " + objectParent.hidden;
-							if (objectParent.hidden) {
-								frameIsHidden = true;
-							};
-							objectParent = objectParent.parent;
-						};
-					};
-				};
-
-				var frameInBounds = false;
-
-				if (
-					(
-						(visibleLeft>=abLeft && visibleLeft<=abRight) ||
-						(visibleRight>=abLeft && visibleRight<=abRight) ||
-						(visibleLeft<=abLeft && visibleRight>=abRight)
-					) && (
-						(visibleTop>=abTop && visibleTop<=abBottom) ||
-						(visibleBottom>=abTop && visibleBottom<=abBottom) ||
-						(visibleTop<=abTop && visibleBottom>=abBottom)
-					)
-				) {
-					frameInBounds=true;
-				};
-
-				if (
-					// reasons to include text for processing
-					frameInBounds &&
-					!frameIsHidden&&
-					// !thisFrame.hidden &&
-					thisFrame.contents!="" &&
-					(
-						docSettings.render_rotated_skewed_text_as=="html" ||
-						(
-							docSettings.render_rotated_skewed_text_as=="image" &&
-							!textIsTransformed(thisFrame)
-						)
-					) &&
-					(thisFrame.kind=="TextType.AREATEXT" || thisFrame.kind=="TextType.POINTTEXT")
-				) {
-					selectFrames.push(thisFrame);
-				};
-			};
-
-			// Sort the selectFrames array top to bottom, left to right.
-			selectFrames.sort(
-			    firstBy(function (v1, v2) { return v2.top  - v1.top ; })
-			    .thenBy(function (v1, v2) { return v1.left - v2.left; })
-			);
-
-			// Find unique character and paragraph styles
-			// Style keys for paragraphs are the character style of the last paragraph.
-			var pStyleKeys = [];
-			var cStyleKeys = [];
-
-			var pFamily    = [];
-			var pWeight    = [];
-			var pStyle     = [];
-			var pSize      = [];
-			var pLeading   = [];
-
-			pBar.setTitle(docArtboardName + ': Finding unique text styles...');
-			for (var i=0;i<selectFrames.length;i++) {
-				var thisFrame = selectFrames[i];
-				var numChars = thisFrame.characters.length;
-				var runningChars = 0;
-				for (var k=0;k<thisFrame.paragraphs.length;k++) {
-					if (runningChars<numChars && thisFrame.paragraphs[k].characters.length!=0) {
-						// var sampleChar = thisFrame.paragraphs[k].length-1;
-						var pStyleKey = getParagraphStyleKey(thisFrame.paragraphs[k]);
-						pStyleKeys.push(pStyleKey);
-						runningChars += (thisFrame.paragraphs[k].characters.length)+1;
-					} else {
-						runningChars += 1;
-					};
-				};
-			};
-			pStyleKeys = uniqify(pStyleKeys);
-
-			// Write css for each style key
-			var pStyleCss = "";
-			// var cStyleCss = "";
-			pBar.setTitle(docArtboardName + ': Writing CSS for text styles...');
-			for (var i=0;i<pStyleKeys.length;i++) {
-				pStyleCss += "\t\t\t#" + nameSpace + docArtboardName + " ." + nameSpace +
-						"aiPstyle" + i + " " + convertStyleKeyToCss(pStyleKeys[i]);
-			};
-
-			html[2] += pStyleCss;
-
-			html[2] += '\t\t\t.g-aiPtransformed p { white-space: nowrap; }\r';
-
-			// Output html for each text frame
-			pBar.setTitle(docArtboardName + ': Writing HTML for text blocks...');
-			var oneArtboard = 1/(doc.artboards.length),
-					oneBlock    = 1/(selectFrames.length),
-					oneBlockNormalized = oneBlock * oneArtboard;
-
-			for (var i=0;i<selectFrames.length;i++) {
-				pBar.increment(oneBlockNormalized); // Keeps text frames progress from overshooting current overall progress.
-				var thisFrame = selectFrames[i];
-				var vFactor = .5; // This is an adjustment to correct for vertical placement.
-				var thisFrameAttributes = {};
-
-				// Read in attribute variables from notes field for this text frame
-				var rawNotes = thisFrame.note;
-				// alert("note = " + rawNotes);
-				rawNotes = rawNotes.split("\r");
-				for (var rNo = 0; rNo < rawNotes.length; rNo++) {
-					var rn = rawNotes[rNo];
-					var rnKey   = rn.replace( /^[ \t]*([^ \t:]*)[ \t]*:(.*)$/ , "$1" );
-					var rnValue = rn.replace( /^[ \t]*([^ \t:]*)[ \t]*:(.*)$/ , "$2" );
-					rnKey       = rnKey.replace( /^\s+/ , "" ).replace( /\s+$/ , "" );
-					rnValue     = rnValue.replace( /^\s+/ , "" ).replace( /\s+$/ , "" );
-					thisFrameAttributes[rnKey] = rnValue;
-				};
-
-
-				var kind, htmlX, htmlY, htmlT, htmlB, htmlTM, htmlH, htmlL, htmlR, htmlW, htmlLM, alignment, extraWidthPct;
-				var centerBuffer = 30; // additional width on left and right sides for center aligned point text in percent of ai width
-
-				if (thisFrame.kind=="TextType.POINTTEXT") {
-					kind = "point";
-					// /this line throws an error if the first paragraph of the frame is empty.
-					// var htmlY = Math.round(-thisFrame.position[1] - (((thisFrame.paragraphs[0].characters[0].leading - thisFrame.paragraphs[0].characters[0].size)*vFactor) + thisFrame.paragraphs[0].spaceBefore)-abY);
-					htmlY = Math.round(-thisFrame.position[1] - (((thisFrame.characters[0].leading - thisFrame.characters[0].size)*vFactor) + thisFrame.characters[0].spaceBefore)-abY);
-				} else if (thisFrame.kind=="TextType.AREATEXT") {
-					kind = "area";
-					// var htmlY = Math.round(-thisFrame.position[1] - (((thisFrame.paragraphs[0].characters[0].leading - thisFrame.paragraphs[0].characters[0].size)*vFactor) + thisFrame.paragraphs[0].spaceBefore)-abY);
-					htmlY = Math.round(-thisFrame.position[1] - (((thisFrame.characters[0].leading - thisFrame.characters[0].size)*vFactor) + thisFrame.characters[0].spaceBefore)-abY);
-				} else {
-					kind = "other";
-				};
-				htmlH = Math.round(thisFrame.height);
-				if (thisFrameAttributes.valign==="bottom") {
-					htmlB = htmlY + thisFrame.height;
-				// } else if (thisFrameAttributes.valign==="center") {
-				// 	htmlT  = htmlY+(thisFrame.height/2);
-				// 	htmlTM = thisFrame.height*(1/2*-1);
-				} else {
-					htmlT = htmlY;
-				};
-
-				// additional width for box to allow for slight variations in font widths
-				if (kind=="area") {
-					extraWidthPct = 0; // was 3 percent -- but need to account for when it hits the edge of the box since we are now overflow hidden
-				} else {
-					extraWidthPct = 100;
-				};
-				htmlW = thisFrame.width*(1+(extraWidthPct/100));
-				if (thisFrame.characters[0].justification=="Justification.LEFT") {
-					alignment = "left";
-					// htmlX = thisFrame.left-abX;
-					htmlL = thisFrame.left-abX;
-					htmlR = abW-(thisFrame.left+htmlW-abX);
-				} else if (thisFrame.characters[0].justification=="Justification.RIGHT") {
-					alignment = "right";
-					// htmlX = abW-(thisFrame.left+thisFrame.width-abX);
-					htmlL = thisFrame.left-(thisFrame.width*(1+(extraWidthPct/100)))-abX;
-					htmlR = abW-(thisFrame.left+thisFrame.width-abX);
-				} else if (thisFrame.characters[0].justification=="Justification.CENTER") {
-					alignment = "center";
-					// if (thisFrame.kind=="TextType.AREATEXT") { centerBuffer=0; }; // don't use additional padding if the text block is area text.
-					// htmlX  = thisFrame.left-abX-(abW*(1+(extraWidthPct/100/2)));
-					htmlL  = thisFrame.left-abX+(thisFrame.width/2); // thanks jeremy!
-					htmlLM = thisFrame.width*(1+(extraWidthPct/100))/2*-1;
-				} else {
-					alignment = "other";
-					htmlX = Math.round(thisFrame.left-abX);
-				};
-
-				var frameLayer = makeKeyword(thisFrame.layer.name);
-
-				// var getParentLayers = function(startingLayer) {
-				// 	var parentLayers = [];
-
-				// }
-
-				// var frameLayers = addLayerClasses(getParentLayers(thisFrame.layer));
-
-
-				var j = i+1;
-				var thisFrameId = nameSpace+"ai"+abNumber+"-" + j;
-				if (thisFrame.name!="") {
-					thisFrameId = makeKeyword(thisFrame.name);
-				};
-				html[6] += "\t\t\t<div id='"+thisFrameId;
-				html[6] += "' class='"+nameSpace+frameLayer+" "+nameSpace+"aiAbs"+
-					(textIsTransformed(thisFrame) && kind == "point" ? ' g-aiPtransformed' : '')+"' style='";
-
-				// check if text is transformed
-				if (textIsTransformed(thisFrame)) {
-					// find transformed anchor point pre-transformation
-					var t_bounds = thisFrame.geometricBounds,
-						u_bounds = getUntransformedTextBounds(thisFrame),
-						u_width = u_bounds[2] - u_bounds[0],
-						t_width = t_bounds[2] - t_bounds[0],
-						u_height = u_bounds[3] - u_bounds[1],
-						t_height = t_bounds[3] - t_bounds[1],
-						v_align = thisFrameAttributes.valign || 'top',
-						t_scale_x = thisFrame.textRange.characterAttributes.horizontalScale / 100,
-						t_scale_y = thisFrame.textRange.characterAttributes.verticalScale / 100,
-						t_anchor = getAnchorPoint(u_bounds, thisFrame.matrix, alignment, v_align, t_scale_x, t_scale_y),
-						t_trans_x = 0,
-						t_trans_y = 0;
-
-					// position div on transformed anchor point
-					html[6] += "left:" + round((t_anchor[0]-abX)/abW*100, pctPrecision) + "%;";
-					html[6] += "top:" + round((-t_anchor[1]-abY)/abH*100, pctPrecision) + "%;";
-
-					// move "back" to left or top to center or right align text
-					if (alignment == 'center') t_trans_x -= u_width * 0.5;
-					else if (alignment == 'right') t_trans_x -= u_width;
-					if (v_align == 'center' || v_align == 'middle') t_trans_y -= u_height * 0.5;
-					else if (v_align == 'bottom') t_trans_y -= u_height;
-
-					var mat = thisFrame.matrix;
-
-					mat = app.concatenateMatrix(app.getTranslationMatrix(t_trans_x, t_trans_y),
-							app.concatenateTranslationMatrix(mat, -mat.mValueTX, -mat.mValueTY));
-
-					// var mat, mat0 = thisFrame.matrix;
-					// mat0 = app.concatenateTranslationMatrix(mat0, -mat0.mValueTX, -mat0.mValueTY);
-					// mat = app.concatenateMatrix(app.getTranslationMatrix(t_trans_x, t_trans_y), mat0);
-
-					var transform = "matrix("
-							+round(mat.mValueA, pctPrecision)+','
-							+round(-1*mat.mValueB, pctPrecision)+','
-							+round(-1*mat.mValueC, pctPrecision)+','
-							+round(mat.mValueD, pctPrecision)+','
-							+round(t_trans_x, pctPrecision)+','
-							+round(-t_trans_y, pctPrecision)+') '
-							+"scaleX("+round(t_scale_x, pctPrecision)+") "
-							+"scaleY("+round(t_scale_y, pctPrecision)+")";
-
-					var transformOrigin = alignment + ' '+(v_align == 'middle' ? 'center' : v_align);
-
-					html[6] += "transform: "+transform+";";
-					html[6] += "transform-origin: "+transformOrigin+";";
-					html[6] += "-webkit-transform: "+transform+";";
-					html[6] += "-webkit-transform-origin: "+transformOrigin+";";
-					html[6] += "-ms-transform: "+transform+";";
-					html[6] += "-ms-transform-origin: "+transformOrigin+";";
-
-					if (kind == 'area') html[6] += "width: "+(u_width * (1+(extraWidthPct/100)))+"px;";
-
-				} else {
-
-					if (outputType=="abs") {
-						html[6] += "top:" + round(htmlY) + "px;";
-						if (alignment=="left") {
-							html[6] += "left:"  + round(htmlL) + "px;";
-							html[6] += "width:" + round(htmlW) + "px;";
-						} else if (alignment=="right") {
-							html[6] += "right:" + round(htmlR) + "px;";
-							html[6] += "width:" + round(htmlW) + "px;";
-						} if (alignment=="center") {
-							html[6] += "left:"  + round(htmlL) + "px;";
-							html[6] += "width:" + round(htmlW) + "px;";
-							html[6] += "margin-left:" + round(htmlLM) + "px;";
-						};
-					} else if (outputType=="pct") {
-						if (thisFrameAttributes.valign==="bottom") {
-							html[6] += "bottom:" + round(100-(htmlB/abH*100), pctPrecision) + "%;";
-						} else {
-							html[6] += "top:" + round(htmlT/abH*100, pctPrecision) + "%;";
-						};
-						if (alignment=="right") {
-							html[6] += "right:" + round(htmlR/abW*100, pctPrecision) + "%;";
-							if (kind=="area") {
-								html[6] += "width:" + round(htmlW/abW*100, pctPrecision) + "%;";
-							};
-						} else if (alignment=="center") {
-							html[6] += "left:" + round(htmlL/abW*100, pctPrecision) + "%;";
-							html[6] += "width:" + round(htmlW/abW*100, pctPrecision) + "%;";
-							html[6] += "margin-left:" + round(htmlLM/abW*100, pctPrecision) + "%;";
-						} else {
-							html[6] += "left:" + round(htmlL/abW*100, pctPrecision) + "%;";
-							if (kind=="area") {
-								html[6] += "width:" + round(htmlW/abW*100, pctPrecision) + "%;";
-							};
-						};
-
-					};
-
-				}
-
-				html[6] += "'>\r"; // close div tag for text frame
-
-				var numChars = thisFrame.characters.length;
-				var runningChars = 0;
-				for (var k=0;k<thisFrame.paragraphs.length;k++) {
-
-					if (runningChars<numChars && thisFrame.paragraphs[k].characters.length!=0) {
-						var pStyleKey = getParagraphStyleKey(thisFrame.paragraphs[k]);
-						var pStyleKeyId = 0;
-						for (var l=0;l<pStyleKeys.length;l++) {
-							if (pStyleKey==pStyleKeys[l]) {
-								pStyleKeyId = l;
-							};
-						};
-
-						html[6] += "\t\t\t\t<p class='"+nameSpace+"aiPstyle" + pStyleKeyId + "'>";
-						if (isNaN(thisFrame.paragraphs[k].length)) {
-							html[6] += "&nbsp;";
-						} else {
-							textToClean = thisFrame.paragraphs[k].contents;
-							textToClean = straightenCurlyQuotesInsideAngleBrackets(textToClean);
-							cleanedText = cleanText(textToClean);
-							html[6] += cleanedText;
-						};
-						html[6] += "</p>\r";
-						runningChars += (thisFrame.paragraphs[k].characters.length)+1;
-					} else {
-						html[6] += "\t\t\t\t<p>&nbsp;</p>\r";
-						runningChars += 1;
-					};
-				};
-				html[6] += "\t\t\t</div>\r";
-			};
-
-			for (var i=1;i<html.length;i++) {
-				responsiveHtml += (html[i]);
-			};
-			// responsiveHtml += "\n";
-
-			for (var i=0;i<selectFrames.length;i++) {
-				hideTextFrame(selectFrames[i]);
-			};
-
-			// unhide text now if in testing mode
-			if (docSettings.testing_mode=="yes") {
-				for (var i=0;i<selectFrames.length;i++) {
-					selectFrames[i].hidden = false;
-				};
-			};
-
-			var imageDestinationFolder = docPath + docSettings.html_output_path + docSettings.image_output_path;
-			checkForOutputFolder(imageDestinationFolder, "image_output_path");
-			var imageDestination = imageDestinationFolder + docArtboardName;
-			// alert ("imageDestination\n" +
-			// 		"docPath = " + docPath + "\n" +
-			// 		"docSettings.html_output_path = " + docSettings.html_output_path + "\n" +
-			// 		"docSettings.image_output_path = " + docSettings.image_output_path + "\n" +
-			// 		"docArtboardName = " + docArtboardName);
-
-			if (docSettings.write_image_files=="yes") {
-				// if in svg export, hide path elements outside of the current artboard
-				if (docSettings.image_format[0] == 'svg') {
-					// save refs to elements we are hiding
-					var hiddenItemsOutsideArtboard = hideElementsOutsideArtboardRect(activeArtboardRect);
-				}
-
-			pBar.setTitle(docArtboardName + ': Writing image...');
-
-			exportImageFiles(imageDestination,abW,abH,docSettings.image_format,1.0,docSettings.use_2x_images_if_possible);
-
-				if (docSettings.image_format[0] == 'svg' && hiddenItemsOutsideArtboard.length > 0) {
-				// unhide non-text elements hidden before export
-					for (var item_i=0; item_i < hiddenItemsOutsideArtboard.length; item_i++) {
-						hiddenItemsOutsideArtboard[item_i].hidden = false;
-					}
-				}
-			};
-
-
-			// unhide text now if NOT in testing mode
-			if (docSettings.testing_mode!="yes") {
-				for (var i=0;i<selectFrames.length;i++) {
-					selectFrames[i].hidden = false;
-				};
-			};
-
-			//=====================================
-			// output html file here if doing a file for every artboard
-			//=====================================
-
-			if (docSettings.output=="multiple-files") {
-				var responsiveJs        = '\t<script src="_assets/resizerScript.js"></script>' + "\n";
-				var responsiveCss       = '\t<link rel="stylesheet" href="_assets/resizerStyle.css">' + "\n";
-				if (docSettings.include_resizer_css_js=="no"||docSettings.ai2html_environment!="nyt") {
-					responsiveJs        = "";
-					responsiveCss       = "";
-				};
-				if (docSettings.include_resizer_script=="yes") {
-					responsiveJs = '\t' + getResizerScript() + '\n';
-					responsiveCss             = "";
-				}
-				var responsiveTextScoop = responsiveHtml;
-				var textForFile         = "";
-				var htmlFileDestination = "";
-				var headerText          = "<div id='" + nameSpace + docArtboardName + "-box' class='ai2html'>\r";
-				headerText             += "\t<!-- Generated by ai2html v" + scriptVersion + " - " + dateTimeStamp + " -->\r"
-				headerText             += "\t<!-- ai file: " + docSettings.project_name + " -->\r";
+			} else {
+                  html[5] += "\t\t\t\tsrc='data:image/gif;base64,R0lGODlhCgAKAIAAAB8fHwAAACH5BAEAAAAALAAAAAAKAAoAAAIIhI+py+0PYysAOw=='\r"; // dummy image to hold space while image loads
 				if (docSettings.ai2html_environment=="nyt") {
-					headerText             += "\t<!-- preview: " + docSettings.preview_slug + " -->\r";
-					headerText             += "\t<!-- scoop  : " + docSettings.scoop_slug_from_config_yml + " -->\r";
+                    html[5] += "\t\t\t\tdata-src='"   + docSettings.preview_image_path + docArtboardName + imageExtension + "'\r";
+				} else {
+                    html[5] += "\t\t\t\tdata-src='"   + docSettings.image_source_path + docArtboardName + imageExtension + "'\r";
 				};
-				headerText             += "\r";
-				headerText             += "\t<style type='text/css' media='screen,print'>\r";
-				if (docSettings.max_width!="") {
-					headerText             += "\t\t#" + nameSpace + docArtboardName + "-box {\r";
-					headerText             += "\t\t\tmax-width:" + docSettings.max_width + "px;\r";
-					headerText             += "\t\t}\r";
+                  html[5] += "\t\t\t\tdata-height-multiplier='" + roundTo(artboardAspectRatio,4) + "'\r";
+			};
+			html[5] += "\t\t\t\t/>\r";
+		};
+
+		html[8]  += "\t\t</div>\r"; // closing the nameSpace+docArtboardName div
+		html[11] += "\t</div>\r";
+
+		var docFrames     = doc.textFrames;
+		var selectFrames  = [];
+
+		for (var i=0;i<docFrames.length;i++) {
+			var thisFrame = docFrames[i];
+
+			var visibleLeft   =  thisFrame.visibleBounds[0];
+			var visibleTop    = -thisFrame.visibleBounds[1];
+			var visibleRight  =  thisFrame.visibleBounds[2];
+			var visibleBottom = -thisFrame.visibleBounds[3];
+
+			var abLeft   =  activeArtboardRect[0];
+			var abTop    = -activeArtboardRect[1];
+			var abRight  =  activeArtboardRect[2];
+			var abBottom = -activeArtboardRect[3];
+
+			var frameIsHidden = thisFrame.hidden;
+			var frameIsHiddenAlert = thisFrame.contents;
+			frameIsHiddenAlert += "\n" + thisFrame.typename + " = " + thisFrame.hidden;
+
+			// traverse all parent objects to determine if any of them are hidden or locked
+			if (!frameIsHidden) {
+				var objectParent = thisFrame.parent;
+				while (objectParent.typename!="Document") {
+					if (objectParent.typename=="Layer") {
+						frameIsHiddenAlert += "\n" + objectParent.typename + " = " + !objectParent.visible;
+						if (!objectParent.visible) {
+							frameIsHidden = true;
+						};
+						objectParent = objectParent.parent;
+					} else {
+						frameIsHiddenAlert += "\n" + objectParent.typename + " = " + objectParent.hidden;
+						if (objectParent.hidden) {
+							frameIsHidden = true;
+						};
+						objectParent = objectParent.parent;
+					};
 				};
-				if (docSettings.center_html_output) {
-					headerText             += "\t\t."+nameSpace+"artboard {\r";
-					headerText             += "\t\t\tmargin:0 auto;\r";
-					headerText             += "\t\t}\r";
-				};
-				headerText             += "\t</style>\r";
-				headerText             += "\r";
-				var footerText          = "\t<!-- End ai2html" + " - " + dateTimeStamp + " -->\r</div>\r";
-
-				textForFile += headerText;
-				if (previewProjectType=="ai2html") { textForFile += responsiveCss; };
-				if (customCssBlocks>0)             { textForFile += customCss;     };
-				textForFile += responsiveTextScoop;
-				if (customHtml.length>0)           { textForFile += customHtml;    };
-				if (customJs.length>0)             { textForFile += customJs;      };
-				if (responsiveJs.length>0)         { textForFile += responsiveJs;  };
-				textForFile += footerText;
-				textForFile  = applyTemplate(textForFile,docSettings);
-				// textForFile  = straightenCurlyQuotesInsideAngleBrackets(textForFile);
-
-				htmlFileDestinationFolder = docPath + docSettings.html_output_path;
-				checkForOutputFolder(htmlFileDestinationFolder, "html_output_path");
-				htmlFileDestination = htmlFileDestinationFolder + docArtboardName + docSettings.html_output_extension;
-				if (docSettings.local_preview_template!="") {
-					pBar.setTitle(docArtboardName + ': Writing HTML file...');
-
-					docSettings.ai2htmlPartial     = textForFile;
-					var localPreviewDestination = htmlFileDestinationFolder + docArtboardName + ".preview.html";
-					var localPreviewHtml        = applyTemplate(localPreviewTemplateText,docSettings)
-					outputHtml(localPreviewHtml,localPreviewDestination);
-				};
-
-				outputHtml(textForFile,htmlFileDestination);
-				// var responsiveHtmlScoopFile = new File( htmlFileDestination );
-				// responsiveHtmlScoopFile.open( "w", "TEXT", "TEXT" );
-				// 	responsiveHtmlScoopFile.lineFeed = "Unix";
-				// 	responsiveHtmlScoopFile.encoding = "UTF-8";
-				// 	responsiveHtmlScoopFile.writeln(textForFile);
-				// responsiveHtmlScoopFile.close;
-				responsiveHtml = "";
 			};
 
-		}; // end check if artboard to process
-	}; // end artboard loop
+			var frameInBounds = false;
+
+			if (
+				(
+					(visibleLeft>=abLeft && visibleLeft<=abRight) ||
+					(visibleRight>=abLeft && visibleRight<=abRight) ||
+					(visibleLeft<=abLeft && visibleRight>=abRight)
+				) && (
+					(visibleTop>=abTop && visibleTop<=abBottom) ||
+					(visibleBottom>=abTop && visibleBottom<=abBottom) ||
+					(visibleTop<=abTop && visibleBottom>=abBottom)
+				)
+			) {
+				frameInBounds=true;
+			};
+
+			if (
+				// reasons to include text for processing
+				frameInBounds &&
+				!frameIsHidden&&
+				// !thisFrame.hidden &&
+				thisFrame.contents!="" &&
+				(
+					docSettings.render_rotated_skewed_text_as=="html" ||
+					(
+						docSettings.render_rotated_skewed_text_as=="image" &&
+						!textIsTransformed(thisFrame)
+					)
+				) &&
+				(thisFrame.kind=="TextType.AREATEXT" || thisFrame.kind=="TextType.POINTTEXT")
+			) {
+				selectFrames.push(thisFrame);
+			};
+		};
+
+		// Sort the selectFrames array top to bottom, left to right.
+		selectFrames.sort(
+		    firstBy(function (v1, v2) { return v2.top  - v1.top ; })
+		    .thenBy(function (v1, v2) { return v1.left - v2.left; })
+		);
+
+		// Find unique character and paragraph styles
+		// Style keys for paragraphs are the character style of the last paragraph.
+		var pStyleKeys = [];
+		var cStyleKeys = [];
+
+		var pFamily    = [];
+		var pWeight    = [];
+		var pStyle     = [];
+		var pSize      = [];
+		var pLeading   = [];
+
+		pBar.setTitle(docArtboardName + ': Finding unique text styles...');
+		for (var i=0;i<selectFrames.length;i++) {
+			var thisFrame = selectFrames[i];
+			var numChars = thisFrame.characters.length;
+			var runningChars = 0;
+			for (var k=0;k<thisFrame.paragraphs.length;k++) {
+				if (runningChars<numChars && thisFrame.paragraphs[k].characters.length!=0) {
+					// var sampleChar = thisFrame.paragraphs[k].length-1;
+					var pStyleKey = getParagraphStyleKey(thisFrame.paragraphs[k]);
+					pStyleKeys.push(pStyleKey);
+					runningChars += (thisFrame.paragraphs[k].characters.length)+1;
+				} else {
+					runningChars += 1;
+				};
+			};
+		};
+		pStyleKeys = uniqify(pStyleKeys);
+
+		// Write css for each style key
+		var pStyleCss = "";
+		// var cStyleCss = "";
+		pBar.setTitle(docArtboardName + ': Writing CSS for text styles...');
+		for (var i=0;i<pStyleKeys.length;i++) {
+			pStyleCss += "\t\t\t#" + nameSpace + docArtboardName + " ." + nameSpace +
+					"aiPstyle" + i + " " + convertStyleKeyToCss(pStyleKeys[i]);
+		};
+
+		html[2] += pStyleCss;
+
+		html[2] += '\t\t\t.g-aiPtransformed p { white-space: nowrap; }\r';
+
+		// Output html for each text frame
+		pBar.setTitle(docArtboardName + ': Writing HTML for text blocks...');
+		var oneArtboard = 1/(doc.artboards.length),
+				oneBlock    = 1/(selectFrames.length),
+				oneBlockNormalized = oneBlock * oneArtboard;
+
+		for (var i=0;i<selectFrames.length;i++) {
+			pBar.increment(oneBlockNormalized); // Keeps text frames progress from overshooting current overall progress.
+			var thisFrame = selectFrames[i];
+			var vFactor = .5; // This is an adjustment to correct for vertical placement.
+			var thisFrameAttributes = {};
+
+			// Read in attribute variables from notes field for this text frame
+			var rawNotes = thisFrame.note;
+			// alert("note = " + rawNotes);
+			rawNotes = rawNotes.split("\r");
+			for (var rNo = 0; rNo < rawNotes.length; rNo++) {
+				var rn = rawNotes[rNo];
+				var rnKey   = rn.replace( /^[ \t]*([^ \t:]*)[ \t]*:(.*)$/ , "$1" );
+				var rnValue = rn.replace( /^[ \t]*([^ \t:]*)[ \t]*:(.*)$/ , "$2" );
+				rnKey       = rnKey.replace( /^\s+/ , "" ).replace( /\s+$/ , "" );
+				rnValue     = rnValue.replace( /^\s+/ , "" ).replace( /\s+$/ , "" );
+				thisFrameAttributes[rnKey] = rnValue;
+			};
+
+
+			var kind, htmlX, htmlY, htmlT, htmlB, htmlTM, htmlH, htmlL, htmlR, htmlW, htmlLM, alignment, extraWidthPct;
+			var centerBuffer = 30; // additional width on left and right sides for center aligned point text in percent of ai width
+
+			if (thisFrame.kind=="TextType.POINTTEXT") {
+				kind = "point";
+				// /this line throws an error if the first paragraph of the frame is empty.
+				// var htmlY = Math.round(-thisFrame.position[1] - (((thisFrame.paragraphs[0].characters[0].leading - thisFrame.paragraphs[0].characters[0].size)*vFactor) + thisFrame.paragraphs[0].spaceBefore)-abY);
+				htmlY = Math.round(-thisFrame.position[1] - (((thisFrame.characters[0].leading - thisFrame.characters[0].size)*vFactor) + thisFrame.characters[0].spaceBefore)-abY);
+			} else if (thisFrame.kind=="TextType.AREATEXT") {
+				kind = "area";
+				// var htmlY = Math.round(-thisFrame.position[1] - (((thisFrame.paragraphs[0].characters[0].leading - thisFrame.paragraphs[0].characters[0].size)*vFactor) + thisFrame.paragraphs[0].spaceBefore)-abY);
+				htmlY = Math.round(-thisFrame.position[1] - (((thisFrame.characters[0].leading - thisFrame.characters[0].size)*vFactor) + thisFrame.characters[0].spaceBefore)-abY);
+			} else {
+				kind = "other";
+			};
+			htmlH = Math.round(thisFrame.height);
+			if (thisFrameAttributes.valign==="bottom") {
+				htmlB = htmlY + thisFrame.height;
+			// } else if (thisFrameAttributes.valign==="center") {
+			// 	htmlT  = htmlY+(thisFrame.height/2);
+			// 	htmlTM = thisFrame.height*(1/2*-1);
+			} else {
+				htmlT = htmlY;
+			};
+
+			// additional width for box to allow for slight variations in font widths
+			if (kind=="area") {
+				extraWidthPct = 0; // was 3 percent -- but need to account for when it hits the edge of the box since we are now overflow hidden
+			} else {
+				extraWidthPct = 100;
+			};
+			htmlW = thisFrame.width*(1+(extraWidthPct/100));
+			if (thisFrame.characters[0].justification=="Justification.LEFT") {
+				alignment = "left";
+				// htmlX = thisFrame.left-abX;
+				htmlL = thisFrame.left-abX;
+				htmlR = abW-(thisFrame.left+htmlW-abX);
+			} else if (thisFrame.characters[0].justification=="Justification.RIGHT") {
+				alignment = "right";
+				// htmlX = abW-(thisFrame.left+thisFrame.width-abX);
+				htmlL = thisFrame.left-(thisFrame.width*(1+(extraWidthPct/100)))-abX;
+				htmlR = abW-(thisFrame.left+thisFrame.width-abX);
+			} else if (thisFrame.characters[0].justification=="Justification.CENTER") {
+				alignment = "center";
+				// if (thisFrame.kind=="TextType.AREATEXT") { centerBuffer=0; }; // don't use additional padding if the text block is area text.
+				// htmlX  = thisFrame.left-abX-(abW*(1+(extraWidthPct/100/2)));
+				htmlL  = thisFrame.left-abX+(thisFrame.width/2); // thanks jeremy!
+				htmlLM = thisFrame.width*(1+(extraWidthPct/100))/2*-1;
+			} else {
+				alignment = "other";
+				htmlX = Math.round(thisFrame.left-abX);
+			};
+
+			var frameLayer = makeKeyword(thisFrame.layer.name);
+
+			// var getParentLayers = function(startingLayer) {
+			// 	var parentLayers = [];
+
+			// }
+
+			// var frameLayers = addLayerClasses(getParentLayers(thisFrame.layer));
+
+
+			var j = i+1;
+			var thisFrameId = nameSpace+"ai"+abNumber+"-" + j;
+			if (thisFrame.name!="") {
+				thisFrameId = makeKeyword(thisFrame.name);
+			};
+			html[6] += "\t\t\t<div id='"+thisFrameId;
+			html[6] += "' class='"+nameSpace+frameLayer+" "+nameSpace+"aiAbs"+
+				(textIsTransformed(thisFrame) && kind == "point" ? ' g-aiPtransformed' : '')+"' style='";
+
+			// check if text is transformed
+			if (textIsTransformed(thisFrame)) {
+				// find transformed anchor point pre-transformation
+				var t_bounds = thisFrame.geometricBounds,
+					u_bounds = getUntransformedTextBounds(thisFrame),
+					u_width = u_bounds[2] - u_bounds[0],
+					t_width = t_bounds[2] - t_bounds[0],
+					u_height = u_bounds[3] - u_bounds[1],
+					t_height = t_bounds[3] - t_bounds[1],
+					v_align = thisFrameAttributes.valign || 'top',
+					t_scale_x = thisFrame.textRange.characterAttributes.horizontalScale / 100,
+					t_scale_y = thisFrame.textRange.characterAttributes.verticalScale / 100,
+					t_anchor = getAnchorPoint(u_bounds, thisFrame.matrix, alignment, v_align, t_scale_x, t_scale_y),
+					t_trans_x = 0,
+					t_trans_y = 0;
+
+				// position div on transformed anchor point
+				html[6] += "left:" + round((t_anchor[0]-abX)/abW*100, pctPrecision) + "%;";
+				html[6] += "top:" + round((-t_anchor[1]-abY)/abH*100, pctPrecision) + "%;";
+
+				// move "back" to left or top to center or right align text
+				if (alignment == 'center') t_trans_x -= u_width * 0.5;
+				else if (alignment == 'right') t_trans_x -= u_width;
+				if (v_align == 'center' || v_align == 'middle') t_trans_y -= u_height * 0.5;
+				else if (v_align == 'bottom') t_trans_y -= u_height;
+
+				var mat = thisFrame.matrix;
+
+				mat = app.concatenateMatrix(app.getTranslationMatrix(t_trans_x, t_trans_y),
+						app.concatenateTranslationMatrix(mat, -mat.mValueTX, -mat.mValueTY));
+
+				// var mat, mat0 = thisFrame.matrix;
+				// mat0 = app.concatenateTranslationMatrix(mat0, -mat0.mValueTX, -mat0.mValueTY);
+				// mat = app.concatenateMatrix(app.getTranslationMatrix(t_trans_x, t_trans_y), mat0);
+
+				var transform = "matrix("
+						+round(mat.mValueA, pctPrecision)+','
+						+round(-1*mat.mValueB, pctPrecision)+','
+						+round(-1*mat.mValueC, pctPrecision)+','
+						+round(mat.mValueD, pctPrecision)+','
+						+round(t_trans_x, pctPrecision)+','
+						+round(-t_trans_y, pctPrecision)+') '
+						+"scaleX("+round(t_scale_x, pctPrecision)+") "
+						+"scaleY("+round(t_scale_y, pctPrecision)+")";
+
+				var transformOrigin = alignment + ' '+(v_align == 'middle' ? 'center' : v_align);
+
+				html[6] += "transform: "+transform+";";
+				html[6] += "transform-origin: "+transformOrigin+";";
+				html[6] += "-webkit-transform: "+transform+";";
+				html[6] += "-webkit-transform-origin: "+transformOrigin+";";
+				html[6] += "-ms-transform: "+transform+";";
+				html[6] += "-ms-transform-origin: "+transformOrigin+";";
+
+				if (kind == 'area') html[6] += "width: "+(u_width * (1+(extraWidthPct/100)))+"px;";
+
+			} else {
+
+				if (outputType=="abs") {
+					html[6] += "top:" + round(htmlY) + "px;";
+					if (alignment=="left") {
+						html[6] += "left:"  + round(htmlL) + "px;";
+						html[6] += "width:" + round(htmlW) + "px;";
+					} else if (alignment=="right") {
+						html[6] += "right:" + round(htmlR) + "px;";
+						html[6] += "width:" + round(htmlW) + "px;";
+					} if (alignment=="center") {
+						html[6] += "left:"  + round(htmlL) + "px;";
+						html[6] += "width:" + round(htmlW) + "px;";
+						html[6] += "margin-left:" + round(htmlLM) + "px;";
+					};
+				} else if (outputType=="pct") {
+					if (thisFrameAttributes.valign==="bottom") {
+						html[6] += "bottom:" + round(100-(htmlB/abH*100), pctPrecision) + "%;";
+					} else {
+						html[6] += "top:" + round(htmlT/abH*100, pctPrecision) + "%;";
+					};
+					if (alignment=="right") {
+						html[6] += "right:" + round(htmlR/abW*100, pctPrecision) + "%;";
+						if (kind=="area") {
+							html[6] += "width:" + round(htmlW/abW*100, pctPrecision) + "%;";
+						};
+					} else if (alignment=="center") {
+						html[6] += "left:" + round(htmlL/abW*100, pctPrecision) + "%;";
+						html[6] += "width:" + round(htmlW/abW*100, pctPrecision) + "%;";
+						html[6] += "margin-left:" + round(htmlLM/abW*100, pctPrecision) + "%;";
+					} else {
+						html[6] += "left:" + round(htmlL/abW*100, pctPrecision) + "%;";
+						if (kind=="area") {
+							html[6] += "width:" + round(htmlW/abW*100, pctPrecision) + "%;";
+						};
+					};
+
+				};
+
+			}
+
+			html[6] += "'>\r"; // close div tag for text frame
+
+			var numChars = thisFrame.characters.length;
+			var runningChars = 0;
+			for (var k=0;k<thisFrame.paragraphs.length;k++) {
+
+				if (runningChars<numChars && thisFrame.paragraphs[k].characters.length!=0) {
+					var pStyleKey = getParagraphStyleKey(thisFrame.paragraphs[k]);
+					var pStyleKeyId = 0;
+					for (var l=0;l<pStyleKeys.length;l++) {
+						if (pStyleKey==pStyleKeys[l]) {
+							pStyleKeyId = l;
+						};
+					};
+
+					html[6] += "\t\t\t\t<p class='"+nameSpace+"aiPstyle" + pStyleKeyId + "'>";
+					if (isNaN(thisFrame.paragraphs[k].length)) {
+						html[6] += "&nbsp;";
+					} else {
+						textToClean = thisFrame.paragraphs[k].contents;
+						textToClean = straightenCurlyQuotesInsideAngleBrackets(textToClean);
+						cleanedText = cleanText(textToClean);
+						html[6] += cleanedText;
+					};
+					html[6] += "</p>\r";
+					runningChars += (thisFrame.paragraphs[k].characters.length)+1;
+				} else {
+					html[6] += "\t\t\t\t<p>&nbsp;</p>\r";
+					runningChars += 1;
+				};
+			};
+			html[6] += "\t\t\t</div>\r";
+		};
+
+		for (var i=1;i<html.length;i++) {
+			responsiveHtml += (html[i]);
+		};
+		// responsiveHtml += "\n";
+
+		for (var i=0;i<selectFrames.length;i++) {
+			hideTextFrame(selectFrames[i]);
+		};
+
+		// unhide text now if in testing mode
+		if (docSettings.testing_mode=="yes") {
+			for (var i=0;i<selectFrames.length;i++) {
+				selectFrames[i].hidden = false;
+			};
+		};
+
+		var imageDestinationFolder = docPath + docSettings.html_output_path + docSettings.image_output_path;
+		checkForOutputFolder(imageDestinationFolder, "image_output_path");
+		var imageDestination = imageDestinationFolder + docArtboardName;
+		// alert ("imageDestination\n" +
+		// 		"docPath = " + docPath + "\n" +
+		// 		"docSettings.html_output_path = " + docSettings.html_output_path + "\n" +
+		// 		"docSettings.image_output_path = " + docSettings.image_output_path + "\n" +
+		// 		"docArtboardName = " + docArtboardName);
+
+		if (docSettings.write_image_files=="yes") {
+			// if in svg export, hide path elements outside of the current artboard
+			if (docSettings.image_format[0] == 'svg') {
+				// save refs to elements we are hiding
+				var hiddenItemsOutsideArtboard = hideElementsOutsideArtboardRect(activeArtboardRect);
+			}
+
+		pBar.setTitle(docArtboardName + ': Writing image...');
+
+		exportImageFiles(imageDestination,abW,abH,docSettings.image_format,1.0,docSettings.use_2x_images_if_possible);
+
+			if (docSettings.image_format[0] == 'svg' && hiddenItemsOutsideArtboard.length > 0) {
+			// unhide non-text elements hidden before export
+				for (var item_i=0; item_i < hiddenItemsOutsideArtboard.length; item_i++) {
+					hiddenItemsOutsideArtboard[item_i].hidden = false;
+				}
+			}
+		};
+
+
+		// unhide text now if NOT in testing mode
+		if (docSettings.testing_mode!="yes") {
+			for (var i=0;i<selectFrames.length;i++) {
+				selectFrames[i].hidden = false;
+			};
+		};
+
+		//=====================================
+		// output html file here if doing a file for every artboard
+		//=====================================
+
+		if (docSettings.output=="multiple-files") {
+			var responsiveJs        = '\t<script src="_assets/resizerScript.js"></script>' + "\n";
+			var responsiveCss       = '\t<link rel="stylesheet" href="_assets/resizerStyle.css">' + "\n";
+			if (docSettings.include_resizer_css_js=="no"||docSettings.ai2html_environment!="nyt") {
+				responsiveJs        = "";
+				responsiveCss       = "";
+			};
+			if (docSettings.include_resizer_script=="yes") {
+				responsiveJs = '\t' + getResizerScript() + '\n';
+				responsiveCss             = "";
+			}
+			var responsiveTextScoop = responsiveHtml;
+			var textForFile         = "";
+			var htmlFileDestination = "";
+			var headerText          = "<div id='" + nameSpace + docArtboardName + "-box' class='ai2html'>\r";
+			headerText             += "\t<!-- Generated by ai2html v" + scriptVersion + " - " + dateTimeStamp + " -->\r"
+			headerText             += "\t<!-- ai file: " + docSettings.project_name + " -->\r";
+			if (docSettings.ai2html_environment=="nyt") {
+				headerText             += "\t<!-- preview: " + docSettings.preview_slug + " -->\r";
+				headerText             += "\t<!-- scoop  : " + docSettings.scoop_slug_from_config_yml + " -->\r";
+			};
+			headerText             += "\r";
+			headerText             += "\t<style type='text/css' media='screen,print'>\r";
+			if (docSettings.max_width!="") {
+				headerText             += "\t\t#" + nameSpace + docArtboardName + "-box {\r";
+				headerText             += "\t\t\tmax-width:" + docSettings.max_width + "px;\r";
+				headerText             += "\t\t}\r";
+			};
+			if (docSettings.center_html_output) {
+				headerText             += "\t\t."+nameSpace+"artboard {\r";
+				headerText             += "\t\t\tmargin:0 auto;\r";
+				headerText             += "\t\t}\r";
+			};
+			headerText             += "\t</style>\r";
+			headerText             += "\r";
+			var footerText          = "\t<!-- End ai2html" + " - " + dateTimeStamp + " -->\r</div>\r";
+
+			textForFile += headerText;
+			if (previewProjectType=="ai2html") { textForFile += responsiveCss; };
+			if (customCssBlocks>0)             { textForFile += customCss;     };
+			textForFile += responsiveTextScoop;
+			if (customHtml.length>0)           { textForFile += customHtml;    };
+			if (customJs.length>0)             { textForFile += customJs;      };
+			if (responsiveJs.length>0)         { textForFile += responsiveJs;  };
+			textForFile += footerText;
+			textForFile  = applyTemplate(textForFile,docSettings);
+			// textForFile  = straightenCurlyQuotesInsideAngleBrackets(textForFile);
+
+			htmlFileDestinationFolder = docPath + docSettings.html_output_path;
+			checkForOutputFolder(htmlFileDestinationFolder, "html_output_path");
+			htmlFileDestination = htmlFileDestinationFolder + docArtboardName + docSettings.html_output_extension;
+			if (docSettings.local_preview_template!="") {
+				pBar.setTitle(docArtboardName + ': Writing HTML file...');
+
+				docSettings.ai2htmlPartial     = textForFile;
+				var localPreviewDestination = htmlFileDestinationFolder + docArtboardName + ".preview.html";
+				var localPreviewHtml        = applyTemplate(localPreviewTemplateText,docSettings)
+				outputHtml(localPreviewHtml,localPreviewDestination);
+			};
+
+			outputHtml(textForFile,htmlFileDestination);
+			// var responsiveHtmlScoopFile = new File( htmlFileDestination );
+			// responsiveHtmlScoopFile.open( "w", "TEXT", "TEXT" );
+			// 	responsiveHtmlScoopFile.lineFeed = "Unix";
+			// 	responsiveHtmlScoopFile.encoding = "UTF-8";
+			// 	responsiveHtmlScoopFile.writeln(textForFile);
+			// responsiveHtmlScoopFile.close;
+			responsiveHtml = "";
+		}
+
+	} // end artboard loop
 
 	T.stop("done with main stuff");
 
