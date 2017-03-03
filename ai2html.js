@@ -113,7 +113,7 @@ var cleanText = function(text) {
 	for (var i=0; i < htmlCharacterCodes.length; i++) {
 		var charCode = htmlCharacterCodes[i];
 		text = text.replace( new RegExp(htmlCharacterCodes[i][0],'g'), htmlCharacterCodes[i][1] )
-	};
+	}
 	return text;
 };
 var straightenCurlyQuotesInsideAngleBrackets = function(text) {
@@ -161,11 +161,11 @@ var exportImageFiles = function(dest,width,height,formats,initialScaling,doubler
 			pngImageScaling = 100;
 			jpgImageScaling = 100;
 			// warnings.push("The jpg and png images are single resolution, but are too large to display on first-generation iPhones.");
-		};
+		}
 	} else {
 		var pngImageScaling = 100 * initialScaling;
 		var jpgImageScaling = 100 * initialScaling;
-	};
+	}
 	// alert("scaling\npngImageScaling = " + pngImageScaling + "\njpgImageScaling = " + jpgImageScaling);
 
 	for (var formatNumber = 0; formatNumber < formats.length; formatNumber++) {
@@ -215,7 +215,7 @@ var exportImageFiles = function(dest,width,height,formats,initialScaling,doubler
 				jpgImageScaling = maxJpgImageScaling;
 				var promoImageFileName = dest.split("/").slice(-1)[0];
 				feedback.push(promoImageFileName + ".jpg was output at a lower scaling than desired because of a limit on jpg exports in Illustrator. If the file needs to be larger, change the image format to png which does not appear to have limits.")
-			};
+			}
 			var jpgExportOptions = new ExportOptionsJPEG();
 			var jpgType = ExportType.JPEG;
 			var jpgFileSpec = new File(dest);
@@ -226,20 +226,24 @@ var exportImageFiles = function(dest,width,height,formats,initialScaling,doubler
 			jpgExportOptions.verticalScale    = jpgImageScaling;
 			app.activeDocument.exportFile( jpgFileSpec, jpgType, jpgExportOptions );
 			// feedback.push("jpgExportOptions.qualitySetting = " + jpgExportOptions.qualitySetting);
-		};
-	};
-};
+		}
+	}
+}
+
 var isEmpty = function(str) {
 	return (!str || 0 === str.length);
 };
+
 var isBlank = function(str) {
 	return (!str || /^\s*$/.test(str));
 };
+
 var makeKeyword = function(text) {
 	// text = text.replace( /[^A-Za-z0-9_\-]/g , "_" ).toLowerCase();
 	text = text.replace( /[^A-Za-z0-9_\-]/g , "_" );
 	return text;
 };
+
 var unlockStuff = function(parentObj) {
 	if (parentObj.typename=="Layer" || parentObj.typename=="Document") {
 		for (var layerNo = 0; layerNo < parentObj.layers.length; layerNo++) {
@@ -247,39 +251,42 @@ var unlockStuff = function(parentObj) {
 			if (currentLayer.locked==true) {
 				currentLayer.locked = false;
 				lockedObjects.push(currentLayer);
-			};
+			}
 			if (currentLayer.visible==false) {
 				currentLayer.visible = true;
 				hiddenObjects.push(currentLayer);
-			};
+			}
 			unlockStuff(currentLayer);
-		};
-	};
+		}
+	}
 	for (var groupItemsNo = 0; groupItemsNo < parentObj.groupItems.length; groupItemsNo++) {
 		var currentGroupItem = parentObj.groupItems[groupItemsNo];
 		if (currentGroupItem.locked==true) {
 			currentGroupItem.locked = false;
 			lockedObjects.push(currentGroupItem);
-		};
+		}
 		unlockStuff(currentGroupItem);
-	};
+	}
 	for (var textFrameNo = 0; textFrameNo < parentObj.textFrames.length; textFrameNo++) {
 		var currentTextFrame = parentObj.textFrames[textFrameNo];
 		// this line is producing the MRAP error!!!
 		if (currentTextFrame.locked==true) {
 			currentTextFrame.locked = false;
 			lockedObjects.push(currentTextFrame);
-		};
-	};
+		}
+	}
 };
+
 var hideTextFrame = function(textFrame) {
 	textFramesToUnhide.push(textFrame);
 	textFrame.hidden = true;
 };
+
 var roundTo = function(numberToRound,decimalPlaces) {
 	var roundedNumber = Math.round(numberToRound * Math.pow(10,decimalPlaces)) / Math.pow(10,decimalPlaces);
 	return roundedNumber;
 };
+
 var createPromoImage = function(abNumber) {
 	doc.artboards.setActiveArtboardIndex(abNumber);
 	var activeArtboard       =  doc.artboards[abNumber];
@@ -347,8 +354,8 @@ var createPromoImage = function(abNumber) {
 			promoImageFormats.push("png");
 		} else {
 			promoImageFormats.push(promoFormat);
-		};
-	};
+		}
+	}
 
 	pBar.setTitle(artboardName + ': Writing promo image...');
 
@@ -356,9 +363,10 @@ var createPromoImage = function(abNumber) {
 	docSettings.png_transparent = "no";
 	if (docSettings.write_image_files=="yes") {
 		exportImageFiles(imageDestination,promoW,promoH,promoImageFormats,promoScale,"no");
-		};
+	}
 	docSettings.png_transparent = tempPNGtransparency;
 };
+
 var applyTemplate = function(template,atObject) {
 	var newText = template;
 	for (var atKey in atObject) {
@@ -367,9 +375,10 @@ var applyTemplate = function(template,atObject) {
 		var replacePattern  = atObject[atKey];
 		newText = newText.replace( mustachePattern , replacePattern );
 		newText = newText.replace( ejsPattern      , replacePattern );
-	};
+	}
 	return newText;
 };
+
 var outputHtml = function(htmlText,fileDestination) {
 	var htmlFile = new File( fileDestination );
 	htmlFile.open( "w", "TEXT", "TEXT" );
@@ -378,19 +387,21 @@ var outputHtml = function(htmlText,fileDestination) {
 		htmlFile.writeln(htmlText);
 	htmlFile.close;
 };
+
 var readTextFileAndPutIntoAVariable = function(inputFile,starterText,linePrefix,lineSuffix) {
 	var outputText = starterText;
 	if ( inputFile.exists ) {
 		inputFile.open("r");
-		while(!inputFile.eof) {
+		while (!inputFile.eof) {
 			outputText += linePrefix + inputFile.readln() + lineSuffix;
-		};
+		}
 		inputFile.close();
 	} else {
 		errors.push(inputFile + " could not be found.");
-	};
+	}
 	return outputText;
 };
+
 var checkForOutputFolder = function(folderPath, nickname) {
 	var outputFolder = new Folder( folderPath );
 	if (!outputFolder.exists) {
@@ -399,8 +410,8 @@ var checkForOutputFolder = function(folderPath, nickname) {
 			feedback.push("The " + nickname + " folder did not exist, so the folder was created.");
 		} else {
 			warnings.push("The " + nickname + " folder did not exist and could not be created.");
-		};
-	};
+		}
+	}
 };
 
 // ================================================
@@ -773,7 +784,7 @@ unlockStuff(doc);
 //unhide layers that where hidded so objects inside could be locked
 for (var i = hiddenObjects.length-1; i>=0; i--) {
 	hiddenObjects[i].visible = false;
-};
+}
 
 // ================================================
 // read .git/config file to get preview slug
@@ -791,11 +802,11 @@ if ( gitConfigFile.exists && scriptEnvironment=="nyt" ) {
 			if ( gitConfigKey=="url" ) {
 				docSettings.preview_slug = gitConfigValue.replace( /^[^:]+:/ , "" ).replace( /\.git$/ , "");
 				// feedback.push("preview slug = " + docSettings.preview_slug);
-			};
-		};
-	};
+			}
+		}
+	}
 	gitConfigFile.close();
-};
+}
 
 
 // ================================================
@@ -813,17 +824,17 @@ if ( ymlFile.exists && scriptEnvironment=="nyt"  ) {
 			var ymlValue  = lineArray[1].replace( /^\s+/ , "" ).replace( /\s+$/ , "" );
 			if ( ymlKey=="project_type" && ymlValue=="ai2html") {
 				previewProjectType = ymlValue;
-			};
+			}
 			if ( ymlKey=="scoop_slug" ) {
 				docSettings.scoop_slug_from_config_yml = ymlValue;
-			};
-		};
-	};
+			}
+		}
+	}
 	ymlFile.close();
 } else {
 	// if a config.yml file does not exist, then yml
 	previewProjectType = "config.yml is missing";
-};
+}
 
 // ================================================
 // Transfer default values into docSettings object.
@@ -837,12 +848,12 @@ for (setting in ai2htmlBaseSettings) {
 	if (ai2htmlBaseSettings[setting].includeInSettingsBlock) {
 		defaultSettingsText += "\r" + setting + ': ' + ai2htmlBaseSettings[setting].defaultValue;
 		ai2htmlSettingsLength += 1;
-	};
+	}
 	// if (ai2htmlBaseSettings[setting].includeInConfigFile) {
 	// 	ymlSettings[setting] = ai2htmlBaseSettings[setting].defaultValue;
-	// };
+	// }
 	docSettings[setting] = ai2htmlBaseSettings[setting].defaultValue;
-};
+}
 
 if (docSettings.project_name == "") {
 	docSettings.project_name = doc.name.replace(/(.+)\.[aieps]+$/,"$1").replace(/ /g,"-");
@@ -876,8 +887,8 @@ var largestNyt5Breakpoint = 0;
 for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
 	if (nyt5Breakpoints[bpNumber].upperLimit>largestNyt5Breakpoint) {
 		largestNyt5Breakpoint = nyt5Breakpoints[bpNumber].upperLimit;
-	};
-};
+	}
+}
 
 // loop thru artboards and determine which ones to process.
 // to manually force an artboard to appear at a specific pixel width,
@@ -899,7 +910,7 @@ for (var abNumber = 0; abNumber < doc.artboards.length; abNumber++) {
 			currentArtboardWidth = (doc.artboards[abNumber].name.replace( /^ai2html-(\d+)$/ , "$1" ));
 		} else {
 			currentArtboardWidth = Math.round(currentArtboard.artboardRect[2]-currentArtboard.artboardRect[0]);
-		};
+		}
 		// alert(abNumber + " = " + currentArtboardWidth);
 
 		artboardsLefts.push(currentArtboard.artboardRect[0]);
@@ -908,16 +919,16 @@ for (var abNumber = 0; abNumber < doc.artboards.length; abNumber++) {
 			var currentBreakpointWidth = nyt5Breakpoints[bpNumber].upperLimit;
 			if (currentBreakpointWidth==currentArtboardWidth) {
 				artboardWidthMatch = true;
-			};
-		};
+			}
+		}
 		if (!artboardWidthMatch && docSettings.include_resizer_classes=="yes" && docSettings.ai2html_environment=="nyt") {
 			// warnings.push('The width of the artboard named "' + currentArtboard.name + '" (#' + (abNumber+1) + ") does not match any of the NYT5 breakpoints and may produce unexpected results on your web page. OurYou probably want to adjust the width of this artboard so that it is exactly the width of a breakpoint.");
 			warnings.push('The width of the artboard named "' + currentArtboard.name + '" (#' + (abNumber+1) + ") does not match any of the NYT5 breakpoints and may produce unexpected results on your web page. The new script should be able to accommodate this, but please double check just in case.");
 		}
 	} else {
 		artboardsToProcess.push(false);
-	};
-};
+	}
+}
 
 // figure out where is the top left of all artboards to place settings text block
 artboardsLefts.sort(function(a,b){return a-b});
@@ -947,42 +958,42 @@ for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
 				currentArtboardWidth = (doc.artboards[abNumber].name.replace( /^ai2html-(\d+)$/ , "$1" ));
 			} else {
 				currentArtboardWidth = Math.round(currentArtboard.artboardRect[2]-currentArtboard.artboardRect[0]);
-			};
+			}
 			if (currentArtboardWidth>maxArtboardWidth) {
 				maxArtboardWidth = currentArtboardWidth;
-			};
-			if (currentArtboardWidth<=currentBreakpoint.upperLimit&&currentArtboardWidth>currentBreakpoint.lowerLimit) {
+			}
+			if (currentArtboardWidth<=currentBreakpoint.upperLimit && currentArtboardWidth>currentBreakpoint.lowerLimit) {
 				currentBreakpoint.artboards.push(abNumber);
-			};
-		};
-	};
+			}
+		}
+	}
 	if (currentBreakpoint.artboards.length==0) {
 		breakpointsWithNoNativeArtboard.push(currentBreakpoint.name);
 	} else {
 		if (breakpoints.min=="") {
 			breakpoints.min = currentBreakpoint.upperLimit;
-		};
+		}
 		if (overrideArtboardWidth==false) {
 			breakpoints.max = currentBreakpoint.upperLimit;
 		} else {
 			breakpoints.max = nyt5Breakpoints[nyt5Breakpoints.length-1].upperLimit;
-		};
-	};
-};
+		}
+	}
+}
 var noNativeArtboardWarning = "These breakpoints have no native artboard: ";
 for (var bpNumber = 0; bpNumber < breakpointsWithNoNativeArtboard.length; bpNumber++) {
 	noNativeArtboardWarning += breakpointsWithNoNativeArtboard[bpNumber];
 	if (bpNumber<breakpointsWithNoNativeArtboard.length-1) {
 		noNativeArtboardWarning += ", ";
-	};
-};
+	}
+}
 // error message for breakpoints that have more than one native artboard
 for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
 	var nyt5Breakpoint = nyt5Breakpoints[bpNumber];
-	if (nyt5Breakpoint.artboards.length>1&&docSettings.ai2html_environment=="nyt") {
+	if (nyt5Breakpoint.artboards.length>1 && docSettings.ai2html_environment=="nyt") {
 		warnings.push('The ' + nyt5Breakpoint.upperLimit + "px breakpoint has " + nyt5Breakpoint.artboards.length + " artboards. You probably want only one artboard per breakpoint.")
 	}
-};
+}
 //put artboard in for breakpoints with no artboard starting from smallest to largest, leaving lower end empty if nothing at the bottom end.
 var breakpointsWithNoArtboard = [];
 var noArtboard = false;
@@ -991,14 +1002,14 @@ for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
 	var previousArtboards = [];
 	if (bpNumber>0) {
 		previousArtboards = nyt5Breakpoints[bpNumber-1].artboards;
-	};
+	}
 	if (currentBreakpoint.artboards.length==0) {
 		currentBreakpoint.artboards = previousArtboards;
-	};
+	}
 	if (currentBreakpoint.artboards.length==0) {
 		breakpointsWithNoArtboard.push(currentBreakpoint.name);
-	};
-};
+	}
+}
 
 // ================================================
 // add settings text block if one does not exist
@@ -1010,9 +1021,9 @@ for (var tfNumber=0;tfNumber<doc.textFrames.length;tfNumber++) {
 	if ( thisFrame.contents!="" ) {
 		if (thisFrame.paragraphs[0].contents=="ai2html-settings") {
 			docHadSettingsBlock = true;
-		};
-	};
-};
+		}
+	}
+}
 // create text settings block if one doesn't exist
 if (!docHadSettingsBlock) {
 	try {
@@ -1021,7 +1032,7 @@ if (!docHadSettingsBlock) {
 		var settingsTextLayer   = doc.layers.add();
 		settingsTextLayer.zOrder(ZOrderMethod.BRINGTOFRONT);
 		settingsTextLayer.name  = "ai2html-settings";
-	};
+	}
 	var settingsTextSize       = 15;
 	var settingsTextLeading    = 22;
 	var settingsTextExtraLines = 6;
@@ -1037,8 +1048,8 @@ if (!docHadSettingsBlock) {
 		var currentChar        = settingsAreaTextRef.characters[c];
 		currentChar.size       = settingsTextSize;
 		currentChar.leading    = settingsTextLeading;
-	};
-};
+	}
+}
 
 
 // ================================================
@@ -1072,12 +1083,12 @@ for (var tfNumber=0;tfNumber<doc.textFrames.length;tfNumber++) {
 				} catch(e) {
 					// alert(e);
 					paragraphContentIsValid = false;
-				};
+				}
 				if (paragraphContentIsValid) {
 					customCss += "\t\t" + cleanText(thisFrame.paragraphs[p].contents) + "\r";
-				};
-			};
-		};
+				}
+			}
+		}
 		if (thisFrame.paragraphs[0].contents=="ai2html-html") {
 			settingsFrames.push(thisFrame);
 			hideTextFrame(thisFrame);
@@ -1090,12 +1101,12 @@ for (var tfNumber=0;tfNumber<doc.textFrames.length;tfNumber++) {
 				} catch(e) {
 					// alert(e);
 					paragraphContentIsValid = false;
-				};
+				}
 				if (paragraphContentIsValid) {
 					customHtml += "\t" + cleanText(thisFrame.paragraphs[p].contents) + "\r";
-				};
-			};
-		};
+				}
+			}
+		}
 		if (thisFrame.paragraphs[0].contents=="ai2html-js") {
 			settingsFrames.push(thisFrame);
 			hideTextFrame(thisFrame);
@@ -1108,12 +1119,12 @@ for (var tfNumber=0;tfNumber<doc.textFrames.length;tfNumber++) {
 				} catch(e) {
 					// alert(e);
 					paragraphContentIsValid = false;
-				};
+				}
 				if (paragraphContentIsValid) {
 					customJs += "\t" + cleanText(thisFrame.paragraphs[p].contents) + "\r";
-				};
-			};
-		};
+				}
+			}
+		}
 		if (thisFrame.paragraphs[0].contents=="ai2html-settings" || thisFrame.paragraphs[0].contents=="ai2html-text") {
 			settingsFrames.push(thisFrame);
 			hideTextFrame(thisFrame);
@@ -1124,7 +1135,7 @@ for (var tfNumber=0;tfNumber<doc.textFrames.length;tfNumber++) {
 				} catch(e) {
 					// alert(e);
 					paragraphContentIsValid = false;
-				};
+				}
 				if (paragraphContentIsValid) {
 					var thisParagraph    = thisFrame.paragraphs[p].contents;
 					var hashKey          = thisParagraph.replace( /^[ \t]*([^ \t:]*)[ \t]*:(.*)$/ , "$1" );
@@ -1133,10 +1144,10 @@ for (var tfNumber=0;tfNumber<doc.textFrames.length;tfNumber++) {
 					hashValue            = hashValue.replace( /^\s+/ , "" ).replace( /\s+$/ , "" );
 					hashValue            = straightenCurlyQuotesInsideAngleBrackets(hashValue);
 					// replace values from old versions of script with current values
-					if (hashKey=="output" && hashValue=="one-file-for-all-artboards") { hashValue="one-file"; };
-					if (hashKey=="output" && hashValue=="one-file-per-artboard")      { hashValue="multiple-files"; };
-					if (hashKey=="output" && hashValue=="preview-one-file")           { hashValue="one-file"; };
-					if (hashKey=="output" && hashValue=="preview-multiple-files")     { hashValue="multiple-files"; };
+					if (hashKey=="output" && hashValue=="one-file-for-all-artboards") { hashValue="one-file"; }
+					if (hashKey=="output" && hashValue=="one-file-per-artboard")      { hashValue="multiple-files"; }
+					if (hashKey=="output" && hashValue=="preview-one-file")           { hashValue="one-file"; }
+					if (hashKey=="output" && hashValue=="preview-multiple-files")     { hashValue="multiple-files"; }
 					// handle stuff that goes in config file and other exceptions, like array values
 					if (hashKey in ai2htmlBaseSettings && ai2htmlBaseSettings[hashKey].includeInConfigFile) {
 						hashValue     = (hashValue.replace( /(["])/g , '\\$1' )); // add stuff to ["] for chars that need to be esc in yml file
@@ -1147,36 +1158,36 @@ for (var tfNumber=0;tfNumber<doc.textFrames.length;tfNumber++) {
 								hashValue = []; // have to do this because .split always returns an array of length at least 1 even if it's splitting an emptry string
 							} else {
 								hashValue = hashValue.split(",");
-							};
-						};
-					};
+							}
+						}
+					}
 					docSettings[hashKey] = hashValue;
-				};
-			};
-		};
-	};
-};
+				}
+			}
+		}
+	}
+}
 
 customYml += "min_width: "       + breakpoints.min    + "\n";
 if (docSettings.max_width!="") {
 	customYml += "max_width: " + docSettings.max_width + "\n";
-} else if (docSettings.responsiveness!="fixed"&&docSettings.ai2html_environment=="nyt") {
+} else if (docSettings.responsiveness!="fixed" && docSettings.ai2html_environment=="nyt") {
 	customYml += "max_width: " + largestNyt5Breakpoint + "\n";
-} else if (docSettings.responsiveness!="fixed"&&docSettings.ai2html_environment!="nyt") {
+} else if (docSettings.responsiveness!="fixed" && docSettings.ai2html_environment!="nyt") {
 	// don't write a max_width setting as there should be no max width in this case
 } else {
 	// this is the case of fixed responsiveness
 	// customYml += "max_width: " + breakpoints.max + "\n";
 	customYml += "max_width: " + maxArtboardWidth + "\n";
-};
+}
 
 // write out remaining values for config file
 for (setting in docSettings) {
 	if (setting in ai2htmlBaseSettings && ai2htmlBaseSettings[setting].includeInConfigFile) {
 		var quoteMark = "";
-		if (ai2htmlBaseSettings[setting].useQuoteMarksInConfigFile) { quoteMark = '"'; };
+		if (ai2htmlBaseSettings[setting].useQuoteMarksInConfigFile) { quoteMark = '"'; }
 		customYml    += setting + ': ' + quoteMark + docSettings[setting] + quoteMark + "\n";
-	};
+	}
 }
 
 customCss  += "\t</style>\r";
@@ -1186,23 +1197,23 @@ customHtml += "\r";
 var imageExtension = ".png";
 if (docSettings.image_format.length>0) {
 	imageExtension = "." + docSettings.image_format[0].substring(0,3);
-};
+}
 
 // ================================================
 // validate settings
 // ================================================
 
-if (docSettings.max_width!=""&&docSettings.ai2html_environment=="nyt") {
+if (docSettings.max_width!="" && docSettings.ai2html_environment=="nyt") {
 	var max_width_is_valid = false;
 	for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
 		if (docSettings.max_width==nyt5Breakpoints[bpNumber].upperLimit.toString()) {
 			max_width_is_valid = true;
-		};
-	};
+		}
+	}
 	if (!max_width_is_valid) {
 		errors.push('The max_width setting of "' + docSettings.max_width + '" is not a valid breakpoint and will create an error when you "preview publish."');
-	};
-};
+	}
+}
 
 // ================================================
 // reset the output path and extension if the previewProjectType is ai2html and fix other path issues
@@ -1212,7 +1223,7 @@ if (previewProjectType=="ai2html") {
 	docSettings.html_output_path      = "/../public/";
 	docSettings.html_output_extension = ".html";
 	docSettings.image_output_path     = "_assets/";
-};
+}
 docSettings.preview_image_path = "_assets/";
 
 if (docSettings.image_source_path === null) {
@@ -1231,7 +1242,7 @@ if (parentFolder === null) {
 } else if ( parentFolder[0]==="ai/" && publicFolder.exists ) {
 	aiFileInPreviewProject = true;
 	// alert("ai file is in a preview project");
-};
+}
 if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 	alertHed = "The Script Stopped Because of an Error";
 	errors.push('Convert document color mode to "RGB" before running script. (File>Document Color Mode>RGB Color)' );
@@ -1257,13 +1268,13 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 
 	if (!docHadSettingsBlock && docSettings.ai2html_environment!="nyt") {
 		feedback.push("A settings text block was created to the left of all your artboards. You can use it to customize your output.");
-	};
+	}
 
 	// process local preview template if appropriate
 	if (docSettings.local_preview_template!="") {
 		var localPreviewTemplateFile = new File(docPath + docSettings.local_preview_template);
 		var localPreviewTemplateText = readTextFileAndPutIntoAVariable(localPreviewTemplateFile,"","","\n");
-	};
+	}
 
 	var uniqueArtboardWidths = [];
 	if (docSettings.include_resizer_widths == "yes") {
@@ -1307,12 +1318,12 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 				largestArtboardArea  = abW*abH;
 				// largestArtboardWidth = abW;
 				largestArtboardIndex = abNumber;
-			};
-		// };
+			}
+		// }
 
 		var html = [];
 		var numHtmlStrands   = 12;
-		for (var i=0;i<numHtmlStrands;i++) {html[i] = "";};
+		for (var i=0;i<numHtmlStrands;i++) {html[i] = "";}
 
 		// css is in html[2]
 		// user-custom css is in html[3]
@@ -1361,10 +1372,10 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 		html[1] += "\t\t\t\toverflow:hidden;\r";
 		if (docSettings.responsiveness=="fixed") {
 			html[1] += "\t\t\t\twidth:"  + Math.round(abW) + "px;\r";
-		};
+		}
 		// if (docSettings.max_width!="") {
 		// 	html[1] += "\t\t\t\tmax-width:"  + Math.round(docSettings.max_width) + "px;\r";
-		// };
+		// }
 		html[1] += "\t\t\t}\r";
 		html[1] += "\t\t\t."+nameSpace+"aiAbs{\r";
 		html[1] += "\t\t\t\tposition:absolute;\r";
@@ -1379,7 +1390,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 		html[1] += "\t\t\t\tline-height:" + defaultLeading + "px;\r";
 		if (docSettings.testing_mode=="yes") {
 			html[1] += "\t\t\t\tcolor: rgba(209, 0, 0, 0.5) !important;\r";
-		};
+		}
 		html[1] += "\t\t\t\tmargin:0;\r";
 		html[1] += "\t\t\t}\r";
 
@@ -1394,7 +1405,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 				html[5] += "\t\t\t\tsrc='"   + docSettings.preview_image_path + docArtboardName + imageExtension + "'\r";
 			} else {
 				html[5] += "\t\t\t\tsrc='"   + docSettings.image_source_path + docArtboardName + imageExtension + "'\r";
-			};
+			}
 			html[5] += "\t\t\t\twidth="  + Math.round(abW) + "\r";
 			html[5] += "\t\t\t\theight=" + Math.round(abH) + "\r";
 			html[5] += "\t\t\t\t/>\r";
@@ -1408,107 +1419,27 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 					html[5] += "\t\t\t\tsrc='"   + docSettings.preview_image_path + docArtboardName + imageExtension + "'\r";
 				} else {
 					html[5] += "\t\t\t\tsrc='"   + docSettings.image_source_path + docArtboardName + imageExtension + "'\r";
-				};
+				}
 			} else {
                   html[5] += "\t\t\t\tsrc='data:image/gif;base64,R0lGODlhCgAKAIAAAB8fHwAAACH5BAEAAAAALAAAAAAKAAoAAAIIhI+py+0PYysAOw=='\r"; // dummy image to hold space while image loads
 				if (docSettings.ai2html_environment=="nyt") {
                     html[5] += "\t\t\t\tdata-src='"   + docSettings.preview_image_path + docArtboardName + imageExtension + "'\r";
 				} else {
                     html[5] += "\t\t\t\tdata-src='"   + docSettings.image_source_path + docArtboardName + imageExtension + "'\r";
-				};
+				}
                   html[5] += "\t\t\t\tdata-height-multiplier='" + roundTo(artboardAspectRatio,4) + "'\r";
-			};
+			}
 			html[5] += "\t\t\t\t/>\r";
-		};
+		}
 
 		html[8]  += "\t\t</div>\r"; // closing the nameSpace+docArtboardName div
 		html[11] += "\t</div>\r";
 
-		var docFrames     = doc.textFrames;
-		var selectFrames  = [];
-
-		for (var i=0;i<docFrames.length;i++) {
-			var thisFrame = docFrames[i];
-
-			var visibleLeft   =  thisFrame.visibleBounds[0];
-			var visibleTop    = -thisFrame.visibleBounds[1];
-			var visibleRight  =  thisFrame.visibleBounds[2];
-			var visibleBottom = -thisFrame.visibleBounds[3];
-
-			var abLeft   =  activeArtboardRect[0];
-			var abTop    = -activeArtboardRect[1];
-			var abRight  =  activeArtboardRect[2];
-			var abBottom = -activeArtboardRect[3];
-
-			var frameIsHidden = thisFrame.hidden;
-			var frameIsHiddenAlert = thisFrame.contents;
-			frameIsHiddenAlert += "\n" + thisFrame.typename + " = " + thisFrame.hidden;
-
-			// traverse all parent objects to determine if any of them are hidden or locked
-			if (!frameIsHidden) {
-				var objectParent = thisFrame.parent;
-				while (objectParent.typename!="Document") {
-					if (objectParent.typename=="Layer") {
-						frameIsHiddenAlert += "\n" + objectParent.typename + " = " + !objectParent.visible;
-						if (!objectParent.visible) {
-							frameIsHidden = true;
-						};
-						objectParent = objectParent.parent;
-					} else {
-						frameIsHiddenAlert += "\n" + objectParent.typename + " = " + objectParent.hidden;
-						if (objectParent.hidden) {
-							frameIsHidden = true;
-						};
-						objectParent = objectParent.parent;
-					};
-				};
-			};
-
-			var frameInBounds = false;
-
-			if (
-				(
-					(visibleLeft>=abLeft && visibleLeft<=abRight) ||
-					(visibleRight>=abLeft && visibleRight<=abRight) ||
-					(visibleLeft<=abLeft && visibleRight>=abRight)
-				) && (
-					(visibleTop>=abTop && visibleTop<=abBottom) ||
-					(visibleBottom>=abTop && visibleBottom<=abBottom) ||
-					(visibleTop<=abTop && visibleBottom>=abBottom)
-				)
-			) {
-				frameInBounds=true;
-			};
-
-			if (
-				// reasons to include text for processing
-				frameInBounds &&
-				!frameIsHidden&&
-				// !thisFrame.hidden &&
-				thisFrame.contents!="" &&
-				(
-					docSettings.render_rotated_skewed_text_as=="html" ||
-					(
-						docSettings.render_rotated_skewed_text_as=="image" &&
-						!textIsTransformed(thisFrame)
-					)
-				) &&
-				(thisFrame.kind=="TextType.AREATEXT" || thisFrame.kind=="TextType.POINTTEXT")
-			) {
-				selectFrames.push(thisFrame);
-			};
-		};
-
-		// Sort the selectFrames array top to bottom, left to right.
-		selectFrames.sort(
-		    firstBy(function (v1, v2) { return v2.top  - v1.top ; })
-		    .thenBy(function (v1, v2) { return v1.left - v2.left; })
-		);
+		var selectFrames  = findTextFramesToRender(doc.textFrames, activeArtboardRect);
 
 		// Find unique character and paragraph styles
 		// Style keys for paragraphs are the character style of the last paragraph.
 		var pStyleKeys = [];
-		var cStyleKeys = [];
 
 		var pFamily    = [];
 		var pWeight    = [];
@@ -1529,9 +1460,9 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 					runningChars += (thisFrame.paragraphs[k].characters.length)+1;
 				} else {
 					runningChars += 1;
-				};
-			};
-		};
+				}
+			}
+		}
 		pStyleKeys = uniqify(pStyleKeys);
 
 		// Write css for each style key
@@ -1541,7 +1472,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 		for (var i=0;i<pStyleKeys.length;i++) {
 			pStyleCss += "\t\t\t#" + nameSpace + docArtboardName + " ." + nameSpace +
 					"aiPstyle" + i + " " + convertStyleKeyToCss(pStyleKeys[i]);
-		};
+		}
 
 		html[2] += pStyleCss;
 
@@ -1556,208 +1487,31 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 		for (var i=0;i<selectFrames.length;i++) {
 			pBar.increment(oneBlockNormalized); // Keeps text frames progress from overshooting current overall progress.
 			var thisFrame = selectFrames[i];
-			var vFactor = .5; // This is an adjustment to correct for vertical placement.
-			var thisFrameAttributes = {};
 
-			// Read in attribute variables from notes field for this text frame
-			var rawNotes = thisFrame.note;
-			// alert("note = " + rawNotes);
-			rawNotes = rawNotes.split("\r");
-			for (var rNo = 0; rNo < rawNotes.length; rNo++) {
-				var rn = rawNotes[rNo];
-				var rnKey   = rn.replace( /^[ \t]*([^ \t:]*)[ \t]*:(.*)$/ , "$1" );
-				var rnValue = rn.replace( /^[ \t]*([^ \t:]*)[ \t]*:(.*)$/ , "$2" );
-				rnKey       = rnKey.replace( /^\s+/ , "" ).replace( /\s+$/ , "" );
-				rnValue     = rnValue.replace( /^\s+/ , "" ).replace( /\s+$/ , "" );
-				thisFrameAttributes[rnKey] = rnValue;
-			};
-
-
-			var kind, htmlX, htmlY, htmlT, htmlB, htmlTM, htmlH, htmlL, htmlR, htmlW, htmlLM, alignment, extraWidthPct;
-			var centerBuffer = 30; // additional width on left and right sides for center aligned point text in percent of ai width
-
-			if (thisFrame.kind=="TextType.POINTTEXT") {
-				kind = "point";
-				// /this line throws an error if the first paragraph of the frame is empty.
-				// var htmlY = Math.round(-thisFrame.position[1] - (((thisFrame.paragraphs[0].characters[0].leading - thisFrame.paragraphs[0].characters[0].size)*vFactor) + thisFrame.paragraphs[0].spaceBefore)-abY);
-				htmlY = Math.round(-thisFrame.position[1] - (((thisFrame.characters[0].leading - thisFrame.characters[0].size)*vFactor) + thisFrame.characters[0].spaceBefore)-abY);
-			} else if (thisFrame.kind=="TextType.AREATEXT") {
-				kind = "area";
-				// var htmlY = Math.round(-thisFrame.position[1] - (((thisFrame.paragraphs[0].characters[0].leading - thisFrame.paragraphs[0].characters[0].size)*vFactor) + thisFrame.paragraphs[0].spaceBefore)-abY);
-				htmlY = Math.round(-thisFrame.position[1] - (((thisFrame.characters[0].leading - thisFrame.characters[0].size)*vFactor) + thisFrame.characters[0].spaceBefore)-abY);
-			} else {
-				kind = "other";
-			};
-			htmlH = Math.round(thisFrame.height);
-			if (thisFrameAttributes.valign==="bottom") {
-				htmlB = htmlY + thisFrame.height;
-			// } else if (thisFrameAttributes.valign==="center") {
-			// 	htmlT  = htmlY+(thisFrame.height/2);
-			// 	htmlTM = thisFrame.height*(1/2*-1);
-			} else {
-				htmlT = htmlY;
-			};
-
-			// additional width for box to allow for slight variations in font widths
-			if (kind=="area") {
-				extraWidthPct = 0; // was 3 percent -- but need to account for when it hits the edge of the box since we are now overflow hidden
-			} else {
-				extraWidthPct = 100;
-			};
-			htmlW = thisFrame.width*(1+(extraWidthPct/100));
-			if (thisFrame.characters[0].justification=="Justification.LEFT") {
-				alignment = "left";
-				// htmlX = thisFrame.left-abX;
-				htmlL = thisFrame.left-abX;
-				htmlR = abW-(thisFrame.left+htmlW-abX);
-			} else if (thisFrame.characters[0].justification=="Justification.RIGHT") {
-				alignment = "right";
-				// htmlX = abW-(thisFrame.left+thisFrame.width-abX);
-				htmlL = thisFrame.left-(thisFrame.width*(1+(extraWidthPct/100)))-abX;
-				htmlR = abW-(thisFrame.left+thisFrame.width-abX);
-			} else if (thisFrame.characters[0].justification=="Justification.CENTER") {
-				alignment = "center";
-				// if (thisFrame.kind=="TextType.AREATEXT") { centerBuffer=0; }; // don't use additional padding if the text block is area text.
-				// htmlX  = thisFrame.left-abX-(abW*(1+(extraWidthPct/100/2)));
-				htmlL  = thisFrame.left-abX+(thisFrame.width/2); // thanks jeremy!
-				htmlLM = thisFrame.width*(1+(extraWidthPct/100))/2*-1;
-			} else {
-				alignment = "other";
-				htmlX = Math.round(thisFrame.left-abX);
-			};
-
-			var frameLayer = makeKeyword(thisFrame.layer.name);
-
-			// var getParentLayers = function(startingLayer) {
-			// 	var parentLayers = [];
-
-			// }
-
-			// var frameLayers = addLayerClasses(getParentLayers(thisFrame.layer));
-
-
+			// Generate opening <div> tag, including CSS styles
 			var j = i+1;
-			var thisFrameId = nameSpace+"ai"+abNumber+"-" + j;
-			if (thisFrame.name!="") {
+			var thisFrameId = nameSpace + "ai" + abNumber + "-" + j;
+			if (thisFrame.name != "") {
 				thisFrameId = makeKeyword(thisFrame.name);
-			};
-			html[6] += "\t\t\t<div id='"+thisFrameId;
-			html[6] += "' class='"+nameSpace+frameLayer+" "+nameSpace+"aiAbs"+
-				(textIsTransformed(thisFrame) && kind == "point" ? ' g-aiPtransformed' : '')+"' style='";
-
-			// check if text is transformed
-			if (textIsTransformed(thisFrame)) {
-				// find transformed anchor point pre-transformation
-				var t_bounds = thisFrame.geometricBounds,
-					u_bounds = getUntransformedTextBounds(thisFrame),
-					u_width = u_bounds[2] - u_bounds[0],
-					t_width = t_bounds[2] - t_bounds[0],
-					u_height = u_bounds[3] - u_bounds[1],
-					t_height = t_bounds[3] - t_bounds[1],
-					v_align = thisFrameAttributes.valign || 'top',
-					t_scale_x = thisFrame.textRange.characterAttributes.horizontalScale / 100,
-					t_scale_y = thisFrame.textRange.characterAttributes.verticalScale / 100,
-					t_anchor = getAnchorPoint(u_bounds, thisFrame.matrix, alignment, v_align, t_scale_x, t_scale_y),
-					t_trans_x = 0,
-					t_trans_y = 0;
-
-				// position div on transformed anchor point
-				html[6] += "left:" + round((t_anchor[0]-abX)/abW*100, pctPrecision) + "%;";
-				html[6] += "top:" + round((-t_anchor[1]-abY)/abH*100, pctPrecision) + "%;";
-
-				// move "back" to left or top to center or right align text
-				if (alignment == 'center') t_trans_x -= u_width * 0.5;
-				else if (alignment == 'right') t_trans_x -= u_width;
-				if (v_align == 'center' || v_align == 'middle') t_trans_y -= u_height * 0.5;
-				else if (v_align == 'bottom') t_trans_y -= u_height;
-
-				var mat = thisFrame.matrix;
-
-				mat = app.concatenateMatrix(app.getTranslationMatrix(t_trans_x, t_trans_y),
-						app.concatenateTranslationMatrix(mat, -mat.mValueTX, -mat.mValueTY));
-
-				// var mat, mat0 = thisFrame.matrix;
-				// mat0 = app.concatenateTranslationMatrix(mat0, -mat0.mValueTX, -mat0.mValueTY);
-				// mat = app.concatenateMatrix(app.getTranslationMatrix(t_trans_x, t_trans_y), mat0);
-
-				var transform = "matrix("
-						+round(mat.mValueA, pctPrecision)+','
-						+round(-1*mat.mValueB, pctPrecision)+','
-						+round(-1*mat.mValueC, pctPrecision)+','
-						+round(mat.mValueD, pctPrecision)+','
-						+round(t_trans_x, pctPrecision)+','
-						+round(-t_trans_y, pctPrecision)+') '
-						+"scaleX("+round(t_scale_x, pctPrecision)+") "
-						+"scaleY("+round(t_scale_y, pctPrecision)+")";
-
-				var transformOrigin = alignment + ' '+(v_align == 'middle' ? 'center' : v_align);
-
-				html[6] += "transform: "+transform+";";
-				html[6] += "transform-origin: "+transformOrigin+";";
-				html[6] += "-webkit-transform: "+transform+";";
-				html[6] += "-webkit-transform-origin: "+transformOrigin+";";
-				html[6] += "-ms-transform: "+transform+";";
-				html[6] += "-ms-transform-origin: "+transformOrigin+";";
-
-				if (kind == 'area') html[6] += "width: "+(u_width * (1+(extraWidthPct/100)))+"px;";
-
-			} else {
-
-				if (outputType=="abs") {
-					html[6] += "top:" + round(htmlY) + "px;";
-					if (alignment=="left") {
-						html[6] += "left:"  + round(htmlL) + "px;";
-						html[6] += "width:" + round(htmlW) + "px;";
-					} else if (alignment=="right") {
-						html[6] += "right:" + round(htmlR) + "px;";
-						html[6] += "width:" + round(htmlW) + "px;";
-					} if (alignment=="center") {
-						html[6] += "left:"  + round(htmlL) + "px;";
-						html[6] += "width:" + round(htmlW) + "px;";
-						html[6] += "margin-left:" + round(htmlLM) + "px;";
-					};
-				} else if (outputType=="pct") {
-					if (thisFrameAttributes.valign==="bottom") {
-						html[6] += "bottom:" + round(100-(htmlB/abH*100), pctPrecision) + "%;";
-					} else {
-						html[6] += "top:" + round(htmlT/abH*100, pctPrecision) + "%;";
-					};
-					if (alignment=="right") {
-						html[6] += "right:" + round(htmlR/abW*100, pctPrecision) + "%;";
-						if (kind=="area") {
-							html[6] += "width:" + round(htmlW/abW*100, pctPrecision) + "%;";
-						};
-					} else if (alignment=="center") {
-						html[6] += "left:" + round(htmlL/abW*100, pctPrecision) + "%;";
-						html[6] += "width:" + round(htmlW/abW*100, pctPrecision) + "%;";
-						html[6] += "margin-left:" + round(htmlLM/abW*100, pctPrecision) + "%;";
-					} else {
-						html[6] += "left:" + round(htmlL/abW*100, pctPrecision) + "%;";
-						if (kind=="area") {
-							html[6] += "width:" + round(htmlW/abW*100, pctPrecision) + "%;";
-						};
-					};
-
-				};
-
 			}
+			html[6] += '\t\t\t<div id="' + thisFrameId + '" ';
+			html[6] += getTextFrameCss(thisFrame) + '>\r';
 
-			html[6] += "'>\r"; // close div tag for text frame
-
+			// Generate <p> tags for paragraphs of text
 			var numChars = thisFrame.characters.length;
 			var runningChars = 0;
-			for (var k=0;k<thisFrame.paragraphs.length;k++) {
+			for (var k=0; k<thisFrame.paragraphs.length; k++) {
 
-				if (runningChars<numChars && thisFrame.paragraphs[k].characters.length!=0) {
+				if (runningChars < numChars && thisFrame.paragraphs[k].characters.length != 0) {
 					var pStyleKey = getParagraphStyleKey(thisFrame.paragraphs[k]);
 					var pStyleKeyId = 0;
 					for (var l=0;l<pStyleKeys.length;l++) {
 						if (pStyleKey==pStyleKeys[l]) {
 							pStyleKeyId = l;
-						};
-					};
+						}
+					}
 
-					html[6] += "\t\t\t\t<p class='"+nameSpace+"aiPstyle" + pStyleKeyId + "'>";
+					html[6] += "\t\t\t\t<p class='" + nameSpace + "aiPstyle" + pStyleKeyId + "'>";
 					if (isNaN(thisFrame.paragraphs[k].length)) {
 						html[6] += "&nbsp;";
 					} else {
@@ -1765,32 +1519,34 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 						textToClean = straightenCurlyQuotesInsideAngleBrackets(textToClean);
 						cleanedText = cleanText(textToClean);
 						html[6] += cleanedText;
-					};
+					}
 					html[6] += "</p>\r";
 					runningChars += (thisFrame.paragraphs[k].characters.length)+1;
 				} else {
 					html[6] += "\t\t\t\t<p>&nbsp;</p>\r";
 					runningChars += 1;
-				};
-			};
+				}
+			}
+
+			// Close text frame div
 			html[6] += "\t\t\t</div>\r";
-		};
+		}
 
 		for (var i=1;i<html.length;i++) {
 			responsiveHtml += (html[i]);
-		};
+		}
 		// responsiveHtml += "\n";
 
 		for (var i=0;i<selectFrames.length;i++) {
 			hideTextFrame(selectFrames[i]);
-		};
+		}
 
 		// unhide text now if in testing mode
 		if (docSettings.testing_mode=="yes") {
 			for (var i=0;i<selectFrames.length;i++) {
 				selectFrames[i].hidden = false;
-			};
-		};
+			}
+		}
 
 		var imageDestinationFolder = docPath + docSettings.html_output_path + docSettings.image_output_path;
 		checkForOutputFolder(imageDestinationFolder, "image_output_path");
@@ -1818,15 +1574,15 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 					hiddenItemsOutsideArtboard[item_i].hidden = false;
 				}
 			}
-		};
+		}
 
 
 		// unhide text now if NOT in testing mode
 		if (docSettings.testing_mode!="yes") {
 			for (var i=0;i<selectFrames.length;i++) {
 				selectFrames[i].hidden = false;
-			};
-		};
+			}
+		}
 
 		//=====================================
 		// output html file here if doing a file for every artboard
@@ -1838,7 +1594,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 			if (docSettings.include_resizer_css_js=="no"||docSettings.ai2html_environment!="nyt") {
 				responsiveJs        = "";
 				responsiveCss       = "";
-			};
+			}
 			if (docSettings.include_resizer_script=="yes") {
 				responsiveJs = '\t' + getResizerScript() + '\n';
 				responsiveCss             = "";
@@ -1852,30 +1608,30 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 			if (docSettings.ai2html_environment=="nyt") {
 				headerText             += "\t<!-- preview: " + docSettings.preview_slug + " -->\r";
 				headerText             += "\t<!-- scoop  : " + docSettings.scoop_slug_from_config_yml + " -->\r";
-			};
+			}
 			headerText             += "\r";
 			headerText             += "\t<style type='text/css' media='screen,print'>\r";
 			if (docSettings.max_width!="") {
 				headerText             += "\t\t#" + nameSpace + docArtboardName + "-box {\r";
 				headerText             += "\t\t\tmax-width:" + docSettings.max_width + "px;\r";
 				headerText             += "\t\t}\r";
-			};
+			}
 			if (docSettings.center_html_output) {
 				headerText             += "\t\t."+nameSpace+"artboard {\r";
 				headerText             += "\t\t\tmargin:0 auto;\r";
 				headerText             += "\t\t}\r";
-			};
+			}
 			headerText             += "\t</style>\r";
 			headerText             += "\r";
 			var footerText          = "\t<!-- End ai2html" + " - " + dateTimeStamp + " -->\r</div>\r";
 
 			textForFile += headerText;
-			if (previewProjectType=="ai2html") { textForFile += responsiveCss; };
-			if (customCssBlocks>0)             { textForFile += customCss;     };
+			if (previewProjectType=="ai2html") { textForFile += responsiveCss; }
+			if (customCssBlocks>0)             { textForFile += customCss;     }
 			textForFile += responsiveTextScoop;
-			if (customHtml.length>0)           { textForFile += customHtml;    };
-			if (customJs.length>0)             { textForFile += customJs;      };
-			if (responsiveJs.length>0)         { textForFile += responsiveJs;  };
+			if (customHtml.length>0)           { textForFile += customHtml;    }
+			if (customJs.length>0)             { textForFile += customJs;      }
+			if (responsiveJs.length>0)         { textForFile += responsiveJs;  }
 			textForFile += footerText;
 			textForFile  = applyTemplate(textForFile,docSettings);
 			// textForFile  = straightenCurlyQuotesInsideAngleBrackets(textForFile);
@@ -1890,7 +1646,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 				var localPreviewDestination = htmlFileDestinationFolder + docArtboardName + ".preview.html";
 				var localPreviewHtml        = applyTemplate(localPreviewTemplateText,docSettings)
 				outputHtml(localPreviewHtml,localPreviewDestination);
-			};
+			}
 
 			outputHtml(textForFile,htmlFileDestination);
 			// var responsiveHtmlScoopFile = new File( htmlFileDestination );
@@ -1916,7 +1672,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 		if (docSettings.include_resizer_css_js=="no"||docSettings.ai2html_environment!="nyt") {
 			responsiveJs              = "";
 			responsiveCss             = "";
-		};
+		}
 		if (docSettings.include_resizer_script=="yes") {
 			responsiveJs = '\t' + getResizerScript() + '\n';
 			responsiveCss             = "";
@@ -1932,29 +1688,29 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 		if (docSettings.ai2html_environment=="nyt") {
 			headerText               += "\t<!-- preview: " + docSettings.preview_slug + " -->\r";
 			headerText               += "\t<!-- scoop  : " + docSettings.scoop_slug_from_config_yml + " -->\r";
-		};
+		}
 		headerText                   += "\r";
 		headerText                   += "\t<style type='text/css' media='screen,print'>\r";
 		if (docSettings.max_width!="") {
 			headerText               += "\t\t#" + nameSpace + makeKeyword(docSettings.project_name) + "-box {\r";
 			headerText               += "\t\t\tmax-width:" + docSettings.max_width + "px;\r";
 			headerText               += "\t\t}\r";
-		};
+		}
 		if (docSettings.center_html_output) {
 			headerText             += "\t\t."+nameSpace+"artboard {\r";
 			headerText             += "\t\t\tmargin:0 auto;\r";
 			headerText             += "\t\t}\r";
-		};
+		}
 		if (docSettings.clickable_link!="") {
 			headerText             += "\t\t."+nameSpace+"ai2htmlLink {\r";
 			headerText             += "\t\t\tdisplay: block;\r";
 			headerText             += "\t\t}\r";
-		};
+		}
 		headerText                   += "\t</style>\r";
 		headerText                   += "\r";
 		if (docSettings.clickable_link!="") {
 			headerText += "\t<a class='"+nameSpace+"ai2htmlLink' href='"+docSettings.clickable_link+"'>\r";
-		};
+		}
 
 
 
@@ -1965,12 +1721,12 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 		footerText                += "\t<!-- End ai2html" + " - " + dateTimeStamp + " -->\r</div>\r";
 
 		textForFile += headerText;
-		if (previewProjectType=="ai2html") { textForFile += responsiveCss; };
-		if (customCssBlocks>0)             { textForFile += customCss;     };
+		if (previewProjectType=="ai2html") { textForFile += responsiveCss; }
+		if (customCssBlocks>0)             { textForFile += customCss;     }
 		textForFile += responsiveTextScoop;
-		if (customHtml.length>0)           { textForFile += customHtml;    };
-		if (customJs.length>0)             { textForFile += customJs;      };
-		if (responsiveJs.length>0)         { textForFile += responsiveJs;  };
+		if (customHtml.length>0)           { textForFile += customHtml;    }
+		if (customJs.length>0)             { textForFile += customJs;      }
+		if (responsiveJs.length>0)         { textForFile += responsiveJs;  }
 
 		textForFile += footerText;
 		textForFile  = applyTemplate(textForFile,docSettings);
@@ -1980,9 +1736,9 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 		checkForOutputFolder(htmlFileDestinationFolder, "html_output_path");
 		if (previewProjectType=="ai2html") {
 			htmlFileDestination     = htmlFileDestinationFolder + "index" + docSettings.html_output_extension;
-		} else if ((previewProjectType!="ai2html"&&srcFolder.exists)||docSettings.ai2html_environment!="nyt") {
+		} else if ((previewProjectType!="ai2html" && srcFolder.exists) || docSettings.ai2html_environment!="nyt") {
 			htmlFileDestination     = htmlFileDestinationFolder + docSettings.project_name + docSettings.html_output_extension;
-			if (docSettings.local_preview_template!="") {
+			if (docSettings.local_preview_template != "") {
 				// var localPreviewTemplateFile = new File(docPath + docSettings.local_preview_template);
 				// var localPreviewTemplateText = readTextFileAndPutIntoAVariable(localPreviewTemplateFile,"","","");
 				pBar.setTitle('Writing HTML file...');
@@ -1991,8 +1747,8 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 				var localPreviewDestination = htmlFileDestinationFolder + docSettings.project_name + ".preview.html";
 				var localPreviewHtml = applyTemplate(localPreviewTemplateText,docSettings)
 				outputHtml(localPreviewHtml,localPreviewDestination);
-			};
-		};
+			}
+		}
 
 		outputHtml(textForFile,htmlFileDestination);
 		// var responsiveHtmlScoopFile = new File( htmlFileDestination );
@@ -2002,7 +1758,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 		// 	responsiveHtmlScoopFile.writeln(textForFile);
 		// responsiveHtmlScoopFile.close;
 
-	};
+	}
 
 	//=====================================
 	// write configuration file with graphic metadata
@@ -2022,37 +1778,37 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 		configFile.close;
 	} else {
 
-	};
+	}
 
 	// Create promo image with largest artboard
 	if (docSettings.create_promo_image=="yes") {
 		createPromoImage(largestArtboardIndex);
-	};
+	}
 
 
-}; // end rgb colorspace test
+} // end rgb colorspace test
 
 
 // Unhide stuff that was hidden during processing
 for (var i = 0; i < textFramesToUnhide.length; i++) {
 	var currentFrameToUnhide = textFramesToUnhide[i];
 	currentFrameToUnhide.hidden = false;
-};
+}
 
 // Unhide layers so objects inside can be unlocked
 for (var i = hiddenObjects.length-1; i>=0; i--) {
 	hiddenObjects[i].visible = true;
-};
+}
 
 // Relock stuff that was unlocked during processing
 for (var i = lockedObjects.length-1; i>=0; i--) {
 	lockedObjects[i].locked = true;
-};
+}
 
 // Hide again layers
 for (var i = hiddenObjects.length-1; i>=0; i--) {
 	hiddenObjects[i].visible = false;
-};
+}
 
 
 pBar.setTitle('Saving Illustrator document...');
@@ -2061,8 +1817,8 @@ pBar.setProgress(1.0);
 if (parentFolder !== null) {
 	var saveOptions = new IllustratorSaveOptions();
 	saveOptions.pdfCompatible = false;
-	// if (!doc.saved) { doc.save() };
-	if (!doc.saved) { doc.saveAs( origFile , saveOptions ) };
+	// if (!doc.saved) { doc.save() }
+	if (!doc.saved) { doc.saveAs( origFile , saveOptions ) }
 	feedback.push("Your Illustrator file was saved.")
 }
 
@@ -2070,49 +1826,49 @@ if (parentFolder !== null) {
 // alert box
 // ==============================
 
-if (customCssBlocks==1)  { feedback.push(customCssBlocks  + " custom CSS block was added.") };
-if (customCssBlocks>1)   { feedback.push(customCssBlocks  + " custom CSS blocks were added.") };
-if (customHtmlBlocks==1) { feedback.push(customHtmlBlocks + " custom HTML block was added.") };
-if (customHtmlBlocks>1)  { feedback.push(customHtmlBlocks + " custom HTML blocks were added.") };
-if (customJsBlocks==1)   { feedback.push(customJsBlocks   + " custom JS block was added.") };
-if (customJsBlocks>1)    { feedback.push(customJsBlocks   + " custom JS blocks were added.") };
+if (customCssBlocks==1)  { feedback.push(customCssBlocks  + " custom CSS block was added."); }
+if (customCssBlocks>1)   { feedback.push(customCssBlocks  + " custom CSS blocks were added."); }
+if (customHtmlBlocks==1) { feedback.push(customHtmlBlocks + " custom HTML block was added."); }
+if (customHtmlBlocks>1)  { feedback.push(customHtmlBlocks + " custom HTML blocks were added."); }
+if (customJsBlocks==1)   { feedback.push(customJsBlocks   + " custom JS block was added."); }
+if (customJsBlocks>1)    { feedback.push(customJsBlocks   + " custom JS blocks were added."); }
 
 if (docSettings["image_format"].length==0) {
 	warnings.push("No images output because no image formats were specified.")
-};
+}
 
 if (errors.length == 1) {
 	alertText += "\rError\r================\r";
 } else if (errors.length > 1) {
 	alertText += "\rErrors\r================\r";
-};
+}
 if (errors.length > 0) {
 	for (var e = 0; e < errors.length; e++) {
 		alertText += "\u2022 " + errors[e] + "\r"; // \u2022 is •
-	};
-};
+	}
+}
 if (warnings.length == 1) {
 	alertText += "\rWarning\r================\r";
 } else if (warnings.length > 1) {
 	alertText += "\rWarnings\r================\r";
-};
+}
 if (warnings.length > 0) {
 	for (var w = 0; w < warnings.length; w++) {
 		alertText += "\u2022 " + warnings[w] + "\r";
-	};
-};
+	}
+}
 if (feedback.length > 0) {
 	alertText += "\rInformation\r================\r";
 	for (var f = 0; f < feedback.length; f++) {
 		alertText += "\u2022 " + feedback[f] + "\r";
-	};
-};
+	}
+}
 
 pBar.close();
 
 if (docSettings.show_completion_dialog_box=="true") {
 	alert(alertHed + "\n" + alertText + "\n\n\n================\nai2html-nyt5 v"+scriptVersion);
-};
+}
 
 
 
@@ -2369,52 +2125,52 @@ function convertStyleKeyToCss(key) {
 	for (var j=0; j<pStyleKeyTags.length; j++) {
 		var thisTag = pStyleKeyTags[j];
 		pHash[thisTag] = pArray[j];
-		if (thisTag=="size"||thisTag=="leading"||thisTag=="spacebefore"||thisTag=="spaceafter") {
+		if (thisTag == "size" || thisTag == "leading" || thisTag=="spacebefore" || thisTag=="spaceafter") {
 			pHash[thisTag] = Math.round(pHash[thisTag]);
-		};
-		if (thisTag=="aifont") {
+		}
+		if (thisTag == "aifont") {
 			pHash['family'] = defaultFamily;
 			pHash['weight'] = defaultWeight;
 			pHash['style']  = defaultStyle;
-			for (var k=0;k<fonts.length;k++) {
+			for (var k=0; k<fonts.length; k++) {
 				if (pHash['aifont']==fonts[k]['aifont']) {
 					pHash['family'] = fonts[k]['family'];
 					pHash['weight'] = fonts[k]['weight'];
 					pHash['style']  = fonts[k]['style'];
-				};
-			};
+				}
+			}
 			// check for franklin or cheltenham
 			// for (var tempFamily in nytFonts) {
 			// 	for (var fontNo = 0; fontNo < nytFonts[tempFamily].fontList.length; fontNo++) {
 			// 		var tempFont = nytFonts[tempFamily].fontList[fontNo];
-			// 		if (tempFont === pHash['aifont']) { nytFonts[tempFamily].inDoc = true; };
-			// 	};
-			// };
-		};
+			// 		if (tempFont === pHash['aifont']) { nytFonts[tempFamily].inDoc = true; }
+			// 	}
+			// }
+		}
 		if (thisTag=="r"||thisTag=="g"||thisTag=="b") {
-			if (pHash[thisTag].length==1) { pHash[thisTag] = "0"+pHash[thisTag] };
-		};
+			if (pHash[thisTag].length==1) { pHash[thisTag] = "0"+pHash[thisTag] }
+		}
 		if (thisTag=="capitalization") {
 			for (var k=0;k<caps.length;k++) {
 				if (pHash['capitalization']==caps[k]['ai']) {
 					pHash['capitalization'] =caps[k]['html'];
-				};
-			};
-		};
+				}
+			}
+		}
 		if (thisTag=="justification") {
 			for (var k=0;k<align.length;k++) {
 				if (pHash['justification']==align[k]['ai']) {
 					pHash['justification'] =align[k]['html'];
-				};
-			};
-		};
+				}
+			}
+		}
 		if (thisTag=="tracking") {
 			// pHash['tracking'] = pHash['tracking']/1000;
 			pHash['tracking'] = pHash['tracking']/1200;
-		};
+		}
 		if (thisTag=="opacity") {
 			pHash['opacity'] = pHash['opacity']/100;
-		};
+		}
 	}
 	lines.push('{');
 	if (pHash['family'] != defaultFamily) lines.push("font-family:" + pHash['family'] + ";");
@@ -2462,7 +2218,7 @@ function getParagraphStyleKey(p) {
 			redOut   = 0;
 			greenOut = 0;
 			blueOut  = 0;
-		};
+		}
 	} else if (sampleChar.fillColor.typename=="NoColor") {
 		var redOut   = 0;
 		var greenOut = 255;
@@ -2473,7 +2229,7 @@ function getParagraphStyleKey(p) {
 		var greenOut = 0;
 		var blueOut  = 0;
 		warnings.push("This text is filled with a non-RGB color. Please fill it with an RGB color. Text: \u201C" + p.contents + "\u201D");
-	};
+	}
 	pStyleKey += b + redOut.toString(16);
 	pStyleKey += b + greenOut.toString(16);
 	pStyleKey += b + blueOut.toString(16);
@@ -2486,4 +2242,229 @@ function getParagraphStyleKey(p) {
 	pStyleKey += b + Math.round(thisFrame.opacity);
 
 	return pStyleKey;
+}
+
+function textFrameIsInBounds(frame, artboardRect) {
+	var visibleLeft   =  frame.visibleBounds[0];
+	var visibleTop    = -frame.visibleBounds[1];
+	var visibleRight  =  frame.visibleBounds[2];
+	var visibleBottom = -frame.visibleBounds[3];
+	var abLeft   =  artboardRect[0];
+	var abTop    = -artboardRect[1];
+	var abRight  =  artboardRect[2];
+	var abBottom = -artboardRect[3];
+	// note: in ExtendScript, it seems that && and || have same priority (!)
+	var inX = (visibleLeft >= abLeft && visibleLeft <= abRight) ||
+		(visibleRight >= abLeft && visibleRight <= abRight) ||
+		(visibleLeft <= abLeft && visibleRight >= abRight);
+	var inY = (visibleTop >= abTop && visibleTop <= abBottom) ||
+		(visibleBottom >= abTop && visibleBottom <= abBottom) ||
+		(visibleTop <= abTop && visibleBottom >= abBottom);
+	return inX && inY;
+}
+
+function objectIsHidden(obj) {
+	var hidden = false;
+	while (!hidden && obj && obj.typename != "Document"){
+		if (obj.typename == "Layer") {
+			hidden = !obj.visible;
+		} else {
+			hidden = obj.hidden;
+		}
+		obj = obj.parent;
+	}
+	return hidden;
+}
+
+function textFrameIsRenderable(frame, artboardRect) {
+	var inBounds = textFrameIsInBounds(frame, artboardRect);
+	var hidden = objectIsHidden(frame);
+	return inBounds && !hidden && frame.contents != "" &&
+		(docSettings.render_rotated_skewed_text_as == "html" ||
+			(docSettings.render_rotated_skewed_text_as == "image" &&
+				!textIsTransformed(frame))) &&
+		(frame.kind=="TextType.AREATEXT" || frame.kind=="TextType.POINTTEXT");
+}
+
+function findTextFramesToRender(frames, artboardRect) {
+	var selected = [];
+	for (var i=0; i<frames.length; i++) {
+		if (textFrameIsRenderable(frames[i], artboardRect)) {
+			selected.push(frames[i]);
+		}
+	}
+	// Sort frames top to bottom, left to right.
+	selected.sort(
+	    firstBy(function (v1, v2) { return v2.top  - v1.top; })
+	    .thenBy(function (v1, v2) { return v1.left - v2.left; })
+	);
+	return selected;
+}
+
+function parseTextFrameNote(note) {
+	// Read in attribute variables from notes field for this text frame
+	var thisFrameAttributes = {};
+	var rawNotes = note.split("\r");
+	for (var rNo = 0; rNo < rawNotes.length; rNo++) {
+		var rn = rawNotes[rNo];
+		var rnKey   = rn.replace( /^[ \t]*([^ \t:]*)[ \t]*:(.*)$/ , "$1" );
+		var rnValue = rn.replace( /^[ \t]*([^ \t:]*)[ \t]*:(.*)$/ , "$2" );
+		rnKey       = rnKey.replace( /^\s+/ , "" ).replace( /\s+$/ , "" );
+		rnValue     = rnValue.replace( /^\s+/ , "" ).replace( /\s+$/ , "" );
+		thisFrameAttributes[rnKey] = rnValue;
+	}
+	return thisFrameAttributes;
+}
+
+// Create class="" and style"" CSS for positioning a text div
+function getTextFrameCss(thisFrame) {
+	var style = "";
+	var vFactor = .5; // This is an adjustment to correct for vertical placement.
+	var kind, htmlY, htmlT, htmlB, htmlTM, htmlH, htmlL, htmlR, htmlW, htmlLM, alignment, extraWidthPct;
+	var thisFrameAttributes = parseTextFrameNote(thisFrame.note);
+
+	if (thisFrame.kind=="TextType.POINTTEXT") {
+		kind = "point";
+		// /this line throws an error if the first paragraph of the frame is empty.
+		// var htmlY = Math.round(-thisFrame.position[1] - (((thisFrame.paragraphs[0].characters[0].leading - thisFrame.paragraphs[0].characters[0].size)*vFactor) + thisFrame.paragraphs[0].spaceBefore)-abY);
+		htmlY = Math.round(-thisFrame.position[1] - (((thisFrame.characters[0].leading - thisFrame.characters[0].size)*vFactor) + thisFrame.characters[0].spaceBefore)-abY);
+	} else if (thisFrame.kind=="TextType.AREATEXT") {
+		kind = "area";
+		// var htmlY = Math.round(-thisFrame.position[1] - (((thisFrame.paragraphs[0].characters[0].leading - thisFrame.paragraphs[0].characters[0].size)*vFactor) + thisFrame.paragraphs[0].spaceBefore)-abY);
+		htmlY = Math.round(-thisFrame.position[1] - (((thisFrame.characters[0].leading - thisFrame.characters[0].size)*vFactor) + thisFrame.characters[0].spaceBefore)-abY);
+	} else {
+		kind = "other";
+	}
+	htmlH = Math.round(thisFrame.height);
+	if (thisFrameAttributes.valign === "bottom") {
+		htmlB = htmlY + thisFrame.height;
+	// } else if (thisFrameAttributes.valign==="center") {
+	// 	htmlT  = htmlY+(thisFrame.height/2);
+	// 	htmlTM = thisFrame.height*(1/2*-1);
+	} else {
+		htmlT = htmlY;
+	}
+
+	// additional width for box to allow for slight variations in font widths
+	if (kind=="area") {
+		extraWidthPct = 0; // was 3 percent -- but need to account for when it hits the edge of the box since we are now overflow hidden
+	} else {
+		extraWidthPct = 100;
+	}
+	htmlW = thisFrame.width*(1+(extraWidthPct/100));
+	if (thisFrame.characters[0].justification=="Justification.LEFT") {
+		alignment = "left";
+		htmlL = thisFrame.left-abX;
+		htmlR = abW-(thisFrame.left+htmlW-abX);
+	} else if (thisFrame.characters[0].justification=="Justification.RIGHT") {
+		alignment = "right";
+		htmlL = thisFrame.left-(thisFrame.width*(1+(extraWidthPct/100)))-abX;
+		htmlR = abW-(thisFrame.left+thisFrame.width-abX);
+	} else if (thisFrame.characters[0].justification=="Justification.CENTER") {
+		alignment = "center";
+		htmlL  = thisFrame.left-abX+(thisFrame.width/2); // thanks jeremy!
+		htmlLM = thisFrame.width*(1+(extraWidthPct/100))/2*-1;
+	} else {
+		alignment = "other";
+		// htmlX = Math.round(thisFrame.left-abX);
+	}
+
+	// check if text is transformed
+	if (textIsTransformed(thisFrame)) {
+		// find transformed anchor point pre-transformation
+		var t_bounds = thisFrame.geometricBounds,
+			u_bounds = getUntransformedTextBounds(thisFrame),
+			u_width = u_bounds[2] - u_bounds[0],
+			t_width = t_bounds[2] - t_bounds[0],
+			u_height = u_bounds[3] - u_bounds[1],
+			t_height = t_bounds[3] - t_bounds[1],
+			v_align = thisFrameAttributes.valign || 'top',
+			t_scale_x = thisFrame.textRange.characterAttributes.horizontalScale / 100,
+			t_scale_y = thisFrame.textRange.characterAttributes.verticalScale / 100,
+			t_anchor = getAnchorPoint(u_bounds, thisFrame.matrix, alignment, v_align, t_scale_x, t_scale_y),
+			t_trans_x = 0,
+			t_trans_y = 0;
+
+		// position div on transformed anchor point
+		style += "left:" + round((t_anchor[0]-abX)/abW*100, pctPrecision) + "%;";
+		style += "top:" + round((-t_anchor[1]-abY)/abH*100, pctPrecision) + "%;";
+
+		// move "back" to left or top to center or right align text
+		if (alignment == 'center') t_trans_x -= u_width * 0.5;
+		else if (alignment == 'right') t_trans_x -= u_width;
+		if (v_align == 'center' || v_align == 'middle') t_trans_y -= u_height * 0.5;
+		else if (v_align == 'bottom') t_trans_y -= u_height;
+
+		var mat = thisFrame.matrix;
+
+		mat = app.concatenateMatrix(app.getTranslationMatrix(t_trans_x, t_trans_y),
+				app.concatenateTranslationMatrix(mat, -mat.mValueTX, -mat.mValueTY));
+
+		// var mat, mat0 = thisFrame.matrix;
+		// mat0 = app.concatenateTranslationMatrix(mat0, -mat0.mValueTX, -mat0.mValueTY);
+		// mat = app.concatenateMatrix(app.getTranslationMatrix(t_trans_x, t_trans_y), mat0);
+
+		var transform = "matrix("
+				+round(mat.mValueA, pctPrecision)+','
+				+round(-1*mat.mValueB, pctPrecision)+','
+				+round(-1*mat.mValueC, pctPrecision)+','
+				+round(mat.mValueD, pctPrecision)+','
+				+round(t_trans_x, pctPrecision)+','
+				+round(-t_trans_y, pctPrecision)+') '
+				+"scaleX("+round(t_scale_x, pctPrecision)+") "
+				+"scaleY("+round(t_scale_y, pctPrecision)+")";
+
+		var transformOrigin = alignment + ' '+(v_align == 'middle' ? 'center' : v_align);
+
+		style += "transform: "+transform+";";
+		style += "transform-origin: "+transformOrigin+";";
+		style += "-webkit-transform: "+transform+";";
+		style += "-webkit-transform-origin: "+transformOrigin+";";
+		style += "-ms-transform: "+transform+";";
+		style += "-ms-transform-origin: "+transformOrigin+";";
+
+		if (kind == 'area') style += "width: "+(u_width * (1+(extraWidthPct/100)))+"px;";
+
+	} else {
+
+		if (outputType=="abs") {
+			style += "top:" + round(htmlY) + "px;";
+			if (alignment=="left") {
+				style += "left:"  + round(htmlL) + "px;";
+				style += "width:" + round(htmlW) + "px;";
+			} else if (alignment=="right") {
+				style += "right:" + round(htmlR) + "px;";
+				style += "width:" + round(htmlW) + "px;";
+			} if (alignment=="center") {
+				style += "left:"  + round(htmlL) + "px;";
+				style += "width:" + round(htmlW) + "px;";
+				style += "margin-left:" + round(htmlLM) + "px;";
+			}
+		} else if (outputType=="pct") {
+			if (thisFrameAttributes.valign==="bottom") {
+				style += "bottom:" + round(100-(htmlB/abH*100), pctPrecision) + "%;";
+			} else {
+				style += "top:" + round(htmlT/abH*100, pctPrecision) + "%;";
+			}
+			if (alignment=="right") {
+				style += "right:" + round(htmlR/abW*100, pctPrecision) + "%;";
+				if (kind=="area") {
+					style += "width:" + round(htmlW/abW*100, pctPrecision) + "%;";
+				}
+			} else if (alignment=="center") {
+				style += "left:" + round(htmlL/abW*100, pctPrecision) + "%;";
+				style += "width:" + round(htmlW/abW*100, pctPrecision) + "%;";
+				style += "margin-left:" + round(htmlLM/abW*100, pctPrecision) + "%;";
+			} else {
+				style += "left:" + round(htmlL/abW*100, pctPrecision) + "%;";
+				if (kind=="area") {
+					style += "width:" + round(htmlW/abW*100, pctPrecision) + "%;";
+				}
+			}
+		}
+	}
+	var frameLayer = makeKeyword(thisFrame.layer.name);
+	return 'class="' + nameSpace + frameLayer + " "+ nameSpace + "aiAbs" +
+		(textIsTransformed(thisFrame) && kind == "point" ? ' g-aiPtransformed' : '') +
+		'" style="' + style + '"';
 }
