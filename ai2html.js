@@ -5,7 +5,6 @@ var scriptEnvironment = "nyt";
 
 // ai2html is a script for Adobe Illustrator that converts your Illustrator document into html and css.
 
-
 // Copyright (c) 2011-2015 The New York Times Company
 
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,8 +18,6 @@ var scriptEnvironment = "nyt";
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
-
 
 
 // =====================================
@@ -60,6 +57,20 @@ if (!Array.prototype.indexOf) {
 // =====================================
 // functions
 // =====================================
+
+// mbloch timer
+// Support for timing using T.start() and T.stop("message")
+var T = {
+  stack: [],
+  start: function() {
+    T.stack.push(+new Date);
+  },
+  stop: function(note) {
+    var msg = (+new Date - T.stack.pop()) + 'ms';
+    if (note) msg += " - " + note;
+    feedback.push(msg);
+  }
+};
 
 // html entity substitution
 // not used ==> ["\x22","&quot;"], ["\x3C","&lt;"], ["\x3E","&gt;"], ["\x26","&amp;"],
@@ -1269,6 +1280,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 		uniqueArtboardWidths.sort(function(a,b){return a-b;});
 	}
 
+	T.start();
 	// begin main stuff
 	var responsiveHtml = "";
 	for (var abNumber = 0; abNumber < doc.artboards.length; abNumber++) {
@@ -1893,6 +1905,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 		}; // end check if artboard to process
 	}; // end artboard loop
 
+	T.stop("done with main stuff");
 
 	//=====================================
 	// output html file here if doing one file for all artboards
@@ -2102,89 +2115,6 @@ if (docSettings.show_completion_dialog_box=="true") {
 	alert(alertHed + "\n" + alertText + "\n\n\n================\nai2html-nyt5 v"+scriptVersion);
 };
 
-function getResizerScript() {
-	var f = function(scriptEnvironment) {
-	  // only want one resizer on the page
-	  if (document.documentElement.className.indexOf("g-resizer-v3-init") > -1) return;
-	  document.documentElement.className += " g-resizer-v3-init";
-	  // require IE9+
-	  if (!("querySelector" in document)) return;
-	  function resizer() {
-	    var elements = Array.prototype.slice.call(document.querySelectorAll(".g-artboard-v3[data-min-width]")),
-	        widthById = {};
-	    elements.forEach(function(el) {
-	      var parent = el.parentNode,
-	          width = widthById[parent.id] || parent.getBoundingClientRect().width,
-	          minwidth = el.getAttribute("data-min-width"),
-	          maxwidth = el.getAttribute("data-max-width");
-	      widthById[parent.id] = width;
-
-	      if (+minwidth <= width && (+maxwidth >= width || maxwidth === null)) {
-	        var img = el.querySelector(".g-aiImg");
-	        if (img.getAttribute("data-src") && img.getAttribute("src") != img.getAttribute("data-src")) {
-	          img.setAttribute("src", img.getAttribute("data-src"));
-	        }
-	        el.style.display = "block";
-	      } else {
-	        el.style.display = "none";
-	      }
-	    });
-
-	    if (scriptEnvironment=="nyt") {
-	      try {
-	        if (window.parent && window.parent.$) {
-	          window.parent.$("body").trigger("resizedcontent", [window]);
-	        }
-	        document.documentElement.dispatchEvent(new Event("resizedcontent"));
-	        if (window.require && document.querySelector("meta[name=sourceApp]") && document.querySelector("meta[name=sourceApp]").content == "nyt-v5") {
-	          require(["foundation/main"], function() {
-	            require(["shared/interactive/instances/app-communicator"], function(AppCommunicator) {
-	              AppCommunicator.triggerResize();
-	            });
-	          });
-	        }
-	      } catch(e) { console.log(e); }
-	    }
-	  }
-
-	  resizer();
-	  document.addEventListener("DOMContentLoaded", resizer);
-	  // feel free to replace throttle with _.throttle, if available
-	  window.addEventListener("resize", throttle(resizer, 200));
-
-	  function throttle(func, wait) {
-	    // from underscore.js
-	    var _now = Date.now || function() { return new Date().getTime(); },
-	        context, args, result, timeout = null, previous = 0;
-	    var later = function() {
-	        previous = _now();
-	        timeout = null;
-	        result = func.apply(context, args);
-	        if (!timeout) context = args = null;
-	    };
-	    return function() {
-	      var now = _now(), remaining = wait - (now - previous);
-	      context = this;
-	      args = arguments;
-	      if (remaining <= 0 || remaining > wait) {
-	        if (timeout) {
-	          clearTimeout(timeout);
-	          timeout = null;
-	        }
-	        previous = now;
-	        result = func.apply(context, args);
-	        if (!timeout) context = args = null;
-	      } else if (!timeout) {
-	        timeout = setTimeout(later, remaining);
-	      }
-	      return result;
-	    };
-	  }
-	};
-	var env = scriptEnvironment || '';
-	return '<script type="text/javascript">\n(' + f.toString() + ')("' +
-		env + '");\n</script>\n\n';
-}
 
 
 function textIsTransformed(textFrame) {
@@ -2328,6 +2258,96 @@ function round(number, precision) {
 	return Math.round(number * d) / d;
 }
 
+// =====================================
+// mbloch refactoring
+// =====================================
+
+function getResizerScript() {
+	var f = function(scriptEnvironment) {
+	  // only want one resizer on the page
+	  if (document.documentElement.className.indexOf("g-resizer-v3-init") > -1) return;
+	  document.documentElement.className += " g-resizer-v3-init";
+	  // require IE9+
+	  if (!("querySelector" in document)) return;
+	  function resizer() {
+	    var elements = Array.prototype.slice.call(document.querySelectorAll(".g-artboard-v3[data-min-width]")),
+	        widthById = {};
+	    elements.forEach(function(el) {
+	      var parent = el.parentNode,
+	          width = widthById[parent.id] || parent.getBoundingClientRect().width,
+	          minwidth = el.getAttribute("data-min-width"),
+	          maxwidth = el.getAttribute("data-max-width");
+	      widthById[parent.id] = width;
+
+	      if (+minwidth <= width && (+maxwidth >= width || maxwidth === null)) {
+	        var img = el.querySelector(".g-aiImg");
+	        if (img.getAttribute("data-src") && img.getAttribute("src") != img.getAttribute("data-src")) {
+	          img.setAttribute("src", img.getAttribute("data-src"));
+	        }
+	        el.style.display = "block";
+	      } else {
+	        el.style.display = "none";
+	      }
+	    });
+
+	    if (scriptEnvironment=="nyt") {
+	      try {
+	        if (window.parent && window.parent.$) {
+	          window.parent.$("body").trigger("resizedcontent", [window]);
+	        }
+	        document.documentElement.dispatchEvent(new Event("resizedcontent"));
+	        if (window.require && document.querySelector("meta[name=sourceApp]") && document.querySelector("meta[name=sourceApp]").content == "nyt-v5") {
+	          require(["foundation/main"], function() {
+	            require(["shared/interactive/instances/app-communicator"], function(AppCommunicator) {
+	              AppCommunicator.triggerResize();
+	            });
+	          });
+	        }
+	      } catch(e) { console.log(e); }
+	    }
+	  }
+
+	  resizer();
+	  document.addEventListener("DOMContentLoaded", resizer);
+	  // feel free to replace throttle with _.throttle, if available
+	  window.addEventListener("resize", throttle(resizer, 200));
+
+	  function throttle(func, wait) {
+	    // from underscore.js
+	    var _now = Date.now || function() { return new Date().getTime(); },
+	        context, args, result, timeout = null, previous = 0;
+	    var later = function() {
+	        previous = _now();
+	        timeout = null;
+	        result = func.apply(context, args);
+	        if (!timeout) context = args = null;
+	    };
+	    return function() {
+	      var now = _now(), remaining = wait - (now - previous);
+	      context = this;
+	      args = arguments;
+	      if (remaining <= 0 || remaining > wait) {
+	        if (timeout) {
+	          clearTimeout(timeout);
+	          timeout = null;
+	        }
+	        previous = now;
+	        result = func.apply(context, args);
+	        if (!timeout) context = args = null;
+	      } else if (!timeout) {
+	        timeout = setTimeout(later, remaining);
+	      }
+	      return result;
+	    };
+	  }
+	};
+
+	// convert function to JS source code
+	var js = '(' + f.toString() + ')("' + (scriptEnvironment || '') + '");';
+	return '<script type="text/javascript">\n' + js + '\n</script>\n\n';
+}
+
+
 function uniqify(arr) {
 	var o = {},
 			r = [],
@@ -2343,8 +2363,7 @@ function uniqify(arr) {
 }
 
 function convertStyleKeyToCss(key) {
-	// external vars:
-	// pStyleKeyTags, caps, fonts, align
+	// external vars: pStyleKeyTags, caps, fonts, align
 	var pArray = key.split("\t");
 	var pHash  = {};
 	var lines = [];
