@@ -2103,96 +2103,89 @@ if (docSettings.show_completion_dialog_box=="true") {
 };
 
 function getResizerScript() {
-	var resizerScript="";
-	resizerScript += "\n" + "<script type=\"text\/javascript\">";
-	resizerScript += "\n" + "    (function() {";
-	resizerScript += "\n" + "        \/\/ only want one resizer on the page";
-	resizerScript += "\n" + "        if (document.documentElement.className.indexOf(\"g-resizer-v3-init\") > -1) return;";
-	resizerScript += "\n" + "        document.documentElement.className += \" g-resizer-v3-init\";";
-	resizerScript += "\n" + "        \/\/ require IE9+";
-	resizerScript += "\n" + "        if (!(\"querySelector\" in document)) return;";
-	resizerScript += "\n" + "        function resizer() {";
-	resizerScript += "\n" + "            var elements = Array.prototype.slice.call(document.querySelectorAll(\".g-artboard-v3[data-min-width]\")),";
-	resizerScript += "\n" + "                widthById = {};";
-	resizerScript += "\n" + "            elements.forEach(function(el) {";
-	resizerScript += "\n" + "                var parent = el.parentNode,";
-	resizerScript += "\n" + "                    width = widthById[parent.id] || parent.getBoundingClientRect().width,";
-	resizerScript += "\n" + "                    minwidth = el.getAttribute(\"data-min-width\"),";
-	resizerScript += "\n" + "                    maxwidth = el.getAttribute(\"data-max-width\");";
-	resizerScript += "\n" + "                widthById[parent.id] = width;";
-	resizerScript += "\n" + "";
-	resizerScript += "\n" + "                if (+minwidth <= width && (+maxwidth >= width || maxwidth === null)) {";
-	resizerScript += "\n" + "                    var img = el.querySelector('.g-aiImg');";
-	resizerScript += "\n" + "                    if (img.getAttribute('data-src') && img.getAttribute('src') != img.getAttribute('data-src')) {";
-	resizerScript += "\n" + "                        img.setAttribute('src', img.getAttribute('data-src'));";
-	resizerScript += "\n" + "                    }";
-	resizerScript += "\n" + "                    el.style.display = \"block\";";
-	resizerScript += "\n" + "                } else {";
-	resizerScript += "\n" + "                    el.style.display = \"none\";";
-	resizerScript += "\n" + "                }";
-	resizerScript += "\n" + "            });";
+	var f = function(scriptEnvironment) {
+	  // only want one resizer on the page
+	  if (document.documentElement.className.indexOf("g-resizer-v3-init") > -1) return;
+	  document.documentElement.className += " g-resizer-v3-init";
+	  // require IE9+
+	  if (!("querySelector" in document)) return;
+	  function resizer() {
+	    var elements = Array.prototype.slice.call(document.querySelectorAll(".g-artboard-v3[data-min-width]")),
+	        widthById = {};
+	    elements.forEach(function(el) {
+	      var parent = el.parentNode,
+	          width = widthById[parent.id] || parent.getBoundingClientRect().width,
+	          minwidth = el.getAttribute("data-min-width"),
+	          maxwidth = el.getAttribute("data-max-width");
+	      widthById[parent.id] = width;
 
+	      if (+minwidth <= width && (+maxwidth >= width || maxwidth === null)) {
+	        var img = el.querySelector(".g-aiImg");
+	        if (img.getAttribute("data-src") && img.getAttribute("src") != img.getAttribute("data-src")) {
+	          img.setAttribute("src", img.getAttribute("data-src"));
+	        }
+	        el.style.display = "block";
+	      } else {
+	        el.style.display = "none";
+	      }
+	    });
 
-	if (scriptEnvironment=="nyt") {
-		resizerScript += "\n" + "            try {";
-		resizerScript += "\n" + "                if (window.parent && window.parent.$) {";
-		resizerScript += "\n" + "                    window.parent.$(\"body\").trigger(\"resizedcontent\", [window]);";
-		resizerScript += "\n" + "                }";
-		resizerScript += "\n" + "                document.documentElement.dispatchEvent(new Event('resizedcontent'));";
-		resizerScript += "\n" + "                if (window.require && document.querySelector('meta[name=sourceApp]') && document.querySelector('meta[name=sourceApp]').content == 'nyt-v5') {";
-		resizerScript += "\n" + "                    require(['foundation\/main'], function() {";
-		resizerScript += "\n" + "                        require(['shared\/interactive\/instances\/app-communicator'], function(AppCommunicator) {";
-		resizerScript += "\n" + "                            AppCommunicator.triggerResize();";
-		resizerScript += "\n" + "                        });";
-		resizerScript += "\n" + "                    });";
-		resizerScript += "\n" + "                }";
-		resizerScript += "\n" + "            } catch(e) { console.log(e); }";
-	}
+	    if (scriptEnvironment=="nyt") {
+	      try {
+	        if (window.parent && window.parent.$) {
+	          window.parent.$("body").trigger("resizedcontent", [window]);
+	        }
+	        document.documentElement.dispatchEvent(new Event("resizedcontent"));
+	        if (window.require && document.querySelector("meta[name=sourceApp]") && document.querySelector("meta[name=sourceApp]").content == "nyt-v5") {
+	          require(["foundation/main"], function() {
+	            require(["shared/interactive/instances/app-communicator"], function(AppCommunicator) {
+	              AppCommunicator.triggerResize();
+	            });
+	          });
+	        }
+	      } catch(e) { console.log(e); }
+	    }
+	  }
 
-	resizerScript += "\n" + "        }";
-	resizerScript += "\n" + "";
-	resizerScript += "\n" + "        resizer();";
-	resizerScript += "\n" + "        document.addEventListener('DOMContentLoaded', resizer);";
-	resizerScript += "\n" + "        \/\/ feel free to replace throttle with _.throttle, if available";
-	resizerScript += "\n" + "        window.addEventListener('resize', throttle(resizer, 200));        ";
-	resizerScript += "\n" + "";
-	resizerScript += "\n" + "        function throttle(func, wait) {";
-	resizerScript += "\n" + "            \/\/ from underscore.js";
-	resizerScript += "\n" + "            var _now = Date.now || function() { return new Date().getTime(); },";
-	resizerScript += "\n" + "                context, args, result, timeout = null, previous = 0;";
-	resizerScript += "\n" + "            var later = function() {";
-	resizerScript += "\n" + "                previous = _now();";
-	resizerScript += "\n" + "                timeout = null;";
-	resizerScript += "\n" + "                result = func.apply(context, args);";
-	resizerScript += "\n" + "                if (!timeout) context = args = null;";
-	resizerScript += "\n" + "            };";
-	resizerScript += "\n" + "            return function() {";
-	resizerScript += "\n" + "                var now = _now(), remaining = wait - (now - previous);";
-	resizerScript += "\n" + "                context = this;";
-	resizerScript += "\n" + "                args = arguments;";
-	resizerScript += "\n" + "                if (remaining <= 0 || remaining > wait) {";
-	resizerScript += "\n" + "                    if (timeout) {";
-	resizerScript += "\n" + "                        clearTimeout(timeout);";
-	resizerScript += "\n" + "                        timeout = null;";
-	resizerScript += "\n" + "                    }";
-	resizerScript += "\n" + "                    previous = now;";
-	resizerScript += "\n" + "                    result = func.apply(context, args);";
-	resizerScript += "\n" + "                    if (!timeout) context = args = null;";
-	resizerScript += "\n" + "                } else if (!timeout) {";
-	resizerScript += "\n" + "                    timeout = setTimeout(later, remaining);";
-	resizerScript += "\n" + "                }";
-	resizerScript += "\n" + "                return result;";
-	resizerScript += "\n" + "            };";
-	resizerScript += "\n" + "        }";
-	resizerScript += "\n" + "";
-	resizerScript += "\n" + "       ";
-	resizerScript += "\n" + "    })();";
-	resizerScript += "\n" + "<\/script>";
-	resizerScript += "\n" + "";
-	return resizerScript;
+	  resizer();
+	  document.addEventListener("DOMContentLoaded", resizer);
+	  // feel free to replace throttle with _.throttle, if available
+	  window.addEventListener("resize", throttle(resizer, 200));
+
+	  function throttle(func, wait) {
+	    // from underscore.js
+	    var _now = Date.now || function() { return new Date().getTime(); },
+	        context, args, result, timeout = null, previous = 0;
+	    var later = function() {
+	        previous = _now();
+	        timeout = null;
+	        result = func.apply(context, args);
+	        if (!timeout) context = args = null;
+	    };
+	    return function() {
+	      var now = _now(), remaining = wait - (now - previous);
+	      context = this;
+	      args = arguments;
+	      if (remaining <= 0 || remaining > wait) {
+	        if (timeout) {
+	          clearTimeout(timeout);
+	          timeout = null;
+	        }
+	        previous = now;
+	        result = func.apply(context, args);
+	        if (!timeout) context = args = null;
+	      } else if (!timeout) {
+	        timeout = setTimeout(later, remaining);
+	      }
+	      return result;
+	    };
+	  }
+	};
+	var env = scriptEnvironment || '';
+	return '<script type="text/javascript">\n(' + f.toString() + ')("' +
+		env + '");\n</script>\n\n';
 }
 
-alert(textIsTransformed.toString());
 
 function textIsTransformed(textFrame) {
 	return !(textFrame.matrix.mValueA==1 &&
