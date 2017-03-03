@@ -737,7 +737,7 @@ var ymlFile                = new File( docPath + "../config.yml" );
 var gitConfigFile          = new File( docPath + "../.git/config");
 var alertText              = "";
 if (scriptEnvironment=="nyt") {
-	var alertHed               = "Actually, that’s not half bad.";
+	var alertHed               = "Actually, that\u2019s not half bad."; // &rsquo;
 } else {
 	var alertHed               = "Nice work!";
 
@@ -2149,7 +2149,7 @@ if (errors.length == 1) {
 };
 if (errors.length > 0) {
 	for (var e = 0; e < errors.length; e++) {
-		alertText += "• " + errors[e] + "\r";
+		alertText += "\u2022 " + errors[e] + "\r"; // \u2022 is •
 	};
 };
 if (warnings.length == 1) {
@@ -2159,13 +2159,13 @@ if (warnings.length == 1) {
 };
 if (warnings.length > 0) {
 	for (var w = 0; w < warnings.length; w++) {
-		alertText += "• " + warnings[w] + "\r";
+		alertText += "\u2022 " + warnings[w] + "\r";
 	};
 };
 if (feedback.length > 0) {
 	alertText += "\rInformation\r================\r";
 	for (var f = 0; f < feedback.length; f++) {
-		alertText += "• " + feedback[f] + "\r";
+		alertText += "\u2022 " + feedback[f] + "\r";
 	};
 };
 
