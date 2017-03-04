@@ -57,6 +57,10 @@ if (!Array.prototype.indexOf) {
    };
 }
 
+if (!app.documents.length) {
+	throw " No documents are open";
+}
+
 // =====================================
 // functions
 // =====================================
@@ -121,6 +125,7 @@ var cleanText = function(text) {
 	}
 	return text;
 };
+
 var straightenCurlyQuotesInsideAngleBrackets = function(text) {
 	// thanks to jashkenas
 	var tagFinder = /<[^\n]+?>/g;
@@ -129,6 +134,7 @@ var straightenCurlyQuotesInsideAngleBrackets = function(text) {
 		return tag.replace( /[\u201C\u201D]/g , '"' ).replace( /[‘’]/g , "'" );
 	});
 };
+
 var exportImageFiles = function(dest,width,height,formats,initialScaling,doubleres) {
 	// alert(formats);
 	// width and height are the artboard width and height and only used to determine whether or not to double res
@@ -745,7 +751,6 @@ var errors    = [];
 // var docHasYml              = false;
 var docHadSettingsBlock    = false;
 var aiFileInPreviewProject = false;
-
 var doc                    = app.activeDocument;
 var docPath                = doc.path + "/";
 // var origFilename           = doc.name;
