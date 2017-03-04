@@ -70,10 +70,10 @@ if (!app.documents.length) {
 var T = {
   stack: [],
   start: function() {
-    T.stack.push(+new Date);
+    T.stack.push(+new Date());
   },
   stop: function(note) {
-    var msg = (+new Date - T.stack.pop()) + 'ms';
+    var msg = (+new Date() - T.stack.pop()) + 'ms';
     if (note) msg += " - " + note;
     feedback.push(msg);
   }
@@ -120,7 +120,7 @@ var cleanText = function(text) {
 	for (var i=0; i < htmlCharacterCodes.length; i++) {
 		var charCode = htmlCharacterCodes[i];
 		if (text.indexOf(charCode[0]) > -1) {
-			text = text.replace(new RegExp(charCode[0],'g'), charCode[1] )
+			text = text.replace(new RegExp(charCode[0],'g'), charCode[1]);
 		}
 	}
 	return text;
@@ -143,11 +143,14 @@ var exportImageFiles = function(dest,width,height,formats,initialScaling,doubler
 	// options, dest contains the full path including the file name
 	// doubleres is "yes" or "no" whether you want to allow images to be double res
 	// if you want to force ai2html to use doubleres, use "always"
+	var pngImageScaling, pngExportOptions, pngFileSpec, pngType,
+			jpgImageScaling, jpgExportOptions, jpgFileSpec, jpgType,
+			svgExportOptions, svgFileSpec, svgType;
 
 	if (doubleres=="yes" || doubleres=="always") {
 		// if image is too big to use double-res, then just output single-res.
-		var pngImageScaling = 200 * initialScaling;
-		var jpgImageScaling = 200 * initialScaling;
+		pngImageScaling = 200 * initialScaling;
+		jpgImageScaling = 200 * initialScaling;
 		if (doubleres == 'always' || ((width*height) < (3*1024*1024/4) || (width >= 945))) {
 			// <3
 			// feedback.push("The jpg and png images are double resolution.");
@@ -174,17 +177,17 @@ var exportImageFiles = function(dest,width,height,formats,initialScaling,doubler
 			// warnings.push("The jpg and png images are single resolution, but are too large to display on first-generation iPhones.");
 		}
 	} else {
-		var pngImageScaling = 100 * initialScaling;
-		var jpgImageScaling = 100 * initialScaling;
+		pngImageScaling = 100 * initialScaling;
+		jpgImageScaling = 100 * initialScaling;
 	}
 	// alert("scaling\npngImageScaling = " + pngImageScaling + "\njpgImageScaling = " + jpgImageScaling);
 
 	for (var formatNumber = 0; formatNumber < formats.length; formatNumber++) {
 		var format = formats[formatNumber];
 		if (format=="png") {
-			var pngExportOptions = new ExportOptionsPNG8();
-			var pngType = ExportType.PNG8;
-			var pngFileSpec = new File(dest);
+			pngExportOptions = new ExportOptionsPNG8();
+			pngType = ExportType.PNG8;
+			pngFileSpec = new File(dest);
 			pngExportOptions.colorCount       = docSettings.png_number_of_colors;
 			pngExportOptions.transparency     = (docSettings.png_transparent==="no") ? false : true;
 			pngExportOptions.artBoardClipping = true;
@@ -195,9 +198,9 @@ var exportImageFiles = function(dest,width,height,formats,initialScaling,doubler
 			// feedback.push("pngExportOptions.png_number_of_colors = " + pngExportOptions.colorCount);
 			// feedback.push("pngExportOptions.transparency = " + pngExportOptions.transparency);
 		} else if (format=="png24") {
-			var pngExportOptions = new ExportOptionsPNG24();
-			var pngType = ExportType.PNG24;
-			var pngFileSpec = new File(dest);
+			pngExportOptions = new ExportOptionsPNG24();
+			pngType = ExportType.PNG24;
+			pngFileSpec = new File(dest);
 			pngExportOptions.transparency     = (docSettings.png_transparent==="no") ? false : true;
 			pngExportOptions.artBoardClipping = true;
 			pngExportOptions.antiAliasing     = false;
@@ -205,10 +208,10 @@ var exportImageFiles = function(dest,width,height,formats,initialScaling,doubler
 			pngExportOptions.verticalScale    = pngImageScaling;
 			app.activeDocument.exportFile( pngFileSpec, pngType, pngExportOptions );
 		} else if (format=="svg") {
-			var svgExportOptions = new ExportOptionsSVG();
-			var svgType = ExportType.SVG;
+			svgExportOptions = new ExportOptionsSVG();
+			svgType = ExportType.SVG;
 			// alert("This will be the svg dest: " + dest);
-			var svgFileSpec = new File(dest);
+			svgFileSpec = new File(dest);
 			svgExportOptions.embedAllFonts         = false;
 			svgExportOptions.fontSubsetting        = SVGFontSubsetting.None;
 			svgExportOptions.compressed            = false;
@@ -225,11 +228,11 @@ var exportImageFiles = function(dest,width,height,formats,initialScaling,doubler
 			if (jpgImageScaling > maxJpgImageScaling) {
 				jpgImageScaling = maxJpgImageScaling;
 				var promoImageFileName = dest.split("/").slice(-1)[0];
-				feedback.push(promoImageFileName + ".jpg was output at a lower scaling than desired because of a limit on jpg exports in Illustrator. If the file needs to be larger, change the image format to png which does not appear to have limits.")
+				feedback.push(promoImageFileName + ".jpg was output at a lower scaling than desired because of a limit on jpg exports in Illustrator. If the file needs to be larger, change the image format to png which does not appear to have limits.");
 			}
-			var jpgExportOptions = new ExportOptionsJPEG();
-			var jpgType = ExportType.JPEG;
-			var jpgFileSpec = new File(dest);
+			jpgExportOptions = new ExportOptionsJPEG();
+			jpgType = ExportType.JPEG;
+			jpgFileSpec = new File(dest);
 			jpgExportOptions.artBoardClipping = true;
 			jpgExportOptions.antiAliasing     = false;
 			jpgExportOptions.qualitySetting   = docSettings.jpg_quality;
@@ -239,7 +242,7 @@ var exportImageFiles = function(dest,width,height,formats,initialScaling,doubler
 			// feedback.push("jpgExportOptions.qualitySetting = " + jpgExportOptions.qualitySetting);
 		}
 	}
-}
+};
 
 var isEmpty = function(str) {
 	return (!str || 0 === str.length);
@@ -259,11 +262,11 @@ var unlockStuff = function(parentObj) {
 	if (parentObj.typename=="Layer" || parentObj.typename=="Document") {
 		for (var layerNo = 0; layerNo < parentObj.layers.length; layerNo++) {
 			var currentLayer = parentObj.layers[layerNo];
-			if (currentLayer.locked==true) {
+			if (currentLayer.locked === true) {
 				currentLayer.locked = false;
 				lockedObjects.push(currentLayer);
 			}
-			if (currentLayer.visible==false) {
+			if (currentLayer.visible === false) {
 				currentLayer.visible = true;
 				hiddenObjects.push(currentLayer);
 			}
@@ -272,7 +275,7 @@ var unlockStuff = function(parentObj) {
 	}
 	for (var groupItemsNo = 0; groupItemsNo < parentObj.groupItems.length; groupItemsNo++) {
 		var currentGroupItem = parentObj.groupItems[groupItemsNo];
-		if (currentGroupItem.locked==true) {
+		if (currentGroupItem.locked === true) {
 			currentGroupItem.locked = false;
 			lockedObjects.push(currentGroupItem);
 		}
@@ -281,7 +284,7 @@ var unlockStuff = function(parentObj) {
 	for (var textFrameNo = 0; textFrameNo < parentObj.textFrames.length; textFrameNo++) {
 		var currentTextFrame = parentObj.textFrames[textFrameNo];
 		// this line is producing the MRAP error!!!
-		if (currentTextFrame.locked==true) {
+		if (currentTextFrame.locked === true) {
 			currentTextFrame.locked = false;
 			lockedObjects.push(currentTextFrame);
 		}
@@ -300,19 +303,19 @@ var roundTo = function(numberToRound,decimalPlaces) {
 
 var createPromoImage = function(abNumber) {
 	doc.artboards.setActiveArtboardIndex(abNumber);
-	var activeArtboard       =  doc.artboards[abNumber];
-		activeArtboardRect   =  activeArtboard.artboardRect,
-		abX                  =  activeArtboardRect[0],
-		abY                  = -activeArtboardRect[1],
-		abW                  =  Math.round(activeArtboardRect[2]-abX),
-		abH                  = -activeArtboardRect[3]-abY,
-		artboardAspectRatio  =  abH/abW,
-		artboardName         =  makeKeyword(activeArtboard.name),
-		docArtboardName      =  makeKeyword(docSettings.project_name) + "-" + artboardName + "-" + abNumber,
-		imageDestination     =  docPath + docArtboardName + "-promo",
-		promoImageAspect     =  promoImageMinHeight/promoImageMinWidth,
-		promoScale           =  1;
-	if (artboardAspectRatio>promoImageAspect) {
+	var activeArtboard       =  doc.artboards[abNumber],
+			activeArtboardRect   =  activeArtboard.artboardRect,
+			abX                  =  activeArtboardRect[0],
+			abY                  = -activeArtboardRect[1],
+			abW                  =  Math.round(activeArtboardRect[2]-abX),
+			abH                  = -activeArtboardRect[3]-abY,
+			artboardAspectRatio  =  abH/abW,
+			artboardName         =  makeKeyword(activeArtboard.name),
+			docArtboardName      =  makeKeyword(docSettings.project_name) + "-" + artboardName + "-" + abNumber,
+			imageDestination     =  docPath + docArtboardName + "-promo",
+			promoImageAspect     =  promoImageMinHeight/promoImageMinWidth,
+			promoScale           =  1;
+	if (artboardAspectRatio > promoImageAspect) {
 		promoScale = promoImageMinWidth/abW;
 		if (abH * promoScale > promoImageMaxHeight) {
 			promoScale = promoImageMaxHeight/abH;
@@ -390,13 +393,13 @@ var applyTemplate = function(template,atObject) {
 	return newText;
 };
 
-var outputHtml = function(htmlText,fileDestination) {
-	var htmlFile = new File( fileDestination );
-	htmlFile.open( "w", "TEXT", "TEXT" );
-		htmlFile.lineFeed = "Unix";
-		htmlFile.encoding = "UTF-8";
-		htmlFile.writeln(htmlText);
-	htmlFile.close;
+var outputHtml = function(htmlText, fileDestination) {
+	var htmlFile = new File(fileDestination);
+	htmlFile.open("w", "TEXT", "TEXT");
+	htmlFile.lineFeed = "Unix";
+	htmlFile.encoding = "UTF-8";
+	htmlFile.writeln(htmlText);
+	htmlFile.close();
 };
 
 var readTextFileAndPutIntoAVariable = function(inputFile,starterText,linePrefix,lineSuffix) {
@@ -447,7 +450,7 @@ progressBar.prototype.init = function() {
   win.show();
 
   return true;
-}
+};
 
 progressBar.prototype.setProgress = function(progress) {
   var win = this.win;
@@ -460,7 +463,7 @@ progressBar.prototype.setProgress = function(progress) {
 
   this.setLabel();
   win.update();
-}
+};
 
 progressBar.prototype.getProgress = function() {
   var win = this.win;
@@ -468,28 +471,27 @@ progressBar.prototype.getProgress = function() {
       min = win.pnl.progBar.minvalue;
 
   return this.win.pnl.progBar.value/max;
-}
+};
 
 progressBar.prototype.setLabel = function() {
   this.win.pnl.progBarLabel.text = Math.round(this.win.pnl.progBar.value) + "%";
-}
+};
 
 progressBar.prototype.setTitle = function(title) {
   this.win.pnl.text = title;
   this.win.update();
-}
+};
 
 progressBar.prototype.increment = function(amount) {
-  var amount = amount || 0.01;
-  var win = this.win;
-  this.setProgress(this.getProgress()+amount);
-  win.update();
-}
+  amount = amount || 0.01;
+  this.setProgress(this.getProgress() + amount);
+  this.win.update();
+};
 
 progressBar.prototype.close = function() {
 	this.win.update();
 	this.win.close();
-}
+};
 
 // ================================================
 // ai2html and config settings
@@ -604,7 +606,7 @@ if (scriptEnvironment=="nyt") {
         scoop_slug: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
         scoop_external_edit_key: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""}
 	};
-};
+}
 // End of ai2htmlBaseSettings block copied from Google Spreadsheet.
 
 
@@ -854,7 +856,7 @@ if ( ymlFile.exists && scriptEnvironment=="nyt"  ) {
 var defaultSettingsText   = "ai2html-settings";
 var ai2htmlSettingsLength = 0;
 // var ymlSettings           = {};
-for (setting in ai2htmlBaseSettings) {
+for (var setting in ai2htmlBaseSettings) {
 	if (ai2htmlBaseSettings[setting].includeInSettingsBlock) {
 		defaultSettingsText += "\r" + setting + ': ' + ai2htmlBaseSettings[setting].defaultValue;
 		ai2htmlSettingsLength += 1;
@@ -865,7 +867,7 @@ for (setting in ai2htmlBaseSettings) {
 	docSettings[setting] = ai2htmlBaseSettings[setting].defaultValue;
 }
 
-if (docSettings.project_name == "") {
+if (docSettings.project_name === "") {
 	docSettings.project_name = doc.name.replace(/(.+)\.[aieps]+$/,"$1").replace(/ /g,"-");
 } else {
 	docSettings.project_name = makeKeyword(docSettings.project_name);
@@ -904,7 +906,7 @@ for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
 // to manually force an artboard to appear at a specific pixel width,
 // append the width to the end of the artboard name with a colon and then the number, eg. "Artboard name:720"
 // old way of doing this: name that artboard with a "ai2html-" followed by the upperlimit of the breakpoint, eg. ai2html-720
-pBar.setTitle('Determining artboards to process...')
+pBar.setTitle('Determining artboards to process...');
 for (var abNumber = 0; abNumber < doc.artboards.length; abNumber++) {
 	if (doc.artboards[abNumber].name.search(/^-/)==-1) {
 		artboardsToProcess.push(true);
@@ -941,8 +943,8 @@ for (var abNumber = 0; abNumber < doc.artboards.length; abNumber++) {
 }
 
 // figure out where is the top left of all artboards to place settings text block
-artboardsLefts.sort(function(a,b){return a-b});
-artboardsTops.sort(function(a,b){return a-b});
+artboardsLefts.sort(function(a,b){return a-b;});
+artboardsTops.sort(function(a,b){return a-b;});
 var artboardsLeft = artboardsLefts[0];
 var artboardsTop  = artboardsTops[artboardsTops.length-1];
 
@@ -951,7 +953,7 @@ var artboardsTop  = artboardsTops[artboardsTops.length-1];
 var breakpointsWithNoNativeArtboard = [];
 var overrideArtboardWidth           = false;
 var maxArtboardWidth                = 0;
-pBar.setTitle('Assigning artboards to breakpoints...')
+pBar.setTitle('Assigning artboards to breakpoints...');
 for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
 	var currentBreakpoint = nyt5Breakpoints[bpNumber];
 	for (var abNumber = 0; abNumber < doc.artboards.length; abNumber++) {
@@ -977,13 +979,13 @@ for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
 			}
 		}
 	}
-	if (currentBreakpoint.artboards.length==0) {
+	if (currentBreakpoint.artboards.length === 0) {
 		breakpointsWithNoNativeArtboard.push(currentBreakpoint.name);
 	} else {
-		if (breakpoints.min=="") {
+		if (breakpoints.min === "") {
 			breakpoints.min = currentBreakpoint.upperLimit;
 		}
-		if (overrideArtboardWidth==false) {
+		if (overrideArtboardWidth === false) {
 			breakpoints.max = currentBreakpoint.upperLimit;
 		} else {
 			breakpoints.max = nyt5Breakpoints[nyt5Breakpoints.length-1].upperLimit;
@@ -1001,7 +1003,7 @@ for (var bpNumber = 0; bpNumber < breakpointsWithNoNativeArtboard.length; bpNumb
 for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
 	var nyt5Breakpoint = nyt5Breakpoints[bpNumber];
 	if (nyt5Breakpoint.artboards.length>1 && docSettings.ai2html_environment=="nyt") {
-		warnings.push('The ' + nyt5Breakpoint.upperLimit + "px breakpoint has " + nyt5Breakpoint.artboards.length + " artboards. You probably want only one artboard per breakpoint.")
+		warnings.push('The ' + nyt5Breakpoint.upperLimit + "px breakpoint has " + nyt5Breakpoint.artboards.length + " artboards. You probably want only one artboard per breakpoint.");
 	}
 }
 //put artboard in for breakpoints with no artboard starting from smallest to largest, leaving lower end empty if nothing at the bottom end.
@@ -1013,10 +1015,10 @@ for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
 	if (bpNumber>0) {
 		previousArtboards = nyt5Breakpoints[bpNumber-1].artboards;
 	}
-	if (currentBreakpoint.artboards.length==0) {
+	if (currentBreakpoint.artboards.length === 0) {
 		currentBreakpoint.artboards = previousArtboards;
 	}
-	if (currentBreakpoint.artboards.length==0) {
+	if (currentBreakpoint.artboards.length === 0) {
 		breakpointsWithNoArtboard.push(currentBreakpoint.name);
 	}
 }
@@ -1028,7 +1030,7 @@ pBar.setTitle('Processing settings text blocks...');
 // check for settings text block
 for (var tfNumber=0;tfNumber<doc.textFrames.length;tfNumber++) {
 	var thisFrame = doc.textFrames[tfNumber];
-	if ( thisFrame.contents!="" ) {
+	if ( thisFrame.contents !== "" ) {
 		if (thisFrame.paragraphs[0].contents=="ai2html-settings") {
 			docHadSettingsBlock = true;
 		}
@@ -1080,110 +1082,55 @@ customYml += "tags: ai2html\n";
 
 for (var tfNumber=0;tfNumber<doc.textFrames.length;tfNumber++) {
 	var thisFrame = doc.textFrames[tfNumber];
-	if ( thisFrame.contents!="" ) {
+	if ( thisFrame.contents !== "" ) {
 		if (thisFrame.paragraphs[0].contents=="ai2html-css") {
 			settingsFrames.push(thisFrame);
 			hideTextFrame(thisFrame);
 			customCssBlocks += 1;
-			customCss += "\t\t/* Custom CSS block " + customCssBlocks + " */\r"
+			customCss += "\t\t/* Custom CSS block " + customCssBlocks + " */\r";
 			for (var p=1; p < thisFrame.paragraphs.length; p++) {
-				var paragraphContentIsValid = true;
 				try {
-					thisFrame.paragraphs[p].contents;
-				} catch(e) {
-					// alert(e);
-					paragraphContentIsValid = false;
-				}
-				if (paragraphContentIsValid) {
 					customCss += "\t\t" + cleanText(thisFrame.paragraphs[p].contents) + "\r";
-				}
+				} catch(e) {}
 			}
 		}
 		if (thisFrame.paragraphs[0].contents=="ai2html-html") {
 			settingsFrames.push(thisFrame);
 			hideTextFrame(thisFrame);
 			customHtmlBlocks += 1;
-			customHtml += "\r\t<!-- Custom HTML block " + customHtmlBlocks + " -->\r"
+			customHtml += "\r\t<!-- Custom HTML block " + customHtmlBlocks + " -->\r";
 			for (var p=1; p < thisFrame.paragraphs.length; p++) {
-				var paragraphContentIsValid = true;
 				try {
-					thisFrame.paragraphs[p].contents;
-				} catch(e) {
-					// alert(e);
-					paragraphContentIsValid = false;
-				}
-				if (paragraphContentIsValid) {
 					customHtml += "\t" + cleanText(thisFrame.paragraphs[p].contents) + "\r";
-				}
+				} catch(e) {}
 			}
 		}
 		if (thisFrame.paragraphs[0].contents=="ai2html-js") {
 			settingsFrames.push(thisFrame);
 			hideTextFrame(thisFrame);
 			customJsBlocks += 1;
-			customJs += "\r\t<!-- Custom JS block " + customJsBlocks + " -->\r"
+			customJs += "\r\t<!-- Custom JS block " + customJsBlocks + " -->\r";
 			for (var p=1; p < thisFrame.paragraphs.length; p++) {
-				var paragraphContentIsValid = true;
 				try {
-					thisFrame.paragraphs[p].contents;
-				} catch(e) {
-					// alert(e);
-					paragraphContentIsValid = false;
-				}
-				if (paragraphContentIsValid) {
 					customJs += "\t" + cleanText(thisFrame.paragraphs[p].contents) + "\r";
-				}
+				} catch(e) {}
 			}
 		}
-		if (thisFrame.paragraphs[0].contents=="ai2html-settings" || thisFrame.paragraphs[0].contents=="ai2html-text") {
+		if (thisFrame.paragraphs[0].contents=="ai2html-settings" ||
+				thisFrame.paragraphs[0].contents=="ai2html-text") {
 			settingsFrames.push(thisFrame);
 			hideTextFrame(thisFrame);
-			for (var p=1; p < thisFrame.paragraphs.length; p++) {
-				var paragraphContentIsValid = true;
-				try {
-					thisFrame.paragraphs[p].contents;
-				} catch(e) {
-					// alert(e);
-					paragraphContentIsValid = false;
-				}
-				if (paragraphContentIsValid) {
-					var thisParagraph    = thisFrame.paragraphs[p].contents;
-					var hashKey          = thisParagraph.replace( /^[ \t]*([^ \t:]*)[ \t]*:(.*)$/ , "$1" );
-					var hashValue        = thisParagraph.replace( /^[ \t]*([^ \t:]*)[ \t]*:(.*)$/ , "$2" );
-					hashKey              = hashKey.replace( /^\s+/ , "" ).replace( /\s+$/ , "" );
-					hashValue            = hashValue.replace( /^\s+/ , "" ).replace( /\s+$/ , "" );
-					hashValue            = straightenCurlyQuotesInsideAngleBrackets(hashValue);
-					// replace values from old versions of script with current values
-					if (hashKey=="output" && hashValue=="one-file-for-all-artboards") { hashValue="one-file"; }
-					if (hashKey=="output" && hashValue=="one-file-per-artboard")      { hashValue="multiple-files"; }
-					if (hashKey=="output" && hashValue=="preview-one-file")           { hashValue="one-file"; }
-					if (hashKey=="output" && hashValue=="preview-multiple-files")     { hashValue="multiple-files"; }
-					// handle stuff that goes in config file and other exceptions, like array values
-					if (hashKey in ai2htmlBaseSettings && ai2htmlBaseSettings[hashKey].includeInConfigFile) {
-						hashValue     = (hashValue.replace( /(["])/g , '\\$1' )); // add stuff to ["] for chars that need to be esc in yml file
-					} else {
-						if (hashKey in ai2htmlBaseSettings && ai2htmlBaseSettings[hashKey].inputType=="array") {
-							hashValue = hashValue.replace( /[\s,]+/g , ',' );
-							if (hashValue.length==0) {
-								hashValue = []; // have to do this because .split always returns an array of length at least 1 even if it's splitting an emptry string
-							} else {
-								hashValue = hashValue.split(",");
-							}
-						}
-					}
-					docSettings[hashKey] = hashValue;
-				}
-			}
+			parseTextFrameSettings(thisFrame, docSettings);
 		}
 	}
 }
 
 customYml += "min_width: "       + breakpoints.min    + "\n";
-if (docSettings.max_width!="") {
+if (docSettings.max_width !== "") {
 	customYml += "max_width: " + docSettings.max_width + "\n";
-} else if (docSettings.responsiveness!="fixed" && docSettings.ai2html_environment=="nyt") {
+} else if (docSettings.responsiveness != "fixed" && docSettings.ai2html_environment == "nyt") {
 	customYml += "max_width: " + largestNyt5Breakpoint + "\n";
-} else if (docSettings.responsiveness!="fixed" && docSettings.ai2html_environment!="nyt") {
+} else if (docSettings.responsiveness != "fixed" && docSettings.ai2html_environment != "nyt") {
 	// don't write a max_width setting as there should be no max width in this case
 } else {
 	// this is the case of fixed responsiveness
@@ -1213,10 +1160,10 @@ if (docSettings.image_format.length>0) {
 // validate settings
 // ================================================
 
-if (docSettings.max_width!="" && docSettings.ai2html_environment=="nyt") {
+if (docSettings.max_width !== "" && docSettings.ai2html_environment ==="nyt") {
 	var max_width_is_valid = false;
 	for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
-		if (docSettings.max_width==nyt5Breakpoints[bpNumber].upperLimit.toString()) {
+		if (docSettings.max_width == nyt5Breakpoints[bpNumber].upperLimit.toString()) {
 			max_width_is_valid = true;
 		}
 	}
@@ -1281,7 +1228,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 	}
 
 	// process local preview template if appropriate
-	if (docSettings.local_preview_template!="") {
+	if (docSettings.local_preview_template !== "") {
 		var localPreviewTemplateFile = new File(docPath + docSettings.local_preview_template);
 		var localPreviewTemplateText = readTextFileAndPutIntoAVariable(localPreviewTemplateFile,"","","\n");
 	}
@@ -1344,7 +1291,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 
 		html[0] += "Cut and paste into Scoop\r";
 
-		html[1] += "\r\t<!-- Artboard: " + artboardName + " -->\r"
+		html[1] += "\r\t<!-- Artboard: " + artboardName + " -->\r";
 
 		var showClass = "";
 
@@ -1463,7 +1410,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 			var numChars = thisFrame.characters.length;
 			var runningChars = 0;
 			for (var k=0;k<thisFrame.paragraphs.length;k++) {
-				if (runningChars<numChars && thisFrame.paragraphs[k].characters.length!=0) {
+				if (runningChars<numChars && thisFrame.paragraphs[k].characters.length !== 0) {
 					// var sampleChar = thisFrame.paragraphs[k].length-1;
 					var pStyleKey = getParagraphStyleKey(thisFrame.paragraphs[k]);
 					pStyleKeys.push(pStyleKey);
@@ -1501,7 +1448,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 			// Generate opening <div> tag, including CSS styles
 			var j = i+1;
 			var thisFrameId = nameSpace + "ai" + abNumber + "-" + j;
-			if (thisFrame.name != "") {
+			if (thisFrame.name !== "") {
 				thisFrameId = makeKeyword(thisFrame.name);
 			}
 			html[6] += '\t\t\t<div id="' + thisFrameId + '" ';
@@ -1512,7 +1459,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 			var runningChars = 0;
 			for (var k=0; k<thisFrame.paragraphs.length; k++) {
 
-				if (runningChars < numChars && thisFrame.paragraphs[k].characters.length != 0) {
+				if (runningChars < numChars && thisFrame.paragraphs[k].characters.length !== 0) {
 					var pStyleKey = getParagraphStyleKey(thisFrame.paragraphs[k]);
 					var pStyleKeyId = 0;
 
@@ -1617,15 +1564,15 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 			var textForFile         = "";
 			var htmlFileDestination = "";
 			var headerText          = "<div id='" + nameSpace + docArtboardName + "-box' class='ai2html'>\r";
-			headerText             += "\t<!-- Generated by ai2html v" + scriptVersion + " - " + dateTimeStamp + " -->\r"
+			headerText             += "\t<!-- Generated by ai2html v" + scriptVersion + " - " + dateTimeStamp + " -->\r";
 			headerText             += "\t<!-- ai file: " + docSettings.project_name + " -->\r";
-			if (docSettings.ai2html_environment=="nyt") {
+			if (docSettings.ai2html_environment == "nyt") {
 				headerText             += "\t<!-- preview: " + docSettings.preview_slug + " -->\r";
 				headerText             += "\t<!-- scoop  : " + docSettings.scoop_slug_from_config_yml + " -->\r";
 			}
 			headerText             += "\r";
 			headerText             += "\t<style type='text/css' media='screen,print'>\r";
-			if (docSettings.max_width!="") {
+			if (docSettings.max_width !== "") {
 				headerText             += "\t\t#" + nameSpace + docArtboardName + "-box {\r";
 				headerText             += "\t\t\tmax-width:" + docSettings.max_width + "px;\r";
 				headerText             += "\t\t}\r";
@@ -1653,12 +1600,12 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 			htmlFileDestinationFolder = docPath + docSettings.html_output_path;
 			checkForOutputFolder(htmlFileDestinationFolder, "html_output_path");
 			htmlFileDestination = htmlFileDestinationFolder + docArtboardName + docSettings.html_output_extension;
-			if (docSettings.local_preview_template!="") {
+			if (docSettings.local_preview_template !== "") {
 				pBar.setTitle(docArtboardName + ': Writing HTML file...');
 
 				docSettings.ai2htmlPartial     = textForFile;
 				var localPreviewDestination = htmlFileDestinationFolder + docArtboardName + ".preview.html";
-				var localPreviewHtml        = applyTemplate(localPreviewTemplateText,docSettings)
+				var localPreviewHtml        = applyTemplate(localPreviewTemplateText,docSettings);
 				outputHtml(localPreviewHtml,localPreviewDestination);
 			}
 
@@ -1697,15 +1644,15 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 		var htmlFileDestinationFolder = "";
 		var htmlFileDestination       = "";
 		var headerText                = "<div id='" + nameSpace + makeKeyword(docSettings.project_name) + "-box' class='ai2html'>\r";
-		headerText                   += "\t<!-- Generated by ai2html v" + scriptVersion + " - " + dateTimeStamp + " -->\r"
+		headerText                   += "\t<!-- Generated by ai2html v" + scriptVersion + " - " + dateTimeStamp + " -->\r";
 		headerText                   += "\t<!-- ai file: " + docSettings.project_name + " -->\r";
-		if (docSettings.ai2html_environment=="nyt") {
+		if (docSettings.ai2html_environment == "nyt") {
 			headerText               += "\t<!-- preview: " + docSettings.preview_slug + " -->\r";
 			headerText               += "\t<!-- scoop  : " + docSettings.scoop_slug_from_config_yml + " -->\r";
 		}
 		headerText                   += "\r";
 		headerText                   += "\t<style type='text/css' media='screen,print'>\r";
-		if (docSettings.max_width!="") {
+		if (docSettings.max_width !== "") {
 			headerText               += "\t\t#" + nameSpace + makeKeyword(docSettings.project_name) + "-box {\r";
 			headerText               += "\t\t\tmax-width:" + docSettings.max_width + "px;\r";
 			headerText               += "\t\t}\r";
@@ -1715,27 +1662,25 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 			headerText             += "\t\t\tmargin:0 auto;\r";
 			headerText             += "\t\t}\r";
 		}
-		if (docSettings.clickable_link!="") {
+		if (docSettings.clickable_link !== "") {
 			headerText             += "\t\t."+nameSpace+"ai2htmlLink {\r";
 			headerText             += "\t\t\tdisplay: block;\r";
 			headerText             += "\t\t}\r";
 		}
 		headerText                   += "\t</style>\r";
 		headerText                   += "\r";
-		if (docSettings.clickable_link!="") {
+		if (docSettings.clickable_link !== "") {
 			headerText += "\t<a class='"+nameSpace+"ai2htmlLink' href='"+docSettings.clickable_link+"'>\r";
 		}
 
-
-
 		var footerText = "";
-		if (docSettings.clickable_link!="") {
+		if (docSettings.clickable_link !== "") {
 			footerText += "\t</a>\r";
 		}
-		footerText                += "\t<!-- End ai2html" + " - " + dateTimeStamp + " -->\r</div>\r";
+		footerText += "\t<!-- End ai2html" + " - " + dateTimeStamp + " -->\r</div>\r";
 
 		textForFile += headerText;
-		if (previewProjectType=="ai2html") { textForFile += responsiveCss; }
+		if (previewProjectType == "ai2html") { textForFile += responsiveCss; }
 		if (customCssBlocks>0)             { textForFile += customCss;     }
 		textForFile += responsiveTextScoop;
 		if (customHtml.length>0)           { textForFile += customHtml;    }
@@ -1748,18 +1693,18 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 
 		htmlFileDestinationFolder = docPath + docSettings.html_output_path;
 		checkForOutputFolder(htmlFileDestinationFolder, "html_output_path");
-		if (previewProjectType=="ai2html") {
-			htmlFileDestination     = htmlFileDestinationFolder + "index" + docSettings.html_output_extension;
+		if (previewProjectType == "ai2html") {
+			htmlFileDestination = htmlFileDestinationFolder + "index" + docSettings.html_output_extension;
 		} else if ((previewProjectType!="ai2html" && srcFolder.exists) || docSettings.ai2html_environment!="nyt") {
-			htmlFileDestination     = htmlFileDestinationFolder + docSettings.project_name + docSettings.html_output_extension;
-			if (docSettings.local_preview_template != "") {
+			htmlFileDestination = htmlFileDestinationFolder + docSettings.project_name + docSettings.html_output_extension;
+			if (docSettings.local_preview_template !== "") {
 				// var localPreviewTemplateFile = new File(docPath + docSettings.local_preview_template);
 				// var localPreviewTemplateText = readTextFileAndPutIntoAVariable(localPreviewTemplateFile,"","","");
 				pBar.setTitle('Writing HTML file...');
 
 				docSettings.ai2htmlPartial = textForFile;
 				var localPreviewDestination = htmlFileDestinationFolder + docSettings.project_name + ".preview.html";
-				var localPreviewHtml = applyTemplate(localPreviewTemplateText,docSettings)
+				var localPreviewHtml = applyTemplate(localPreviewTemplateText,docSettings);
 				outputHtml(localPreviewHtml,localPreviewDestination);
 			}
 		}
@@ -1786,10 +1731,10 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 		checkForOutputFolder(configFileFolder , "configFileFolder");
 		var configFile = new File( docPath + docSettings.config_file_path );
 		configFile.open( "w", "TEXT", "TEXT" );
-			configFile.lineFeed = "Unix";
-			configFile.encoding = "UTF-8";
-			configFile.writeln(customYml);
-		configFile.close;
+		configFile.lineFeed = "Unix";
+		configFile.encoding = "UTF-8";
+		configFile.writeln(customYml);
+		configFile.close();
 	} else {
 
 	}
@@ -1798,7 +1743,6 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 	if (docSettings.create_promo_image=="yes") {
 		createPromoImage(largestArtboardIndex);
 	}
-
 
 } // end rgb colorspace test
 
@@ -1832,8 +1776,8 @@ if (parentFolder !== null) {
 	var saveOptions = new IllustratorSaveOptions();
 	saveOptions.pdfCompatible = false;
 	// if (!doc.saved) { doc.save() }
-	if (!doc.saved) { doc.saveAs( origFile , saveOptions ) }
-	feedback.push("Your Illustrator file was saved.")
+	if (!doc.saved) { doc.saveAs(origFile, saveOptions); }
+	feedback.push("Your Illustrator file was saved.");
 }
 
 // ==============================
@@ -1847,8 +1791,8 @@ if (customHtmlBlocks>1)  { feedback.push(customHtmlBlocks + " custom HTML blocks
 if (customJsBlocks==1)   { feedback.push(customJsBlocks   + " custom JS block was added."); }
 if (customJsBlocks>1)    { feedback.push(customJsBlocks   + " custom JS blocks were added."); }
 
-if (docSettings["image_format"].length==0) {
-	warnings.push("No images output because no image formats were specified.")
+if (docSettings.image_format.length === 0) {
+	warnings.push("No images output because no image formats were specified.");
 }
 
 if (errors.length == 1) {
@@ -1884,13 +1828,11 @@ if (docSettings.show_completion_dialog_box=="true") {
 	alert(alertHed + "\n" + alertText + "\n\n\n================\nai2html-nyt5 v"+scriptVersion);
 }
 
-
-
 function textIsTransformed(textFrame) {
-	return !(textFrame.matrix.mValueA==1 &&
-		textFrame.matrix.mValueB==0 &&
-		textFrame.matrix.mValueC==0 &&
-		textFrame.matrix.mValueD==1);
+	return !(textFrame.matrix.mValueA == 1 &&
+		textFrame.matrix.mValueB === 0 &&
+		textFrame.matrix.mValueC === 0 &&
+		textFrame.matrix.mValueD === 1);
 		// || textFrame.textRange.characterAttributes.horizontalScale != 100
 		// || textFrame.textRange.characterAttributes.verticalScale != 100;
 }
@@ -2136,21 +2078,22 @@ function convertStyleKeyToCss(key) {
 	var pArray = key.split("\t");
 	var pHash  = {};
 	var lines = [];
-	for (var j=0; j<pStyleKeyTags.length; j++) {
+	var j, k;
+	for (j=0; j<pStyleKeyTags.length; j++) {
 		var thisTag = pStyleKeyTags[j];
 		pHash[thisTag] = pArray[j];
 		if (thisTag == "size" || thisTag == "leading" || thisTag=="spacebefore" || thisTag=="spaceafter") {
 			pHash[thisTag] = Math.round(pHash[thisTag]);
 		}
 		if (thisTag == "aifont") {
-			pHash['family'] = defaultFamily;
-			pHash['weight'] = defaultWeight;
-			pHash['style']  = defaultStyle;
-			for (var k=0; k<fonts.length; k++) {
-				if (pHash['aifont']==fonts[k]['aifont']) {
-					pHash['family'] = fonts[k]['family'];
-					pHash['weight'] = fonts[k]['weight'];
-					pHash['style']  = fonts[k]['style'];
+			pHash.family = defaultFamily;
+			pHash.weight = defaultWeight;
+			pHash.style  = defaultStyle;
+			for (k=0; k<fonts.length; k++) {
+				if (pHash.aifont ==fonts[k].aifont) {
+					pHash.family = fonts[k].family;
+					pHash.weight = fonts[k].weight;
+					pHash.style  = fonts[k].style;
 				}
 			}
 			// check for franklin or cheltenham
@@ -2162,47 +2105,47 @@ function convertStyleKeyToCss(key) {
 			// }
 		}
 		if (thisTag=="r"||thisTag=="g"||thisTag=="b") {
-			if (pHash[thisTag].length==1) { pHash[thisTag] = "0"+pHash[thisTag] }
+			if (pHash[thisTag].length==1) { pHash[thisTag] = "0"+pHash[thisTag]; }
 		}
 		if (thisTag=="capitalization") {
-			for (var k=0;k<caps.length;k++) {
-				if (pHash['capitalization']==caps[k]['ai']) {
-					pHash['capitalization'] =caps[k]['html'];
+			for (k=0; k<caps.length; k++) {
+				if (pHash.capitalization == caps[k].ai) {
+					pHash.capitalization = caps[k].html;
 				}
 			}
 		}
 		if (thisTag=="justification") {
-			for (var k=0;k<align.length;k++) {
-				if (pHash['justification']==align[k]['ai']) {
-					pHash['justification'] =align[k]['html'];
+			for (k=0; k<align.length; k++) {
+				if (pHash.justification == align[k].ai) {
+					pHash.justification = align[k].html;
 				}
 			}
 		}
 		if (thisTag=="tracking") {
 			// pHash['tracking'] = pHash['tracking']/1000;
-			pHash['tracking'] = pHash['tracking']/1200;
+			pHash.tracking = pHash.tracking / 1200;
 		}
 		if (thisTag=="opacity") {
-			pHash['opacity'] = pHash['opacity']/100;
+			pHash.opacity = pHash.opacity / 100;
 		}
 	}
 	lines.push('{');
-	if (pHash['family'] != defaultFamily) lines.push("font-family:" + pHash['family'] + ";");
-	if (pHash['size'] != defaultSize) lines.push("font-size:" + pHash['size'] + "px;");
-	if (pHash['leading'] != defaultLeading) lines.push("line-height:" + pHash['leading'] + "px;");
-	if (pHash['weight'] != "") lines.push("font-weight:" + pHash['weight'] + ";");
-	if (pHash['style'] != "" ) lines.push("font-style:" + pHash['style'] + ";");
-	if (pHash['capitalization'] != "" ) lines.push("text-transform:" + pHash['capitalization'] + ";");
-	if (pHash['justification'] != "" ) lines.push("text-align:" + pHash['justification'] + ";");
-	if (pHash['spacebefore'] > 0 ) lines.push("padding-top:" + pHash['spacebefore'] + "px;");
-	if (pHash['spaceafter'] > 0 ) lines.push("padding-bottom:" + pHash['spaceafter'] + "px;");
-	if (pHash['tracking'] != 0 ) lines.push("letter-spacing:" + pHash['tracking'] + "em;");
-	if (pHash['opacity'] != 1.0 ) lines.push("filter: alpha(opacity=" + (pHash['opacity']*100) + ");");
-	if (pHash['opacity'] != 1.0 ) lines.push("-ms-filter:'progid:DXImageTransform.Microsoft.Alpha(Opacity=" + (pHash['opacity']*100) + ")';");
-	if (pHash['opacity'] != 1.0 ) lines.push("opacity:" + pHash['opacity'] + ";");
-	lines.push("color:#" + pHash['r'] + pHash['g'] + pHash['b'] + ";");
+	if (pHash.family != defaultFamily) lines.push("font-family:" + pHash.family + ";");
+	if (pHash.size != defaultSize) lines.push("font-size:" + pHash.size + "px;");
+	if (pHash.leading != defaultLeading) lines.push("line-height:" + pHash.leading + "px;");
+	if (pHash.weight !== "") lines.push("font-weight:" + pHash.weight + ";");
+	if (pHash.style !== "" ) lines.push("font-style:" + pHash.style + ";");
+	if (pHash.capitalization !== "" ) lines.push("text-transform:" + pHash.capitalization + ";");
+	if (pHash.justification !== "" ) lines.push("text-align:" + pHash.justification + ";");
+	if (pHash.spacebefore > 0 ) lines.push("padding-top:" + pHash.spacebefore + "px;");
+	if (pHash.spaceafter > 0 ) lines.push("padding-bottom:" + pHash.spaceafter + "px;");
+	if (pHash.tracking !== 0 ) lines.push("letter-spacing:" + pHash.tracking + "em;");
+	if (pHash.opacity != 1.0 ) lines.push("filter: alpha(opacity=" + (pHash.opacity * 100) + ");");
+	if (pHash.opacity != 1.0 ) lines.push("-ms-filter:'progid:DXImageTransform.Microsoft.Alpha(Opacity=" + (pHash.opacity * 100) + ")';");
+	if (pHash.opacity != 1.0 ) lines.push("opacity:" + pHash.opacity + ";");
+	lines.push("color:#" + pHash.r + pHash.g + pHash.b + ";");
 
-	return lines.join('\r\t\t\t\t') + "\r\t\t\t}\r";
+	return lines.join("\r\t\t\t\t") + "\r\t\t\t}\r";
 }
 
 function getParagraphSegments(p) {
@@ -2269,7 +2212,8 @@ function getCharStyle(c) {
 }
 
 function getParagraphStyleKey(p) {
-	var b = "\t"
+	var redOut, greenOut, blueOut, grayPct;
+	var b = "\t";
 	// var sampleChar = p.characters[Math.round(p.length/2)-1];
 	var sampleChar = p.characterAttributes;
 	var pStyleKey = "";
@@ -2280,15 +2224,14 @@ function getParagraphStyleKey(p) {
 	if (sampleChar.fillColor.typename == "GrayColor") {
 		// looks like a bug
 		// var grayPct = selectFrames[i].characters[k].fillColor.gray;
-		var grayPct = sampleChar.fillColor.gray;
-		var rgbPct   = (100-grayPct)/100*255;
-		var redOut   = rgbPct;
-		var greenOut = rgbPct;
-		var blueOut  = rgbPct;
+		grayPct   = (100 - sampleChar.fillColor.gray) / 100 * 255;
+		redOut   = rgbPct;
+		greenOut = rgbPct;
+		blueOut  = rgbPct;
 	} else if (sampleChar.fillColor.typename == "RGBColor") {
-		var redOut   = sampleChar.fillColor.red;
-		var greenOut = sampleChar.fillColor.green;
-		var blueOut  = sampleChar.fillColor.blue;
+		redOut   = sampleChar.fillColor.red;
+		greenOut = sampleChar.fillColor.green;
+		blueOut  = sampleChar.fillColor.blue;
 		if (redOut < rgbBlackThreshold &&
 			greenOut < rgbBlackThreshold &&
 			blueOut < rgbBlackThreshold) {
@@ -2297,14 +2240,14 @@ function getParagraphStyleKey(p) {
 			blueOut  = 0;
 		}
 	} else if (sampleChar.fillColor.typename == "NoColor") {
-		var redOut   = 0;
-		var greenOut = 255;
-		var blueOut  = 0;
+		redOut   = 0;
+		greenOut = 255;
+		blueOut  = 0;
 		warnings.push("This text has no fill. Please fill it with an RGB color. It has been filled with green. Text: \u201C" + p.contents + "\u201D");
 	} else {
-		var redOut   = 0;
-		var greenOut = 0;
-		var blueOut  = 0;
+		redOut   = 0;
+		greenOut = 0;
+		blueOut  = 0;
 		warnings.push("This text is filled with a non-RGB color. Please fill it with an RGB color. Text: \u201C" + p.contents + "\u201D");
 	}
 	pStyleKey += b + redOut.toString(16);
@@ -2319,7 +2262,6 @@ function getParagraphStyleKey(p) {
 	// mbloch TODO: investigate opacity. Switching from frame to paragraph
 	// pStyleKey += b + Math.round(thisFrame.opacity);
 	pStyleKey += b + Math.round(p.opacity);
-
 	return pStyleKey;
 }
 
@@ -2358,7 +2300,7 @@ function objectIsHidden(obj) {
 function textFrameIsRenderable(frame, artboardRect) {
 	var inBounds = textFrameIsInBounds(frame, artboardRect);
 	var hidden = objectIsHidden(frame);
-	return inBounds && !hidden && frame.contents != "" &&
+	return inBounds && !hidden && frame.contents !== "" &&
 		(docSettings.render_rotated_skewed_text_as == "html" ||
 			(docSettings.render_rotated_skewed_text_as == "image" &&
 				!textIsTransformed(frame))) &&
@@ -2398,7 +2340,7 @@ function parseTextFrameNote(note) {
 // Create class="" and style"" CSS for positioning a text div
 function getTextFrameCss(thisFrame) {
 	var style = "";
-	var vFactor = .5; // This is an adjustment to correct for vertical placement.
+	var vFactor = 0.5; // This is an adjustment to correct for vertical placement.
 	var kind, htmlY, htmlT, htmlB, htmlTM, htmlH, htmlL, htmlR, htmlW, htmlLM, alignment, extraWidthPct;
 	var thisFrameAttributes = parseTextFrameNote(thisFrame.note);
 
@@ -2483,15 +2425,15 @@ function getTextFrameCss(thisFrame) {
 		// mat0 = app.concatenateTranslationMatrix(mat0, -mat0.mValueTX, -mat0.mValueTY);
 		// mat = app.concatenateMatrix(app.getTranslationMatrix(t_trans_x, t_trans_y), mat0);
 
-		var transform = "matrix("
-				+round(mat.mValueA, pctPrecision)+','
-				+round(-1*mat.mValueB, pctPrecision)+','
-				+round(-1*mat.mValueC, pctPrecision)+','
-				+round(mat.mValueD, pctPrecision)+','
-				+round(t_trans_x, pctPrecision)+','
-				+round(-t_trans_y, pctPrecision)+') '
-				+"scaleX("+round(t_scale_x, pctPrecision)+") "
-				+"scaleY("+round(t_scale_y, pctPrecision)+")";
+		var transform = "matrix(" +
+				round(mat.mValueA, pctPrecision) + ',' +
+				round(-1*mat.mValueB, pctPrecision) + ',' +
+				round(-1*mat.mValueC, pctPrecision) + ',' +
+				round(mat.mValueD, pctPrecision) + ',' +
+				round(t_trans_x, pctPrecision) + ',' +
+				round(-t_trans_y, pctPrecision) + ') ' +
+				"scaleX("+round(t_scale_x, pctPrecision) + ") " +
+				"scaleY("+round(t_scale_y, pctPrecision) + ")";
 
 		var transformOrigin = alignment + ' '+(v_align == 'middle' ? 'center' : v_align);
 
@@ -2546,4 +2488,37 @@ function getTextFrameCss(thisFrame) {
 	return 'class="' + nameSpace + frameLayer + " "+ nameSpace + "aiAbs" +
 		(textIsTransformed(thisFrame) && kind == "point" ? ' g-aiPtransformed' : '') +
 		'" style="' + style + '"';
+}
+
+// Add ai2html settings contained in a text frame to the document settings
+function parseTextFrameSettings(frame, docSettings) {
+	for (var p=1; p<frame.paragraphs.length; p++) {
+		try {
+			var thisParagraph    = frame.paragraphs[p].contents;
+			var hashKey          = thisParagraph.replace( /^[ \t]*([^ \t:]*)[ \t]*:(.*)$/ , "$1" );
+			var hashValue        = thisParagraph.replace( /^[ \t]*([^ \t:]*)[ \t]*:(.*)$/ , "$2" );
+			hashKey              = hashKey.replace( /^\s+/ , "" ).replace( /\s+$/ , "" );
+			hashValue            = hashValue.replace( /^\s+/ , "" ).replace( /\s+$/ , "" );
+			hashValue            = straightenCurlyQuotesInsideAngleBrackets(hashValue);
+			// replace values from old versions of script with current values
+			if (hashKey=="output" && hashValue=="one-file-for-all-artboards") { hashValue="one-file"; }
+			if (hashKey=="output" && hashValue=="one-file-per-artboard")      { hashValue="multiple-files"; }
+			if (hashKey=="output" && hashValue=="preview-one-file")           { hashValue="one-file"; }
+			if (hashKey=="output" && hashValue=="preview-multiple-files")     { hashValue="multiple-files"; }
+			// handle stuff that goes in config file and other exceptions, like array values
+			if (hashKey in ai2htmlBaseSettings && ai2htmlBaseSettings[hashKey].includeInConfigFile) {
+				hashValue = (hashValue.replace( /(["])/g , '\\$1' )); // add stuff to ["] for chars that need to be esc in yml file
+			} else {
+				if (hashKey in ai2htmlBaseSettings && ai2htmlBaseSettings[hashKey].inputType=="array") {
+					hashValue = hashValue.replace( /[\s,]+/g , ',' );
+					if (hashValue.length === 0) {
+						hashValue = []; // have to do this because .split always returns an array of length at least 1 even if it's splitting an emptry string
+					} else {
+						hashValue = hashValue.split(",");
+					}
+				}
+			}
+			docSettings[hashKey] = hashValue;
+		} catch(e) {}
+	}
 }
