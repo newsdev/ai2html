@@ -1,3 +1,6 @@
+// include JSON for development - mbloch
+// @include "lib/json2.js"
+
 // ai2html.js
 var scriptVersion     = "0.61";
 var scriptEnvironment = "nyt";
@@ -112,7 +115,9 @@ var firstBy = (function() {
 var cleanText = function(text) {
 	for (var i=0; i < htmlCharacterCodes.length; i++) {
 		var charCode = htmlCharacterCodes[i];
-		text = text.replace( new RegExp(htmlCharacterCodes[i][0],'g'), htmlCharacterCodes[i][1] )
+		if (text.indexOf(charCode[0]) > -1) {
+			text = text.replace(new RegExp(charCode[0],'g'), charCode[1] )
+		}
 	}
 	return text;
 };
@@ -1484,7 +1489,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 				oneBlock    = 1/(selectFrames.length),
 				oneBlockNormalized = oneBlock * oneArtboard;
 
-		for (var i=0;i<selectFrames.length;i++) {
+		for (var i=0; i<selectFrames.length; i++) {
 			pBar.increment(oneBlockNormalized); // Keeps text frames progress from overshooting current overall progress.
 			var thisFrame = selectFrames[i];
 
@@ -1505,6 +1510,10 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 				if (runningChars < numChars && thisFrame.paragraphs[k].characters.length != 0) {
 					var pStyleKey = getParagraphStyleKey(thisFrame.paragraphs[k]);
 					var pStyleKeyId = 0;
+
+					var segments = getParagraphSegments(thisFrame.paragraphs[k]);
+					// feedback.push(JSON.stringify(segments))
+
 					for (var l=0;l<pStyleKeys.length;l++) {
 						if (pStyleKey==pStyleKeys[l]) {
 							pStyleKeyId = l;
@@ -1617,7 +1626,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 				headerText             += "\t\t}\r";
 			}
 			if (docSettings.center_html_output) {
-				headerText             += "\t\t."+nameSpace+"artboard {\r";
+				headerText             += "\t\t." + nameSpace + "artboard {\r";
 				headerText             += "\t\t\tmargin:0 auto;\r";
 				headerText             += "\t\t}\r";
 			}
@@ -2191,16 +2200,79 @@ function convertStyleKeyToCss(key) {
 	return lines.join('\r\t\t\t\t') + "\r\t\t\t}\r";
 }
 
+function getParagraphSegments(p) {
+	var pstyle = getCharStyle(p.characterAttributes);
+	var properties = 'aifont,size,capitalization,tracking,rgb'.split(',');
+	var segments = [];
+	var currRange;
+	var prev, curr, diff, cstr;
+	for (var i=0, n=p.characters.length; i<n; i++) {
+		cstr = p.characters[i].contents;
+		curr = getCharStyle(p.characters[i]);
+		if (!prev || getCharStyleDiff(curr, prev, properties)) {
+			currRange = {
+				text: "",
+				style: getCharStyleDiff(curr, pstyle, properties)
+			};
+			segments.push(currRange);
+		}
+		currRange.text += cstr;
+		prev = curr;
+	}
+	return segments;
+}
+
+// return styles that are different
+function getCharStyleDiff(a, b, properties) {
+	var diff = null, name;
+	for (var i=0; i<properties.length; i++) {
+		name = properties[i];
+		if (a[name] != b[name]) {
+			diff = diff || {};
+			diff[name] = a[name];
+		}
+	}
+	return diff;
+}
+
+function getCharStyle(c) {
+	var fill = c.fillColor;
+	var r, g, b;
+	if (fill.typename == 'RGBColor') {
+		r = fill.red;
+		g = fill.green;
+		b = fill.blue;
+		if (r < rgbBlackThreshold && g < rgbBlackThreshold && b < rgbBlackThreshold) {
+			r = g = b = 0;
+		}
+	} else if (fill.typename == 'GrayColor') {
+		r = g = b = (100 - fill.gray) / 100 * 255;
+	} else if (fill.typename == 'NoColor') {
+		g = 255;
+		r = b = 0;
+	} else {
+		r = g = b = 0;
+	}
+
+	return {
+		aifont: c.textFont.name,
+		size: Math.round(c.size),
+		capitalization: c.capitalization,
+		tracking: c.tracking,
+		rgb: 'rgb(' + r + ',' + g + ',' + b + ')'
+	};
+}
 
 function getParagraphStyleKey(p) {
 	var b = "\t"
-	var sampleChar = p.characters[Math.round(p.length/2)-1];
+	// var sampleChar = p.characters[Math.round(p.length/2)-1];
+	var sampleChar = p.characterAttributes;
 	var pStyleKey = "";
 	pStyleKey += sampleChar.textFont.name;
 	pStyleKey += b + Math.round(sampleChar.size);
 	pStyleKey += b + sampleChar.capitalization;
 
-	if (sampleChar.fillColor.typename=="GrayColor") {
+	if (sampleChar.fillColor.typename == "GrayColor") {
 		// looks like a bug
 		// var grayPct = selectFrames[i].characters[k].fillColor.gray;
 		var grayPct = sampleChar.fillColor.gray;
@@ -2208,7 +2280,7 @@ function getParagraphStyleKey(p) {
 		var redOut   = rgbPct;
 		var greenOut = rgbPct;
 		var blueOut  = rgbPct;
-	} else if (sampleChar.fillColor.typename=="RGBColor") {
+	} else if (sampleChar.fillColor.typename == "RGBColor") {
 		var redOut   = sampleChar.fillColor.red;
 		var greenOut = sampleChar.fillColor.green;
 		var blueOut  = sampleChar.fillColor.blue;
@@ -2219,7 +2291,7 @@ function getParagraphStyleKey(p) {
 			greenOut = 0;
 			blueOut  = 0;
 		}
-	} else if (sampleChar.fillColor.typename=="NoColor") {
+	} else if (sampleChar.fillColor.typename == "NoColor") {
 		var redOut   = 0;
 		var greenOut = 255;
 		var blueOut  = 0;
@@ -2239,7 +2311,9 @@ function getParagraphStyleKey(p) {
 	pStyleKey += b + Math.round(p.spaceBefore);
 	pStyleKey += b + Math.round(p.spaceAfter);
 	pStyleKey += b + p.justification;
-	pStyleKey += b + Math.round(thisFrame.opacity);
+	// mbloch TODO: investigate opacity. Switching from frame to paragraph
+	// pStyleKey += b + Math.round(thisFrame.opacity);
+	pStyleKey += b + Math.round(p.opacity);
 
 	return pStyleKey;
 }
