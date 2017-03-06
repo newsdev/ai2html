@@ -1,5 +1,3 @@
-// include JSON for development - mbloch
-// @include "lib/json2.js"
 
 // ai2html.js
 var scriptVersion     = "0.61";
@@ -61,12 +59,12 @@ if (!app.documents.length) {
 	throw " No documents are open";
 }
 
-// =====================================
-// functions
-// =====================================
+// mbloch development stuff
 
-// mbloch timer
-// Support for timing using T.start() and T.stop("message")
+// include JSON for development - mbloch
+// @include "lib/json2.js"
+
+// Performance timing using T.start() and T.stop("message")
 var T = {
   stack: [],
   start: function() {
@@ -78,6 +76,10 @@ var T = {
     feedback.push(msg);
   }
 };
+
+// =====================================
+// functions
+// =====================================
 
 // html entity substitution
 // not used ==> ["\x22","&quot;"], ["\x3C","&lt;"], ["\x3E","&gt;"], ["\x26","&amp;"],
@@ -197,6 +199,7 @@ var exportImageFiles = function(dest,width,height,formats,initialScaling,doubler
 			app.activeDocument.exportFile( pngFileSpec, pngType, pngExportOptions );
 			// feedback.push("pngExportOptions.png_number_of_colors = " + pngExportOptions.colorCount);
 			// feedback.push("pngExportOptions.transparency = " + pngExportOptions.transparency);
+
 		} else if (format=="png24") {
 			pngExportOptions = new ExportOptionsPNG24();
 			pngType = ExportType.PNG24;
@@ -207,6 +210,7 @@ var exportImageFiles = function(dest,width,height,formats,initialScaling,doubler
 			pngExportOptions.horizontalScale  = pngImageScaling;
 			pngExportOptions.verticalScale    = pngImageScaling;
 			app.activeDocument.exportFile( pngFileSpec, pngType, pngExportOptions );
+
 		} else if (format=="svg") {
 			svgExportOptions = new ExportOptionsSVG();
 			svgType = ExportType.SVG;
@@ -715,14 +719,6 @@ var pStyleKeyTags = [
 // declarations
 // ================================================
 
-var d             = new Date();
-var currYear      = d.getFullYear();
-var currDate      = zeroPad(d.getDate(),2);
-var currMonth     = zeroPad(d.getMonth() + 1,2); //Months are zero based
-var currHour      = zeroPad(d.getHours(),2);
-var currMin       = zeroPad(d.getMinutes(),2);
-var dateTimeStamp = currYear + "-" + currMonth + "-" + currDate + " - " + currHour + ":" + currMin;
-
 // user inputs, settings, etc
 var defaultFamily       = "nyt-franklin,arial,helvetica,sans-serif";
 var defaultWeight       = "";
@@ -741,7 +737,6 @@ var promoImageMinHeight = promoImageMinWidth*2/3;
 var promoImageMaxWidth  = 6000;  // need to set a max width because ai jpg export fails if it's too large
 var promoImageMaxHeight = promoImageMaxWidth*2/3;
 // var settingsArrays      = ["image_format"] // put hash keys here for settings that are arrays -- in the illustrator file, the setting should be in the format "key: value,value,value"
-var settingsFrames      = [];
 var docSettings         = {};
 
 // vars to hold warnings and informational messages at the end
@@ -962,7 +957,7 @@ for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
 
 			// calculate artboard width for purposes of determining viewport -- need to make this into a function
 			// need to figure out what to do here if responsiveness==fixed
-		// calculate artboard width for purposes of determining viewport -- need to make this into a function
+			// calculate artboard width for purposes of determining viewport -- need to make this into a function
 			if (doc.artboards[abNumber].name.search(/^.+:\d+$/)!=-1) {
 				currentArtboardWidth = (doc.artboards[abNumber].name.replace( /^.+:(\d+)$/ , "$1" ));
 			} else if (doc.artboards[abNumber].name.search(/^ai2html-\d+$/)!=-1) {
@@ -1084,7 +1079,6 @@ for (var tfNumber=0;tfNumber<doc.textFrames.length;tfNumber++) {
 	var thisFrame = doc.textFrames[tfNumber];
 	if ( thisFrame.contents !== "" ) {
 		if (thisFrame.paragraphs[0].contents=="ai2html-css") {
-			settingsFrames.push(thisFrame);
 			hideTextFrame(thisFrame);
 			customCssBlocks += 1;
 			customCss += "\t\t/* Custom CSS block " + customCssBlocks + " */\r";
@@ -1095,7 +1089,6 @@ for (var tfNumber=0;tfNumber<doc.textFrames.length;tfNumber++) {
 			}
 		}
 		if (thisFrame.paragraphs[0].contents=="ai2html-html") {
-			settingsFrames.push(thisFrame);
 			hideTextFrame(thisFrame);
 			customHtmlBlocks += 1;
 			customHtml += "\r\t<!-- Custom HTML block " + customHtmlBlocks + " -->\r";
@@ -1106,7 +1099,6 @@ for (var tfNumber=0;tfNumber<doc.textFrames.length;tfNumber++) {
 			}
 		}
 		if (thisFrame.paragraphs[0].contents=="ai2html-js") {
-			settingsFrames.push(thisFrame);
 			hideTextFrame(thisFrame);
 			customJsBlocks += 1;
 			customJs += "\r\t<!-- Custom JS block " + customJsBlocks + " -->\r";
@@ -1118,9 +1110,8 @@ for (var tfNumber=0;tfNumber<doc.textFrames.length;tfNumber++) {
 		}
 		if (thisFrame.paragraphs[0].contents=="ai2html-settings" ||
 				thisFrame.paragraphs[0].contents=="ai2html-text") {
-			settingsFrames.push(thisFrame);
 			hideTextFrame(thisFrame);
-			parseTextFrameSettings(thisFrame, docSettings);
+			parseSettingsTextBlock(thisFrame, docSettings);
 		}
 	}
 }
@@ -1203,9 +1194,11 @@ if (parentFolder === null) {
 if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 	alertHed = "The Script Stopped Because of an Error";
 	errors.push('Convert document color mode to "RGB" before running script. (File>Document Color Mode>RGB Color)' );
+
 } else if (!docHadSettingsBlock && docSettings.ai2html_environment=="nyt") {
 	alertHed = "Settings Text Block Added";
 	feedback.push("A settings text block was created to the left of all your artboards. Fill out the settings to link your project to the Scoop asset.");
+
 } else if (
 		(
 			(previewProjectType=="config.yml is missing") ||
@@ -1217,20 +1210,14 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 		errors.push("Make sure your Illustrator file is inside the \u201Cai\u201D folder of a Preview project.");
 		errors.push("If the Illustrator file is in the correct folder, your Preview project may be missing a config.yml file or a \u201Cpublic\u201D or a \u201Csrc\u201D folder.");
 		errors.push("If this is an ai2html project, it is probably easier to just create a new ai2html Preview project and move this Illustrator file into the \u201Cai\u201D folder inside the project.");
-} else {
 
+} else {
 	// ======================================
 	// main stuff
 	// ======================================
 
 	if (!docHadSettingsBlock && docSettings.ai2html_environment!="nyt") {
 		feedback.push("A settings text block was created to the left of all your artboards. You can use it to customize your output.");
-	}
-
-	// process local preview template if appropriate
-	if (docSettings.local_preview_template !== "") {
-		var localPreviewTemplateFile = new File(docPath + docSettings.local_preview_template);
-		var localPreviewTemplateText = readTextFileAndPutIntoAVariable(localPreviewTemplateFile,"","","\n");
 	}
 
 	var uniqueArtboardWidths = [];
@@ -1248,7 +1235,6 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 		uniqueArtboardWidths.sort(function(a,b){return a-b;});
 	}
 
-	T.start();
 	// begin main stuff
 	var responsiveHtml = "";
 	for (var abNumber = 0; abNumber < doc.artboards.length; abNumber++) {
@@ -1271,11 +1257,12 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 
 		// for determining which artboard to use for promo image
 		// if (abW>=largestArtboardWidth) {
-			if (abW*abH>largestArtboardArea) {
-				largestArtboardArea  = abW*abH;
-				// largestArtboardWidth = abW;
-				largestArtboardIndex = abNumber;
-			}
+		// mbloch TODO move into function for generating promo image
+		if (abW*abH>largestArtboardArea) {
+			largestArtboardArea  = abW*abH;
+			// largestArtboardWidth = abW;
+			largestArtboardIndex = abNumber;
+		}
 		// }
 
 		var html = [];
@@ -1310,6 +1297,8 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 			showClass = "";
 		}
 
+		// TODO: refactor this stuff
+		//
 		html[1] += "\t<div id='"+nameSpace+docArtboardName+"' class='"+nameSpace+"artboard "+nameSpace+"artboard-v3 "+showClass+"'";
 		if (docSettings.include_resizer_widths == "yes") {
 			// add data-min/max-width attributes
@@ -1378,13 +1367,13 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 					html[5] += "\t\t\t\tsrc='"   + docSettings.image_source_path + docArtboardName + imageExtension + "'\r";
 				}
 			} else {
-                  html[5] += "\t\t\t\tsrc='data:image/gif;base64,R0lGODlhCgAKAIAAAB8fHwAAACH5BAEAAAAALAAAAAAKAAoAAAIIhI+py+0PYysAOw=='\r"; // dummy image to hold space while image loads
+				html[5] += "\t\t\t\tsrc='data:image/gif;base64,R0lGODlhCgAKAIAAAB8fHwAAACH5BAEAAAAALAAAAAAKAAoAAAIIhI+py+0PYysAOw=='\r"; // dummy image to hold space while image loads
 				if (docSettings.ai2html_environment=="nyt") {
-                    html[5] += "\t\t\t\tdata-src='"   + docSettings.preview_image_path + docArtboardName + imageExtension + "'\r";
+					html[5] += "\t\t\t\tdata-src='"   + docSettings.preview_image_path + docArtboardName + imageExtension + "'\r";
 				} else {
-                    html[5] += "\t\t\t\tdata-src='"   + docSettings.image_source_path + docArtboardName + imageExtension + "'\r";
+					html[5] += "\t\t\t\tdata-src='"   + docSettings.image_source_path + docArtboardName + imageExtension + "'\r";
 				}
-                  html[5] += "\t\t\t\tdata-height-multiplier='" + roundTo(artboardAspectRatio,4) + "'\r";
+				html[5] += "\t\t\t\tdata-height-multiplier='" + roundTo(artboardAspectRatio,4) + "'\r";
 			}
 			html[5] += "\t\t\t\t/>\r";
 		}
@@ -1394,140 +1383,90 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 
 		var selectFrames  = findTextFramesToRender(doc.textFrames, activeArtboardRect);
 
-		// Find unique character and paragraph styles
-		// Style keys for paragraphs are the character style of the last paragraph.
-		var pStyleKeys = [];
+		//
+		// Convert text objects
+		//
+		T.start();
+		pBar.setTitle(docArtboardName + ': Generating text...');
+		var pClasses = [];
 
-		var pFamily    = [];
-		var pWeight    = [];
-		var pStyle     = [];
-		var pSize      = [];
-		var pLeading   = [];
-
-		pBar.setTitle(docArtboardName + ': Finding unique text styles...');
-		for (var i=0;i<selectFrames.length;i++) {
+		for (var i=0; i<selectFrames.length; i++) {
 			var thisFrame = selectFrames[i];
 			var numChars = thisFrame.characters.length;
 			var runningChars = 0;
-			for (var k=0;k<thisFrame.paragraphs.length;k++) {
-				if (runningChars<numChars && thisFrame.paragraphs[k].characters.length !== 0) {
-					// var sampleChar = thisFrame.paragraphs[k].length-1;
-					var pStyleKey = getParagraphStyleKey(thisFrame.paragraphs[k]);
-					pStyleKeys.push(pStyleKey);
-					runningChars += (thisFrame.paragraphs[k].characters.length)+1;
-				} else {
-					runningChars += 1;
-				}
-			}
-		}
-		pStyleKeys = uniqify(pStyleKeys);
 
-		// Write css for each style key
-		var pStyleCss = "";
-		// var cStyleCss = "";
-		pBar.setTitle(docArtboardName + ': Writing CSS for text styles...');
-		for (var i=0;i<pStyleKeys.length;i++) {
-			pStyleCss += "\t\t\t#" + nameSpace + docArtboardName + " ." + nameSpace +
-					"aiPstyle" + i + " " + convertStyleKeyToCss(pStyleKeys[i]);
-		}
-
-		html[2] += pStyleCss;
-
-		html[2] += '\t\t\t.g-aiPtransformed p { white-space: nowrap; }\r';
-
-		// Output html for each text frame
-		pBar.setTitle(docArtboardName + ': Writing HTML for text blocks...');
-		var oneArtboard = 1/(doc.artboards.length),
-				oneBlock    = 1/(selectFrames.length),
-				oneBlockNormalized = oneBlock * oneArtboard;
-
-		for (var i=0; i<selectFrames.length; i++) {
-			pBar.increment(oneBlockNormalized); // Keeps text frames progress from overshooting current overall progress.
-			var thisFrame = selectFrames[i];
-
-			// Generate opening <div> tag, including CSS styles
+			// Generate a <div> element for each text frame, including CSS styles
 			var j = i+1;
 			var thisFrameId = nameSpace + "ai" + abNumber + "-" + j;
 			if (thisFrame.name !== "") {
 				thisFrameId = makeKeyword(thisFrame.name);
 			}
 			html[6] += '\t\t\t<div id="' + thisFrameId + '" ';
-			html[6] += getTextFrameCss(thisFrame) + '>\r';
+			html[6] += getTextFrameCss(thisFrame, activeArtboardRect) + '>\r';
 
-			// Generate <p> tags for paragraphs of text
-			var numChars = thisFrame.characters.length;
-			var runningChars = 0;
+			// Generate a <p> tag for each paragraph of text
 			for (var k=0; k<thisFrame.paragraphs.length; k++) {
-
-				if (runningChars < numChars && thisFrame.paragraphs[k].characters.length !== 0) {
-					var pStyleKey = getParagraphStyleKey(thisFrame.paragraphs[k]);
-					var pStyleKeyId = 0;
-
-					var segments = getParagraphSegments(thisFrame.paragraphs[k]);
-					// feedback.push(JSON.stringify(segments))
-
-					for (var l=0;l<pStyleKeys.length;l++) {
-						if (pStyleKey==pStyleKeys[l]) {
-							pStyleKeyId = l;
-						}
-					}
-
-					html[6] += "\t\t\t\t<p class='" + nameSpace + "aiPstyle" + pStyleKeyId + "'>";
-					if (isNaN(thisFrame.paragraphs[k].length)) {
-						html[6] += "&nbsp;";
-					} else {
-						textToClean = thisFrame.paragraphs[k].contents;
-						textToClean = straightenCurlyQuotesInsideAngleBrackets(textToClean);
-						cleanedText = cleanText(textToClean);
-						html[6] += cleanedText;
-					}
-					html[6] += "</p>\r";
+				if (runningChars<numChars && thisFrame.paragraphs[k].characters.length !== 0) {
+					var pData = convertParagraph(thisFrame.paragraphs[k], pClasses);
+					html[6] += "\t\t\t\t<p class='" + pData.classname + "'>";
+					html[6] += pData.html + "</p>\r";
 					runningChars += (thisFrame.paragraphs[k].characters.length)+1;
+
 				} else {
 					html[6] += "\t\t\t\t<p>&nbsp;</p>\r";
 					runningChars += 1;
 				}
 			}
-
-			// Close text frame div
 			html[6] += "\t\t\t</div>\r";
 		}
 
-		for (var i=1;i<html.length;i++) {
+		// Generate CSS class definitions
+		for (var i=0; i<pClasses.length; i++) {
+			html[2] += "\t\t\t#" + nameSpace + docArtboardName + " ." +
+					pClasses[i].classname + " " + pClasses[i].css;
+		}
+		html[2] += '\t\t\t.g-aiPtransformed p { white-space: nowrap; }\r';
+
+		T.stop("Text generation");
+
+		// Concatenate html fragments
+		for (var i=1; i<html.length; i++) {
 			responsiveHtml += (html[i]);
 		}
-		// responsiveHtml += "\n";
 
+		T.start();
+		// Hide text frames in preparation for image generation
 		for (var i=0;i<selectFrames.length;i++) {
 			hideTextFrame(selectFrames[i]);
 		}
 
-		// unhide text now if in testing mode
+		// Unhide text now if in testing mode
 		if (docSettings.testing_mode=="yes") {
 			for (var i=0;i<selectFrames.length;i++) {
 				selectFrames[i].hidden = false;
 			}
 		}
 
-		var imageDestinationFolder = docPath + docSettings.html_output_path + docSettings.image_output_path;
-		checkForOutputFolder(imageDestinationFolder, "image_output_path");
-		var imageDestination = imageDestinationFolder + docArtboardName;
-		// alert ("imageDestination\n" +
-		// 		"docPath = " + docPath + "\n" +
-		// 		"docSettings.html_output_path = " + docSettings.html_output_path + "\n" +
-		// 		"docSettings.image_output_path = " + docSettings.image_output_path + "\n" +
-		// 		"docArtboardName = " + docArtboardName);
-
+		// Generate image(s) of artboard
 		if (docSettings.write_image_files=="yes") {
+			pBar.setTitle(docArtboardName + ': Writing image...');
+
+			var imageDestinationFolder = docPath + docSettings.html_output_path + docSettings.image_output_path;
+			checkForOutputFolder(imageDestinationFolder, "image_output_path");
+			var imageDestination = imageDestinationFolder + docArtboardName;
+			// alert ("imageDestination\n" +
+			// 		"docPath = " + docPath + "\n" +
+			// 		"docSettings.html_output_path = " + docSettings.html_output_path + "\n" +
+			// 		"docSettings.image_output_path = " + docSettings.image_output_path + "\n" +
+			// 		"docArtboardName = " + docArtboardName);
+
 			// if in svg export, hide path elements outside of the current artboard
 			if (docSettings.image_format[0] == 'svg') {
 				// save refs to elements we are hiding
 				var hiddenItemsOutsideArtboard = hideElementsOutsideArtboardRect(activeArtboardRect);
 			}
 
-		pBar.setTitle(docArtboardName + ': Writing image...');
-
-		exportImageFiles(imageDestination,abW,abH,docSettings.image_format,1.0,docSettings.use_2x_images_if_possible);
+			exportImageFiles(imageDestination,abW,abH,docSettings.image_format,1.0,docSettings.use_2x_images_if_possible);
 
 			if (docSettings.image_format[0] == 'svg' && hiddenItemsOutsideArtboard.length > 0) {
 			// unhide non-text elements hidden before export
@@ -1536,7 +1475,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 				}
 			}
 		}
-
+		T.stop("Image generation");
 
 		// unhide text now if NOT in testing mode
 		if (docSettings.testing_mode!="yes") {
@@ -1545,178 +1484,24 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 			}
 		}
 
+
 		//=====================================
 		// output html file here if doing a file for every artboard
 		//=====================================
 
 		if (docSettings.output=="multiple-files") {
-			var responsiveJs        = '\t<script src="_assets/resizerScript.js"></script>' + "\n";
-			var responsiveCss       = '\t<link rel="stylesheet" href="_assets/resizerStyle.css">' + "\n";
-			if (docSettings.include_resizer_css_js=="no"||docSettings.ai2html_environment!="nyt") {
-				responsiveJs        = "";
-				responsiveCss       = "";
-			}
-			if (docSettings.include_resizer_script=="yes") {
-				responsiveJs = '\t' + getResizerScript() + '\n';
-				responsiveCss             = "";
-			}
-			var responsiveTextScoop = responsiveHtml;
-			var textForFile         = "";
-			var htmlFileDestination = "";
-			var headerText          = "<div id='" + nameSpace + docArtboardName + "-box' class='ai2html'>\r";
-			headerText             += "\t<!-- Generated by ai2html v" + scriptVersion + " - " + dateTimeStamp + " -->\r";
-			headerText             += "\t<!-- ai file: " + docSettings.project_name + " -->\r";
-			if (docSettings.ai2html_environment == "nyt") {
-				headerText             += "\t<!-- preview: " + docSettings.preview_slug + " -->\r";
-				headerText             += "\t<!-- scoop  : " + docSettings.scoop_slug_from_config_yml + " -->\r";
-			}
-			headerText             += "\r";
-			headerText             += "\t<style type='text/css' media='screen,print'>\r";
-			if (docSettings.max_width !== "") {
-				headerText             += "\t\t#" + nameSpace + docArtboardName + "-box {\r";
-				headerText             += "\t\t\tmax-width:" + docSettings.max_width + "px;\r";
-				headerText             += "\t\t}\r";
-			}
-			if (docSettings.center_html_output) {
-				headerText             += "\t\t." + nameSpace + "artboard {\r";
-				headerText             += "\t\t\tmargin:0 auto;\r";
-				headerText             += "\t\t}\r";
-			}
-			headerText             += "\t</style>\r";
-			headerText             += "\r";
-			var footerText          = "\t<!-- End ai2html" + " - " + dateTimeStamp + " -->\r</div>\r";
-
-			textForFile += headerText;
-			if (previewProjectType=="ai2html") { textForFile += responsiveCss; }
-			if (customCssBlocks>0)             { textForFile += customCss;     }
-			textForFile += responsiveTextScoop;
-			if (customHtml.length>0)           { textForFile += customHtml;    }
-			if (customJs.length>0)             { textForFile += customJs;      }
-			if (responsiveJs.length>0)         { textForFile += responsiveJs;  }
-			textForFile += footerText;
-			textForFile  = applyTemplate(textForFile,docSettings);
-			// textForFile  = straightenCurlyQuotesInsideAngleBrackets(textForFile);
-
-			htmlFileDestinationFolder = docPath + docSettings.html_output_path;
-			checkForOutputFolder(htmlFileDestinationFolder, "html_output_path");
-			htmlFileDestination = htmlFileDestinationFolder + docArtboardName + docSettings.html_output_extension;
-			if (docSettings.local_preview_template !== "") {
-				pBar.setTitle(docArtboardName + ': Writing HTML file...');
-
-				docSettings.ai2htmlPartial     = textForFile;
-				var localPreviewDestination = htmlFileDestinationFolder + docArtboardName + ".preview.html";
-				var localPreviewHtml        = applyTemplate(localPreviewTemplateText,docSettings);
-				outputHtml(localPreviewHtml,localPreviewDestination);
-			}
-
-			outputHtml(textForFile,htmlFileDestination);
-			// var responsiveHtmlScoopFile = new File( htmlFileDestination );
-			// responsiveHtmlScoopFile.open( "w", "TEXT", "TEXT" );
-			// 	responsiveHtmlScoopFile.lineFeed = "Unix";
-			// 	responsiveHtmlScoopFile.encoding = "UTF-8";
-			// 	responsiveHtmlScoopFile.writeln(textForFile);
-			// responsiveHtmlScoopFile.close;
+			generateHtml(responsiveHtml, docArtboardName, docSettings);
 			responsiveHtml = "";
 		}
 
 	} // end artboard loop
-
-	T.stop("done with main stuff");
 
 	//=====================================
 	// output html file here if doing one file for all artboards
 	//=====================================
 
 	if (docSettings.output=="one-file") {
-		var responsiveJs              = '\t<script src="_assets/resizerScript.js"></script>' + "\n";
-		var responsiveCss             = '\t<link rel="stylesheet" href="_assets/resizerStyle.css">' + "\n";
-		if (docSettings.include_resizer_css_js=="no"||docSettings.ai2html_environment!="nyt") {
-			responsiveJs              = "";
-			responsiveCss             = "";
-		}
-		if (docSettings.include_resizer_script=="yes") {
-			responsiveJs = '\t' + getResizerScript() + '\n';
-			responsiveCss             = "";
-		}
-
-		var responsiveTextScoop       = responsiveHtml;
-		var textForFile               = "";
-		var htmlFileDestinationFolder = "";
-		var htmlFileDestination       = "";
-		var headerText                = "<div id='" + nameSpace + makeKeyword(docSettings.project_name) + "-box' class='ai2html'>\r";
-		headerText                   += "\t<!-- Generated by ai2html v" + scriptVersion + " - " + dateTimeStamp + " -->\r";
-		headerText                   += "\t<!-- ai file: " + docSettings.project_name + " -->\r";
-		if (docSettings.ai2html_environment == "nyt") {
-			headerText               += "\t<!-- preview: " + docSettings.preview_slug + " -->\r";
-			headerText               += "\t<!-- scoop  : " + docSettings.scoop_slug_from_config_yml + " -->\r";
-		}
-		headerText                   += "\r";
-		headerText                   += "\t<style type='text/css' media='screen,print'>\r";
-		if (docSettings.max_width !== "") {
-			headerText               += "\t\t#" + nameSpace + makeKeyword(docSettings.project_name) + "-box {\r";
-			headerText               += "\t\t\tmax-width:" + docSettings.max_width + "px;\r";
-			headerText               += "\t\t}\r";
-		}
-		if (docSettings.center_html_output) {
-			headerText             += "\t\t."+nameSpace+"artboard {\r";
-			headerText             += "\t\t\tmargin:0 auto;\r";
-			headerText             += "\t\t}\r";
-		}
-		if (docSettings.clickable_link !== "") {
-			headerText             += "\t\t."+nameSpace+"ai2htmlLink {\r";
-			headerText             += "\t\t\tdisplay: block;\r";
-			headerText             += "\t\t}\r";
-		}
-		headerText                   += "\t</style>\r";
-		headerText                   += "\r";
-		if (docSettings.clickable_link !== "") {
-			headerText += "\t<a class='"+nameSpace+"ai2htmlLink' href='"+docSettings.clickable_link+"'>\r";
-		}
-
-		var footerText = "";
-		if (docSettings.clickable_link !== "") {
-			footerText += "\t</a>\r";
-		}
-		footerText += "\t<!-- End ai2html" + " - " + dateTimeStamp + " -->\r</div>\r";
-
-		textForFile += headerText;
-		if (previewProjectType == "ai2html") { textForFile += responsiveCss; }
-		if (customCssBlocks>0)             { textForFile += customCss;     }
-		textForFile += responsiveTextScoop;
-		if (customHtml.length>0)           { textForFile += customHtml;    }
-		if (customJs.length>0)             { textForFile += customJs;      }
-		if (responsiveJs.length>0)         { textForFile += responsiveJs;  }
-
-		textForFile += footerText;
-		textForFile  = applyTemplate(textForFile,docSettings);
-		// textForFile  = straightenCurlyQuotesInsideAngleBrackets(textForFile);
-
-		htmlFileDestinationFolder = docPath + docSettings.html_output_path;
-		checkForOutputFolder(htmlFileDestinationFolder, "html_output_path");
-		if (previewProjectType == "ai2html") {
-			htmlFileDestination = htmlFileDestinationFolder + "index" + docSettings.html_output_extension;
-		} else if ((previewProjectType!="ai2html" && srcFolder.exists) || docSettings.ai2html_environment!="nyt") {
-			htmlFileDestination = htmlFileDestinationFolder + docSettings.project_name + docSettings.html_output_extension;
-			if (docSettings.local_preview_template !== "") {
-				// var localPreviewTemplateFile = new File(docPath + docSettings.local_preview_template);
-				// var localPreviewTemplateText = readTextFileAndPutIntoAVariable(localPreviewTemplateFile,"","","");
-				pBar.setTitle('Writing HTML file...');
-
-				docSettings.ai2htmlPartial = textForFile;
-				var localPreviewDestination = htmlFileDestinationFolder + docSettings.project_name + ".preview.html";
-				var localPreviewHtml = applyTemplate(localPreviewTemplateText,docSettings);
-				outputHtml(localPreviewHtml,localPreviewDestination);
-			}
-		}
-
-		outputHtml(textForFile,htmlFileDestination);
-		// var responsiveHtmlScoopFile = new File( htmlFileDestination );
-		// responsiveHtmlScoopFile.open( "w", "TEXT", "TEXT" );
-		// 	responsiveHtmlScoopFile.lineFeed = "Unix";
-		// 	responsiveHtmlScoopFile.encoding = "UTF-8";
-		// 	responsiveHtmlScoopFile.writeln(textForFile);
-		// responsiveHtmlScoopFile.close;
-
+		generateHtml(html.join(''), docSettings.project_name, docSettings);
 	}
 
 	//=====================================
@@ -1735,8 +1520,6 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 		configFile.encoding = "UTF-8";
 		configFile.writeln(customYml);
 		configFile.close();
-	} else {
-
 	}
 
 	// Create promo image with largest artboard
@@ -1745,7 +1528,6 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 	}
 
 } // end rgb colorspace test
-
 
 // Unhide stuff that was hidden during processing
 for (var i = 0; i < textFramesToUnhide.length; i++) {
@@ -1767,7 +1549,6 @@ for (var i = lockedObjects.length-1; i>=0; i--) {
 for (var i = hiddenObjects.length-1; i>=0; i--) {
 	hiddenObjects[i].visible = false;
 }
-
 
 pBar.setTitle('Saving Illustrator document...');
 pBar.setProgress(1.0);
@@ -1827,6 +1608,10 @@ pBar.close();
 if (docSettings.show_completion_dialog_box=="true") {
 	alert(alertHed + "\n" + alertText + "\n\n\n================\nai2html-nyt5 v"+scriptVersion);
 }
+
+// ===============
+// more functions
+// ===============
 
 function textIsTransformed(textFrame) {
 	return !(textFrame.matrix.mValueA == 1 &&
@@ -1973,6 +1758,19 @@ function round(number, precision) {
 // mbloch refactoring
 // =====================================
 
+function getArtboardPos(rect) {
+	var x = rect[0],
+			y = rect[1],
+			w = Math.round(rect[2] - x),
+			h = -rect[3] - y;
+	return {
+		x: x,
+		y: y,
+		width: w,
+		height: h
+	};
+}
+
 function getResizerScript() {
 	var f = function(scriptEnvironment) {
 	  // only want one resizer on the page
@@ -2054,25 +1852,17 @@ function getResizerScript() {
 	};
 
 	// convert function to JS source code
-	var js = '(' + f.toString() + ')("' + (scriptEnvironment || '') + '");';
+	var js = '(' + trim(f.toString()) + ')("' + (scriptEnvironment || '') + '");';
 	return '<script type="text/javascript">\n' + js + '\n</script>\n\n';
 }
 
-
-function uniqify(arr) {
-	var o = {},
-			r = [],
-			val;
-	for (var i=0, l=arr.length; i<l; i++) {
-		val = arr[i];
-		if (val in o === false) {
-			o[val] = true;
-			r.push(val);
-		}
-	}
-	return r;
+// Remove whitespace from beginning and end of a string
+function trim(s) {
+	return s.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
 }
 
+// TODO: no longer used, remove
+//
 function convertStyleKeyToCss(key) {
 	// external vars: pStyleKeyTags, caps, fonts, align
 	var pArray = key.split("\t");
@@ -2148,8 +1938,160 @@ function convertStyleKeyToCss(key) {
 	return lines.join("\r\t\t\t\t") + "\r\t\t\t}\r";
 }
 
-function getParagraphSegments(p) {
-	var pstyle = getCharStyle(p.characterAttributes);
+function getParagraphStyle(p) {
+	// get character style
+	var s = getCharStyle(p.characterAttributes);
+	// add paragraph-related styles
+	s.leading = Math.round(p.leading);
+	s.spaceBefore = Math.round(p.spaceBefore);
+	s.spaceAfter = Math.round(p.spaceAfter);
+	s.justification = p.justification;
+ 	// TODO: fix opacity -- try checking text frame // Math.round(p.opacity);
+	s.opacity = 100;
+	s.key = s.aifont + '~' + s.size + '~' + s.capitalization + '~' + s.tracking +
+		'~' + s.rgb + s.leading + '~' + s.spaceBefore + '~' +
+		'~' + s.spaceAfter + '~' + s.opacity;
+	return s;
+}
+
+
+function getParagraphClass(style, classes) {
+	var o, i;
+	for (i=0; i<classes.length; i++) {
+		o = classes[i];
+		if (o.style.key == style.key) {
+			return o.classname;
+		}
+	}
+	o = {
+		style: style,
+		classname: nameSpace + 'aiPstyle' + i,
+		css: generateStyleCss(style)
+	};
+	classes.push(o);
+	return o.classname;
+}
+
+function convertParagraphSegments(arr) {
+	var html = "", o;
+	for (var i=0; i<arr.length; i++) {
+		o = arr[i];
+		if (o.css) {
+			html += '<span style="' + o.css + '">' + o.text + '</span>';
+		} else {
+			html += o.text;
+		}
+	}
+	return html;
+}
+
+// Divide a pg into strings of the same style; capture style data
+// for each string of characters and for the entire paragraph
+//
+function convertParagraph(p, classes) {
+	var style = getParagraphStyle(p);
+	var segments = getParagraphSegments(p, style);
+	return {
+		style: style,
+		classname: getParagraphClass(style, classes),
+		sections: segments,
+		html: convertParagraphSegments(segments)
+	};
+}
+
+// Lookup an AI font name in the font table
+function findFontInfo(aifont) {
+	for (var k=0; k<fonts.length; k++) {
+		if (aifont == fonts[k].aifont) {
+			return fonts[k];
+		}
+	}
+	return null;
+}
+
+// ai: AI justification value
+function getJustificationCss(ai) {
+	for (var k=0; k<align.length; k++) {
+		if (ai == align[k].ai) {
+			return align[k].html;
+		}
+	}
+	return "initial"; // CSS default
+}
+
+// ai: AI capitalization value
+function getCapitalizationCss(ai) {
+	for (k=0; k<caps.length; k++) {
+		if (ai == caps[k].ai) {
+			return caps[k].html;
+		}
+	}
+	return "";
+}
+
+// Convert a parsed style object into a CSS block or inline CSS
+// s: style object
+// inline: (bool) whether to generate inline CSS or a CSS block
+function generateStyleCss(s, inline) {
+	var styles = [];
+	var fontInfo, css, tmp;
+	if (s.aifont && (fontInfo = findFontInfo(s.aifont))) {
+		if (fontInfo.family != defaultFamily) {
+			styles.push("font-family:" + fontInfo.family + ";");
+		}
+		if (fontInfo.weight) {
+			styles.push("font-weight:" + fontInfo.weight + ";");
+		}
+		if (fontInfo.style) {
+			styles.push("font-style:" + fontInfo.style + ";");
+		}
+	}
+	if (('size' in s) && s.size != defaultSize) {
+		styles.push("font-size:" + s.size + "px;");
+	}
+	if (('leading' in s) && s.leading !== defaultLeading) {
+		styles.push("line-height:" + s.leading + "px;");
+	}
+	if (('opacity' in s) && s.opacity != 100) {
+		styles.push("filter: alpha(opacity=" + (s.opacity * 100) + ");");
+		styles.push("-ms-filter:'progid:DXImageTransform.Microsoft.Alpha(Opacity=" + (s.opacity) + ")';");
+		styles.push("opacity:" + (s.opacity / 100) + ";");
+	}
+	if (s.spaceBefore > 0) {
+		styles.push("padding-top:" + s.spaceBefore + "px;");
+	}
+	if (s.spaceAfter > 0) {
+		styles.push("padding-bottom:" + s.spaceAfter + "px;");
+	}
+	if (('tracking' in s) && s.tracking !== 0) {
+		styles.push("letter-spacing:" + (s.tracking / 1200) + "em;");
+	}
+	if (s.justification) {
+		styles.push("text-align:" + getJustificationCss(s.justification) + ";");
+	}
+	if (s.capitalization && (tmp = getCapitalizationCss(s.capitalization))) {
+		styles.push("text-transform:" + tmp + ";");
+	}
+	if (s.rgb) {
+		styles.push("color:" + s.rgb + ";");
+	}
+
+	if (!styles.length) {
+		css = "";
+	} else if (inline) {
+		css = styles.join(' ');
+	} else {
+		styles.unshift('{');
+		css = styles.join("\r\t\t\t\t") + "\r\t\t\t}\r";
+	}
+	return css;
+}
+
+// Divide a paragraph into segments with the same style
+// p: AI paragraph object
+// pstyle: parsed paragraph style
+//
+function getParagraphSegments(p, pstyle) {
 	var properties = 'aifont,size,capitalization,tracking,rgb'.split(',');
 	var segments = [];
 	var currRange;
@@ -2158,9 +2100,11 @@ function getParagraphSegments(p) {
 		cstr = p.characters[i].contents;
 		curr = getCharStyle(p.characters[i]);
 		if (!prev || getCharStyleDiff(curr, prev, properties)) {
+			diff = getCharStyleDiff(curr, pstyle, properties);
 			currRange = {
 				text: "",
-				style: getCharStyleDiff(curr, pstyle, properties)
+				style: diff,
+				css: diff ? generateStyleCss(diff, true) : ''
 			};
 			segments.push(currRange);
 		}
@@ -2183,9 +2127,11 @@ function getCharStyleDiff(a, b, properties) {
 	return diff;
 }
 
+// Parse an AI CharacterAttributes object
+//
 function getCharStyle(c) {
 	var fill = c.fillColor;
-	var r, g, b;
+	var r, g, b, caps;
 	if (fill.typename == 'RGBColor') {
 		r = fill.red;
 		g = fill.green;
@@ -2201,16 +2147,19 @@ function getCharStyle(c) {
 	} else {
 		r = g = b = 0;
 	}
-
+	caps = String(c.capitalization);
 	return {
 		aifont: c.textFont.name,
 		size: Math.round(c.size),
-		capitalization: c.capitalization,
+		capitalization: caps == 'FontCapsOption.NORMALCAPS' ? '' : caps,
 		tracking: c.tracking,
 		rgb: 'rgb(' + r + ',' + g + ',' + b + ')'
 	};
 }
 
+// No longer used
+// TODO: port invalid fill warnings to refactored code
+//
 function getParagraphStyleKey(p) {
 	var redOut, greenOut, blueOut, grayPct;
 	var b = "\t";
@@ -2323,7 +2272,7 @@ function findTextFramesToRender(frames, artboardRect) {
 }
 
 function parseTextFrameNote(note) {
-	// Read in attribute variables from notes field for this text frame
+	// Read in attribute variables from notes field of a text frame
 	var thisFrameAttributes = {};
 	var rawNotes = note.split("\r");
 	for (var rNo = 0; rNo < rawNotes.length; rNo++) {
@@ -2337,22 +2286,23 @@ function parseTextFrameNote(note) {
 	return thisFrameAttributes;
 }
 
-// Create class="" and style"" CSS for positioning a text div
-function getTextFrameCss(thisFrame) {
+// Create class="" and style="" CSS for positioning a text div
+function getTextFrameCss(thisFrame, artboardRect) {
 	var style = "";
 	var vFactor = 0.5; // This is an adjustment to correct for vertical placement.
 	var kind, htmlY, htmlT, htmlB, htmlTM, htmlH, htmlL, htmlR, htmlW, htmlLM, alignment, extraWidthPct;
 	var thisFrameAttributes = parseTextFrameNote(thisFrame.note);
+	var abPos = getArtboardPos(artboardRect);
 
 	if (thisFrame.kind=="TextType.POINTTEXT") {
 		kind = "point";
 		// /this line throws an error if the first paragraph of the frame is empty.
 		// var htmlY = Math.round(-thisFrame.position[1] - (((thisFrame.paragraphs[0].characters[0].leading - thisFrame.paragraphs[0].characters[0].size)*vFactor) + thisFrame.paragraphs[0].spaceBefore)-abY);
-		htmlY = Math.round(-thisFrame.position[1] - (((thisFrame.characters[0].leading - thisFrame.characters[0].size)*vFactor) + thisFrame.characters[0].spaceBefore)-abY);
+		htmlY = Math.round(-thisFrame.position[1] - (((thisFrame.characters[0].leading - thisFrame.characters[0].size)*vFactor) + thisFrame.characters[0].spaceBefore) - abPos.y);
 	} else if (thisFrame.kind=="TextType.AREATEXT") {
 		kind = "area";
 		// var htmlY = Math.round(-thisFrame.position[1] - (((thisFrame.paragraphs[0].characters[0].leading - thisFrame.paragraphs[0].characters[0].size)*vFactor) + thisFrame.paragraphs[0].spaceBefore)-abY);
-		htmlY = Math.round(-thisFrame.position[1] - (((thisFrame.characters[0].leading - thisFrame.characters[0].size)*vFactor) + thisFrame.characters[0].spaceBefore)-abY);
+		htmlY = Math.round(-thisFrame.position[1] - (((thisFrame.characters[0].leading - thisFrame.characters[0].size)*vFactor) + thisFrame.characters[0].spaceBefore) - abPos.y);
 	} else {
 		kind = "other";
 	}
@@ -2375,16 +2325,16 @@ function getTextFrameCss(thisFrame) {
 	htmlW = thisFrame.width*(1+(extraWidthPct/100));
 	if (thisFrame.characters[0].justification=="Justification.LEFT") {
 		alignment = "left";
-		htmlL = thisFrame.left-abX;
-		htmlR = abW-(thisFrame.left+htmlW-abX);
+		htmlL = thisFrame.left - abPos.x;
+		htmlR = abPos.width - (thisFrame.left + htmlW - abPos.x);
 	} else if (thisFrame.characters[0].justification=="Justification.RIGHT") {
 		alignment = "right";
-		htmlL = thisFrame.left-(thisFrame.width*(1+(extraWidthPct/100)))-abX;
-		htmlR = abW-(thisFrame.left+thisFrame.width-abX);
+		htmlL = thisFrame.left - (thisFrame.width * (1 + (extraWidthPct / 100))) - abPos.x;
+		htmlR = abPos.width - (thisFrame.left + thisFrame.width - abPos.x);
 	} else if (thisFrame.characters[0].justification=="Justification.CENTER") {
 		alignment = "center";
-		htmlL  = thisFrame.left-abX+(thisFrame.width/2); // thanks jeremy!
-		htmlLM = thisFrame.width*(1+(extraWidthPct/100))/2*-1;
+		htmlL  = thisFrame.left - abPos.x +  (thisFrame.width / 2); // thanks jeremy!
+		htmlLM = thisFrame.width * (1 + (extraWidthPct/100)) / 2 * -1;
 	} else {
 		alignment = "other";
 		// htmlX = Math.round(thisFrame.left-abX);
@@ -2407,8 +2357,8 @@ function getTextFrameCss(thisFrame) {
 			t_trans_y = 0;
 
 		// position div on transformed anchor point
-		style += "left:" + round((t_anchor[0]-abX)/abW*100, pctPrecision) + "%;";
-		style += "top:" + round((-t_anchor[1]-abY)/abH*100, pctPrecision) + "%;";
+		style += "left:" + round((t_anchor[0] - abPos.x) / abPos.width * 100, pctPrecision) + "%;";
+		style += "top:" + round((-t_anchor[1]- abPos.y) / abPos.height * 100, pctPrecision) + "%;";
 
 		// move "back" to left or top to center or right align text
 		if (alignment == 'center') t_trans_x -= u_width * 0.5;
@@ -2437,14 +2387,14 @@ function getTextFrameCss(thisFrame) {
 
 		var transformOrigin = alignment + ' '+(v_align == 'middle' ? 'center' : v_align);
 
-		style += "transform: "+transform+";";
-		style += "transform-origin: "+transformOrigin+";";
-		style += "-webkit-transform: "+transform+";";
-		style += "-webkit-transform-origin: "+transformOrigin+";";
-		style += "-ms-transform: "+transform+";";
-		style += "-ms-transform-origin: "+transformOrigin+";";
+		style += "transform: " + transform + ";";
+		style += "transform-origin: " + transformOrigin + ";";
+		style += "-webkit-transform: " + transform + ";";
+		style += "-webkit-transform-origin: " + transformOrigin + ";";
+		style += "-ms-transform: " + transform + ";";
+		style += "-ms-transform-origin: " + transformOrigin + ";";
 
-		if (kind == 'area') style += "width: "+(u_width * (1+(extraWidthPct/100)))+"px;";
+		if (kind == 'area') style += "width: " + (u_width * (1 + (extraWidthPct/100))) + "px;";
 
 	} else {
 
@@ -2463,35 +2413,36 @@ function getTextFrameCss(thisFrame) {
 			}
 		} else if (outputType=="pct") {
 			if (thisFrameAttributes.valign==="bottom") {
-				style += "bottom:" + round(100-(htmlB/abH*100), pctPrecision) + "%;";
+				style += "bottom:" + round(100 - (htmlB / abPos.height * 100), pctPrecision) + "%;";
 			} else {
-				style += "top:" + round(htmlT/abH*100, pctPrecision) + "%;";
+				style += "top:" + round(htmlT / abPos.height * 100, pctPrecision) + "%;";
 			}
 			if (alignment=="right") {
-				style += "right:" + round(htmlR/abW*100, pctPrecision) + "%;";
+				style += "right:" + round(htmlR / abPos.width * 100, pctPrecision) + "%;";
 				if (kind=="area") {
-					style += "width:" + round(htmlW/abW*100, pctPrecision) + "%;";
+					style += "width:" + round(htmlW / abPos.width * 100, pctPrecision) + "%;";
 				}
 			} else if (alignment=="center") {
-				style += "left:" + round(htmlL/abW*100, pctPrecision) + "%;";
-				style += "width:" + round(htmlW/abW*100, pctPrecision) + "%;";
-				style += "margin-left:" + round(htmlLM/abW*100, pctPrecision) + "%;";
+				style += "left:" + round(htmlL / abPos.width * 100, pctPrecision) + "%;";
+				style += "width:" + round(htmlW / abPos.width * 100, pctPrecision) + "%;";
+				style += "margin-left:" + round(htmlLM / abPos.width * 100, pctPrecision) + "%;";
 			} else {
-				style += "left:" + round(htmlL/abW*100, pctPrecision) + "%;";
+				style += "left:" + round(htmlL / abPos.width * 100, pctPrecision) + "%;";
 				if (kind=="area") {
-					style += "width:" + round(htmlW/abW*100, pctPrecision) + "%;";
+					style += "width:" + round(htmlW / abPos.width * 100, pctPrecision) + "%;";
 				}
 			}
 		}
 	}
 	var frameLayer = makeKeyword(thisFrame.layer.name);
-	return 'class="' + nameSpace + frameLayer + " "+ nameSpace + "aiAbs" +
+	return 'class="' + nameSpace + frameLayer + " " + nameSpace + "aiAbs" +
 		(textIsTransformed(thisFrame) && kind == "point" ? ' g-aiPtransformed' : '') +
 		'" style="' + style + '"';
 }
 
 // Add ai2html settings contained in a text frame to the document settings
-function parseTextFrameSettings(frame, docSettings) {
+//
+function parseSettingsTextBlock(frame, docSettings) {
 	for (var p=1; p<frame.paragraphs.length; p++) {
 		try {
 			var thisParagraph    = frame.paragraphs[p].contents;
@@ -2506,10 +2457,10 @@ function parseTextFrameSettings(frame, docSettings) {
 			if (hashKey=="output" && hashValue=="preview-one-file")           { hashValue="one-file"; }
 			if (hashKey=="output" && hashValue=="preview-multiple-files")     { hashValue="multiple-files"; }
 			// handle stuff that goes in config file and other exceptions, like array values
-			if (hashKey in ai2htmlBaseSettings && ai2htmlBaseSettings[hashKey].includeInConfigFile) {
+			if ((hashKey in ai2htmlBaseSettings) && ai2htmlBaseSettings[hashKey].includeInConfigFile) {
 				hashValue = (hashValue.replace( /(["])/g , '\\$1' )); // add stuff to ["] for chars that need to be esc in yml file
 			} else {
-				if (hashKey in ai2htmlBaseSettings && ai2htmlBaseSettings[hashKey].inputType=="array") {
+				if ((hashKey in ai2htmlBaseSettings) && ai2htmlBaseSettings[hashKey].inputType=="array") {
 					hashValue = hashValue.replace( /[\s,]+/g , ',' );
 					if (hashValue.length === 0) {
 						hashValue = []; // have to do this because .split always returns an array of length at least 1 even if it's splitting an emptry string
@@ -2520,5 +2471,112 @@ function parseTextFrameSettings(frame, docSettings) {
 			}
 			docSettings[hashKey] = hashValue;
 		} catch(e) {}
+	}
+}
+
+// TODO: value could change during program execution -- does this matter?
+function getDateTimeStamp() {
+	var d             = new Date();
+	var currYear      = d.getFullYear();
+	var currDate      = zeroPad(d.getDate(),2);
+	var currMonth     = zeroPad(d.getMonth() + 1,2); //Months are zero based
+	var currHour      = zeroPad(d.getHours(),2);
+	var currMin       = zeroPad(d.getMinutes(),2);
+  return currYear + "-" + currMonth + "-" + currDate + " - " + currHour + ":" + currMin;
+}
+
+// Write a complete HTML page to a file for NYT Preview
+function outputLocalPreviewPage(textForFile, localPreviewDestination, docSettings) {
+	var localPreviewTemplateFile = new File(docPath + docSettings.local_preview_template);
+	var localPreviewTemplateText = readTextFileAndPutIntoAVariable(localPreviewTemplateFile,"","","\n");
+
+	var localPreviewHtml = applyTemplate(localPreviewTemplateText, docSettings);
+	docSettings.ai2htmlPartial = textForFile; // TODO: don't modify global settings this way
+	outputHtml(localPreviewHtml, localPreviewDestination);
+}
+
+// Place generated HTML for an artboard or artboards on an HTML page and write to a file (or files)
+function generateHtml(responsiveHtml, docName, docSettings) {
+	pBar.setTitle('Writing HTML output...');
+
+	var multiMode = docSettings.output == 'multiple-files';
+	var docKey = makeKeyword(docName);
+	var dateTimeStamp = getDateTimeStamp();
+	var responsiveJs = '\t<script src="_assets/resizerScript.js"></script>' + "\n";
+	var responsiveCss = '\t<link rel="stylesheet" href="_assets/resizerStyle.css">' + "\n";
+	if (docSettings.include_resizer_css_js=="no"||docSettings.ai2html_environment!="nyt") {
+		responsiveJs  = "";
+		responsiveCss = "";
+	}
+	if (docSettings.include_resizer_script=="yes") {
+		responsiveJs  = '\t' + getResizerScript() + '\n';
+		responsiveCss = "";
+	}
+	var responsiveTextScoop       = responsiveHtml;
+	var textForFile               = "";
+	var htmlFileDestinationFolder = "";
+	var htmlFileDestination       = "";
+	var headerText = "<div id='" + nameSpace + docKey + "-box' class='ai2html'>\r";
+	headerText += "\t<!-- Generated by ai2html v" + scriptVersion + " - " + dateTimeStamp + " -->\r";
+	headerText += "\t<!-- ai file: " + docSettings.project_name + " -->\r";
+	if (docSettings.ai2html_environment == "nyt") {
+		headerText += "\t<!-- preview: " + docSettings.preview_slug + " -->\r";
+		headerText += "\t<!-- scoop  : " + docSettings.scoop_slug_from_config_yml + " -->\r";
+	}
+	headerText += "\r";
+	headerText += "\t<style type='text/css' media='screen,print'>\r";
+	if (docSettings.max_width !== "") {
+		headerText += "\t\t#" + nameSpace + docKey + "-box {\r";
+		headerText += "\t\t\tmax-width:" + docSettings.max_width + "px;\r";
+		headerText += "\t\t}\r";
+	}
+	if (docSettings.center_html_output) {
+		headerText += "\t\t." + nameSpace + "artboard {\r";
+		headerText += "\t\t\tmargin:0 auto;\r";
+		headerText += "\t\t}\r";
+	}
+	if (multiMode && docSettings.clickable_link !== "") {
+		headerText += "\t\t." + nameSpace + "ai2htmlLink {\r";
+		headerText += "\t\t\tdisplay: block;\r";
+		headerText += "\t\t}\r";
+	}
+	headerText += "\t</style>\r";
+	headerText += "\r";
+	if (multiMode && docSettings.clickable_link !== "") {
+		headerText += "\t<a class='" + nameSpace+"ai2htmlLink' href='" + docSettings.clickable_link + "'>\r";
+	}
+
+	var footerText = "";
+	if (multiMode && docSettings.clickable_link !== "") {
+		footerText += "\t</a>\r";
+	}
+	footerText += "\t<!-- End ai2html" + " - " + dateTimeStamp + " -->\r</div>\r";
+
+	textForFile += headerText;
+	if (previewProjectType == "ai2html") { textForFile += responsiveCss; }
+	if (customCssBlocks>0)             { textForFile += customCss;     }
+	textForFile += responsiveTextScoop;
+	if (customHtml.length>0)           { textForFile += customHtml;    }
+	if (customJs.length>0)             { textForFile += customJs;      }
+	if (responsiveJs.length>0)         { textForFile += responsiveJs;  }
+
+	textForFile += footerText;
+	textForFile  = applyTemplate(textForFile, docSettings);
+	// textForFile  = straightenCurlyQuotesInsideAngleBrackets(textForFile);
+
+	htmlFileDestinationFolder = docPath + docSettings.html_output_path;
+	checkForOutputFolder(htmlFileDestinationFolder, "html_output_path");
+
+	htmlFileDestination = htmlFileDestinationFolder + docKey + docSettings.html_output_extension;
+	if (multiMode && previewProjectType == 'ai2html') {
+		htmlFileDestination = htmlFileDestinationFolder + "index" + docSettings.html_output_extension;
+	}
+	outputHtml(textForFile, htmlFileDestination);
+
+	// process local preview template if appropriate
+	if (docSettings.local_preview_template !== "") {
+		// TODO: may have missed a condition, need to compare with original version
+		var previewFileDestination = htmlFileDestinationFolder + docKey + ".preview.html";
+		outputLocalPreviewPage(textForFile, previewFileDestination, docSettings);
 	}
 }
