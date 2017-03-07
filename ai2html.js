@@ -1259,6 +1259,14 @@ function getDateTimeStamp() {
   return currYear + "-" + currMonth + "-" + currDate + " - " + currHour + ":" + currMin;
 }
 
+// Append a value to an array only if not already present
+// (Useful for warnings)
+/*
+function pushIfUnique(arr, val) {
+	if (arr.indexOf(val) == -1) arr.push(val);
+}
+*/
+
 
 // =====================================
 // AI specific utility functions
@@ -1955,7 +1963,7 @@ function getParagraphStyle(p) {
  	// TODO: fix opacity -- try checking text frame // Math.round(p.opacity);
 	s.opacity = 100;
 	s.key = s.aifont + '~' + s.size + '~' + s.capitalization + '~' + s.tracking +
-		'~' + s.rgb + s.leading + '~' + s.spaceBefore + '~' +
+		'~' + s.color + s.leading + '~' + s.spaceBefore + '~' +
 		'~' + s.spaceAfter + '~' + s.opacity;
 	return s;
 }
@@ -1977,6 +1985,7 @@ function getParagraphClass(style, classes) {
 	return o.classname;
 }
 
+
 function convertParagraphSegments(arr) {
 	var html = "", o;
 	for (var i=0; i<arr.length; i++) {
@@ -1985,6 +1994,9 @@ function convertParagraphSegments(arr) {
 			html += '<span style="' + o.css + '">' + o.text + '</span>';
 		} else {
 			html += o.text;
+		}
+		if (o.warning) {
+			warnings.push(o.warning + "Text: \u201C" + o.text + "\u201D");
 		}
 	}
 	return html;
@@ -1995,6 +2007,7 @@ function convertParagraphSegments(arr) {
 //
 function convertParagraph(p, classes) {
 	var style = getParagraphStyle(p);
+	feedback.push(JSON.stringify(style));
 	var segments = getParagraphSegments(p, style);
 	return {
 		style: style,
@@ -2077,8 +2090,8 @@ function generateStyleCss(s, inline) {
 	if (s.capitalization && (tmp = getCapitalizationCss(s.capitalization))) {
 		styles.push("text-transform:" + tmp + ";");
 	}
-	if (s.rgb) {
-		styles.push("color:" + s.rgb + ";");
+	if (s.color) {
+		styles.push("color:" + s.color + ";");
 	}
 
 	if (!styles.length) {
@@ -2097,7 +2110,7 @@ function generateStyleCss(s, inline) {
 // pstyle: parsed paragraph style
 //
 function getParagraphSegments(p, pstyle) {
-	var properties = 'aifont,size,capitalization,tracking,rgb'.split(',');
+	var properties = 'aifont,size,capitalization,tracking,color'.split(',');
 	var segments = [];
 	var currRange;
 	var prev, curr, diff, cstr;
@@ -2132,10 +2145,21 @@ function getCharStyleDiff(a, b, properties) {
 	return diff;
 }
 
+function getCssColor(r, g, b) {
+	return 'rgb(' + r + ',' + g + ',' + b + ')';
+}
+
 // Parse an AI CharacterAttributes object
 function getCharStyle(c) {
 	var fill = c.fillColor;
-	var r, g, b, caps;
+	var caps = String(c.capitalization);
+	var o = {
+		aifont: c.textFont.name,
+		size: Math.round(c.size),
+		capitalization: caps == 'FontCapsOption.NORMALCAPS' ? '' : caps,
+		tracking: c.tracking
+	};
+	var r, g, b;
 	if (fill.typename == 'RGBColor') {
 		r = fill.red;
 		g = fill.green;
@@ -2148,17 +2172,14 @@ function getCharStyle(c) {
 	} else if (fill.typename == 'NoColor') {
 		g = 255;
 		r = b = 0;
+		// warnings is processed later, after ranges of same-style chars are identified
+		o.warning = "This text has no fill. Please fill it with an RGB color. It has been filled with green.";
 	} else {
 		r = g = b = 0;
+		o.warning = "This text is filled with a non-RGB color. Please fill it with an RGB color."
 	}
-	caps = String(c.capitalization);
-	return {
-		aifont: c.textFont.name,
-		size: Math.round(c.size),
-		capitalization: caps == 'FontCapsOption.NORMALCAPS' ? '' : caps,
-		tracking: c.tracking,
-		rgb: 'rgb(' + r + ',' + g + ',' + b + ')'
-	};
+	o.color = getCssColor(r, g, b);
+	return o;
 }
 
 // No longer used
