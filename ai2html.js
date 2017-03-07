@@ -990,7 +990,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 		T.stop("Text generation");
 
 		// Concatenate html fragments
-		responsiveHtml = html.join('');
+		responsiveHtml += html.join('');
 
 		T.start();
 		// Hide text frames in preparation for image generation
@@ -1798,6 +1798,7 @@ function getResizerScript() {
 	          maxwidth = el.getAttribute("data-max-width");
 	      widthById[parent.id] = width;
 
+	      console.log(">> resizer minw:", minwidth, "maxw:", maxwidth, "w:", width);
 	      if (+minwidth <= width && (+maxwidth >= width || maxwidth === null)) {
 	        var img = el.querySelector(".g-aiImg");
 	        if (img.getAttribute("data-src") && img.getAttribute("src") != img.getAttribute("data-src")) {
@@ -2433,14 +2434,15 @@ function getTextFrameCss(thisFrame, artboardRect) {
 
 // Add ai2html settings contained in a text frame to the document settings object
 function parseSettingsTextBlock(frame, docSettings) {
-	for (var p=1; p<frame.paragraphs.length; p++) {
-		try {
+	try {
+		for (var p=1; p<frame.paragraphs.length; p++) {
 			var thisParagraph    = frame.paragraphs[p].contents;
 			var hashKey          = thisParagraph.replace( /^[ \t]*([^ \t:]*)[ \t]*:(.*)$/ , "$1" );
 			var hashValue        = thisParagraph.replace( /^[ \t]*([^ \t:]*)[ \t]*:(.*)$/ , "$2" );
-			hashKey              = hashKey.replace( /^\s+/ , "" ).replace( /\s+$/ , "" );
-			hashValue            = hashValue.replace( /^\s+/ , "" ).replace( /\s+$/ , "" );
+			hashKey              = trim(hashKey);
+			hashValue            = trim(hashValue);
 			hashValue            = straightenCurlyQuotesInsideAngleBrackets(hashValue);
+
 			// replace values from old versions of script with current values
 			if (hashKey=="output" && hashValue=="one-file-for-all-artboards") { hashValue="one-file"; }
 			if (hashKey=="output" && hashValue=="one-file-per-artboard")      { hashValue="multiple-files"; }
@@ -2460,7 +2462,9 @@ function parseSettingsTextBlock(frame, docSettings) {
 				}
 			}
 			docSettings[hashKey] = hashValue;
-		} catch(e) {}
+		}
+	} catch(e) {
+		errors.push("Error parsing settings block: " + e.message);
 	}
 }
 
@@ -2468,9 +2472,8 @@ function parseSettingsTextBlock(frame, docSettings) {
 function outputLocalPreviewPage(textForFile, localPreviewDestination, docSettings) {
 	var localPreviewTemplateFile = new File(docPath + docSettings.local_preview_template);
 	var localPreviewTemplateText = readTextFileAndPutIntoAVariable(localPreviewTemplateFile,"","","\n");
-
-	var localPreviewHtml = applyTemplate(localPreviewTemplateText, docSettings);
 	docSettings.ai2htmlPartial = textForFile; // TODO: don't modify global settings this way
+	var localPreviewHtml = applyTemplate(localPreviewTemplateText, docSettings);
 	outputHtml(localPreviewHtml, localPreviewDestination);
 }
 
