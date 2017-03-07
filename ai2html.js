@@ -1959,7 +1959,8 @@ function getParagraphStyle(p) {
 	s.leading = Math.round(p.leading);
 	s.spaceBefore = Math.round(p.spaceBefore);
 	s.spaceAfter = Math.round(p.spaceAfter);
-	s.justification = p.justification;
+	s.justification = String(p.justification);
+
  	// TODO: fix opacity -- try checking text frame // Math.round(p.opacity);
 	s.opacity = 100;
 	s.key = s.aifont + '~' + s.size + '~' + s.capitalization + '~' + s.tracking +
@@ -2084,8 +2085,8 @@ function generateStyleCss(s, inline) {
 	if (('tracking' in s) && s.tracking !== 0) {
 		styles.push("letter-spacing:" + (s.tracking / 1200) + "em;");
 	}
-	if (s.justification) {
-		styles.push("text-align:" + getJustificationCss(s.justification) + ";");
+	if (s.justification && (tmp = getJustificationCss(s.justification))) {
+		styles.push("text-align:" + tmp + ";");
 	}
 	if (s.capitalization && (tmp = getCapitalizationCss(s.capitalization))) {
 		styles.push("text-transform:" + tmp + ";");
