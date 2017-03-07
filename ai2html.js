@@ -2427,8 +2427,7 @@ function getTextFrameCss(thisFrame, artboardRect) {
 		'" style="' + style + '"';
 }
 
-// Add ai2html settings contained in a text frame to the document settings
-//
+// Add ai2html settings contained in a text frame to the document settings object
 function parseSettingsTextBlock(frame, docSettings) {
 	for (var p=1; p<frame.paragraphs.length; p++) {
 		try {
@@ -2461,7 +2460,7 @@ function parseSettingsTextBlock(frame, docSettings) {
 	}
 }
 
-// Write a complete HTML page to a file for NYT Preview
+// Write an HTML page to a file for NYT Preview
 function outputLocalPreviewPage(textForFile, localPreviewDestination, docSettings) {
 	var localPreviewTemplateFile = new File(docPath + docSettings.local_preview_template);
 	var localPreviewTemplateText = readTextFileAndPutIntoAVariable(localPreviewTemplateFile,"","","\n");
@@ -2471,7 +2470,7 @@ function outputLocalPreviewPage(textForFile, localPreviewDestination, docSetting
 	outputHtml(localPreviewHtml, localPreviewDestination);
 }
 
-// Place generated HTML for an artboard or artboards on an HTML page and write to a file (or files)
+// Wrap artboard HTML in a <div>, add styles and resizer script, write to a file
 function generateHtml(responsiveHtml, docName, docSettings) {
 	pBar.setTitle('Writing HTML output...');
 
