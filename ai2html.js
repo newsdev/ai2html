@@ -943,9 +943,9 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 
 		var selectFrames  = findTextFramesToRender(doc.textFrames, activeArtboardRect);
 
-		//
+		// ========================
 		// Convert text objects
-		//
+		// ========================
 		T.start();
 		pBar.setTitle(docArtboardName + ': Generating text...');
 		var pClasses = [];
@@ -1005,7 +1005,11 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 			}
 		}
 
-		// Generate image(s) of artboard
+
+		// ==========================
+		// Generate artboard image(s)
+		// ==========================
+
 		if (docSettings.write_image_files=="yes") {
 			pBar.setTitle(docArtboardName + ': Writing image...');
 
