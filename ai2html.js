@@ -20,7 +20,6 @@ var scriptEnvironment = "nyt";
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 // =====================================
 // How to install ai2html
 // =====================================
@@ -41,461 +40,12 @@ var scriptEnvironment = "nyt";
 // - Go to the folder containing your Illustrator file. Inside will be a folder called ai2html-output.
 // - Open the html files in your browser to preview your output.
 
-// Adding [].indexOf to Illustrator JavaScript
-if (!Array.prototype.indexOf) {
-    Array.prototype.indexOf = function(elt /*, from*/) {
-        var len = this.length;
-        var from = Number(arguments[1]) || 0;
-        from = (from < 0) ? Math.ceil(from) : Math.floor(from);
-        if (from < 0) from += len;
-        for (; from < len; from++) {
-            if (from in this && this[from] === elt) return from;
-        }
-        return -1;
-   };
-}
+// add polyfills, etc
+initScriptEnvironment();
 
 if (!app.documents.length) {
 	throw " No documents are open";
 }
-
-// mbloch development stuff
-
-// include JSON for development - mbloch
-// @include "lib/json2.js"
-
-// Performance timing using T.start() and T.stop("message")
-var T = {
-  stack: [],
-  start: function() {
-    T.stack.push(+new Date());
-  },
-  stop: function(note) {
-    var msg = (+new Date() - T.stack.pop()) + 'ms';
-    if (note) msg += " - " + note;
-    feedback.push(msg);
-  }
-};
-
-// =====================================
-// functions
-// =====================================
-
-// html entity substitution
-// not used ==> ["\x22","&quot;"], ["\x3C","&lt;"], ["\x3E","&gt;"], ["\x26","&amp;"],
-var htmlCharacterCodes = [["\xA0","&nbsp;"], ["\xA1","&iexcl;"], ["\xA2","&cent;"], ["\xA3","&pound;"], ["\xA4","&curren;"], ["\xA5","&yen;"], ["\xA6","&brvbar;"], ["\xA7","&sect;"], ["\xA8","&uml;"], ["\xA9","&copy;"], ["\xAA","&ordf;"], ["\xAB","&laquo;"], ["\xAC","&not;"], ["\xAD","&shy;"], ["\xAE","&reg;"], ["\xAF","&macr;"], ["\xB0","&deg;"], ["\xB1","&plusmn;"], ["\xB2","&sup2;"], ["\xB3","&sup3;"], ["\xB4","&acute;"], ["\xB5","&micro;"], ["\xB6","&para;"], ["\xB7","&middot;"], ["\xB8","&cedil;"], ["\xB9","&sup1;"], ["\xBA","&ordm;"], ["\xBB","&raquo;"], ["\xBC","&frac14;"], ["\xBD","&frac12;"], ["\xBE","&frac34;"], ["\xBF","&iquest;"], ["\xD7","&times;"], ["\xF7","&divide;"], ["\u0192","&fnof;"], ["\u02C6","&circ;"], ["\u02DC","&tilde;"], ["\u2002","&ensp;"], ["\u2003","&emsp;"], ["\u2009","&thinsp;"], ["\u200C","&zwnj;"], ["\u200D","&zwj;"], ["\u200E","&lrm;"], ["\u200F","&rlm;"], ["\u2013","&ndash;"], ["\u2014","&mdash;"], ["\u2018","&lsquo;"], ["\u2019","&rsquo;"], ["\u201A","&sbquo;"], ["\u201C","&ldquo;"], ["\u201D","&rdquo;"], ["\u201E","&bdquo;"], ["\u2020","&dagger;"], ["\u2021","&Dagger;"], ["\u2022","&bull;"], ["\u2026","&hellip;"], ["\u2030","&permil;"], ["\u2032","&prime;"], ["\u2033","&Prime;"], ["\u2039","&lsaquo;"], ["\u203A","&rsaquo;"], ["\u203E","&oline;"], ["\u2044","&frasl;"], ["\u20AC","&euro;"], ["\u2111","&image;"], ["\u2113",""], ["\u2116",""], ["\u2118","&weierp;"], ["\u211C","&real;"], ["\u2122","&trade;"], ["\u2135","&alefsym;"], ["\u2190","&larr;"], ["\u2191","&uarr;"], ["\u2192","&rarr;"], ["\u2193","&darr;"], ["\u2194","&harr;"], ["\u21B5","&crarr;"], ["\u21D0","&lArr;"], ["\u21D1","&uArr;"], ["\u21D2","&rArr;"], ["\u21D3","&dArr;"], ["\u21D4","&hArr;"], ["\u2200","&forall;"], ["\u2202","&part;"], ["\u2203","&exist;"], ["\u2205","&empty;"], ["\u2207","&nabla;"], ["\u2208","&isin;"], ["\u2209","&notin;"], ["\u220B","&ni;"], ["\u220F","&prod;"], ["\u2211","&sum;"], ["\u2212","&minus;"], ["\u2217","&lowast;"], ["\u221A","&radic;"], ["\u221D","&prop;"], ["\u221E","&infin;"], ["\u2220","&ang;"], ["\u2227","&and;"], ["\u2228","&or;"], ["\u2229","&cap;"], ["\u222A","&cup;"], ["\u222B","&int;"], ["\u2234","&there4;"], ["\u223C","&sim;"], ["\u2245","&cong;"], ["\u2248","&asymp;"], ["\u2260","&ne;"], ["\u2261","&equiv;"], ["\u2264","&le;"], ["\u2265","&ge;"], ["\u2282","&sub;"], ["\u2283","&sup;"], ["\u2284","&nsub;"], ["\u2286","&sube;"], ["\u2287","&supe;"], ["\u2295","&oplus;"], ["\u2297","&otimes;"], ["\u22A5","&perp;"], ["\u22C5","&sdot;"], ["\u2308","&lceil;"], ["\u2309","&rceil;"], ["\u230A","&lfloor;"], ["\u230B","&rfloor;"], ["\u2329","&lang;"], ["\u232A","&rang;"], ["\u25CA","&loz;"], ["\u2660","&spades;"], ["\u2663","&clubs;"], ["\u2665","&hearts;"], ["\u2666","&diams;"]];
-
-
-// http://samuelmullen.com/2012/03/left-pad-zeroes-in-javascript/
-var zeroPad = function(value, padding) {
-	var zeroes = "0";
-	for (var i = 0; i < padding; i++) { zeroes += "0"; }
-	return (zeroes + value).slice(padding * -1);
-};
-
-// multiple key sorting function from https://github.com/Teun/thenBy.js
-// first by length of name, then by population, then by ID
-// data.sort(
-//     firstBy(function (v1, v2) { return v1.name.length - v2.name.length; })
-//     .thenBy(function (v1, v2) { return v1.population - v2.population; })
-//     .thenBy(function (v1, v2) { return v1.id - v2.id; });
-// );
-var firstBy = (function() {
-    /* mixin for the `thenBy` property */
-    function extend(f) {
-        f.thenBy = tb;
-        return f;
-    }
-    /* adds a secondary compare function to the target function (`this` context)
-       which is applied in case the first one returns 0 (equal)
-       returns a new compare function, which has a `thenBy` method as well */
-    function tb(y) {
-        var x = this;
-        return extend(function(a, b) {
-            return x(a,b) || y(a,b);
-        });
-    }
-    return extend;
-})();
-
-var cleanText = function(text) {
-	for (var i=0; i < htmlCharacterCodes.length; i++) {
-		var charCode = htmlCharacterCodes[i];
-		if (text.indexOf(charCode[0]) > -1) {
-			text = text.replace(new RegExp(charCode[0],'g'), charCode[1]);
-		}
-	}
-	return text;
-};
-
-var straightenCurlyQuotesInsideAngleBrackets = function(text) {
-	// thanks to jashkenas
-	var tagFinder = /<[^\n]+?>/g;
-	var quoteFinder = /[\u201C‘’\u201D]([^\n]*?)[\u201C‘’\u201D]/g;
-	return text.replace(tagFinder, function(tag){
-		return tag.replace( /[\u201C\u201D]/g , '"' ).replace( /[‘’]/g , "'" );
-	});
-};
-
-var exportImageFiles = function(dest,width,height,formats,initialScaling,doubleres) {
-	// alert(formats);
-	// width and height are the artboard width and height and only used to determine whether or not to double res
-	// initialScaling is the proportion to scale the base image before considering whether to double res. Usually just 1.
-	// Exports current document to dest as a PNG8 file with specified
-	// options, dest contains the full path including the file name
-	// doubleres is "yes" or "no" whether you want to allow images to be double res
-	// if you want to force ai2html to use doubleres, use "always"
-	var pngImageScaling, pngExportOptions, pngFileSpec, pngType,
-			jpgImageScaling, jpgExportOptions, jpgFileSpec, jpgType,
-			svgExportOptions, svgFileSpec, svgType;
-
-	if (doubleres=="yes" || doubleres=="always") {
-		// if image is too big to use double-res, then just output single-res.
-		pngImageScaling = 200 * initialScaling;
-		jpgImageScaling = 200 * initialScaling;
-		if (doubleres == 'always' || ((width*height) < (3*1024*1024/4) || (width >= 945))) {
-			// <3
-			// feedback.push("The jpg and png images are double resolution.");
-		} else if ( (width*height) < (3*1024*1024) ) {
-			// .75-3
-			pngImageScaling = 100;
-			// feedback.push("The png image is single resolution.");
-			// feedback.push("The jpg image is double resolution.");
-		} else if ( (width*height) < (32*1024*1024/4) ) {
-			// 3-8
-			pngImageScaling = 100;
-			// warnings.push("The png image is single resolution, but is too large to display on first-generation iPhones.");
-			// feedback.push("The jpg image is double resolution.");
-		} else if ( (width*height) < (32*1024*1024) ) {
-			// 8-32
-			pngImageScaling = 100;
-			jpgImageScaling = 100;
-			// warnings.push("The png image is single resolution, but is too large to display on first-generation iPhones.");
-			// feedback.push("The jpg image is single resolution.");
-		} else {
-			// 32+
-			pngImageScaling = 100;
-			jpgImageScaling = 100;
-			// warnings.push("The jpg and png images are single resolution, but are too large to display on first-generation iPhones.");
-		}
-	} else {
-		pngImageScaling = 100 * initialScaling;
-		jpgImageScaling = 100 * initialScaling;
-	}
-	// alert("scaling\npngImageScaling = " + pngImageScaling + "\njpgImageScaling = " + jpgImageScaling);
-
-	for (var formatNumber = 0; formatNumber < formats.length; formatNumber++) {
-		var format = formats[formatNumber];
-		if (format=="png") {
-			pngExportOptions = new ExportOptionsPNG8();
-			pngType = ExportType.PNG8;
-			pngFileSpec = new File(dest);
-			pngExportOptions.colorCount       = docSettings.png_number_of_colors;
-			pngExportOptions.transparency     = (docSettings.png_transparent==="no") ? false : true;
-			pngExportOptions.artBoardClipping = true;
-			pngExportOptions.antiAliasing     = false;
-			pngExportOptions.horizontalScale  = pngImageScaling;
-			pngExportOptions.verticalScale    = pngImageScaling;
-			app.activeDocument.exportFile( pngFileSpec, pngType, pngExportOptions );
-			// feedback.push("pngExportOptions.png_number_of_colors = " + pngExportOptions.colorCount);
-			// feedback.push("pngExportOptions.transparency = " + pngExportOptions.transparency);
-
-		} else if (format=="png24") {
-			pngExportOptions = new ExportOptionsPNG24();
-			pngType = ExportType.PNG24;
-			pngFileSpec = new File(dest);
-			pngExportOptions.transparency     = (docSettings.png_transparent==="no") ? false : true;
-			pngExportOptions.artBoardClipping = true;
-			pngExportOptions.antiAliasing     = false;
-			pngExportOptions.horizontalScale  = pngImageScaling;
-			pngExportOptions.verticalScale    = pngImageScaling;
-			app.activeDocument.exportFile( pngFileSpec, pngType, pngExportOptions );
-
-		} else if (format=="svg") {
-			svgExportOptions = new ExportOptionsSVG();
-			svgType = ExportType.SVG;
-			// alert("This will be the svg dest: " + dest);
-			svgFileSpec = new File(dest);
-			svgExportOptions.embedAllFonts         = false;
-			svgExportOptions.fontSubsetting        = SVGFontSubsetting.None;
-			svgExportOptions.compressed            = false;
-			svgExportOptions.documentEncoding      = SVGDocumentEncoding.UTF8;
-			svgExportOptions.embedRasterImages     = (docSettings.svg_embed_images==="yes") ? true : false;
-			// svgExportOptions.horizontalScale       = initialScaling;
-			// svgExportOptions.verticalScale         = initialScaling;
-			svgExportOptions.saveMultipleArtboards = false;
-			svgExportOptions.DTD                   = SVGDTDVersion.SVG1_1; // SVG1_0 SVGTINY1_1 <=default SVG1_1 SVGTINY1_1PLUS SVGBASIC1_1 SVGTINY1_2
-			svgExportOptions.cssProperties         = SVGCSSPropertyLocation.STYLEATTRIBUTES; // ENTITIES STYLEATTRIBUTES <=default PRESENTATIONATTRIBUTES STYLEELEMENTS
-			app.activeDocument.exportFile( svgFileSpec, svgType, svgExportOptions );
-
-		} else if (format=="jpg") {
-			if (jpgImageScaling > maxJpgImageScaling) {
-				jpgImageScaling = maxJpgImageScaling;
-				var promoImageFileName = dest.split("/").slice(-1)[0];
-				feedback.push(promoImageFileName + ".jpg was output at a lower scaling than desired because of a limit on jpg exports in Illustrator. If the file needs to be larger, change the image format to png which does not appear to have limits.");
-			}
-			jpgExportOptions = new ExportOptionsJPEG();
-			jpgType = ExportType.JPEG;
-			jpgFileSpec = new File(dest);
-			jpgExportOptions.artBoardClipping = true;
-			jpgExportOptions.antiAliasing     = false;
-			jpgExportOptions.qualitySetting   = docSettings.jpg_quality;
-			jpgExportOptions.horizontalScale  = jpgImageScaling;
-			jpgExportOptions.verticalScale    = jpgImageScaling;
-			app.activeDocument.exportFile( jpgFileSpec, jpgType, jpgExportOptions );
-			// feedback.push("jpgExportOptions.qualitySetting = " + jpgExportOptions.qualitySetting);
-		}
-	}
-};
-
-var isEmpty = function(str) {
-	return (!str || 0 === str.length);
-};
-
-var isBlank = function(str) {
-	return (!str || /^\s*$/.test(str));
-};
-
-var makeKeyword = function(text) {
-	// text = text.replace( /[^A-Za-z0-9_\-]/g , "_" ).toLowerCase();
-	text = text.replace( /[^A-Za-z0-9_\-]/g , "_" );
-	return text;
-};
-
-var unlockStuff = function(parentObj) {
-	if (parentObj.typename=="Layer" || parentObj.typename=="Document") {
-		for (var layerNo = 0; layerNo < parentObj.layers.length; layerNo++) {
-			var currentLayer = parentObj.layers[layerNo];
-			if (currentLayer.locked === true) {
-				currentLayer.locked = false;
-				lockedObjects.push(currentLayer);
-			}
-			if (currentLayer.visible === false) {
-				currentLayer.visible = true;
-				hiddenObjects.push(currentLayer);
-			}
-			unlockStuff(currentLayer);
-		}
-	}
-	for (var groupItemsNo = 0; groupItemsNo < parentObj.groupItems.length; groupItemsNo++) {
-		var currentGroupItem = parentObj.groupItems[groupItemsNo];
-		if (currentGroupItem.locked === true) {
-			currentGroupItem.locked = false;
-			lockedObjects.push(currentGroupItem);
-		}
-		unlockStuff(currentGroupItem);
-	}
-	for (var textFrameNo = 0; textFrameNo < parentObj.textFrames.length; textFrameNo++) {
-		var currentTextFrame = parentObj.textFrames[textFrameNo];
-		// this line is producing the MRAP error!!!
-		if (currentTextFrame.locked === true) {
-			currentTextFrame.locked = false;
-			lockedObjects.push(currentTextFrame);
-		}
-	}
-};
-
-var hideTextFrame = function(textFrame) {
-	textFramesToUnhide.push(textFrame);
-	textFrame.hidden = true;
-};
-
-var roundTo = function(numberToRound,decimalPlaces) {
-	var roundedNumber = Math.round(numberToRound * Math.pow(10,decimalPlaces)) / Math.pow(10,decimalPlaces);
-	return roundedNumber;
-};
-
-var createPromoImage = function(abNumber) {
-	doc.artboards.setActiveArtboardIndex(abNumber);
-	var activeArtboard       =  doc.artboards[abNumber],
-			activeArtboardRect   =  activeArtboard.artboardRect,
-			abX                  =  activeArtboardRect[0],
-			abY                  = -activeArtboardRect[1],
-			abW                  =  Math.round(activeArtboardRect[2]-abX),
-			abH                  = -activeArtboardRect[3]-abY,
-			artboardAspectRatio  =  abH/abW,
-			artboardName         =  makeKeyword(activeArtboard.name),
-			docArtboardName      =  makeKeyword(docSettings.project_name) + "-" + artboardName + "-" + abNumber,
-			imageDestination     =  docPath + docArtboardName + "-promo",
-			promoImageAspect     =  promoImageMinHeight/promoImageMinWidth,
-			promoScale           =  1;
-	if (artboardAspectRatio > promoImageAspect) {
-		promoScale = promoImageMinWidth/abW;
-		if (abH * promoScale > promoImageMaxHeight) {
-			promoScale = promoImageMaxHeight/abH;
-		}
-	} else {
-		promoScale = promoImageMinHeight/abH;
-		if (abW * promoScale > promoImageMaxWidth) {
-			promoScale = promoImageMaxWidth/abW;
-		}
-	}
-
-	var promoW = abW * promoScale;
-	var promoH = abH * promoScale;
-
-	// feedback.push("promoImageAspect = " + promoImageAspect + "\r" +
-	// 	"abNumber = " + abNumber + "\r" +
-	// 	"artboardAspectRatio = " + artboardAspectRatio + "\r" +
-	// 	"promoScale = " + promoScale + "\r" +
-	// 	"abW = " + abW + "\r" +
-	// 	"abH = " + abH + "\r" +
-	// 	"promoW = " + promoW + "\r" +
-	// 	"promoH = " + promoH);
-
-	// alert("promoImageAspect = " + promoImageAspect + "\r" +
-	// 	"abNumber = " + abNumber + "\r" +
-	// 	"artboardAspectRatio = " + artboardAspectRatio + "\r" +
-	// 	"promoScale = " + promoScale + "\r" +
-	// 	"abW = " + abW + "\r" +
-	// 	"abH = " + abH + "\r" +
-	// 	"promoW = " + promoW + "\r" +
-	// 	"promoH = " + promoH);
-
-	// var promoImageFormat = [];
-	// if (docSettings.image_format[0]=="png" ||
-	// 	docSettings.image_format[0]=="png24" ||
-	// 	docSettings.image_format[0]=="svg")
-	// {
-	// 	promoImageFormat.push("png");
-	// } else {
-	// 	promoImageFormat.push(docSettings.image_format[0]);
-	// };
-
-	var promoImageFormats = [];
-	for (var formatNo = 0; formatNo < docSettings.image_format.length; formatNo++) {
-		var promoFormat = docSettings.image_format[formatNo];
-		if (promoFormat=="png" ||
-			promoFormat=="png24" ||
-			promoFormat=="svg")
-		{
-			promoImageFormats.push("png");
-		} else {
-			promoImageFormats.push(promoFormat);
-		}
-	}
-
-	pBar.setTitle(artboardName + ': Writing promo image...');
-
-	var tempPNGtransparency = docSettings.png_transparent;
-	docSettings.png_transparent = "no";
-	if (docSettings.write_image_files=="yes") {
-		exportImageFiles(imageDestination,promoW,promoH,promoImageFormats,promoScale,"no");
-	}
-	docSettings.png_transparent = tempPNGtransparency;
-};
-
-var applyTemplate = function(template,atObject) {
-	var newText = template;
-	for (var atKey in atObject) {
-		var mustachePattern = new RegExp("\\{\\{\\{? *" + atKey + " *\\}\\}\\}?","g");
-		var ejsPattern      = new RegExp("\\<\\%[=]? *" + atKey + " *\\%\\>","g");
-		var replacePattern  = atObject[atKey];
-		newText = newText.replace( mustachePattern , replacePattern );
-		newText = newText.replace( ejsPattern      , replacePattern );
-	}
-	return newText;
-};
-
-var outputHtml = function(htmlText, fileDestination) {
-	var htmlFile = new File(fileDestination);
-	htmlFile.open("w", "TEXT", "TEXT");
-	htmlFile.lineFeed = "Unix";
-	htmlFile.encoding = "UTF-8";
-	htmlFile.writeln(htmlText);
-	htmlFile.close();
-};
-
-var readTextFileAndPutIntoAVariable = function(inputFile,starterText,linePrefix,lineSuffix) {
-	var outputText = starterText;
-	if ( inputFile.exists ) {
-		inputFile.open("r");
-		while (!inputFile.eof) {
-			outputText += linePrefix + inputFile.readln() + lineSuffix;
-		}
-		inputFile.close();
-	} else {
-		errors.push(inputFile + " could not be found.");
-	}
-	return outputText;
-};
-
-var checkForOutputFolder = function(folderPath, nickname) {
-	var outputFolder = new Folder( folderPath );
-	if (!outputFolder.exists) {
-		var outputFolderCreated = outputFolder.create();
-		if (outputFolderCreated) {
-			feedback.push("The " + nickname + " folder did not exist, so the folder was created.");
-		} else {
-			warnings.push("The " + nickname + " folder did not exist and could not be created.");
-		}
-	}
-};
-
-// ================================================
-// Progress bar
-// ================================================
-
-function progressBar() {
-  this.win = null;
-}
-
-progressBar.prototype.init = function() {
-  var min=0, max=100;
-
-  var win = new Window("palette", "Ai2html progress", [150, 150, 600, 260]);
-  this.win = win;
-
-  win.pnl = win.add("panel", [10, 10, 440, 100], "Progress");
-
-  win.pnl.progBar      = win.pnl.add("progressbar", [20, 35, 410, 60], min, max);
-  win.pnl.progBarLabel = win.pnl.add("statictext", [20, 20, 320, 35], min+"%");
-
-  win.show();
-
-  return true;
-};
-
-progressBar.prototype.setProgress = function(progress) {
-  var win = this.win;
-  var max = win.pnl.progBar.maxvalue,
-      min = win.pnl.progBar.minvalue;
-
-  // progress is always 0.0 to 1.0
-  var pct = progress * max;
-  win.pnl.progBar.value = pct;
-
-  this.setLabel();
-  win.update();
-};
-
-progressBar.prototype.getProgress = function() {
-  var win = this.win;
-  var max = win.pnl.progBar.maxvalue,
-      min = win.pnl.progBar.minvalue;
-
-  return this.win.pnl.progBar.value/max;
-};
-
-progressBar.prototype.setLabel = function() {
-  this.win.pnl.progBarLabel.text = Math.round(this.win.pnl.progBar.value) + "%";
-};
-
-progressBar.prototype.setTitle = function(title) {
-  this.win.pnl.text = title;
-  this.win.update();
-};
-
-progressBar.prototype.increment = function(amount) {
-  amount = amount || 0.01;
-  this.setProgress(this.getProgress() + amount);
-  this.win.update();
-};
-
-progressBar.prototype.close = function() {
-	this.win.update();
-	this.win.close();
-};
 
 // ================================================
 // ai2html and config settings
@@ -618,6 +168,10 @@ if (scriptEnvironment=="nyt") {
 // constants
 // ================================================
 
+// html entity substitution
+// not used ==> ["\x22","&quot;"], ["\x3C","&lt;"], ["\x3E","&gt;"], ["\x26","&amp;"],
+var htmlCharacterCodes = [["\xA0","&nbsp;"], ["\xA1","&iexcl;"], ["\xA2","&cent;"], ["\xA3","&pound;"], ["\xA4","&curren;"], ["\xA5","&yen;"], ["\xA6","&brvbar;"], ["\xA7","&sect;"], ["\xA8","&uml;"], ["\xA9","&copy;"], ["\xAA","&ordf;"], ["\xAB","&laquo;"], ["\xAC","&not;"], ["\xAD","&shy;"], ["\xAE","&reg;"], ["\xAF","&macr;"], ["\xB0","&deg;"], ["\xB1","&plusmn;"], ["\xB2","&sup2;"], ["\xB3","&sup3;"], ["\xB4","&acute;"], ["\xB5","&micro;"], ["\xB6","&para;"], ["\xB7","&middot;"], ["\xB8","&cedil;"], ["\xB9","&sup1;"], ["\xBA","&ordm;"], ["\xBB","&raquo;"], ["\xBC","&frac14;"], ["\xBD","&frac12;"], ["\xBE","&frac34;"], ["\xBF","&iquest;"], ["\xD7","&times;"], ["\xF7","&divide;"], ["\u0192","&fnof;"], ["\u02C6","&circ;"], ["\u02DC","&tilde;"], ["\u2002","&ensp;"], ["\u2003","&emsp;"], ["\u2009","&thinsp;"], ["\u200C","&zwnj;"], ["\u200D","&zwj;"], ["\u200E","&lrm;"], ["\u200F","&rlm;"], ["\u2013","&ndash;"], ["\u2014","&mdash;"], ["\u2018","&lsquo;"], ["\u2019","&rsquo;"], ["\u201A","&sbquo;"], ["\u201C","&ldquo;"], ["\u201D","&rdquo;"], ["\u201E","&bdquo;"], ["\u2020","&dagger;"], ["\u2021","&Dagger;"], ["\u2022","&bull;"], ["\u2026","&hellip;"], ["\u2030","&permil;"], ["\u2032","&prime;"], ["\u2033","&Prime;"], ["\u2039","&lsaquo;"], ["\u203A","&rsaquo;"], ["\u203E","&oline;"], ["\u2044","&frasl;"], ["\u20AC","&euro;"], ["\u2111","&image;"], ["\u2113",""], ["\u2116",""], ["\u2118","&weierp;"], ["\u211C","&real;"], ["\u2122","&trade;"], ["\u2135","&alefsym;"], ["\u2190","&larr;"], ["\u2191","&uarr;"], ["\u2192","&rarr;"], ["\u2193","&darr;"], ["\u2194","&harr;"], ["\u21B5","&crarr;"], ["\u21D0","&lArr;"], ["\u21D1","&uArr;"], ["\u21D2","&rArr;"], ["\u21D3","&dArr;"], ["\u21D4","&hArr;"], ["\u2200","&forall;"], ["\u2202","&part;"], ["\u2203","&exist;"], ["\u2205","&empty;"], ["\u2207","&nabla;"], ["\u2208","&isin;"], ["\u2209","&notin;"], ["\u220B","&ni;"], ["\u220F","&prod;"], ["\u2211","&sum;"], ["\u2212","&minus;"], ["\u2217","&lowast;"], ["\u221A","&radic;"], ["\u221D","&prop;"], ["\u221E","&infin;"], ["\u2220","&ang;"], ["\u2227","&and;"], ["\u2228","&or;"], ["\u2229","&cap;"], ["\u222A","&cup;"], ["\u222B","&int;"], ["\u2234","&there4;"], ["\u223C","&sim;"], ["\u2245","&cong;"], ["\u2248","&asymp;"], ["\u2260","&ne;"], ["\u2261","&equiv;"], ["\u2264","&le;"], ["\u2265","&ge;"], ["\u2282","&sub;"], ["\u2283","&sup;"], ["\u2284","&nsub;"], ["\u2286","&sube;"], ["\u2287","&supe;"], ["\u2295","&oplus;"], ["\u2297","&otimes;"], ["\u22A5","&perp;"], ["\u22C5","&sdot;"], ["\u2308","&lceil;"], ["\u2309","&rceil;"], ["\u230A","&lfloor;"], ["\u230B","&rfloor;"], ["\u2329","&lang;"], ["\u232A","&rang;"], ["\u25CA","&loz;"], ["\u2660","&spades;"], ["\u2663","&clubs;"], ["\u2665","&hearts;"], ["\u2666","&diams;"]];
+
 // Add to the fonts array to make the script work with your own custom fonts.
 // To make it easier to add to this array, use the "fonts" worksheet of this Google Spreadsheet:
 	// https://docs.google.com/spreadsheets/d/13ESQ9ktfkdzFq78FkWLGaZr2s3lNbv2cN25F2pYf5XM/edit?usp=sharing
@@ -700,6 +254,8 @@ var align = [
 	{"ai":"Justification.FULLJUSTIFYLASTLINECENTER","html":"justify"},
 	{"ai":"Justification.FULLJUSTIFYLASTLINERIGHT","html":"justify"}
 ];
+
+// TODO: remove
 var pStyleKeyTags = [
 	"aifont",
 	"size",
@@ -773,9 +329,9 @@ var largestArtboardArea    = 0;
 var largestArtboardWidth   = 0;
 var	rgbBlackThreshold      = 36; // value between 0 and 255 lower than which if all three RGB values are below then force the RGB to #000 so it is a pure black
 
-var pBar = new progressBar();
-pBar.init();
+var pBar = new ProgressBar();
 
+// TODO: ask Archie about these comments:
 // work on inlining responsive js and css
 // var responsiveCssFile      = new File( docPath + "../public/assets/resizerStyle.css");
 // var responsiveJsFile       = new File( docPath + "../public/assets/resizerScript.js");
@@ -785,8 +341,13 @@ pBar.init();
 // readTextFileAndPutIntoAVariable
 
 
+// =====================
+// start processing
+// =====================
+
+
 // loop thru all layers, groups and textframes to find locked objects and unlock them
-unlockStuff(doc);
+unlockObjects(doc);
 
 //unhide layers that where hidded so objects inside could be locked
 for (var i = hiddenObjects.length-1; i>=0; i--) {
@@ -1212,6 +773,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 		errors.push("If this is an ai2html project, it is probably easier to just create a new ai2html Preview project and move this Illustrator file into the \u201Cai\u201D folder inside the project.");
 
 } else {
+
 	// ======================================
 	// main stuff
 	// ======================================
@@ -1235,11 +797,11 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 		uniqueArtboardWidths.sort(function(a,b){return a-b;});
 	}
 
-	// begin main stuff
 	var responsiveHtml = "";
 	for (var abNumber = 0; abNumber < doc.artboards.length; abNumber++) {
 		if (!artboardsToProcess[abNumber]) continue;
 		doc.artboards.setActiveArtboardIndex(abNumber);
+		// throw "done";
 		var activeArtboard      =  doc.artboards[abNumber];
 		docSettings.docName     =  makeKeyword(docSettings.project_name);
 		var artboardName        =  makeKeyword(activeArtboard.name.replace( /^(.+):\d+$/ , "$1"));
@@ -1275,8 +837,6 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 		// user-custom html is in html[7]
 		// user-custom js is in html[9]
 		// typekit is in html[10]
-
-		html[0] += "Cut and paste into Scoop\r";
 
 		html[1] += "\r\t<!-- Artboard: " + artboardName + " -->\r";
 
@@ -1430,9 +990,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 		T.stop("Text generation");
 
 		// Concatenate html fragments
-		for (var i=1; i<html.length; i++) {
-			responsiveHtml += (html[i]);
-		}
+		responsiveHtml = html.join('');
 
 		T.start();
 		// Hide text frames in preparation for image generation
@@ -1501,7 +1059,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 	//=====================================
 
 	if (docSettings.output=="one-file") {
-		generateHtml(html.join(''), docSettings.project_name, docSettings);
+		generateHtml(responsiveHtml, docSettings.project_name, docSettings);
 	}
 
 	//=====================================
@@ -1528,6 +1086,11 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 	}
 
 } // end rgb colorspace test
+
+
+// ==============================
+// restore document state
+// ==============================
 
 // Unhide stuff that was hidden during processing
 for (var i = 0; i < textFramesToUnhide.length; i++) {
@@ -1562,7 +1125,7 @@ if (parentFolder !== null) {
 }
 
 // ==============================
-// alert box
+// show alert box
 // ==============================
 
 if (customCssBlocks==1)  { feedback.push(customCssBlocks  + " custom CSS block was added."); }
@@ -1609,9 +1172,106 @@ if (docSettings.show_completion_dialog_box=="true") {
 	alert(alertHed + "\n" + alertText + "\n\n\n================\nai2html-nyt5 v"+scriptVersion);
 }
 
-// ===============
-// more functions
-// ===============
+
+// =================================
+// general purpose utility functions
+// =================================
+
+function isEmpty(str) {
+	return (!str || 0 === str.length);
+}
+
+function isBlank(str) {
+	return (!str || /^\s*$/.test(str));
+}
+
+// Remove whitespace from beginning and end of a string
+function trim(s) {
+	return s.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
+}
+
+// http://samuelmullen.com/2012/03/left-pad-zeroes-in-javascript/
+function zeroPad(value, padding) {
+	var zeroes = "0";
+	for (var i = 0; i < padding; i++) { zeroes += "0"; }
+	return (zeroes + value).slice(padding * -1);
+}
+// multiple key sorting function based on https://github.com/Teun/thenBy.js
+// first by length of name, then by population, then by ID
+// data.sort(
+//     firstBy(function (v1, v2) { return v1.name.length - v2.name.length; })
+//     .thenBy(function (v1, v2) { return v1.population - v2.population; })
+//     .thenBy(function (v1, v2) { return v1.id - v2.id; });
+// );
+function firstBy(f1, f2) {
+	var compare = f2 ? function(a, b) {return f1(a, b) || f2(a, b);} : f1;
+	compare.thenBy = function(f) {return firstBy(compare, f);};
+	return compare;
+}
+
+function makeKeyword(text) {
+	// text = text.replace( /[^A-Za-z0-9_\-]/g , "_" ).toLowerCase();
+	text = text.replace( /[^A-Za-z0-9_\-]/g , "_" );
+	return text;
+}
+
+function cleanText(text) {
+	for (var i=0; i < htmlCharacterCodes.length; i++) {
+		var charCode = htmlCharacterCodes[i];
+		if (text.indexOf(charCode[0]) > -1) {
+			text = text.replace(new RegExp(charCode[0],'g'), charCode[1]);
+		}
+	}
+	return text;
+}
+
+function straightenCurlyQuotesInsideAngleBrackets(text) {
+	// thanks to jashkenas
+	var tagFinder = /<[^\n]+?>/g;
+	var quoteFinder = /[\u201C‘’\u201D]([^\n]*?)[\u201C‘’\u201D]/g;
+	return text.replace(tagFinder, function(tag){
+		return tag.replace( /[\u201C\u201D]/g , '"' ).replace( /[‘’]/g , "'" );
+	});
+}
+
+function roundTo(numberToRound, decimalPlaces) {
+	var roundedNumber = Math.round(numberToRound * Math.pow(10,decimalPlaces)) / Math.pow(10,decimalPlaces);
+	return roundedNumber;
+}
+
+function round(number, precision) {
+	var d = Math.pow(10, precision || 0);
+	return Math.round(number * d) / d;
+}
+
+// TODO: value could change during program execution -- does this matter?
+function getDateTimeStamp() {
+	var d             = new Date();
+	var currYear      = d.getFullYear();
+	var currDate      = zeroPad(d.getDate(),2);
+	var currMonth     = zeroPad(d.getMonth() + 1,2); //Months are zero based
+	var currHour      = zeroPad(d.getHours(),2);
+	var currMin       = zeroPad(d.getMinutes(),2);
+  return currYear + "-" + currMonth + "-" + currDate + " - " + currHour + ":" + currMin;
+}
+
+
+// =====================================
+// AI specific utility functions
+// =====================================
+
+function getArtboardPos(rect) {
+	var x = rect[0],
+			y = rect[1],
+			w = Math.round(rect[2] - x),
+			h = -rect[3] - y;
+	return {
+		x: x,
+		y: y,
+		width: w,
+		height: h
+	};
+}
 
 function textIsTransformed(textFrame) {
 	return !(textFrame.matrix.mValueA == 1 &&
@@ -1620,6 +1280,375 @@ function textIsTransformed(textFrame) {
 		textFrame.matrix.mValueD === 1);
 		// || textFrame.textRange.characterAttributes.horizontalScale != 100
 		// || textFrame.textRange.characterAttributes.verticalScale != 100;
+}
+
+function objectIsHidden(obj) {
+	var hidden = false;
+	while (!hidden && obj && obj.typename != "Document"){
+		if (obj.typename == "Layer") {
+			hidden = !obj.visible;
+		} else {
+			hidden = obj.hidden;
+		}
+		obj = obj.parent;
+	}
+	return hidden;
+}
+
+function ProgressBar() {
+  var win = new Window("palette", "Ai2html progress", [150, 150, 600, 260]);
+  win.pnl = win.add("panel", [10, 10, 440, 100], "Progress");
+  win.pnl.progBar      = win.pnl.add("progressbar", [20, 35, 410, 60], 0, 100);
+  win.pnl.progBarLabel = win.pnl.add("statictext", [20, 20, 320, 35], "0%");
+  win.show();
+
+	function getProgress() {
+	  return win.pnl.progBar.value/win.pnl.progBar.maxvalue;
+	}
+
+	this.setProgress = function(progress) {
+	  var max = win.pnl.progBar.maxvalue;
+	  // progress is always 0.0 to 1.0
+	  var pct = progress * max;
+	  win.pnl.progBar.value = pct;
+	  win.pnl.progBarLabel.text = Math.round(pct) + "%";
+	  win.update();
+	};
+
+	this.setTitle = function(title) {
+	  win.pnl.text = title;
+	  win.update();
+	};
+
+	this.increment = function(amount) {
+	  amount = amount || 0.01;
+	  this.setProgress(getProgress() + amount);
+	  win.update();
+	};
+
+	this.close = function() {
+		win.update();
+		win.close();
+	};
+}
+
+
+// =====================================
+// ai2html functions
+// =====================================
+
+// Add polyfills, etc.
+function initScriptEnvironment() {
+	// TODO: don't setup dev environment for production use
+	initDevEnvironment();
+
+	// Adding [].indexOf to Illustrator JavaScript
+	if (!Array.prototype.indexOf) {
+	    Array.prototype.indexOf = function(elt /*, from*/) {
+	        var len = this.length;
+	        var from = Number(arguments[1]) || 0;
+	        from = (from < 0) ? Math.ceil(from) : Math.floor(from);
+	        if (from < 0) from += len;
+	        for (; from < len; from++) {
+	            if (from in this && this[from] === elt) return from;
+	        }
+	        return -1;
+	   };
+	}
+}
+
+function initDevEnvironment() {
+	// include JSON for debugging objects
+	// @include "lib/json2.js"
+
+	// Performance timing using T.start() and T.stop("message")
+	T = {
+	  stack: [],
+	  start: function() {
+	    T.stack.push(+new Date());
+	  },
+	  stop: function(note) {
+	    var msg = (+new Date() - T.stack.pop()) + 'ms';
+	    if (note) msg += " - " + note;
+	    feedback.push(msg);
+	  }
+	};
+}
+
+function exportImageFiles(dest,width,height,formats,initialScaling,doubleres) {
+	// alert(formats);
+	// width and height are the artboard width and height and only used to determine whether or not to double res
+	// initialScaling is the proportion to scale the base image before considering whether to double res. Usually just 1.
+	// Exports current document to dest as a PNG8 file with specified
+	// options, dest contains the full path including the file name
+	// doubleres is "yes" or "no" whether you want to allow images to be double res
+	// if you want to force ai2html to use doubleres, use "always"
+	var pngImageScaling, pngExportOptions, pngFileSpec, pngType,
+			jpgImageScaling, jpgExportOptions, jpgFileSpec, jpgType,
+			svgExportOptions, svgFileSpec, svgType;
+
+	if (doubleres=="yes" || doubleres=="always") {
+		// if image is too big to use double-res, then just output single-res.
+		pngImageScaling = 200 * initialScaling;
+		jpgImageScaling = 200 * initialScaling;
+		if (doubleres == 'always' || ((width*height) < (3*1024*1024/4) || (width >= 945))) {
+			// <3
+			// feedback.push("The jpg and png images are double resolution.");
+		} else if ( (width*height) < (3*1024*1024) ) {
+			// .75-3
+			pngImageScaling = 100;
+			// feedback.push("The png image is single resolution.");
+			// feedback.push("The jpg image is double resolution.");
+		} else if ( (width*height) < (32*1024*1024/4) ) {
+			// 3-8
+			pngImageScaling = 100;
+			// warnings.push("The png image is single resolution, but is too large to display on first-generation iPhones.");
+			// feedback.push("The jpg image is double resolution.");
+		} else if ( (width*height) < (32*1024*1024) ) {
+			// 8-32
+			pngImageScaling = 100;
+			jpgImageScaling = 100;
+			// warnings.push("The png image is single resolution, but is too large to display on first-generation iPhones.");
+			// feedback.push("The jpg image is single resolution.");
+		} else {
+			// 32+
+			pngImageScaling = 100;
+			jpgImageScaling = 100;
+			// warnings.push("The jpg and png images are single resolution, but are too large to display on first-generation iPhones.");
+		}
+	} else {
+		pngImageScaling = 100 * initialScaling;
+		jpgImageScaling = 100 * initialScaling;
+	}
+	// alert("scaling\npngImageScaling = " + pngImageScaling + "\njpgImageScaling = " + jpgImageScaling);
+
+	for (var formatNumber = 0; formatNumber < formats.length; formatNumber++) {
+		var format = formats[formatNumber];
+		if (format=="png") {
+			pngExportOptions = new ExportOptionsPNG8();
+			pngType = ExportType.PNG8;
+			pngFileSpec = new File(dest);
+			pngExportOptions.colorCount       = docSettings.png_number_of_colors;
+			pngExportOptions.transparency     = (docSettings.png_transparent==="no") ? false : true;
+			pngExportOptions.artBoardClipping = true;
+			pngExportOptions.antiAliasing     = false;
+			pngExportOptions.horizontalScale  = pngImageScaling;
+			pngExportOptions.verticalScale    = pngImageScaling;
+			app.activeDocument.exportFile( pngFileSpec, pngType, pngExportOptions );
+			// feedback.push("pngExportOptions.png_number_of_colors = " + pngExportOptions.colorCount);
+			// feedback.push("pngExportOptions.transparency = " + pngExportOptions.transparency);
+
+		} else if (format=="png24") {
+			pngExportOptions = new ExportOptionsPNG24();
+			pngType = ExportType.PNG24;
+			pngFileSpec = new File(dest);
+			pngExportOptions.transparency     = (docSettings.png_transparent==="no") ? false : true;
+			pngExportOptions.artBoardClipping = true;
+			pngExportOptions.antiAliasing     = false;
+			pngExportOptions.horizontalScale  = pngImageScaling;
+			pngExportOptions.verticalScale    = pngImageScaling;
+			app.activeDocument.exportFile( pngFileSpec, pngType, pngExportOptions );
+
+		} else if (format=="svg") {
+			svgExportOptions = new ExportOptionsSVG();
+			svgType = ExportType.SVG;
+			// alert("This will be the svg dest: " + dest);
+			svgFileSpec = new File(dest);
+			svgExportOptions.embedAllFonts         = false;
+			svgExportOptions.fontSubsetting        = SVGFontSubsetting.None;
+			svgExportOptions.compressed            = false;
+			svgExportOptions.documentEncoding      = SVGDocumentEncoding.UTF8;
+			svgExportOptions.embedRasterImages     = (docSettings.svg_embed_images==="yes") ? true : false;
+			// svgExportOptions.horizontalScale       = initialScaling;
+			// svgExportOptions.verticalScale         = initialScaling;
+			svgExportOptions.saveMultipleArtboards = false;
+			svgExportOptions.DTD                   = SVGDTDVersion.SVG1_1; // SVG1_0 SVGTINY1_1 <=default SVG1_1 SVGTINY1_1PLUS SVGBASIC1_1 SVGTINY1_2
+			svgExportOptions.cssProperties         = SVGCSSPropertyLocation.STYLEATTRIBUTES; // ENTITIES STYLEATTRIBUTES <=default PRESENTATIONATTRIBUTES STYLEELEMENTS
+			app.activeDocument.exportFile( svgFileSpec, svgType, svgExportOptions );
+
+		} else if (format=="jpg") {
+			if (jpgImageScaling > maxJpgImageScaling) {
+				jpgImageScaling = maxJpgImageScaling;
+				var promoImageFileName = dest.split("/").slice(-1)[0];
+				feedback.push(promoImageFileName + ".jpg was output at a lower scaling than desired because of a limit on jpg exports in Illustrator. If the file needs to be larger, change the image format to png which does not appear to have limits.");
+			}
+			jpgExportOptions = new ExportOptionsJPEG();
+			jpgType = ExportType.JPEG;
+			jpgFileSpec = new File(dest);
+			jpgExportOptions.artBoardClipping = true;
+			jpgExportOptions.antiAliasing     = false;
+			jpgExportOptions.qualitySetting   = docSettings.jpg_quality;
+			jpgExportOptions.horizontalScale  = jpgImageScaling;
+			jpgExportOptions.verticalScale    = jpgImageScaling;
+			app.activeDocument.exportFile( jpgFileSpec, jpgType, jpgExportOptions );
+			// feedback.push("jpgExportOptions.qualitySetting = " + jpgExportOptions.qualitySetting);
+		}
+	}
+}
+
+function unlockObjects(parentObj) {
+	if (parentObj.typename=="Layer" || parentObj.typename=="Document") {
+		for (var layerNo = 0; layerNo < parentObj.layers.length; layerNo++) {
+			var currentLayer = parentObj.layers[layerNo];
+			if (currentLayer.locked === true) {
+				currentLayer.locked = false;
+				lockedObjects.push(currentLayer);
+			}
+			if (currentLayer.visible === false) {
+				currentLayer.visible = true;
+				hiddenObjects.push(currentLayer);
+			}
+			unlockObjects(currentLayer);
+		}
+	}
+	for (var groupItemsNo = 0; groupItemsNo < parentObj.groupItems.length; groupItemsNo++) {
+		var currentGroupItem = parentObj.groupItems[groupItemsNo];
+		if (currentGroupItem.locked === true) {
+			currentGroupItem.locked = false;
+			lockedObjects.push(currentGroupItem);
+		}
+		unlockObjects(currentGroupItem);
+	}
+	for (var textFrameNo = 0; textFrameNo < parentObj.textFrames.length; textFrameNo++) {
+		var currentTextFrame = parentObj.textFrames[textFrameNo];
+		// this line is producing the MRAP error!!!
+		if (currentTextFrame.locked === true) {
+			currentTextFrame.locked = false;
+			lockedObjects.push(currentTextFrame);
+		}
+	}
+}
+
+function hideTextFrame(textFrame) {
+	textFramesToUnhide.push(textFrame);
+	textFrame.hidden = true;
+}
+
+function createPromoImage(abNumber) {
+	doc.artboards.setActiveArtboardIndex(abNumber);
+	var activeArtboard       =  doc.artboards[abNumber],
+			activeArtboardRect   =  activeArtboard.artboardRect,
+			abX                  =  activeArtboardRect[0],
+			abY                  = -activeArtboardRect[1],
+			abW                  =  Math.round(activeArtboardRect[2]-abX),
+			abH                  = -activeArtboardRect[3]-abY,
+			artboardAspectRatio  =  abH/abW,
+			artboardName         =  makeKeyword(activeArtboard.name),
+			docArtboardName      =  makeKeyword(docSettings.project_name) + "-" + artboardName + "-" + abNumber,
+			imageDestination     =  docPath + docArtboardName + "-promo",
+			promoImageAspect     =  promoImageMinHeight/promoImageMinWidth,
+			promoScale           =  1;
+	if (artboardAspectRatio > promoImageAspect) {
+		promoScale = promoImageMinWidth/abW;
+		if (abH * promoScale > promoImageMaxHeight) {
+			promoScale = promoImageMaxHeight/abH;
+		}
+	} else {
+		promoScale = promoImageMinHeight/abH;
+		if (abW * promoScale > promoImageMaxWidth) {
+			promoScale = promoImageMaxWidth/abW;
+		}
+	}
+
+	var promoW = abW * promoScale;
+	var promoH = abH * promoScale;
+
+	// feedback.push("promoImageAspect = " + promoImageAspect + "\r" +
+	// 	"abNumber = " + abNumber + "\r" +
+	// 	"artboardAspectRatio = " + artboardAspectRatio + "\r" +
+	// 	"promoScale = " + promoScale + "\r" +
+	// 	"abW = " + abW + "\r" +
+	// 	"abH = " + abH + "\r" +
+	// 	"promoW = " + promoW + "\r" +
+	// 	"promoH = " + promoH);
+
+	// alert("promoImageAspect = " + promoImageAspect + "\r" +
+	// 	"abNumber = " + abNumber + "\r" +
+	// 	"artboardAspectRatio = " + artboardAspectRatio + "\r" +
+	// 	"promoScale = " + promoScale + "\r" +
+	// 	"abW = " + abW + "\r" +
+	// 	"abH = " + abH + "\r" +
+	// 	"promoW = " + promoW + "\r" +
+	// 	"promoH = " + promoH);
+
+	// var promoImageFormat = [];
+	// if (docSettings.image_format[0]=="png" ||
+	// 	docSettings.image_format[0]=="png24" ||
+	// 	docSettings.image_format[0]=="svg")
+	// {
+	// 	promoImageFormat.push("png");
+	// } else {
+	// 	promoImageFormat.push(docSettings.image_format[0]);
+	// };
+
+	var promoImageFormats = [];
+	for (var formatNo = 0; formatNo < docSettings.image_format.length; formatNo++) {
+		var promoFormat = docSettings.image_format[formatNo];
+		if (promoFormat=="png" ||
+			promoFormat=="png24" ||
+			promoFormat=="svg")
+		{
+			promoImageFormats.push("png");
+		} else {
+			promoImageFormats.push(promoFormat);
+		}
+	}
+
+	pBar.setTitle(artboardName + ': Writing promo image...');
+
+	var tempPNGtransparency = docSettings.png_transparent;
+	docSettings.png_transparent = "no";
+	if (docSettings.write_image_files=="yes") {
+		exportImageFiles(imageDestination,promoW,promoH,promoImageFormats,promoScale,"no");
+	}
+	docSettings.png_transparent = tempPNGtransparency;
+}
+
+function applyTemplate(template, atObject) {
+	var newText = template;
+	for (var atKey in atObject) {
+		var mustachePattern = new RegExp("\\{\\{\\{? *" + atKey + " *\\}\\}\\}?","g");
+		var ejsPattern      = new RegExp("\\<\\%[=]? *" + atKey + " *\\%\\>","g");
+		var replacePattern  = atObject[atKey];
+		newText = newText.replace( mustachePattern , replacePattern );
+		newText = newText.replace( ejsPattern      , replacePattern );
+	}
+	return newText;
+}
+
+function outputHtml(htmlText, fileDestination) {
+	var htmlFile = new File(fileDestination);
+	htmlFile.open("w", "TEXT", "TEXT");
+	htmlFile.lineFeed = "Unix";
+	htmlFile.encoding = "UTF-8";
+	htmlFile.writeln(htmlText);
+	htmlFile.close();
+}
+
+function readTextFileAndPutIntoAVariable(inputFile,starterText,linePrefix,lineSuffix) {
+	var outputText = starterText;
+	if ( inputFile.exists ) {
+		inputFile.open("r");
+		while (!inputFile.eof) {
+			outputText += linePrefix + inputFile.readln() + lineSuffix;
+		}
+		inputFile.close();
+	} else {
+		errors.push(inputFile + " could not be found.");
+	}
+	return outputText;
+}
+
+function checkForOutputFolder(folderPath, nickname) {
+	var outputFolder = new Folder( folderPath );
+	if (!outputFolder.exists) {
+		var outputFolderCreated = outputFolder.create();
+		if (outputFolderCreated) {
+			feedback.push("The " + nickname + " folder did not exist, so the folder was created.");
+		} else {
+			warnings.push("The " + nickname + " folder did not exist and could not be created.");
+		}
+	}
 }
 
 function getUntransformedTextBounds(textFrame) {
@@ -1654,7 +1683,6 @@ function getUntransformedTextBounds(textFrame) {
 	}
 
 	var bounds = textFrameCopy.geometricBounds;
-
 	textFrameCopy.textRange.characterAttributes.fillColor = getRGBColor(250, 50, 50);
 	textFrameCopy.remove();
 
@@ -1749,28 +1777,6 @@ function hideElementsOutsideArtboardRect(artbnds) {
 	return hidden;
 }
 
-function round(number, precision) {
-	var d = Math.pow(10, precision || 0);
-	return Math.round(number * d) / d;
-}
-
-// =====================================
-// mbloch refactoring
-// =====================================
-
-function getArtboardPos(rect) {
-	var x = rect[0],
-			y = rect[1],
-			w = Math.round(rect[2] - x),
-			h = -rect[3] - y;
-	return {
-		x: x,
-		y: y,
-		width: w,
-		height: h
-	};
-}
-
 function getResizerScript() {
 	var f = function(scriptEnvironment) {
 	  // only want one resizer on the page
@@ -1854,11 +1860,6 @@ function getResizerScript() {
 	// convert function to JS source code
 	var js = '(' + trim(f.toString()) + ')("' + (scriptEnvironment || '') + '");';
 	return '<script type="text/javascript">\n' + js + '\n</script>\n\n';
-}
-
-// Remove whitespace from beginning and end of a string
-function trim(s) {
-	return s.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
 }
 
 // TODO: no longer used, remove
@@ -1953,7 +1954,6 @@ function getParagraphStyle(p) {
 		'~' + s.spaceAfter + '~' + s.opacity;
 	return s;
 }
-
 
 function getParagraphClass(style, classes) {
 	var o, i;
@@ -2128,7 +2128,6 @@ function getCharStyleDiff(a, b, properties) {
 }
 
 // Parse an AI CharacterAttributes object
-//
 function getCharStyle(c) {
 	var fill = c.fillColor;
 	var r, g, b, caps;
@@ -2233,19 +2232,6 @@ function textFrameIsInBounds(frame, artboardRect) {
 	return inX && inY;
 }
 
-function objectIsHidden(obj) {
-	var hidden = false;
-	while (!hidden && obj && obj.typename != "Document"){
-		if (obj.typename == "Layer") {
-			hidden = !obj.visible;
-		} else {
-			hidden = obj.hidden;
-		}
-		obj = obj.parent;
-	}
-	return hidden;
-}
-
 function textFrameIsRenderable(frame, artboardRect) {
 	var inBounds = textFrameIsInBounds(frame, artboardRect);
 	var hidden = objectIsHidden(frame);
@@ -2258,6 +2244,7 @@ function textFrameIsRenderable(frame, artboardRect) {
 
 function findTextFramesToRender(frames, artboardRect) {
 	var selected = [];
+	// doc.selectObjectsOnActiveArtboard();
 	for (var i=0; i<frames.length; i++) {
 		if (textFrameIsRenderable(frames[i], artboardRect)) {
 			selected.push(frames[i]);
@@ -2472,17 +2459,6 @@ function parseSettingsTextBlock(frame, docSettings) {
 			docSettings[hashKey] = hashValue;
 		} catch(e) {}
 	}
-}
-
-// TODO: value could change during program execution -- does this matter?
-function getDateTimeStamp() {
-	var d             = new Date();
-	var currYear      = d.getFullYear();
-	var currDate      = zeroPad(d.getDate(),2);
-	var currMonth     = zeroPad(d.getMonth() + 1,2); //Months are zero based
-	var currHour      = zeroPad(d.getHours(),2);
-	var currMin       = zeroPad(d.getMinutes(),2);
-  return currYear + "-" + currMonth + "-" + currDate + " - " + currHour + ":" + currMin;
 }
 
 // Write a complete HTML page to a file for NYT Preview
