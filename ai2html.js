@@ -314,13 +314,7 @@ var publicFolder           = new Folder( docPath + "../public/" );
 var srcFolder              = new Folder( docPath + "../src/" );
 var ymlFile                = new File( docPath + "../config.yml" );
 var gitConfigFile          = new File( docPath + "../.git/config");
-var alertText              = "";
-if (scriptEnvironment=="nyt") {
-	var alertHed               = "Actually, that\u2019s not half bad."; // &rsquo;
-} else {
-	var alertHed               = "Nice work!";
 
-}
 var textFramesToUnhide     = [];
 var lockedObjects          = [];
 var hiddenObjects		   = [];
@@ -349,7 +343,7 @@ var pBar = new ProgressBar();
 // loop thru all layers, groups and textframes to find locked objects and unlock them
 unlockObjects(doc);
 
-//unhide layers that where hidded so objects inside could be locked
+//unhide layers that were hidden so objects inside could be locked
 for (var i = hiddenObjects.length-1; i>=0; i--) {
 	hiddenObjects[i].visible = false;
 }
@@ -357,7 +351,6 @@ for (var i = hiddenObjects.length-1; i>=0; i--) {
 // ================================================
 // read .git/config file to get preview slug
 // ================================================
-
 
 if ( gitConfigFile.exists && scriptEnvironment=="nyt" ) {
 	gitConfigFile.open("r");
@@ -374,7 +367,6 @@ if ( gitConfigFile.exists && scriptEnvironment=="nyt" ) {
 	}
 	gitConfigFile.close();
 }
-
 
 // ================================================
 // read yml file if it exists to determine what type of project this is
@@ -489,7 +481,6 @@ for (var abNumber = 0; abNumber < doc.artboards.length; abNumber++) {
 			}
 		}
 		if (!artboardWidthMatch && docSettings.include_resizer_classes=="yes" && docSettings.ai2html_environment=="nyt") {
-			// warnings.push('The width of the artboard named "' + currentArtboard.name + '" (#' + (abNumber+1) + ") does not match any of the NYT5 breakpoints and may produce unexpected results on your web page. OurYou probably want to adjust the width of this artboard so that it is exactly the width of a breakpoint.");
 			warnings.push('The width of the artboard named "' + currentArtboard.name + '" (#' + (abNumber+1) + ") does not match any of the NYT5 breakpoints and may produce unexpected results on your web page. The new script should be able to accommodate this, but please double check just in case.");
 		}
 	} else {
@@ -719,7 +710,7 @@ if (docSettings.max_width !== "" && docSettings.ai2html_environment ==="nyt") {
 		}
 	}
 	if (!max_width_is_valid) {
-		errors.push('The max_width setting of "' + docSettings.max_width + '" is not a valid breakpoint and will create an error when you "preview publish."');
+		warnings.push('The max_width setting of "' + docSettings.max_width + '" is not a valid breakpoint and will create an error when you "preview publish."');
 	}
 }
 
@@ -745,19 +736,16 @@ if (docSettings.image_source_path === null) {
 
 // check for ai2html and preview project folders
 if (parentFolder === null) {
-	alertHed = "The Script Stopped Because of an Error";
 	errors.push('You need to save your Illustrator file before running this script');
 } else if ( parentFolder[0]==="ai/" && publicFolder.exists ) {
 	aiFileInPreviewProject = true;
 	// alert("ai file is in a preview project");
 }
 if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
-	alertHed = "The Script Stopped Because of an Error";
 	errors.push('Convert document color mode to "RGB" before running script. (File>Document Color Mode>RGB Color)' );
 
 } else if (!docHadSettingsBlock && docSettings.ai2html_environment=="nyt") {
-	alertHed = "Settings Text Block Added";
-	feedback.push("A settings text block was created to the left of all your artboards. Fill out the settings to link your project to the Scoop asset.");
+	errors.push("A settings text block was created to the left of all your artboards. Fill out the settings to link your project to the Scoop asset.");
 
 } else if (
 		(
@@ -766,13 +754,11 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 			((previewProjectType!="ai2html" && previewProjectType!="config.yml is missing") && !srcFolder.exists)
 		) && docSettings.ai2html_environment=="nyt"
     ){
-		alertHed = "The Script Stopped Because of an Error";
 		errors.push("Make sure your Illustrator file is inside the \u201Cai\u201D folder of a Preview project.");
 		errors.push("If the Illustrator file is in the correct folder, your Preview project may be missing a config.yml file or a \u201Cpublic\u201D or a \u201Csrc\u201D folder.");
 		errors.push("If this is an ai2html project, it is probably easier to just create a new ai2html Preview project and move this Illustrator file into the \u201Cai\u201D folder inside the project.");
 
 } else {
-
 
 	// ======================================
 	// main stuff
@@ -1139,55 +1125,24 @@ if (parentFolder !== null) {
 T.stop("Restore and save document");
 
 T.stop("Total time");
+pBar.close();
 
 // ==============================
 // show alert box
 // ==============================
 
-if (customCssBlocks==1)  { feedback.push(customCssBlocks  + " custom CSS block was added."); }
-if (customCssBlocks>1)   { feedback.push(customCssBlocks  + " custom CSS blocks were added."); }
-if (customHtmlBlocks==1) { feedback.push(customHtmlBlocks + " custom HTML block was added."); }
-if (customHtmlBlocks>1)  { feedback.push(customHtmlBlocks + " custom HTML blocks were added."); }
-if (customJsBlocks==1)   { feedback.push(customJsBlocks   + " custom JS block was added."); }
-if (customJsBlocks>1)    { feedback.push(customJsBlocks   + " custom JS blocks were added."); }
-
-if (docSettings.image_format.length === 0) {
-	warnings.push("No images output because no image formats were specified.");
-}
-
-if (errors.length == 1) {
-	alertText += "\rError\r================\r";
-} else if (errors.length > 1) {
-	alertText += "\rErrors\r================\r";
-}
-if (errors.length > 0) {
-	for (var e = 0; e < errors.length; e++) {
-		alertText += "\u2022 " + errors[e] + "\r"; // \u2022 is •
-	}
-}
-if (warnings.length == 1) {
-	alertText += "\rWarning\r================\r";
-} else if (warnings.length > 1) {
-	alertText += "\rWarnings\r================\r";
-}
-if (warnings.length > 0) {
-	for (var w = 0; w < warnings.length; w++) {
-		alertText += "\u2022 " + warnings[w] + "\r";
-	}
-}
-if (feedback.length > 0) {
-	alertText += "\rInformation\r================\r";
-	for (var f = 0; f < feedback.length; f++) {
-		alertText += "\u2022 " + feedback[f] + "\r";
-	}
-}
-
-pBar.close();
-
 if (docSettings.show_completion_dialog_box=="true") {
-	alert(alertHed + "\n" + alertText + "\n\n\n================\nai2html-nyt5 v"+scriptVersion);
+	if (docSettings.image_format.length === 0) {
+		warnings.push("No images output because no image formats were specified.");
+	}
+	if (customCssBlocks==1)  { feedback.push(customCssBlocks  + " custom CSS block was added."); }
+	if (customCssBlocks>1)   { feedback.push(customCssBlocks  + " custom CSS blocks were added."); }
+	if (customHtmlBlocks==1) { feedback.push(customHtmlBlocks + " custom HTML block was added."); }
+	if (customHtmlBlocks>1)  { feedback.push(customHtmlBlocks + " custom HTML blocks were added."); }
+	if (customJsBlocks==1)   { feedback.push(customJsBlocks   + " custom JS block was added."); }
+	if (customJsBlocks>1)    { feedback.push(customJsBlocks   + " custom JS blocks were added."); }
+	showCompletionAlert();
 }
-
 
 // =================================
 // general purpose utility functions
@@ -1540,6 +1495,7 @@ function hideTextFrame(textFrame) {
 	textFrame.hidden = true;
 }
 
+
 function createPromoImage(abNumber) {
 	doc.artboards.setActiveArtboardIndex(abNumber);
 	var activeArtboard       =  doc.artboards[abNumber],
@@ -1655,7 +1611,7 @@ function readTextFileAndPutIntoAVariable(inputFile,starterText,linePrefix,lineSu
 		}
 		inputFile.close();
 	} else {
-		errors.push(inputFile + " could not be found.");
+		warnings.push(inputFile + " could not be found.");
 	}
 	return outputText;
 }
@@ -2376,7 +2332,7 @@ function parseSettingsTextBlock(frame, docSettings) {
 			docSettings[hashKey] = hashValue;
 		}
 	} catch(e) {
-		errors.push("Error parsing settings block: " + e.message);
+		warnings.push("Error parsing settings block: " + e.message);
 	}
 }
 
@@ -2473,4 +2429,44 @@ function generateHtml(responsiveHtml, docName, docSettings) {
 		var previewFileDestination = htmlFileDestinationFolder + docKey + ".preview.html";
 		outputLocalPreviewPage(textForFile, previewFileDestination, docSettings);
 	}
+}
+
+function showCompletionAlert() {
+	var alertText = "";
+	var alertHed = "";
+
+	if (scriptEnvironment == "nyt") {
+		alertHed = "Actually, that\u2019s not half bad."; // &rsquo;
+	} else {
+		alertHed = "Nice work!";
+	}
+
+	if (errors.length > 0) {
+		alertHed = "The Script Was Unable to Finish";
+		if (errors.length == 1) {
+			alertText += "\rError\r================\r";
+		} else {
+			alertText += "\rErrors\r================\r";
+		}
+		for (var e = 0; e < errors.length; e++) {
+			alertText += "\u2022 " + errors[e] + "\r"; // \u2022 is •
+		}
+	}
+	if (warnings.length > 0) {
+		if (warnings.length == 1) {
+			alertText += "\rWarning\r================\r";
+		} else {
+			alertText += "\rWarnings\r================\r";
+		}
+		for (var w = 0; w < warnings.length; w++) {
+			alertText += "\u2022 " + warnings[w] + "\r";
+		}
+	}
+	if (feedback.length > 0) {
+		alertText += "\rInformation\r================\r";
+		for (var f = 0; f < feedback.length; f++) {
+			alertText += "\u2022 " + feedback[f] + "\r";
+		}
+	}
+	alert(alertHed + "\n" + alertText + "\n\n\n================\nai2html-nyt5 v"+scriptVersion);
 }
