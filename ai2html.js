@@ -294,6 +294,8 @@ var promoImageMaxWidth  = 6000;  // need to set a max width because ai jpg expor
 var promoImageMaxHeight = promoImageMaxWidth*2/3;
 // var settingsArrays      = ["image_format"] // put hash keys here for settings that are arrays -- in the illustrator file, the setting should be in the format "key: value,value,value"
 var docSettings         = {};
+var previewProjectType = "";
+
 
 // vars to hold warnings and informational messages at the end
 var feedback  = [];
@@ -303,7 +305,6 @@ var errors    = [];
 // flags
 // var docHasYml              = false;
 var docHadSettingsBlock    = false;
-var aiFileInPreviewProject = false;
 var doc                    = app.activeDocument;
 var docPath                = doc.path + "/";
 // var origFilename           = doc.name;
@@ -336,178 +337,194 @@ var pBar = new ProgressBar();
 
 
 // =====================
-// start processing
+// call main function
 // =====================
+try {
+	main();
+} catch(e) {
+	errors.push("The script threw an error" + (e.message ? ": " + e.message : ''));
+}
 
+// ==============================
+// restore document state
+// ==============================
 
-// loop thru all layers, groups and textframes to find locked objects and unlock them
-unlockObjects(doc);
+T.start();
 
-//unhide layers that were hidden so objects inside could be locked
+// Unhide stuff that was hidden during processing
+for (var i = 0; i < textFramesToUnhide.length; i++) {
+	var currentFrameToUnhide = textFramesToUnhide[i];
+	currentFrameToUnhide.hidden = false;
+}
+
+// Unhide layers so objects inside can be unlocked
+for (var i = hiddenObjects.length-1; i>=0; i--) {
+	hiddenObjects[i].visible = true;
+}
+
+// Relock stuff that was unlocked during processing
+for (var i = lockedObjects.length-1; i>=0; i--) {
+	lockedObjects[i].locked = true;
+}
+
+// Hide again layers
 for (var i = hiddenObjects.length-1; i>=0; i--) {
 	hiddenObjects[i].visible = false;
 }
 
-// ================================================
-// read .git/config file to get preview slug
-// ================================================
+pBar.setTitle('Saving Illustrator document...');
+pBar.setProgress(1.0);
 
-if ( gitConfigFile.exists && scriptEnvironment=="nyt" ) {
-	gitConfigFile.open("r");
-	while(!gitConfigFile.eof) {
-		var line      = gitConfigFile.readln();
-		var lineArray = line.split("=");
-		if (lineArray.length>1) {
-			var gitConfigKey    = lineArray[0].replace( /^\s+/ , "" ).replace( /\s+$/ , "" );
-			var gitConfigValue  = lineArray[1].replace( /^\s+/ , "" ).replace( /\s+$/ , "" );
-			if ( gitConfigKey=="url" ) {
-				docSettings.preview_slug = gitConfigValue.replace( /^[^:]+:/ , "" ).replace( /\.git$/ , "");
-			}
-		}
-	}
-	gitConfigFile.close();
-}
-
-// ================================================
-// read yml file if it exists to determine what type of project this is
-// ================================================
-
-var previewProjectType = "";
-if ( ymlFile.exists && scriptEnvironment=="nyt"  ) {
-	ymlFile.open("r");
-	while(!ymlFile.eof) {
-		var line      = ymlFile.readln();
-		var lineArray = line.split(":");
-		if (lineArray.length>1) {
-			var ymlKey    = lineArray[0].replace( /^\s+/ , "" ).replace( /\s+$/ , "" );
-			var ymlValue  = lineArray[1].replace( /^\s+/ , "" ).replace( /\s+$/ , "" );
-			if ( ymlKey=="project_type" && ymlValue=="ai2html") {
-				previewProjectType = ymlValue;
-			}
-			if ( ymlKey=="scoop_slug" ) {
-				docSettings.scoop_slug_from_config_yml = ymlValue;
-			}
-		}
-	}
-	ymlFile.close();
-} else {
-	// if a config.yml file does not exist, then yml
-	previewProjectType = "config.yml is missing";
-}
-
-// ================================================
-// Transfer default values into docSettings object.
-// Generate text for ai2html settings block and determine length.
-// ================================================
-
-var defaultSettingsText   = "ai2html-settings";
-var ai2htmlSettingsLength = 0;
-// var ymlSettings           = {};
-for (var setting in ai2htmlBaseSettings) {
-	if (ai2htmlBaseSettings[setting].includeInSettingsBlock) {
-		defaultSettingsText += "\r" + setting + ': ' + ai2htmlBaseSettings[setting].defaultValue;
-		ai2htmlSettingsLength += 1;
-	}
-	// if (ai2htmlBaseSettings[setting].includeInConfigFile) {
-	// 	ymlSettings[setting] = ai2htmlBaseSettings[setting].defaultValue;
-	// }
-	docSettings[setting] = ai2htmlBaseSettings[setting].defaultValue;
-}
-
-if (docSettings.project_name === "") {
-	docSettings.project_name = doc.name.replace(/(.+)\.[aieps]+$/,"$1").replace(/ /g,"-");
-} else {
-	docSettings.project_name = makeKeyword(docSettings.project_name);
-}
-
-// ================================================
-// determine which artboards get which show classes
-// ================================================
-
-var nyt5Breakpoints = [
-	{ name:"xsmall"    , lowerLimit:   0, upperLimit: 180, artboards:[] },
-	{ name:"small"     , lowerLimit: 180, upperLimit: 300, artboards:[] },
-	{ name:"smallplus" , lowerLimit: 300, upperLimit: 460, artboards:[] },
-	{ name:"submedium" , lowerLimit: 460, upperLimit: 600, artboards:[] },
-	{ name:"medium"    , lowerLimit: 600, upperLimit: 720, artboards:[] },
-	{ name:"large"     , lowerLimit: 720, upperLimit: 945, artboards:[] },
-	{ name:"xlarge"    , lowerLimit: 945, upperLimit:1050, artboards:[] },
-	{ name:"xxlarge"   , lowerLimit:1050, upperLimit:1600, artboards:[] }
-];
-var breakpoints        = {};
-breakpoints.min        = "";
-breakpoints.max        = "";
-var artboardsToProcess = [];
-var artboardsMaxMins   = [];
-var artboardsLefts     = [];
-var artboardsTops      = [];
-
-var largestNyt5Breakpoint = 0;
-for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
-	if (nyt5Breakpoints[bpNumber].upperLimit>largestNyt5Breakpoint) {
-		largestNyt5Breakpoint = nyt5Breakpoints[bpNumber].upperLimit;
+// Save the document if no errors occured
+if (parentFolder !== null && errors.length === 0) {
+	var saveOptions = new IllustratorSaveOptions();
+	saveOptions.pdfCompatible = false;
+	if (!doc.saved) {
+		doc.saveAs(origFile, saveOptions);
+		feedback.push("Your Illustrator file was saved.");
 	}
 }
 
-// loop thru artboards and determine which ones to process.
-// to manually force an artboard to appear at a specific pixel width,
-// append the width to the end of the artboard name with a colon and then the number, eg. "Artboard name:720"
-// old way of doing this: name that artboard with a "ai2html-" followed by the upperlimit of the breakpoint, eg. ai2html-720
-pBar.setTitle('Determining artboards to process...');
-for (var abNumber = 0; abNumber < doc.artboards.length; abNumber++) {
-	if (doc.artboards[abNumber].name.search(/^-/)==-1) {
-		artboardsToProcess.push(true);
-		var artboardWidthMatch   = false;
-		var currentArtboard      = doc.artboards[abNumber];
-		var currentArtboardWidth = 0;
+T.stop("Restore and save document");
+T.stop("Total time");
 
-		// calculate artboard width for purposes of determining viewport -- need to make this into a function
-		if (doc.artboards[abNumber].name.search(/^.+:\d+$/)!=-1) {
-			currentArtboardWidth = (doc.artboards[abNumber].name.replace( /^.+:(\d+)$/ , "$1" ));
-		} else if (doc.artboards[abNumber].name.search(/^ai2html-\d+$/)!=-1) {
-			// this is the old way, supported for backward compatibility
-			currentArtboardWidth = (doc.artboards[abNumber].name.replace( /^ai2html-(\d+)$/ , "$1" ));
-		} else {
-			currentArtboardWidth = Math.round(currentArtboard.artboardRect[2]-currentArtboard.artboardRect[0]);
-		}
-		// alert(abNumber + " = " + currentArtboardWidth);
+pBar.close();
 
-		artboardsLefts.push(currentArtboard.artboardRect[0]);
-		artboardsTops.push(currentArtboard.artboardRect[1]);
-		for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
-			var currentBreakpointWidth = nyt5Breakpoints[bpNumber].upperLimit;
-			if (currentBreakpointWidth==currentArtboardWidth) {
-				artboardWidthMatch = true;
+// ==============================
+// show alert box
+// ==============================
+
+if (docSettings.show_completion_dialog_box=="true") {
+	showCompletionAlert();
+}
+
+
+// =================================
+// main function
+// =================================
+
+function main() {
+
+	// loop thru all layers, groups and textframes to find locked objects and unlock them
+	unlockObjects(doc);
+
+	//unhide layers that were hidden so objects inside could be locked
+	for (var i = hiddenObjects.length-1; i>=0; i--) {
+		hiddenObjects[i].visible = false;
+	}
+
+	// ================================================
+	// read .git/config file to get preview slug
+	// ================================================
+
+	if ( gitConfigFile.exists && scriptEnvironment=="nyt" ) {
+		gitConfigFile.open("r");
+		while(!gitConfigFile.eof) {
+			var line      = gitConfigFile.readln();
+			var lineArray = line.split("=");
+			if (lineArray.length>1) {
+				var gitConfigKey    = lineArray[0].replace( /^\s+/ , "" ).replace( /\s+$/ , "" );
+				var gitConfigValue  = lineArray[1].replace( /^\s+/ , "" ).replace( /\s+$/ , "" );
+				if ( gitConfigKey=="url" ) {
+					docSettings.preview_slug = gitConfigValue.replace( /^[^:]+:/ , "" ).replace( /\.git$/ , "");
+				}
 			}
 		}
-		if (!artboardWidthMatch && docSettings.include_resizer_classes=="yes" && docSettings.ai2html_environment=="nyt") {
-			warnings.push('The width of the artboard named "' + currentArtboard.name + '" (#' + (abNumber+1) + ") does not match any of the NYT5 breakpoints and may produce unexpected results on your web page. The new script should be able to accommodate this, but please double check just in case.");
+		gitConfigFile.close();
+	}
+
+	// ================================================
+	// read yml file if it exists to determine what type of project this is
+	// ================================================
+
+	if ( ymlFile.exists && scriptEnvironment=="nyt"  ) {
+		ymlFile.open("r");
+		while(!ymlFile.eof) {
+			var line      = ymlFile.readln();
+			var lineArray = line.split(":");
+			if (lineArray.length>1) {
+				var ymlKey    = lineArray[0].replace( /^\s+/ , "" ).replace( /\s+$/ , "" );
+				var ymlValue  = lineArray[1].replace( /^\s+/ , "" ).replace( /\s+$/ , "" );
+				if ( ymlKey=="project_type" && ymlValue=="ai2html") {
+					previewProjectType = ymlValue;
+				}
+				if ( ymlKey=="scoop_slug" ) {
+					docSettings.scoop_slug_from_config_yml = ymlValue;
+				}
+			}
 		}
+		ymlFile.close();
 	} else {
-		artboardsToProcess.push(false);
+		// if a config.yml file does not exist, then yml
+		previewProjectType = "config.yml is missing";
 	}
-}
 
-// figure out where is the top left of all artboards to place settings text block
-artboardsLefts.sort(function(a,b){return a-b;});
-artboardsTops.sort(function(a,b){return a-b;});
-var artboardsLeft = artboardsLefts[0];
-var artboardsTop  = artboardsTops[artboardsTops.length-1];
+	// ================================================
+	// Transfer default values into docSettings object.
+	// Generate text for ai2html settings block and determine length.
+	// ================================================
 
-// assign artboards to their corresponding breakpoints -- can have more than one artboard per breakpoint.
-// also figure out the min and max breakpoints that have artboards.
-var breakpointsWithNoNativeArtboard = [];
-var overrideArtboardWidth           = false;
-var maxArtboardWidth                = 0;
-pBar.setTitle('Assigning artboards to breakpoints...');
-for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
-	var currentBreakpoint = nyt5Breakpoints[bpNumber];
+	var defaultSettingsText   = "ai2html-settings";
+	var ai2htmlSettingsLength = 0;
+	// var ymlSettings           = {};
+	for (var setting in ai2htmlBaseSettings) {
+		if (ai2htmlBaseSettings[setting].includeInSettingsBlock) {
+			defaultSettingsText += "\r" + setting + ': ' + ai2htmlBaseSettings[setting].defaultValue;
+			ai2htmlSettingsLength += 1;
+		}
+		// if (ai2htmlBaseSettings[setting].includeInConfigFile) {
+		// 	ymlSettings[setting] = ai2htmlBaseSettings[setting].defaultValue;
+		// }
+		docSettings[setting] = ai2htmlBaseSettings[setting].defaultValue;
+	}
+
+	if (docSettings.project_name === "") {
+		docSettings.project_name = doc.name.replace(/(.+)\.[aieps]+$/,"$1").replace(/ /g,"-");
+	} else {
+		docSettings.project_name = makeKeyword(docSettings.project_name);
+	}
+
+	// ================================================
+	// determine which artboards get which show classes
+	// ================================================
+
+	var nyt5Breakpoints = [
+		{ name:"xsmall"    , lowerLimit:   0, upperLimit: 180, artboards:[] },
+		{ name:"small"     , lowerLimit: 180, upperLimit: 300, artboards:[] },
+		{ name:"smallplus" , lowerLimit: 300, upperLimit: 460, artboards:[] },
+		{ name:"submedium" , lowerLimit: 460, upperLimit: 600, artboards:[] },
+		{ name:"medium"    , lowerLimit: 600, upperLimit: 720, artboards:[] },
+		{ name:"large"     , lowerLimit: 720, upperLimit: 945, artboards:[] },
+		{ name:"xlarge"    , lowerLimit: 945, upperLimit:1050, artboards:[] },
+		{ name:"xxlarge"   , lowerLimit:1050, upperLimit:1600, artboards:[] }
+	];
+	var breakpoints        = {};
+	breakpoints.min        = "";
+	breakpoints.max        = "";
+	var artboardsToProcess = [];
+	var artboardsMaxMins   = [];
+	var artboardsLefts     = [];
+	var artboardsTops      = [];
+
+	var largestNyt5Breakpoint = 0;
+	for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
+		if (nyt5Breakpoints[bpNumber].upperLimit>largestNyt5Breakpoint) {
+			largestNyt5Breakpoint = nyt5Breakpoints[bpNumber].upperLimit;
+		}
+	}
+
+	// loop thru artboards and determine which ones to process.
+	// to manually force an artboard to appear at a specific pixel width,
+	// append the width to the end of the artboard name with a colon and then the number, eg. "Artboard name:720"
+	// old way of doing this: name that artboard with a "ai2html-" followed by the upperlimit of the breakpoint, eg. ai2html-720
+	pBar.setTitle('Determining artboards to process...');
 	for (var abNumber = 0; abNumber < doc.artboards.length; abNumber++) {
-		if (artboardsToProcess[abNumber]) {
-			var currentArtboard = doc.artboards[abNumber];
+		if (doc.artboards[abNumber].name.search(/^-/)==-1) {
+			artboardsToProcess.push(true);
+			var artboardWidthMatch   = false;
+			var currentArtboard      = doc.artboards[abNumber];
+			var currentArtboardWidth = 0;
 
-			// calculate artboard width for purposes of determining viewport -- need to make this into a function
-			// need to figure out what to do here if responsiveness==fixed
 			// calculate artboard width for purposes of determining viewport -- need to make this into a function
 			if (doc.artboards[abNumber].name.search(/^.+:\d+$/)!=-1) {
 				currentArtboardWidth = (doc.artboards[abNumber].name.replace( /^.+:(\d+)$/ , "$1" ));
@@ -517,119 +534,166 @@ for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
 			} else {
 				currentArtboardWidth = Math.round(currentArtboard.artboardRect[2]-currentArtboard.artboardRect[0]);
 			}
-			if (currentArtboardWidth>maxArtboardWidth) {
-				maxArtboardWidth = currentArtboardWidth;
+			// alert(abNumber + " = " + currentArtboardWidth);
+
+			artboardsLefts.push(currentArtboard.artboardRect[0]);
+			artboardsTops.push(currentArtboard.artboardRect[1]);
+			for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
+				var currentBreakpointWidth = nyt5Breakpoints[bpNumber].upperLimit;
+				if (currentBreakpointWidth==currentArtboardWidth) {
+					artboardWidthMatch = true;
+				}
 			}
-			if (currentArtboardWidth<=currentBreakpoint.upperLimit && currentArtboardWidth>currentBreakpoint.lowerLimit) {
-				currentBreakpoint.artboards.push(abNumber);
+			if (!artboardWidthMatch && docSettings.include_resizer_classes=="yes" && docSettings.ai2html_environment=="nyt") {
+				warnings.push('The width of the artboard named "' + currentArtboard.name + '" (#' + (abNumber+1) + ") does not match any of the NYT5 breakpoints and may produce unexpected results on your web page. The new script should be able to accommodate this, but please double check just in case.");
 			}
-		}
-	}
-	if (currentBreakpoint.artboards.length === 0) {
-		breakpointsWithNoNativeArtboard.push(currentBreakpoint.name);
-	} else {
-		if (breakpoints.min === "") {
-			breakpoints.min = currentBreakpoint.upperLimit;
-		}
-		if (overrideArtboardWidth === false) {
-			breakpoints.max = currentBreakpoint.upperLimit;
 		} else {
-			breakpoints.max = nyt5Breakpoints[nyt5Breakpoints.length-1].upperLimit;
+			artboardsToProcess.push(false);
 		}
 	}
-}
-var noNativeArtboardWarning = "These breakpoints have no native artboard: ";
-for (var bpNumber = 0; bpNumber < breakpointsWithNoNativeArtboard.length; bpNumber++) {
-	noNativeArtboardWarning += breakpointsWithNoNativeArtboard[bpNumber];
-	if (bpNumber<breakpointsWithNoNativeArtboard.length-1) {
-		noNativeArtboardWarning += ", ";
-	}
-}
-// error message for breakpoints that have more than one native artboard
-for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
-	var nyt5Breakpoint = nyt5Breakpoints[bpNumber];
-	if (nyt5Breakpoint.artboards.length>1 && docSettings.ai2html_environment=="nyt") {
-		warnings.push('The ' + nyt5Breakpoint.upperLimit + "px breakpoint has " + nyt5Breakpoint.artboards.length + " artboards. You probably want only one artboard per breakpoint.");
-	}
-}
-//put artboard in for breakpoints with no artboard starting from smallest to largest, leaving lower end empty if nothing at the bottom end.
-var breakpointsWithNoArtboard = [];
-var noArtboard = false;
-for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
-	var currentBreakpoint = nyt5Breakpoints[bpNumber];
-	var previousArtboards = [];
-	if (bpNumber>0) {
-		previousArtboards = nyt5Breakpoints[bpNumber-1].artboards;
-	}
-	if (currentBreakpoint.artboards.length === 0) {
-		currentBreakpoint.artboards = previousArtboards;
-	}
-	if (currentBreakpoint.artboards.length === 0) {
-		breakpointsWithNoArtboard.push(currentBreakpoint.name);
-	}
-}
 
-// ================================================
-// add settings text block if one does not exist
-// ================================================
-pBar.setTitle('Processing settings text blocks...');
-// check for settings text block
-for (var tfNumber=0;tfNumber<doc.textFrames.length;tfNumber++) {
-	var thisFrame = doc.textFrames[tfNumber];
-	if ( thisFrame.contents !== "" ) {
-		if (thisFrame.paragraphs[0].contents=="ai2html-settings") {
-			docHadSettingsBlock = true;
+	// figure out where is the top left of all artboards to place settings text block
+	artboardsLefts.sort(function(a,b){return a-b;});
+	artboardsTops.sort(function(a,b){return a-b;});
+	var artboardsLeft = artboardsLefts[0];
+	var artboardsTop  = artboardsTops[artboardsTops.length-1];
+
+	// assign artboards to their corresponding breakpoints -- can have more than one artboard per breakpoint.
+	// also figure out the min and max breakpoints that have artboards.
+	var breakpointsWithNoNativeArtboard = [];
+	var overrideArtboardWidth           = false;
+	var maxArtboardWidth                = 0;
+	pBar.setTitle('Assigning artboards to breakpoints...');
+	for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
+		var currentBreakpoint = nyt5Breakpoints[bpNumber];
+		for (var abNumber = 0; abNumber < doc.artboards.length; abNumber++) {
+			if (artboardsToProcess[abNumber]) {
+				var currentArtboard = doc.artboards[abNumber];
+
+				// calculate artboard width for purposes of determining viewport -- need to make this into a function
+				// need to figure out what to do here if responsiveness==fixed
+				// calculate artboard width for purposes of determining viewport -- need to make this into a function
+				if (doc.artboards[abNumber].name.search(/^.+:\d+$/)!=-1) {
+					currentArtboardWidth = (doc.artboards[abNumber].name.replace( /^.+:(\d+)$/ , "$1" ));
+				} else if (doc.artboards[abNumber].name.search(/^ai2html-\d+$/)!=-1) {
+					// this is the old way, supported for backward compatibility
+					currentArtboardWidth = (doc.artboards[abNumber].name.replace( /^ai2html-(\d+)$/ , "$1" ));
+				} else {
+					currentArtboardWidth = Math.round(currentArtboard.artboardRect[2]-currentArtboard.artboardRect[0]);
+				}
+				if (currentArtboardWidth>maxArtboardWidth) {
+					maxArtboardWidth = currentArtboardWidth;
+				}
+				if (currentArtboardWidth<=currentBreakpoint.upperLimit && currentArtboardWidth>currentBreakpoint.lowerLimit) {
+					currentBreakpoint.artboards.push(abNumber);
+				}
+			}
+		}
+		if (currentBreakpoint.artboards.length === 0) {
+			breakpointsWithNoNativeArtboard.push(currentBreakpoint.name);
+		} else {
+			if (breakpoints.min === "") {
+				breakpoints.min = currentBreakpoint.upperLimit;
+			}
+			if (overrideArtboardWidth === false) {
+				breakpoints.max = currentBreakpoint.upperLimit;
+			} else {
+				breakpoints.max = nyt5Breakpoints[nyt5Breakpoints.length-1].upperLimit;
+			}
 		}
 	}
-}
-// create text settings block if one doesn't exist
-if (!docHadSettingsBlock) {
-	try {
-		settingsTextLayer = doc.layers.getByName("ai2html-settings");
-	} catch(e) {
-		var settingsTextLayer   = doc.layers.add();
-		settingsTextLayer.zOrder(ZOrderMethod.BRINGTOFRONT);
-		settingsTextLayer.name  = "ai2html-settings";
+	var noNativeArtboardWarning = "These breakpoints have no native artboard: ";
+	for (var bpNumber = 0; bpNumber < breakpointsWithNoNativeArtboard.length; bpNumber++) {
+		noNativeArtboardWarning += breakpointsWithNoNativeArtboard[bpNumber];
+		if (bpNumber<breakpointsWithNoNativeArtboard.length-1) {
+			noNativeArtboardWarning += ", ";
+		}
 	}
-	var settingsTextSize       = 15;
-	var settingsTextLeading    = 22;
-	var settingsTextExtraLines = 6;
-	var settingsTextWidth      = 400;
-	var settingsTextHeight     = settingsTextLeading * (ai2htmlSettingsLength + settingsTextExtraLines);
-	var settingsTextOffset     = 50;
-	var settingsTextTop        = artboardsTop;
-	var settingsTextLeft       = artboardsLeft-settingsTextWidth-settingsTextOffset;
-	var settingsTextRectRef    = settingsTextLayer.pathItems.rectangle(settingsTextTop, settingsTextLeft, settingsTextWidth, settingsTextHeight);
-	var settingsAreaTextRef    = settingsTextLayer.textFrames.areaText(settingsTextRectRef);
-	settingsAreaTextRef.contents = defaultSettingsText;
-	for (var c = 0; c < settingsAreaTextRef.characters.length; c++) {
-		var currentChar        = settingsAreaTextRef.characters[c];
-		currentChar.size       = settingsTextSize;
-		currentChar.leading    = settingsTextLeading;
+	// error message for breakpoints that have more than one native artboard
+	for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
+		var nyt5Breakpoint = nyt5Breakpoints[bpNumber];
+		if (nyt5Breakpoint.artboards.length>1 && docSettings.ai2html_environment=="nyt") {
+			warnings.push('The ' + nyt5Breakpoint.upperLimit + "px breakpoint has " + nyt5Breakpoint.artboards.length + " artboards. You probably want only one artboard per breakpoint.");
+		}
 	}
-}
+	//put artboard in for breakpoints with no artboard starting from smallest to largest, leaving lower end empty if nothing at the bottom end.
+	var breakpointsWithNoArtboard = [];
+	var noArtboard = false;
+	for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
+		var currentBreakpoint = nyt5Breakpoints[bpNumber];
+		var previousArtboards = [];
+		if (bpNumber>0) {
+			previousArtboards = nyt5Breakpoints[bpNumber-1].artboards;
+		}
+		if (currentBreakpoint.artboards.length === 0) {
+			currentBreakpoint.artboards = previousArtboards;
+		}
+		if (currentBreakpoint.artboards.length === 0) {
+			breakpointsWithNoArtboard.push(currentBreakpoint.name);
+		}
+	}
+
+	// ================================================
+	// add settings text block if one does not exist
+	// ================================================
+	pBar.setTitle('Processing settings text blocks...');
+	// check for settings text block
+	for (var tfNumber=0;tfNumber<doc.textFrames.length;tfNumber++) {
+		var thisFrame = doc.textFrames[tfNumber];
+		if ( thisFrame.contents !== "" ) {
+			if (thisFrame.paragraphs[0].contents=="ai2html-settings") {
+				docHadSettingsBlock = true;
+			}
+		}
+	}
+	// create text settings block if one doesn't exist
+	if (!docHadSettingsBlock) {
+		try {
+			settingsTextLayer = doc.layers.getByName("ai2html-settings");
+		} catch(e) {
+			var settingsTextLayer   = doc.layers.add();
+			settingsTextLayer.zOrder(ZOrderMethod.BRINGTOFRONT);
+			settingsTextLayer.name  = "ai2html-settings";
+		}
+		var settingsTextSize       = 15;
+		var settingsTextLeading    = 22;
+		var settingsTextExtraLines = 6;
+		var settingsTextWidth      = 400;
+		var settingsTextHeight     = settingsTextLeading * (ai2htmlSettingsLength + settingsTextExtraLines);
+		var settingsTextOffset     = 50;
+		var settingsTextTop        = artboardsTop;
+		var settingsTextLeft       = artboardsLeft-settingsTextWidth-settingsTextOffset;
+		var settingsTextRectRef    = settingsTextLayer.pathItems.rectangle(settingsTextTop, settingsTextLeft, settingsTextWidth, settingsTextHeight);
+		var settingsAreaTextRef    = settingsTextLayer.textFrames.areaText(settingsTextRectRef);
+		settingsAreaTextRef.contents = defaultSettingsText;
+		for (var c = 0; c < settingsAreaTextRef.characters.length; c++) {
+			var currentChar        = settingsAreaTextRef.characters[c];
+			currentChar.size       = settingsTextSize;
+			currentChar.leading    = settingsTextLeading;
+		}
+	}
 
 
-// ================================================
-// grab custom settings, html, css, js and text blocks
-// ================================================
+	// ================================================
+	// grab custom settings, html, css, js and text blocks
+	// ================================================
 
-var customCss        = "\r\t<style type='text/css' media='screen,print'>\r",
-	customJs         = "",
-	customHtml       = "",
-	customYml        = "",
-	customCssBlocks  = 0,
-	customHtmlBlocks = 0,
-	customJsBlocks   = 0;
+	var customCss      = "",
+		customJs         = "",
+		customHtml       = "",
+		customYml        = "",
+		customCssBlocks  = 0,
+		customHtmlBlocks = 0,
+		customJsBlocks   = 0;
 
-customYml += "ai2html_version: " + scriptVersion      + "\n";
-customYml += "project_type: "    + previewProjectType + "\n";
-customYml += "tags: ai2html\n";
+	customYml += "ai2html_version: " + scriptVersion      + "\n";
+	customYml += "project_type: "    + previewProjectType + "\n";
+	customYml += "tags: ai2html\n";
 
-for (var tfNumber=0;tfNumber<doc.textFrames.length;tfNumber++) {
-	var thisFrame = doc.textFrames[tfNumber];
-	if ( thisFrame.contents !== "" ) {
-		if (thisFrame.paragraphs[0].contents=="ai2html-css") {
+	for (var tfNumber=0; tfNumber<doc.textFrames.length; tfNumber++) {
+		var thisFrame = doc.textFrames[tfNumber];
+		var firstLine = thisFrame.paragraphs.length > 0 ? thisFrame.paragraphs[0].contents : '';
+		if (firstLine == "ai2html-css") {
 			hideTextFrame(thisFrame);
 			customCssBlocks += 1;
 			customCss += "\t\t/* Custom CSS block " + customCssBlocks + " */\r";
@@ -639,7 +703,7 @@ for (var tfNumber=0;tfNumber<doc.textFrames.length;tfNumber++) {
 				} catch(e) {}
 			}
 		}
-		if (thisFrame.paragraphs[0].contents=="ai2html-html") {
+		if (firstLine == "ai2html-html") {
 			hideTextFrame(thisFrame);
 			customHtmlBlocks += 1;
 			customHtml += "\r\t<!-- Custom HTML block " + customHtmlBlocks + " -->\r";
@@ -649,7 +713,7 @@ for (var tfNumber=0;tfNumber<doc.textFrames.length;tfNumber++) {
 				} catch(e) {}
 			}
 		}
-		if (thisFrame.paragraphs[0].contents=="ai2html-js") {
+		if (firstLine == "ai2html-js") {
 			hideTextFrame(thisFrame);
 			customJsBlocks += 1;
 			customJs += "\r\t<!-- Custom JS block " + customJsBlocks + " -->\r";
@@ -659,110 +723,101 @@ for (var tfNumber=0;tfNumber<doc.textFrames.length;tfNumber++) {
 				} catch(e) {}
 			}
 		}
-		if (thisFrame.paragraphs[0].contents=="ai2html-settings" ||
-				thisFrame.paragraphs[0].contents=="ai2html-text") {
+		if (firstLine == "ai2html-settings" || firstLine == "ai2html-text") {
 			hideTextFrame(thisFrame);
 			parseSettingsTextBlock(thisFrame, docSettings);
 		}
 	}
-}
 
-customYml += "min_width: "       + breakpoints.min    + "\n";
-if (docSettings.max_width !== "") {
-	customYml += "max_width: " + docSettings.max_width + "\n";
-} else if (docSettings.responsiveness != "fixed" && docSettings.ai2html_environment == "nyt") {
-	customYml += "max_width: " + largestNyt5Breakpoint + "\n";
-} else if (docSettings.responsiveness != "fixed" && docSettings.ai2html_environment != "nyt") {
-	// don't write a max_width setting as there should be no max width in this case
-} else {
-	// this is the case of fixed responsiveness
-	// customYml += "max_width: " + breakpoints.max + "\n";
-	customYml += "max_width: " + maxArtboardWidth + "\n";
-}
-
-// write out remaining values for config file
-for (setting in docSettings) {
-	if (setting in ai2htmlBaseSettings && ai2htmlBaseSettings[setting].includeInConfigFile) {
-		var quoteMark = "";
-		if (ai2htmlBaseSettings[setting].useQuoteMarksInConfigFile) { quoteMark = '"'; }
-		customYml    += setting + ': ' + quoteMark + docSettings[setting] + quoteMark + "\n";
+	customYml += "min_width: "       + breakpoints.min    + "\n";
+	if (docSettings.max_width !== "") {
+		customYml += "max_width: " + docSettings.max_width + "\n";
+	} else if (docSettings.responsiveness != "fixed" && docSettings.ai2html_environment == "nyt") {
+		customYml += "max_width: " + largestNyt5Breakpoint + "\n";
+	} else if (docSettings.responsiveness != "fixed" && docSettings.ai2html_environment != "nyt") {
+		// don't write a max_width setting as there should be no max width in this case
+	} else {
+		// this is the case of fixed responsiveness
+		// customYml += "max_width: " + breakpoints.max + "\n";
+		customYml += "max_width: " + maxArtboardWidth + "\n";
 	}
-}
 
-customCss  += "\t</style>\r";
-customJs   += "\r";
-customHtml += "\r";
-
-var imageExtension = ".png";
-if (docSettings.image_format.length>0) {
-	imageExtension = "." + docSettings.image_format[0].substring(0,3);
-}
-
-// ================================================
-// validate settings
-// ================================================
-
-if (docSettings.max_width !== "" && docSettings.ai2html_environment ==="nyt") {
-	var max_width_is_valid = false;
-	for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
-		if (docSettings.max_width == nyt5Breakpoints[bpNumber].upperLimit.toString()) {
-			max_width_is_valid = true;
+	// write out remaining values for config file
+	for (setting in docSettings) {
+		if (setting in ai2htmlBaseSettings && ai2htmlBaseSettings[setting].includeInConfigFile) {
+			var quoteMark = "";
+			if (ai2htmlBaseSettings[setting].useQuoteMarksInConfigFile) { quoteMark = '"'; }
+			customYml    += setting + ': ' + quoteMark + docSettings[setting] + quoteMark + "\n";
 		}
 	}
-	if (!max_width_is_valid) {
-		warnings.push('The max_width setting of "' + docSettings.max_width + '" is not a valid breakpoint and will create an error when you "preview publish."');
+
+	var imageExtension = ".png";
+	if (docSettings.image_format.length>0) {
+		imageExtension = "." + docSettings.image_format[0].substring(0,3);
 	}
-}
 
-// ================================================
-// reset the output path and extension if the previewProjectType is ai2html and fix other path issues
-// ================================================
+	// ================================================
+	// validate settings
+	// ================================================
 
-if (previewProjectType=="ai2html") {
-	docSettings.html_output_path      = "/../public/";
-	docSettings.html_output_extension = ".html";
-	docSettings.image_output_path     = "_assets/";
-}
-docSettings.preview_image_path = "_assets/";
+	if (docSettings.max_width !== "" && docSettings.ai2html_environment ==="nyt") {
+		var max_width_is_valid = false;
+		for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
+			if (docSettings.max_width == nyt5Breakpoints[bpNumber].upperLimit.toString()) {
+				max_width_is_valid = true;
+			}
+		}
+		if (!max_width_is_valid) {
+			warnings.push('The max_width setting of "' + docSettings.max_width + '" is not a valid breakpoint and will create an error when you "preview publish."');
+		}
+	}
 
-if (docSettings.image_source_path === null) {
-	// fall back to image output path
-	docSettings.image_source_path = docSettings.image_output_path;
-}
+	// ================================================
+	// reset the output path and extension if the previewProjectType is ai2html and fix other path issues
+	// ================================================
 
-// ================================================
-// check for things that should/could prevent the script from running, otherwise proceed
-// ================================================
+	if (previewProjectType=="ai2html") {
+		docSettings.html_output_path      = "/../public/";
+		docSettings.html_output_extension = ".html";
+		docSettings.image_output_path     = "_assets/";
+	}
+	docSettings.preview_image_path = "_assets/";
 
-// check for ai2html and preview project folders
-if (parentFolder === null) {
-	errors.push('You need to save your Illustrator file before running this script');
-} else if ( parentFolder[0]==="ai/" && publicFolder.exists ) {
-	aiFileInPreviewProject = true;
-	// alert("ai file is in a preview project");
-}
-if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
-	errors.push('Convert document color mode to "RGB" before running script. (File>Document Color Mode>RGB Color)' );
+	if (docSettings.image_source_path === null) {
+		// fall back to image output path
+		docSettings.image_source_path = docSettings.image_output_path;
+	}
 
-} else if (!docHadSettingsBlock && docSettings.ai2html_environment=="nyt") {
-	errors.push("A settings text block was created to the left of all your artboards. Fill out the settings to link your project to the Scoop asset.");
+	// ================================================
+	// check for things that should/could prevent the script from running, otherwise proceed
+	// ================================================
 
-} else if (
-		(
-			(previewProjectType=="config.yml is missing") ||
-			(previewProjectType=="ai2html" && !publicFolder.exists) ||
-			((previewProjectType!="ai2html" && previewProjectType!="config.yml is missing") && !srcFolder.exists)
-		) && docSettings.ai2html_environment=="nyt"
-    ){
-		errors.push("Make sure your Illustrator file is inside the \u201Cai\u201D folder of a Preview project.");
-		errors.push("If the Illustrator file is in the correct folder, your Preview project may be missing a config.yml file or a \u201Cpublic\u201D or a \u201Csrc\u201D folder.");
-		errors.push("If this is an ai2html project, it is probably easier to just create a new ai2html Preview project and move this Illustrator file into the \u201Cai\u201D folder inside the project.");
+	if (parentFolder === null) {
+		errors.push('You need to save your Illustrator file before running this script');
+	}
+	else if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
+		errors.push('Convert document color mode to "RGB" before running script. (File>Document Color Mode>RGB Color)' );
+	} else if (!docHadSettingsBlock && docSettings.ai2html_environment=="nyt") {
+		errors.push("A settings text block was created to the left of all your artboards. Fill out the settings to link your project to the Scoop asset.");
+	} else if (
+			(
+				(previewProjectType=="config.yml is missing") ||
+				(previewProjectType=="ai2html" && !publicFolder.exists) ||
+				((previewProjectType!="ai2html" && previewProjectType!="config.yml is missing") && !srcFolder.exists)
+			) && docSettings.ai2html_environment=="nyt"
+	    ){
+			errors.push("Make sure your Illustrator file is inside the \u201Cai\u201D folder of a Preview project.");
+			errors.push("If the Illustrator file is in the correct folder, your Preview project may be missing a config.yml file or a \u201Cpublic\u201D or a \u201Csrc\u201D folder.");
+			errors.push("If this is an ai2html project, it is probably easier to just create a new ai2html Preview project and move this Illustrator file into the \u201Cai\u201D folder inside the project.");
+	}
+	if (errors.length > 0) {
+		return; // unable to continue
+	}
 
-} else {
 
-	// ======================================
-	// main stuff
-	// ======================================
+	if ( parentFolder[0]==="ai/" && publicFolder.exists ) {
+		// TODO: use this to configure something
+	}
 
 	if (!docHadSettingsBlock && docSettings.ai2html_environment!="nyt") {
 		feedback.push("A settings text block was created to the left of all your artboards. You can use it to customize your output.");
@@ -783,7 +838,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 		uniqueArtboardWidths.sort(function(a,b){return a-b;});
 	}
 
-	var responsiveHtml = "";
+	var artboardHtml = "";
 	for (var abNumber = 0; abNumber < doc.artboards.length; abNumber++) {
 		if (!artboardsToProcess[abNumber]) continue;
 		doc.artboards.setActiveArtboardIndex(abNumber);
@@ -980,7 +1035,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 		T.stop("Text generation");
 
 		// Concatenate html fragments
-		responsiveHtml += html.join('');
+		artboardHtml += html.join('');
 
 		T.start();
 		// Hide text frames in preparation for image generation
@@ -1042,8 +1097,9 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 		//=====================================
 
 		if (docSettings.output=="multiple-files") {
-			generateHtml(responsiveHtml, docArtboardName, docSettings);
-			responsiveHtml = "";
+			var content = getPageContent(artboardHtml, customHtml, customJs, customCss);
+			generateHtml(content, docArtboardName, docSettings);
+			artboardHtml = "";
 		}
 
 	} // end artboard loop
@@ -1053,7 +1109,8 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 	//=====================================
 
 	if (docSettings.output=="one-file") {
-		generateHtml(responsiveHtml, docSettings.project_name, docSettings);
+		var content = getPageContent(artboardHtml, customHtml, customJs, customCss);
+		generateHtml(content, docSettings.project_name, docSettings);
 	}
 
 	//=====================================
@@ -1081,57 +1138,6 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 		T.stop("Promo image creation");
 	}
 
-} // end rgb colorspace test
-
-
-// ==============================
-// restore document state
-// ==============================
-
-T.start();
-
-// Unhide stuff that was hidden during processing
-for (var i = 0; i < textFramesToUnhide.length; i++) {
-	var currentFrameToUnhide = textFramesToUnhide[i];
-	currentFrameToUnhide.hidden = false;
-}
-
-// Unhide layers so objects inside can be unlocked
-for (var i = hiddenObjects.length-1; i>=0; i--) {
-	hiddenObjects[i].visible = true;
-}
-
-// Relock stuff that was unlocked during processing
-for (var i = lockedObjects.length-1; i>=0; i--) {
-	lockedObjects[i].locked = true;
-}
-
-// Hide again layers
-for (var i = hiddenObjects.length-1; i>=0; i--) {
-	hiddenObjects[i].visible = false;
-}
-
-pBar.setTitle('Saving Illustrator document...');
-pBar.setProgress(1.0);
-// Save the document
-if (parentFolder !== null) {
-	var saveOptions = new IllustratorSaveOptions();
-	saveOptions.pdfCompatible = false;
-	// if (!doc.saved) { doc.save() }
-	if (!doc.saved) { doc.saveAs(origFile, saveOptions); }
-	feedback.push("Your Illustrator file was saved.");
-}
-
-T.stop("Restore and save document");
-
-T.stop("Total time");
-pBar.close();
-
-// ==============================
-// show alert box
-// ==============================
-
-if (docSettings.show_completion_dialog_box=="true") {
 	if (docSettings.image_format.length === 0) {
 		warnings.push("No images output because no image formats were specified.");
 	}
@@ -1141,8 +1147,9 @@ if (docSettings.show_completion_dialog_box=="true") {
 	if (customHtmlBlocks>1)  { feedback.push(customHtmlBlocks + " custom HTML blocks were added."); }
 	if (customJsBlocks==1)   { feedback.push(customJsBlocks   + " custom JS block was added."); }
 	if (customJsBlocks>1)    { feedback.push(customJsBlocks   + " custom JS blocks were added."); }
-	showCompletionAlert();
-}
+
+} // end main()
+
 
 // =================================
 // general purpose utility functions
@@ -2345,29 +2352,19 @@ function outputLocalPreviewPage(textForFile, localPreviewDestination, docSetting
 	outputHtml(localPreviewHtml, localPreviewDestination);
 }
 
-// Wrap artboard HTML in a <div>, add styles and resizer script, write to a file
-function generateHtml(responsiveHtml, docName, docSettings) {
-	pBar.setTitle('Writing HTML output...');
+function getPageContent(artboardHtml, customHtml, customJs, customCss) {
+	var content = "";
+	if (customCss) {
+		content += "\r\t<style type='text/css' media='screen,print'>\r" + customCss + "\t</style>\r";
+	}
+	content += artboardHtml;
+	if (customHtml) content += customHtml + '\r';
+	if (customJs) content += customJs + '\r';
+	return content;
+}
 
-	var multiMode = docSettings.output == 'multiple-files';
-	var docKey = makeKeyword(docName);
-	var dateTimeStamp = getDateTimeStamp();
-	var responsiveJs = '\t<script src="_assets/resizerScript.js"></script>' + "\n";
-	var responsiveCss = '\t<link rel="stylesheet" href="_assets/resizerStyle.css">' + "\n";
-	if (docSettings.include_resizer_css_js=="no"||docSettings.ai2html_environment!="nyt") {
-		responsiveJs  = "";
-		responsiveCss = "";
-	}
-	if (docSettings.include_resizer_script=="yes") {
-		responsiveJs  = '\t' + getResizerScript() + '\n';
-		responsiveCss = "";
-	}
-	var responsiveTextScoop       = responsiveHtml;
-	var textForFile               = "";
-	var htmlFileDestinationFolder = "";
-	var htmlFileDestination       = "";
-	var headerText = "<div id='" + nameSpace + docKey + "-box' class='ai2html'>\r";
-	headerText += "\t<!-- Generated by ai2html v" + scriptVersion + " - " + dateTimeStamp + " -->\r";
+function getContentHeader(docKey, docSettings) {
+	var headerText = "\t<!-- Generated by ai2html v" + scriptVersion + " - " + getDateTimeStamp() + " -->\r";
 	headerText += "\t<!-- ai file: " + docSettings.project_name + " -->\r";
 	if (docSettings.ai2html_environment == "nyt") {
 		headerText += "\t<!-- preview: " + docSettings.preview_slug + " -->\r";
@@ -2385,42 +2382,72 @@ function generateHtml(responsiveHtml, docName, docSettings) {
 		headerText += "\t\t\tmargin:0 auto;\r";
 		headerText += "\t\t}\r";
 	}
-	if (multiMode && docSettings.clickable_link !== "") {
+	if (docSettings.clickable_link !== "") {
 		headerText += "\t\t." + nameSpace + "ai2htmlLink {\r";
 		headerText += "\t\t\tdisplay: block;\r";
 		headerText += "\t\t}\r";
 	}
 	headerText += "\t</style>\r";
 	headerText += "\r";
-	if (multiMode && docSettings.clickable_link !== "") {
-		headerText += "\t<a class='" + nameSpace+"ai2htmlLink' href='" + docSettings.clickable_link + "'>\r";
+
+	return headerText;
+}
+
+// Wrap content HTML in a <div>, add styles and resizer script, write to a file
+function generateHtml(pageContent, docName, docSettings) {
+
+	var multiMode = docSettings.output == 'multiple-files';
+	var linkSrc = docSettings.clickable_link || "";
+	var docKey = makeKeyword(docName);
+	var textForFile = "";
+	var responsiveCss = "";
+	var responsiveJs = "";
+	var htmlFileDestination, htmlFileDestinationFolder;
+
+	pBar.setTitle('Writing HTML output...');
+
+	if (docSettings.ai2html_environment == "nyt" && docSettings.include_resizer_css_js != "no") {
+		responsiveJs = '\t<script src="_assets/resizerScript.js"></script>' + "\n";
+		if (previewProjectType == "ai2html") {
+			responsiveCss = '\t<link rel="stylesheet" href="_assets/resizerStyle.css">' + "\n";
+		}
+	}
+	if (docSettings.include_resizer_script=="yes") {
+		responsiveJs  = '\t' + getResizerScript() + '\n';
+		responsiveCss = "";
 	}
 
-	var footerText = "";
-	if (multiMode && docSettings.clickable_link !== "") {
-		footerText += "\t</a>\r";
+	// wrap content in a <div> tag
+	textForFile += "<div id='" + nameSpace + docKey + "-box' class='ai2html'>\r";
+	textForFile += getContentHeader(docKey, docSettings);
+
+	// optional link around content
+	if (linkSrc) {
+		textForFile += "\t<a class='" + nameSpace + "ai2htmlLink' href='" + linkSrc + "'>\r";
 	}
-	footerText += "\t<!-- End ai2html" + " - " + dateTimeStamp + " -->\r</div>\r";
 
-	textForFile += headerText;
-	if (previewProjectType == "ai2html") { textForFile += responsiveCss; }
-	if (customCssBlocks>0)             { textForFile += customCss;     }
-	textForFile += responsiveTextScoop;
-	if (customHtml.length>0)           { textForFile += customHtml;    }
-	if (customJs.length>0)             { textForFile += customJs;      }
-	if (responsiveJs.length>0)         { textForFile += responsiveJs;  }
+	textForFile += responsiveCss;
+	textForFile += pageContent;
+	textForFile += responsiveJs;
 
-	textForFile += footerText;
-	textForFile  = applyTemplate(textForFile, docSettings);
-	// textForFile  = straightenCurlyQuotesInsideAngleBrackets(textForFile);
+	if (linkSrc) {
+		textForFile += "\t</a>\r";
+	}
+
+	// close <div>
+	textForFile += "\t<!-- End ai2html" + " - " + getDateTimeStamp() + " -->\r</div>\r";
+
+	textForFile = applyTemplate(textForFile, docSettings);
 
 	htmlFileDestinationFolder = docPath + docSettings.html_output_path;
 	checkForOutputFolder(htmlFileDestinationFolder, "html_output_path");
-
 	htmlFileDestination = htmlFileDestinationFolder + docKey + docSettings.html_output_extension;
+
 	if (multiMode && previewProjectType == 'ai2html') {
 		htmlFileDestination = htmlFileDestinationFolder + "index" + docSettings.html_output_extension;
 	}
+
+	// write file
 	outputHtml(textForFile, htmlFileDestination);
 
 	// process local preview template if appropriate
