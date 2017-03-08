@@ -245,6 +245,7 @@ var caps = [
 	{"ai":"FontCapsOption.ALLCAPS","html":"uppercase"},
 	{"ai":"FontCapsOption.SMALLCAPS","html":"uppercase"}
 ];
+
 var align = [
 	{"ai":"Justification.LEFT","html":""},
 	{"ai":"Justification.RIGHT","html":"right"},
@@ -255,18 +256,15 @@ var align = [
 	{"ai":"Justification.FULLJUSTIFYLASTLINERIGHT","html":"justify"}
 ];
 
-// TODO: remove
-var pStyleKeyTags = [
+var textStyleKeys = [
 	"aifont",
 	"size",
 	"capitalization",
-	"r",
-	"g",
-	"b",
+	"color",
 	"tracking",
 	"leading",
-	"spacebefore",
-	"spaceafter",
+	"spaceBefore",
+	"spaceAfter",
 	"justification",
 	"opacity"
 ];
@@ -276,11 +274,13 @@ var pStyleKeyTags = [
 // ================================================
 
 // user inputs, settings, etc
-var defaultFamily       = "nyt-franklin,arial,helvetica,sans-serif";
-var defaultWeight       = "";
-var defaultStyle        = "";
-var defaultSize         = 13;
-var defaultLeading      = 18;
+var defaultParagraphStyle = {
+	aifont: 'NYTFranklin-Medium',
+	size: 13,
+	leading: 18,
+	weight: 500,
+	color: getCssColor(0, 0, 0)
+};
 var nameSpace           = "g-";
 var imageScale          = 200;
 var maxJpgImageScaling  = 776.19; // This is specified in the Javascript Object Reference under ExportOptionsJPEG.
@@ -369,7 +369,6 @@ if ( gitConfigFile.exists && scriptEnvironment=="nyt" ) {
 			var gitConfigValue  = lineArray[1].replace( /^\s+/ , "" ).replace( /\s+$/ , "" );
 			if ( gitConfigKey=="url" ) {
 				docSettings.preview_slug = gitConfigValue.replace( /^[^:]+:/ , "" ).replace( /\.git$/ , "");
-				// feedback.push("preview slug = " + docSettings.preview_slug);
 			}
 		}
 	}
@@ -774,6 +773,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 
 } else {
 
+
 	// ======================================
 	// main stuff
 	// ======================================
@@ -890,14 +890,14 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 		html[1] += "\t\t\t\tdisplay:block;\r";
 		html[1] += "\t\t\t\twidth:100% !important;\r";
 		html[1] += "\t\t\t}\r";
-		html[1] += "\t\t\t#"+nameSpace+docArtboardName+" p{\r";
-		html[1] += "\t\t\t\tfont-family:" + defaultFamily + ";\r";
-		html[1] += "\t\t\t\tfont-size:" + defaultSize + "px;\r";
-		html[1] += "\t\t\t\tline-height:" + defaultLeading + "px;\r";
+
+		// default <p> style
+		html[1] += "\t\t\t#"+nameSpace+docArtboardName+" p {\r";
 		if (docSettings.testing_mode=="yes") {
 			html[1] += "\t\t\t\tcolor: rgba(209, 0, 0, 0.5) !important;\r";
 		}
-		html[1] += "\t\t\t\tmargin:0;\r";
+		html[1] += "\t\t\t\tmargin:0;";
+		html[1] += generateStyleCss(defaultParagraphStyle);
 		html[1] += "\t\t\t}\r";
 
 		html[4] += "\t\t</style>\r";
@@ -965,12 +965,16 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 			html[6] += getTextFrameCss(thisFrame, activeArtboardRect) + '>\r';
 
 			// Generate a <p> tag for each paragraph of text
-			for (var k=0; k<thisFrame.paragraphs.length; k++) {
-				if (runningChars<numChars && thisFrame.paragraphs[k].characters.length !== 0) {
+			for (var k=0, l=0; k<thisFrame.paragraphs.length; k++) {
+				l = thisFrame.paragraphs[k].characters.length;
+				if (runningChars<numChars && l > 0) {
 					var pData = convertParagraph(thisFrame.paragraphs[k], pClasses);
+					// Warning: after calling convertParagraph(), a paragraph object may
+					// become unusable; simply referencing thisFrame.paragraphs[k] may throw an error
+					// (unclear why. sample file: 0125 web DISTRICTmap.ai)
 					html[6] += "\t\t\t\t<p class='" + pData.classname + "'>";
 					html[6] += pData.html + "</p>\r";
-					runningChars += (thisFrame.paragraphs[k].characters.length)+1;
+					runningChars += l+1;
 
 				} else {
 					html[6] += "\t\t\t\t<p>&nbsp;</p>\r";
@@ -983,7 +987,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 		// Generate CSS class definitions
 		for (var i=0; i<pClasses.length; i++) {
 			html[2] += "\t\t\t#" + nameSpace + docArtboardName + " ." +
-					pClasses[i].classname + " " + pClasses[i].css;
+					pClasses[i].classname + " {" + pClasses[i].css + "\t\t\t}\r";
 		}
 		html[2] += '\t\t\t.g-aiPtransformed p { white-space: nowrap; }\r';
 
@@ -1668,7 +1672,7 @@ function getUntransformedTextBounds(textFrame) {
 
 	activeDocument.selection = [textFrame];
 	app.copy();
-	app.paste();
+	app.paste(); // See Issue #50 https://github.com/newsdev/ai2html/issues/50
 	var textFrameCopy = activeDocument.selection[0];
 	// move to same position
 	textFrameCopy.left = textFrame.left;
@@ -1875,86 +1879,43 @@ function getResizerScript() {
 	return '<script type="text/javascript">\n' + js + '\n</script>\n\n';
 }
 
-// TODO: no longer used, remove
-//
-function convertStyleKeyToCss(key) {
-	// external vars: pStyleKeyTags, caps, fonts, align
-	var pArray = key.split("\t");
-	var pHash  = {};
-	var lines = [];
-	var j, k;
-	for (j=0; j<pStyleKeyTags.length; j++) {
-		var thisTag = pStyleKeyTags[j];
-		pHash[thisTag] = pArray[j];
-		if (thisTag == "size" || thisTag == "leading" || thisTag=="spacebefore" || thisTag=="spaceafter") {
-			pHash[thisTag] = Math.round(pHash[thisTag]);
+// Parse an AI CharacterAttributes object
+function getCharStyle(c) {
+	var fill = c.fillColor;
+	var caps = String(c.capitalization);
+	var o = {
+		aifont: c.textFont.name,
+		size: Math.round(c.size),
+		capitalization: caps == 'FontCapsOption.NORMALCAPS' ? '' : caps,
+		tracking: c.tracking
+	};
+	var r, g, b;
+	if (fill.typename == 'RGBColor') {
+		r = fill.red;
+		g = fill.green;
+		b = fill.blue;
+		if (r < rgbBlackThreshold && g < rgbBlackThreshold && b < rgbBlackThreshold) {
+			r = g = b = 0;
 		}
-		if (thisTag == "aifont") {
-			pHash.family = defaultFamily;
-			pHash.weight = defaultWeight;
-			pHash.style  = defaultStyle;
-			for (k=0; k<fonts.length; k++) {
-				if (pHash.aifont ==fonts[k].aifont) {
-					pHash.family = fonts[k].family;
-					pHash.weight = fonts[k].weight;
-					pHash.style  = fonts[k].style;
-				}
-			}
-			// check for franklin or cheltenham
-			// for (var tempFamily in nytFonts) {
-			// 	for (var fontNo = 0; fontNo < nytFonts[tempFamily].fontList.length; fontNo++) {
-			// 		var tempFont = nytFonts[tempFamily].fontList[fontNo];
-			// 		if (tempFont === pHash['aifont']) { nytFonts[tempFamily].inDoc = true; }
-			// 	}
-			// }
-		}
-		if (thisTag=="r"||thisTag=="g"||thisTag=="b") {
-			if (pHash[thisTag].length==1) { pHash[thisTag] = "0"+pHash[thisTag]; }
-		}
-		if (thisTag=="capitalization") {
-			for (k=0; k<caps.length; k++) {
-				if (pHash.capitalization == caps[k].ai) {
-					pHash.capitalization = caps[k].html;
-				}
-			}
-		}
-		if (thisTag=="justification") {
-			for (k=0; k<align.length; k++) {
-				if (pHash.justification == align[k].ai) {
-					pHash.justification = align[k].html;
-				}
-			}
-		}
-		if (thisTag=="tracking") {
-			// pHash['tracking'] = pHash['tracking']/1000;
-			pHash.tracking = pHash.tracking / 1200;
-		}
-		if (thisTag=="opacity") {
-			pHash.opacity = pHash.opacity / 100;
-		}
+	} else if (fill.typename == 'GrayColor') {
+		r = g = b = (100 - fill.gray) / 100 * 255;
+	} else if (fill.typename == 'NoColor') {
+		g = 255;
+		r = b = 0;
+		// warnings is processed later, after ranges of same-style chars are identified
+		o.warning = "This text has no fill. Please fill it with an RGB color. It has been filled with green.";
+	} else {
+		r = g = b = 0;
+		o.warning = "This text is filled with a non-RGB color. Please fill it with an RGB color."
 	}
-	lines.push('{');
-	if (pHash.family != defaultFamily) lines.push("font-family:" + pHash.family + ";");
-	if (pHash.size != defaultSize) lines.push("font-size:" + pHash.size + "px;");
-	if (pHash.leading != defaultLeading) lines.push("line-height:" + pHash.leading + "px;");
-	if (pHash.weight !== "") lines.push("font-weight:" + pHash.weight + ";");
-	if (pHash.style !== "" ) lines.push("font-style:" + pHash.style + ";");
-	if (pHash.capitalization !== "" ) lines.push("text-transform:" + pHash.capitalization + ";");
-	if (pHash.justification !== "" ) lines.push("text-align:" + pHash.justification + ";");
-	if (pHash.spacebefore > 0 ) lines.push("padding-top:" + pHash.spacebefore + "px;");
-	if (pHash.spaceafter > 0 ) lines.push("padding-bottom:" + pHash.spaceafter + "px;");
-	if (pHash.tracking !== 0 ) lines.push("letter-spacing:" + pHash.tracking + "em;");
-	if (pHash.opacity != 1.0 ) lines.push("filter: alpha(opacity=" + (pHash.opacity * 100) + ");");
-	if (pHash.opacity != 1.0 ) lines.push("-ms-filter:'progid:DXImageTransform.Microsoft.Alpha(Opacity=" + (pHash.opacity * 100) + ")';");
-	if (pHash.opacity != 1.0 ) lines.push("opacity:" + pHash.opacity + ";");
-	lines.push("color:#" + pHash.r + pHash.g + pHash.b + ";");
-
-	return lines.join("\r\t\t\t\t") + "\r\t\t\t}\r";
+	o.color = getCssColor(r, g, b);
+	return o;
 }
 
 function getParagraphStyle(p) {
 	// get character style
 	var s = getCharStyle(p.characterAttributes);
+	// var s = getCharStyle(p.characters[0]);
 	// add paragraph-related styles
 	s.leading = Math.round(p.leading);
 	s.spaceBefore = Math.round(p.spaceBefore);
@@ -1963,23 +1924,35 @@ function getParagraphStyle(p) {
 
  	// TODO: fix opacity -- try checking text frame // Math.round(p.opacity);
 	s.opacity = 100;
-	s.key = s.aifont + '~' + s.size + '~' + s.capitalization + '~' + s.tracking +
-		'~' + s.color + s.leading + '~' + s.spaceBefore + '~' +
-		'~' + s.spaceAfter + '~' + s.opacity;
+
 	return s;
 }
 
-function getParagraphClass(style, classes) {
+// s: style object
+function getStyleKey(s) {
+	// TODO: improve
+	var key = '';
+	for (var i=0, n=textStyleKeys.length; i<n; i++) {
+		key += '~' + (s[textStyleKeys[i]] || '');
+	}
+	return key;
+}
+
+
+function getTextStyleClass(style, classes, name) {
+	var key = getStyleKey(style);
+	var cname = nameSpace + (name || 'aiPstyle');
 	var o, i;
 	for (i=0; i<classes.length; i++) {
 		o = classes[i];
-		if (o.style.key == style.key) {
+		if (o.key == key) {
 			return o.classname;
 		}
 	}
 	o = {
+		key: key,
 		style: style,
-		classname: nameSpace + 'aiPstyle' + i,
+		classname: cname + i,
 		css: generateStyleCss(style)
 	};
 	classes.push(o);
@@ -2007,12 +1980,14 @@ function convertParagraphSegments(arr) {
 // for each string of characters and for the entire paragraph
 //
 function convertParagraph(p, classes) {
-	var style = getParagraphStyle(p);
-	feedback.push(JSON.stringify(style));
-	var segments = getParagraphSegments(p, style);
+	var pstyle = getParagraphStyle(p);
+	// TODO: base the pstyle on the most common character style
+	var segments = getParagraphSegments(p, pstyle);
+	var uniqStyle = getTextStyleDiff(pstyle, defaultParagraphStyle) || {};
+
 	return {
-		style: style,
-		classname: getParagraphClass(style, classes),
+		style: pstyle,
+		classname: getTextStyleClass(uniqStyle, classes),
 		sections: segments,
 		html: convertParagraphSegments(segments)
 	};
@@ -2055,7 +2030,7 @@ function generateStyleCss(s, inline) {
 	var styles = [];
 	var fontInfo, css, tmp;
 	if (s.aifont && (fontInfo = findFontInfo(s.aifont))) {
-		if (fontInfo.family != defaultFamily) {
+		if (fontInfo.family) {
 			styles.push("font-family:" + fontInfo.family + ";");
 		}
 		if (fontInfo.weight) {
@@ -2065,10 +2040,10 @@ function generateStyleCss(s, inline) {
 			styles.push("font-style:" + fontInfo.style + ";");
 		}
 	}
-	if (('size' in s) && s.size != defaultSize) {
+	if (s.size > 0) {
 		styles.push("font-size:" + s.size + "px;");
 	}
-	if (('leading' in s) && s.leading !== defaultLeading) {
+	if ('leading' in s) {
 		styles.push("line-height:" + s.leading + "px;");
 	}
 	if (('opacity' in s) && s.opacity != 100) {
@@ -2100,8 +2075,7 @@ function generateStyleCss(s, inline) {
 	} else if (inline) {
 		css = styles.join(' ');
 	} else {
-		styles.unshift('{');
-		css = styles.join("\r\t\t\t\t") + "\r\t\t\t}\r";
+		css = "\r\t\t\t\t" + styles.join("\r\t\t\t\t") + "\r";
 	}
 	return css;
 }
@@ -2111,15 +2085,14 @@ function generateStyleCss(s, inline) {
 // pstyle: parsed paragraph style
 //
 function getParagraphSegments(p, pstyle) {
-	var properties = 'aifont,size,capitalization,tracking,color'.split(',');
 	var segments = [];
 	var currRange;
 	var prev, curr, diff, cstr;
 	for (var i=0, n=p.characters.length; i<n; i++) {
 		cstr = p.characters[i].contents;
 		curr = getCharStyle(p.characters[i]);
-		if (!prev || getCharStyleDiff(curr, prev, properties)) {
-			diff = getCharStyleDiff(curr, pstyle, properties);
+		if (!prev || getTextStyleDiff(curr, prev)) {
+			diff = getTextStyleDiff(curr, pstyle);
 			currRange = {
 				text: "",
 				style: diff,
@@ -2133,14 +2106,16 @@ function getParagraphSegments(p, pstyle) {
 	return segments;
 }
 
-// return styles that are different
-function getCharStyleDiff(a, b, properties) {
-	var diff = null, name;
-	for (var i=0; i<properties.length; i++) {
-		name = properties[i];
-		if (a[name] != b[name]) {
+
+// return styles that are in a but not b
+// a, b: style objects
+// properties: array of properties to consider
+function getTextStyleDiff(a, b) {
+	var diff = null;
+	for (var k in a) {
+		if (a[k] != b[k] && a.hasOwnProperty(k)) {
 			diff = diff || {};
-			diff[name] = a[name];
+			diff[k] = a[k];
 		}
 	}
 	return diff;
@@ -2148,96 +2123,6 @@ function getCharStyleDiff(a, b, properties) {
 
 function getCssColor(r, g, b) {
 	return 'rgb(' + r + ',' + g + ',' + b + ')';
-}
-
-// Parse an AI CharacterAttributes object
-function getCharStyle(c) {
-	var fill = c.fillColor;
-	var caps = String(c.capitalization);
-	var o = {
-		aifont: c.textFont.name,
-		size: Math.round(c.size),
-		capitalization: caps == 'FontCapsOption.NORMALCAPS' ? '' : caps,
-		tracking: c.tracking
-	};
-	var r, g, b;
-	if (fill.typename == 'RGBColor') {
-		r = fill.red;
-		g = fill.green;
-		b = fill.blue;
-		if (r < rgbBlackThreshold && g < rgbBlackThreshold && b < rgbBlackThreshold) {
-			r = g = b = 0;
-		}
-	} else if (fill.typename == 'GrayColor') {
-		r = g = b = (100 - fill.gray) / 100 * 255;
-	} else if (fill.typename == 'NoColor') {
-		g = 255;
-		r = b = 0;
-		// warnings is processed later, after ranges of same-style chars are identified
-		o.warning = "This text has no fill. Please fill it with an RGB color. It has been filled with green.";
-	} else {
-		r = g = b = 0;
-		o.warning = "This text is filled with a non-RGB color. Please fill it with an RGB color."
-	}
-	o.color = getCssColor(r, g, b);
-	return o;
-}
-
-// No longer used
-// TODO: port invalid fill warnings to refactored code
-//
-function getParagraphStyleKey(p) {
-	var redOut, greenOut, blueOut, grayPct;
-	var b = "\t";
-	// var sampleChar = p.characters[Math.round(p.length/2)-1];
-	var sampleChar = p.characterAttributes;
-	var pStyleKey = "";
-	pStyleKey += sampleChar.textFont.name;
-	pStyleKey += b + Math.round(sampleChar.size);
-	pStyleKey += b + sampleChar.capitalization;
-
-	if (sampleChar.fillColor.typename == "GrayColor") {
-		// looks like a bug
-		// var grayPct = selectFrames[i].characters[k].fillColor.gray;
-		grayPct   = (100 - sampleChar.fillColor.gray) / 100 * 255;
-		redOut   = rgbPct;
-		greenOut = rgbPct;
-		blueOut  = rgbPct;
-	} else if (sampleChar.fillColor.typename == "RGBColor") {
-		redOut   = sampleChar.fillColor.red;
-		greenOut = sampleChar.fillColor.green;
-		blueOut  = sampleChar.fillColor.blue;
-		if (redOut < rgbBlackThreshold &&
-			greenOut < rgbBlackThreshold &&
-			blueOut < rgbBlackThreshold) {
-			redOut   = 0;
-			greenOut = 0;
-			blueOut  = 0;
-		}
-	} else if (sampleChar.fillColor.typename == "NoColor") {
-		redOut   = 0;
-		greenOut = 255;
-		blueOut  = 0;
-		warnings.push("This text has no fill. Please fill it with an RGB color. It has been filled with green. Text: \u201C" + p.contents + "\u201D");
-	} else {
-		redOut   = 0;
-		greenOut = 0;
-		blueOut  = 0;
-		warnings.push("This text is filled with a non-RGB color. Please fill it with an RGB color. Text: \u201C" + p.contents + "\u201D");
-	}
-	pStyleKey += b + redOut.toString(16);
-	pStyleKey += b + greenOut.toString(16);
-	pStyleKey += b + blueOut.toString(16);
-
-	pStyleKey += b + sampleChar.tracking;
-	pStyleKey += b + Math.round(p.leading);
-	pStyleKey += b + Math.round(p.spaceBefore);
-	pStyleKey += b + Math.round(p.spaceAfter);
-	pStyleKey += b + p.justification;
-	// mbloch TODO: investigate opacity. Switching from frame to paragraph
-	// pStyleKey += b + Math.round(thisFrame.opacity);
-	pStyleKey += b + Math.round(p.opacity);
-	return pStyleKey;
 }
 
 function textFrameIsInBounds(frame, artboardRect) {
