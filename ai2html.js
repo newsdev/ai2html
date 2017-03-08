@@ -42,6 +42,7 @@ var scriptEnvironment = "nyt";
 
 // add polyfills, etc
 initScriptEnvironment();
+T.start();
 
 if (!app.documents.length) {
 	throw " No documents are open";
@@ -282,7 +283,6 @@ var defaultParagraphStyle = {
 	color: getCssColor(0, 0, 0)
 };
 var nameSpace           = "g-";
-var imageScale          = 200;
 var maxJpgImageScaling  = 776.19; // This is specified in the Javascript Object Reference under ExportOptionsJPEG.
 var pctPrecision        = 4;
 var outputType          = "pct"; // "abs" or "pct"
@@ -1041,7 +1041,6 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 				}
 			}
 		}
-		T.stop("Image generation");
 
 		// unhide text now if NOT in testing mode
 		if (docSettings.testing_mode!="yes") {
@@ -1049,6 +1048,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 				selectFrames[i].hidden = false;
 			}
 		}
+		T.stop("Image generation");
 
 
 		//=====================================
@@ -1090,7 +1090,9 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 
 	// Create promo image with largest artboard
 	if (docSettings.create_promo_image=="yes") {
+		T.start();
 		createPromoImage(largestArtboardIndex);
+		T.stop("Promo image creation");
 	}
 
 } // end rgb colorspace test
@@ -1099,6 +1101,8 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 // ==============================
 // restore document state
 // ==============================
+
+T.start();
 
 // Unhide stuff that was hidden during processing
 for (var i = 0; i < textFramesToUnhide.length; i++) {
@@ -1131,6 +1135,10 @@ if (parentFolder !== null) {
 	if (!doc.saved) { doc.saveAs(origFile, saveOptions); }
 	feedback.push("Your Illustrator file was saved.");
 }
+
+T.stop("Restore and save document");
+
+T.stop("Total time");
 
 // ==============================
 // show alert box
@@ -1278,7 +1286,7 @@ function pushIfUnique(arr, val) {
 
 function getArtboardPos(rect) {
 	var x = rect[0],
-			y = rect[1],
+			y = -rect[1],
 			w = Math.round(rect[2] - x),
 			h = -rect[3] - y;
 	return {
@@ -1391,114 +1399,106 @@ function initDevEnvironment() {
 	};
 }
 
+// Exports contents of current artboard (typically without text)
+// dest: full path of output file including the file name
+// width, height: the artboard width and height and only used to determine whether or not to use double res
+// formats: array of export format identifiers (png, png24, jpg, svg)
+// initialScaling: the proportion to scale the base image before considering whether to double res. Usually just 1.
+// doubleres: "yes" or "no" whether you want to allow images to be double res
+//            to force ai2html to use doubleres, use "always"
+//
 function exportImageFiles(dest,width,height,formats,initialScaling,doubleres) {
-	// alert(formats);
-	// width and height are the artboard width and height and only used to determine whether or not to double res
-	// initialScaling is the proportion to scale the base image before considering whether to double res. Usually just 1.
-	// Exports current document to dest as a PNG8 file with specified
-	// options, dest contains the full path including the file name
-	// doubleres is "yes" or "no" whether you want to allow images to be double res
-	// if you want to force ai2html to use doubleres, use "always"
-	var pngImageScaling, pngExportOptions, pngFileSpec, pngType,
-			jpgImageScaling, jpgExportOptions, jpgFileSpec, jpgType,
-			svgExportOptions, svgFileSpec, svgType;
+	var pngScaling = 100 * initialScaling,
+			jpgScaling = 100 * initialScaling,
+			exportOptions, fileType;
 
 	if (doubleres=="yes" || doubleres=="always") {
+		pngScaling = 200 * initialScaling;
+		jpgScaling = 200 * initialScaling;
 		// if image is too big to use double-res, then just output single-res.
-		pngImageScaling = 200 * initialScaling;
-		jpgImageScaling = 200 * initialScaling;
 		if (doubleres == 'always' || ((width*height) < (3*1024*1024/4) || (width >= 945))) {
 			// <3
 			// feedback.push("The jpg and png images are double resolution.");
 		} else if ( (width*height) < (3*1024*1024) ) {
 			// .75-3
-			pngImageScaling = 100;
+			pngScaling = 100;
 			// feedback.push("The png image is single resolution.");
 			// feedback.push("The jpg image is double resolution.");
 		} else if ( (width*height) < (32*1024*1024/4) ) {
 			// 3-8
-			pngImageScaling = 100;
+			pngScaling = 100;
 			// warnings.push("The png image is single resolution, but is too large to display on first-generation iPhones.");
 			// feedback.push("The jpg image is double resolution.");
 		} else if ( (width*height) < (32*1024*1024) ) {
 			// 8-32
-			pngImageScaling = 100;
-			jpgImageScaling = 100;
+			pngScaling = 100;
+			jpgScaling = 100;
 			// warnings.push("The png image is single resolution, but is too large to display on first-generation iPhones.");
 			// feedback.push("The jpg image is single resolution.");
 		} else {
 			// 32+
-			pngImageScaling = 100;
-			jpgImageScaling = 100;
+			pngScaling = 100;
+			jpgScaling = 100;
 			// warnings.push("The jpg and png images are single resolution, but are too large to display on first-generation iPhones.");
 		}
-	} else {
-		pngImageScaling = 100 * initialScaling;
-		jpgImageScaling = 100 * initialScaling;
 	}
-	// alert("scaling\npngImageScaling = " + pngImageScaling + "\njpgImageScaling = " + jpgImageScaling);
 
 	for (var formatNumber = 0; formatNumber < formats.length; formatNumber++) {
 		var format = formats[formatNumber];
 		if (format=="png") {
-			pngExportOptions = new ExportOptionsPNG8();
-			pngType = ExportType.PNG8;
-			pngFileSpec = new File(dest);
-			pngExportOptions.colorCount       = docSettings.png_number_of_colors;
-			pngExportOptions.transparency     = (docSettings.png_transparent==="no") ? false : true;
-			pngExportOptions.artBoardClipping = true;
-			pngExportOptions.antiAliasing     = false;
-			pngExportOptions.horizontalScale  = pngImageScaling;
-			pngExportOptions.verticalScale    = pngImageScaling;
-			app.activeDocument.exportFile( pngFileSpec, pngType, pngExportOptions );
-			// feedback.push("pngExportOptions.png_number_of_colors = " + pngExportOptions.colorCount);
-			// feedback.push("pngExportOptions.transparency = " + pngExportOptions.transparency);
+			exportOptions = new ExportOptionsPNG8();
+			fileType = ExportType.PNG8;
+			exportOptions.colorCount       = docSettings.png_number_of_colors;
+			exportOptions.transparency     = (docSettings.png_transparent==="no") ? false : true;
+			exportOptions.artBoardClipping = true;
+			exportOptions.antiAliasing     = false;
+			exportOptions.horizontalScale  = pngScaling;
+			exportOptions.verticalScale    = pngScaling;
+			// feedback.push("exportOptions.png_number_of_colors = " + exportOptions.colorCount);
+			// feedback.push("exportOptions.transparency = " + exportOptions.transparency);
 
 		} else if (format=="png24") {
-			pngExportOptions = new ExportOptionsPNG24();
-			pngType = ExportType.PNG24;
-			pngFileSpec = new File(dest);
-			pngExportOptions.transparency     = (docSettings.png_transparent==="no") ? false : true;
-			pngExportOptions.artBoardClipping = true;
-			pngExportOptions.antiAliasing     = false;
-			pngExportOptions.horizontalScale  = pngImageScaling;
-			pngExportOptions.verticalScale    = pngImageScaling;
-			app.activeDocument.exportFile( pngFileSpec, pngType, pngExportOptions );
+			exportOptions = new ExportOptionsPNG24();
+			fileType = ExportType.PNG24;
+			exportOptions.transparency     = (docSettings.png_transparent==="no") ? false : true;
+			exportOptions.artBoardClipping = true;
+			exportOptions.antiAliasing     = false;
+			exportOptions.horizontalScale  = pngScaling;
+			exportOptions.verticalScale    = pngScaling;
 
 		} else if (format=="svg") {
-			svgExportOptions = new ExportOptionsSVG();
-			svgType = ExportType.SVG;
-			// alert("This will be the svg dest: " + dest);
-			svgFileSpec = new File(dest);
-			svgExportOptions.embedAllFonts         = false;
-			svgExportOptions.fontSubsetting        = SVGFontSubsetting.None;
-			svgExportOptions.compressed            = false;
-			svgExportOptions.documentEncoding      = SVGDocumentEncoding.UTF8;
-			svgExportOptions.embedRasterImages     = (docSettings.svg_embed_images==="yes") ? true : false;
-			// svgExportOptions.horizontalScale       = initialScaling;
-			// svgExportOptions.verticalScale         = initialScaling;
-			svgExportOptions.saveMultipleArtboards = false;
-			svgExportOptions.DTD                   = SVGDTDVersion.SVG1_1; // SVG1_0 SVGTINY1_1 <=default SVG1_1 SVGTINY1_1PLUS SVGBASIC1_1 SVGTINY1_2
-			svgExportOptions.cssProperties         = SVGCSSPropertyLocation.STYLEATTRIBUTES; // ENTITIES STYLEATTRIBUTES <=default PRESENTATIONATTRIBUTES STYLEELEMENTS
-			app.activeDocument.exportFile( svgFileSpec, svgType, svgExportOptions );
+			fileType = ExportType.SVG;
+			exportOptions = new ExportOptionsSVG();
+			exportOptions.embedAllFonts         = false;
+			exportOptions.fontSubsetting        = SVGFontSubsetting.None;
+			exportOptions.compressed            = false;
+			exportOptions.documentEncoding      = SVGDocumentEncoding.UTF8;
+			exportOptions.embedRasterImages     = (docSettings.svg_embed_images==="yes") ? true : false;
+			// exportOptions.horizontalScale       = initialScaling;
+			// exportOptions.verticalScale         = initialScaling;
+			exportOptions.saveMultipleArtboards = false;
+			exportOptions.DTD                   = SVGDTDVersion.SVG1_1; // SVG1_0 SVGTINY1_1 <=default SVG1_1 SVGTINY1_1PLUS SVGBASIC1_1 SVGTINY1_2
+			exportOptions.cssProperties         = SVGCSSPropertyLocation.STYLEATTRIBUTES; // ENTITIES STYLEATTRIBUTES <=default PRESENTATIONATTRIBUTES STYLEELEMENTS
 
 		} else if (format=="jpg") {
-			if (jpgImageScaling > maxJpgImageScaling) {
-				jpgImageScaling = maxJpgImageScaling;
+			if (jpgScaling > maxJpgImageScaling) {
+				jpgScaling = maxJpgImageScaling;
 				var promoImageFileName = dest.split("/").slice(-1)[0];
 				feedback.push(promoImageFileName + ".jpg was output at a lower scaling than desired because of a limit on jpg exports in Illustrator. If the file needs to be larger, change the image format to png which does not appear to have limits.");
 			}
-			jpgExportOptions = new ExportOptionsJPEG();
-			jpgType = ExportType.JPEG;
-			jpgFileSpec = new File(dest);
-			jpgExportOptions.artBoardClipping = true;
-			jpgExportOptions.antiAliasing     = false;
-			jpgExportOptions.qualitySetting   = docSettings.jpg_quality;
-			jpgExportOptions.horizontalScale  = jpgImageScaling;
-			jpgExportOptions.verticalScale    = jpgImageScaling;
-			app.activeDocument.exportFile( jpgFileSpec, jpgType, jpgExportOptions );
-			// feedback.push("jpgExportOptions.qualitySetting = " + jpgExportOptions.qualitySetting);
+			fileType = ExportType.JPEG;
+			exportOptions = new ExportOptionsJPEG();
+			exportOptions.artBoardClipping = true;
+			exportOptions.antiAliasing     = false;
+			exportOptions.qualitySetting   = docSettings.jpg_quality;
+			exportOptions.horizontalScale  = jpgScaling;
+			exportOptions.verticalScale    = jpgScaling;
+
+		} else {
+			warnings.push("Unsupported image format: " + format);
+			continue;
 		}
+		app.activeDocument.exportFile(new File(dest), fileType, exportOptions);
 	}
 }
 
@@ -1554,6 +1554,9 @@ function createPromoImage(abNumber) {
 			imageDestination     =  docPath + docArtboardName + "-promo",
 			promoImageAspect     =  promoImageMinHeight/promoImageMinWidth,
 			promoScale           =  1;
+
+	// Promo size calculation is buggy... tends to generate too-large images,
+	//   needs to be reworked
 	if (artboardAspectRatio > promoImageAspect) {
 		promoScale = promoImageMinWidth/abW;
 		if (abH * promoScale > promoImageMaxHeight) {
@@ -1568,6 +1571,8 @@ function createPromoImage(abNumber) {
 
 	var promoW = abW * promoScale;
 	var promoH = abH * promoScale;
+
+	// promoScale *= 1024 / promoW  // test 1024px promo width
 
 	// feedback.push("promoImageAspect = " + promoImageAspect + "\r" +
 	// 	"abNumber = " + abNumber + "\r" +
