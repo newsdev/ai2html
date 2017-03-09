@@ -2,6 +2,7 @@
 var scriptVersion     = "0.61";
 // var scriptEnvironment = "nyt";
 var scriptEnvironment = "";
+var axiosVersion = "1.1";
 
 // ai2html is a script for Adobe Illustrator that converts your Illustrator document into html and css.
 
@@ -661,7 +662,7 @@ var defaultWeight       = "400";
 var defaultStyle        = "";
 var defaultSize         = 13;
 var defaultLeading      = 18;
-var nameSpace           = "g-";
+var nameSpace           = "av-";
 var imageScale          = 200;
 var maxJpgImageScaling  = 776.19; // This is specified in the Javascript Object Reference under ExportOptionsJPEG.
 var pctPrecision        = 4;
@@ -689,7 +690,7 @@ var aiFileInPreviewProject = false;
 var doc                    = app.activeDocument;
 var docPath                = doc.path + "/";
 // var origFilename           = doc.name;
-
+var filename               = doc.name.replace(/(.+)\.[aieps]+$/,"$1").replace(/ /g,"-");
 var origFile               = new File (docPath + doc.name);
 var parentFolder           = docPath.toString().match( /[^\/]+\/$/ );
 var publicFolder           = new Folder( docPath + "../public/" );
@@ -800,7 +801,7 @@ for (setting in ai2htmlBaseSettings) {
 	docSettings[setting] = ai2htmlBaseSettings[setting].defaultValue;
 };
 
-if (docSettings.project_name == "") {
+if (docSettings.project_name == "" || !docSettings.project_name) {
 	docSettings.project_name = doc.name.replace(/(.+)\.[aieps]+$/,"$1").replace(/ /g,"-");
 } else {
 	docSettings.project_name = makeKeyword(docSettings.project_name);
@@ -995,6 +996,19 @@ if (!docHadSettingsBlock) {
 		currentChar.leading    = settingsTextLeading;
 	};
 };
+
+// ================================================
+// increment build value
+// ================================================
+
+var buildLayer = doc.layers.getByName("ai2html-settings").textFrames.getByName("ai2html-build");
+
+var buildValue = Number(buildLayer.paragraphs[1].contents);
+if (isNaN(buildValue)) {
+  buildValue = 0;
+}
+var newBuildValue = buildValue + 1;
+buildLayer.paragraphs[1].contents = newBuildValue.toString();
 
 
 // ================================================

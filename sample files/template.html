@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<title>Axios Visuals: <%= subhead %></title>
+	<title>Axios Visuals: {{ headline }}</title>
 	<!--[if lt IE 9]>
 	  <script type="text/javascript" charset="utf-8" src="https://html5shim.googlecode.com/svn/trunk/html5.js"></script>
 	<![endif]-->
@@ -23,14 +23,14 @@
 </head>
 <body>
 	<div class="tmpl-ai2htmlPage">
-		<h1 class="tmpl-pageHed"><%= subhead %></h1>
-		<p class="tmpl-pageIntro"><%= leadin %></p>
+		<h1 class="tmpl-pageHed">{{ headline }}</h1>
+		<p class="tmpl-pageIntro">{{ leadin }}></p>
 		<div class="g-graphicStub">
-			<%= ai2htmlPartial %>
+			{{ ai2htmlPartial }}
 		</div>
-		<p  class="tmpl-pageNotes"><%= notes %></p>
-		<p  class="tmpl-pageSources"><%= sources %></p>
-		<p  class="tmpl-pageCredits"><%= credit %></p>
+		<p  class="tmpl-pageNotes">{{ notes }}</p>
+		<p  class="tmpl-pageSources">{{ sources }}</p>
+		<p  class="tmpl-pageCredits">{{ credit }}</p>
 	</div>
 	<script type="text/javascript" src="https://pym.nprapps.org/pym.v1.min.js"></script>
 	<script type="text/javascript">
