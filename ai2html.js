@@ -328,6 +328,13 @@ var pBar = new ProgressBar();
 // inputFile,starterText,linePrefix,lineSuffix
 // readTextFileAndPutIntoAVariable
 
+// Unlock all objects
+unlockObjects(doc);
+
+// unhide layers that were hidden so objects inside could be locked
+for (var i = hiddenObjects.length-1; i>=0; i--) {
+	hiddenObjects[i].visible = false;
+}
 
 // =====================
 // call main function
@@ -355,12 +362,12 @@ for (var i = hiddenObjects.length-1; i>=0; i--) {
 	hiddenObjects[i].visible = true;
 }
 
-// Relock stuff that was unlocked during processing
+// Restore locked objects
 for (var i = lockedObjects.length-1; i>=0; i--) {
 	lockedObjects[i].locked = true;
 }
 
-// Hide again layers
+// Restore hidden layers
 for (var i = hiddenObjects.length-1; i>=0; i--) {
 	hiddenObjects[i].visible = false;
 }
@@ -384,7 +391,7 @@ T.stop("Total time");
 pBar.close();
 
 // ==============================
-// show alert box
+// Show alert box
 // ==============================
 
 if (docSettings.show_completion_dialog_box=="true") {
@@ -395,22 +402,15 @@ if (docSettings.show_completion_dialog_box=="true") {
 }
 
 
+
 // =================================
-// main function
+// Main function
 // =================================
 
 function main() {
 
-	// loop thru all layers, groups and textframes to find locked objects and unlock them
-	unlockObjects(doc);
-
-	//unhide layers that were hidden so objects inside could be locked
-	for (var i = hiddenObjects.length-1; i>=0; i--) {
-		hiddenObjects[i].visible = false;
-	}
-
 	// ================================================
-	// read .git/config file to get preview slug
+	// Read .git/config file to get preview slug
 	// ================================================
 
 	if (scriptEnvironment=="nyt") {
@@ -422,7 +422,7 @@ function main() {
 	}
 
 	// ================================================
-	// read yml file if it exists to determine what type of project this is
+	// Read yml file if it exists to determine what type of project this is
 	// ================================================
 
 	if (scriptEnvironment=="nyt") {
@@ -440,18 +440,10 @@ function main() {
 	}
 
 	// ================================================
-	// Transfer default values into docSettings object.
-	// Generate text for ai2html settings block and determine length.
+	// Initialize docSettings object.
 	// ================================================
 
-	var defaultSettingsText   = "ai2html-settings";
-	var ai2htmlSettingsLength = 0;
-
 	for (var setting in ai2htmlBaseSettings) {
-		if (ai2htmlBaseSettings[setting].includeInSettingsBlock) {
-			defaultSettingsText += "\r" + setting + ': ' + ai2htmlBaseSettings[setting].defaultValue;
-			ai2htmlSettingsLength += 1;
-		}
 		docSettings[setting] = ai2htmlBaseSettings[setting].defaultValue;
 	}
 
@@ -462,7 +454,7 @@ function main() {
 	}
 
 	// ================================================
-	// determine which artboards get which show classes
+	// Determine which artboards get which show classes
 	// ================================================
 
 	var nyt5Breakpoints = [
@@ -478,9 +470,6 @@ function main() {
 	var breakpoints        = {};
 	breakpoints.min        = "";
 	breakpoints.max        = "";
-	var artboardsMaxMins   = [];
-	var artboardsLefts     = [];
-	var artboardsTops      = [];
 
 	var largestNyt5Breakpoint = 0;
 	for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
@@ -492,50 +481,38 @@ function main() {
 	// to manually force an artboard to appear at a specific pixel width,
 	// append the width to the end of the artboard name with a colon and then the number, eg. "Artboard name:720"
 	// old way of doing this: name that artboard with a "ai2html-" followed by the upperlimit of the breakpoint, eg. ai2html-720
-	pBar.setTitle('Determining artboards to process...');
-	for (var abNumber = 0; abNumber < doc.artboards.length; abNumber++) {
-		if (doc.artboards[abNumber].name.search(/^-/)==-1) {
-			var artboardWidthMatch   = false;
-			var currentArtboard      = doc.artboards[abNumber];
-			var currentArtboardWidth = 0;
 
-			// calculate artboard width for purposes of determining viewport -- need to make this into a function
-			if (doc.artboards[abNumber].name.search(/^.+:\d+$/)!=-1) {
-				currentArtboardWidth = (doc.artboards[abNumber].name.replace( /^.+:(\d+)$/ , "$1" ));
-			} else if (doc.artboards[abNumber].name.search(/^ai2html-\d+$/)!=-1) {
-				// this is the old way, supported for backward compatibility
-				currentArtboardWidth = (doc.artboards[abNumber].name.replace( /^ai2html-(\d+)$/ , "$1" ));
-			} else {
-				currentArtboardWidth = Math.round(currentArtboard.artboardRect[2]-currentArtboard.artboardRect[0]);
-			}
-			// alert(abNumber + " = " + currentArtboardWidth);
+	forEachArtboard(function(currentArtboard, abNumber) {
+		var artboardWidthMatch   = false;
+		var currentArtboardWidth = 0;
 
-			artboardsLefts.push(currentArtboard.artboardRect[0]);
-			artboardsTops.push(currentArtboard.artboardRect[1]);
-			for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
-				var currentBreakpointWidth = nyt5Breakpoints[bpNumber].upperLimit;
-				if (currentBreakpointWidth==currentArtboardWidth) {
-					artboardWidthMatch = true;
-				}
-			}
-			if (!artboardWidthMatch && docSettings.include_resizer_classes=="yes" && docSettings.ai2html_environment=="nyt") {
-				warnings.push('The width of the artboard named "' + currentArtboard.name + '" (#' + (abNumber+1) + ") does not match any of the NYT5 breakpoints and may produce unexpected results on your web page. The new script should be able to accommodate this, but please double check just in case.");
+		// calculate artboard width for purposes of determining viewport -- need to make this into a function
+		if (doc.artboards[abNumber].name.search(/^.+:\d+$/)!=-1) {
+			currentArtboardWidth = currentArtboard.name.replace( /^.+:(\d+)$/, "$1" );
+		} else if (currentArtboard.name.search(/^ai2html-\d+$/)!=-1) {
+			// this is the old way, supported for backward compatibility
+			currentArtboardWidth = currentArtboard.name.replace( /^ai2html-(\d+)$/, "$1");
+		} else {
+			currentArtboardWidth = Math.round(currentArtboard.artboardRect[2]-currentArtboard.artboardRect[0]);
+		}
+
+		for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
+			var currentBreakpointWidth = nyt5Breakpoints[bpNumber].upperLimit;
+			if (currentBreakpointWidth==currentArtboardWidth) {
+				artboardWidthMatch = true;
 			}
 		}
-	}
-
-	// figure out where is the top left of all artboards to place settings text block
-	artboardsLefts.sort(function(a,b){return a-b;});
-	artboardsTops.sort(function(a,b){return a-b;});
-	var artboardsLeft = artboardsLefts[0];
-	var artboardsTop  = artboardsTops[artboardsTops.length-1];
+		if (!artboardWidthMatch && docSettings.include_resizer_classes=="yes" && docSettings.ai2html_environment=="nyt") {
+			warnings.push('The width of the artboard named "' + currentArtboard.name + '" (#' + (abNumber+1) + ") does not match any of the NYT5 breakpoints and may produce unexpected results on your web page. The new script should be able to accommodate this, but please double check just in case.");
+		}
+	});
 
 	// assign artboards to their corresponding breakpoints -- can have more than one artboard per breakpoint.
 	// also figure out the min and max breakpoints that have artboards.
 	var breakpointsWithNoNativeArtboard = [];
 	var overrideArtboardWidth           = false;
 	var maxArtboardWidth                = 0;
-	pBar.setTitle('Assigning artboards to breakpoints...');
+
 	for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
 		var currentBreakpoint = nyt5Breakpoints[bpNumber];
 		for (var abNumber = 0; abNumber < doc.artboards.length; abNumber++) {
@@ -607,43 +584,16 @@ function main() {
 	// ================================================
 	// add settings text block if one does not exist
 	// ================================================
-	pBar.setTitle('Processing settings text blocks...');
-	// check for settings text block
-	for (var tfNumber=0; tfNumber<doc.textFrames.length; tfNumber++) {
-		var thisFrame = doc.textFrames[tfNumber];
-		if (thisFrame.contents !== "") {
-			if (thisFrame.paragraphs[0].contents=="ai2html-settings") {
-				docHadSettingsBlock = true;
-			}
-		}
-	}
-	// create text settings block if one doesn't exist
-	if (!docHadSettingsBlock) {
-		try {
-			settingsTextLayer = doc.layers.getByName("ai2html-settings");
-		} catch(e) {
-			var settingsTextLayer   = doc.layers.add();
-			settingsTextLayer.zOrder(ZOrderMethod.BRINGTOFRONT);
-			settingsTextLayer.name  = "ai2html-settings";
-		}
-		var settingsTextSize       = 15;
-		var settingsTextLeading    = 22;
-		var settingsTextExtraLines = 6;
-		var settingsTextWidth      = 400;
-		var settingsTextHeight     = settingsTextLeading * (ai2htmlSettingsLength + settingsTextExtraLines);
-		var settingsTextOffset     = 50;
-		var settingsTextTop        = artboardsTop;
-		var settingsTextLeft       = artboardsLeft-settingsTextWidth-settingsTextOffset;
-		var settingsTextRectRef    = settingsTextLayer.pathItems.rectangle(settingsTextTop, settingsTextLeft, settingsTextWidth, settingsTextHeight);
-		var settingsAreaTextRef    = settingsTextLayer.textFrames.areaText(settingsTextRectRef);
-		settingsAreaTextRef.contents = defaultSettingsText;
-		for (var c = 0; c < settingsAreaTextRef.characters.length; c++) {
-			var currentChar        = settingsAreaTextRef.characters[c];
-			currentChar.size       = settingsTextSize;
-			currentChar.leading    = settingsTextLeading;
-		}
-	}
 
+	if (!documentHasSettingsBlock()) {
+		createSettingsBlock();
+		if (docSettings.ai2html_environment=="nyt") {
+			feedback.push("A settings text block was created to the left of all your artboards. Fill out the settings to link your project to the Scoop asset.");
+			return; // Exit the script
+		} else {
+			feedback.push("A settings text block was created to the left of all your artboards. You can use it to customize your output.");
+		}
+	}
 
 	// ================================================
 	// grab custom settings, html, css, js and text blocks
@@ -664,7 +614,7 @@ function main() {
 	for (var tfNumber=0; tfNumber<doc.textFrames.length; tfNumber++) {
 		var thisFrame = doc.textFrames[tfNumber];
 		if (thisFrame.characters.length === 0) {
-			// prevents an error (bug?) caused by referencing thisFrame.paragraphs[0]
+			// prevents an error (AI bug?) caused by referencing thisFrame.paragraphs[0]
 			// when the pg is empty
 			continue;
 		}
@@ -770,12 +720,13 @@ function main() {
 
 	if (parentFolder === null) {
 		errors.push('You need to save your Illustrator file before running this script');
+		return;
 	}
-	else if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
+	if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 		errors.push('Convert document color mode to "RGB" before running script. (File>Document Color Mode>RGB Color)' );
-	} else if (!docHadSettingsBlock && docSettings.ai2html_environment=="nyt") {
-		errors.push("A settings text block was created to the left of all your artboards. Fill out the settings to link your project to the Scoop asset.");
-	} else if (
+		return;
+	}
+	if (
 			(
 				(previewProjectType=="config.yml is missing") ||
 				(previewProjectType=="ai2html" && !publicFolder.exists) ||
@@ -785,18 +736,13 @@ function main() {
 			errors.push("Make sure your Illustrator file is inside the \u201Cai\u201D folder of a Preview project.");
 			errors.push("If the Illustrator file is in the correct folder, your Preview project may be missing a config.yml file or a \u201Cpublic\u201D or a \u201Csrc\u201D folder.");
 			errors.push("If this is an ai2html project, it is probably easier to just create a new ai2html Preview project and move this Illustrator file into the \u201Cai\u201D folder inside the project.");
-	}
-	if (errors.length > 0) {
-		return; // unable to continue
+		return;
 	}
 
 	if ( parentFolder[0]==="ai/" && publicFolder.exists ) {
 		// TODO: use this to configure something
 	}
 
-	if (!docHadSettingsBlock && docSettings.ai2html_environment!="nyt") {
-		feedback.push("A settings text block was created to the left of all your artboards. You can use it to customize your output.");
-	}
 
 	var uniqueArtboardWidths = [];
 	if (docSettings.include_resizer_widths == "yes") {
@@ -1135,6 +1081,13 @@ function zeroPad(value, padding) {
 	for (var i = 0; i < padding; i++) { zeroes += "0"; }
 	return (zeroes + value).slice(padding * -1);
 }
+
+function forEach(arr, cb) {
+	for (var i=0, n=arr.length; i<n; i++) {
+		cb(arr[i], i);
+	}
+}
+
 // multiple key sorting function based on https://github.com/Teun/thenBy.js
 // first by length of name, then by population, then by ID
 // data.sort(
@@ -1356,6 +1309,67 @@ function initDevEnvironment() {
 	    feedback.push(msg);
 	  }
 	};
+}
+
+function documentHasSettingsBlock() {
+	var found = false;
+	forEach(doc.textFrames, function(frame, i) {
+		if (frame.lines.length > 1 && frame.lines[0].contents == 'ai2html-settings') {
+			found = true;
+		}
+	});
+	return found;
+}
+
+// return rect of bounding box of all artboards
+function getArtboardBounds() {
+	var rect, bounds;
+	for (var i=0, n=doc.artboards.length; i<n; i++) {
+		rect = doc.artboards[i].artboardRect;
+		if (i === 0) {
+			bounds = rect;
+		} else {
+			bounds = [
+				Math.min(rect[0], bounds[0]), Math.max(rect[1], bounds[1]),
+				Math.max(rect[2], bounds[2]), Math.min(rect[3], bounds[3])];
+		}
+	}
+	return bounds;
+}
+
+
+function createSettingsBlock() {
+	var bounds			= getArtboardBounds();
+	var fontSize 		= 15;
+	var leading     = 22;
+	var extraLines  = 6;
+	var width       = 400;
+	var left        = bounds[0] - width - 50;
+	var top 				= bounds[1];
+	var settingsLines = ["ai2html-settings"];
+	var layer, rect, textArea, height;
+
+	for (var name in ai2htmlBaseSettings) {
+		if (ai2htmlBaseSettings[name].includeInSettingsBlock) {
+			settingsLines.push(name + ": " + ai2htmlBaseSettings[name].defaultValue);
+		}
+	}
+
+	try {
+		layer = doc.layers.getByName("ai2html-settings");
+	} catch(e) {
+		layer = doc.layers.add();
+		layer.zOrder(ZOrderMethod.BRINGTOFRONT);
+		layer.name  = "ai2html-settings";
+	}
+
+	height = leading * (settingsLines.length + extraLines);
+	rect = layer.pathItems.rectangle(top, left, width, height);
+	textArea = layer.textFrames.areaText(rect);
+	textArea.textRange.autoLeading = false;
+	textArea.textRange.characterAttributes.leading = leading;
+	textArea.textRange.characterAttributes.size = fontSize;
+	textArea.contents = settingsLines.join('\n');
 }
 
 // Exports contents of current artboard (typically without text)
@@ -2304,7 +2318,7 @@ function parseSettingsTextBlock(frame, docSettings) {
 				if ((hashKey in ai2htmlBaseSettings) && ai2htmlBaseSettings[hashKey].inputType=="array") {
 					hashValue = hashValue.replace( /[\s,]+/g , ',' );
 					if (hashValue.length === 0) {
-						hashValue = []; // have to do this because .split always returns an array of length at least 1 even if it's splitting an emptry string
+						hashValue = []; // have to do this because .split always returns an array of length at least 1 even if it's splitting an empty string
 					} else {
 						hashValue = hashValue.split(",");
 					}
