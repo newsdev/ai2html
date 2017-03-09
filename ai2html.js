@@ -285,12 +285,7 @@ var nameSpace           = "g-";
 var maxJpgImageScaling  = 776.19; // This is specified in the Javascript Object Reference under ExportOptionsJPEG.
 var pctPrecision        = 4;
 var outputType          = "pct"; // "abs" or "pct"
-// var promoImageMinWidth  = 768+40; // should be at least 768x507 AFTER being cropped, so we're making it extra large to get around this error
-// var promoImageMinHeight = 507+40;
-var promoImageMinWidth  = 3000;  // should be at least 768x507 AFTER being cropped, so we're making it extra large to get around Scoop error
-var promoImageMinHeight = promoImageMinWidth*2/3;
-var promoImageMaxWidth  = 6000;  // need to set a max width because ai jpg export fails if it's too large
-var promoImageMaxHeight = promoImageMaxWidth*2/3;
+
 // var settingsArrays      = ["image_format"] // put hash keys here for settings that are arrays -- in the illustrator file, the setting should be in the format "key: value,value,value"
 var docSettings         = {};
 var previewProjectType = "";
@@ -394,7 +389,7 @@ pBar.close();
 
 if (docSettings.show_completion_dialog_box=="true") {
 	// ignoring (obsolete) "create_promo_image" option setting
-	var promptForPromo = previewProjectType == "ai2html";
+	var promptForPromo = previewProjectType == "ai2html" && docSettings.write_image_files=="yes";
 	var showPromo = showCompletionAlert(promptForPromo);
 	if (showPromo) createPromoImage();
 }
@@ -1535,64 +1530,37 @@ function findLargestArtboard() {
 
 // Create a promo image from the largest usable artboard
 function createPromoImage() {
+	var PROMO_WIDTH = 1024;
 	var abNumber = findLargestArtboard();
 	if (abNumber == -1) return; // TODO: show error
 
+	var artboard         =  doc.artboards[abNumber],
+			abPos            =  getArtboardPos(artboard.artboardRect),
+			promoScale       =  PROMO_WIDTH / abPos.width,
+			promoW           =  abPos.width * promoScale,
+			promoH           =  abPos.height * promoScale,
+			imageDestination =  docPath + docSettings.docName + "-promo",
+			promoFormat, tmpPngTransparency;
+
+	// Previous file name was more complicated:
+	// imageDestination = docPath + docSettings.docName + "-" + makeKeyword(ab.name) + "-" + abNumber + "-promo";
+
 	doc.artboards.setActiveArtboardIndex(abNumber);
-	var activeArtboard       =  doc.artboards[abNumber],
-			activeArtboardRect   =  activeArtboard.artboardRect,
-			abX                  =  activeArtboardRect[0],
-			abY                  = -activeArtboardRect[1],
-			abW                  =  Math.round(activeArtboardRect[2]-abX),
-			abH                  = -activeArtboardRect[3]-abY,
-			artboardAspectRatio  =  abH/abW,
-			artboardName         =  makeKeyword(activeArtboard.name),
-			docArtboardName      =  makeKeyword(docSettings.project_name) + "-" + artboardName + "-" + abNumber,
-			imageDestination     =  docPath + docArtboardName + "-promo",
-			promoImageAspect     =  promoImageMinHeight/promoImageMinWidth,
-			promoScale           =  1;
 
-	// Promo size calculation is buggy... tends to generate too-large images,
-	//   needs to be reworked
-	if (artboardAspectRatio > promoImageAspect) {
-		promoScale = promoImageMinWidth/abW;
-		if (abH * promoScale > promoImageMaxHeight) {
-			promoScale = promoImageMaxHeight/abH;
-		}
+	alert(JSON.stringify(docSettings.image_format) +  ' > ' + String(docSettings.image_format.indexOf('jpg')));
+
+	// Using "jpg" if present in image_format setting, else using "png";
+	if (docSettings.image_format.indexOf('jpg') > -1) {
+		promoFormat = 'jpg';
 	} else {
-		promoScale = promoImageMinHeight/abH;
-		if (abW * promoScale > promoImageMaxWidth) {
-			promoScale = promoImageMaxWidth/abW;
-		}
+		promoFormat = 'png';
 	}
 
-	var promoW = abW * promoScale;
-	var promoH = abH * promoScale;
-
-	// promoScale *= 1024 / promoW  // test 1024px promo width
-
-	var promoImageFormats = [];
-	for (var formatNo = 0; formatNo < docSettings.image_format.length; formatNo++) {
-		var promoFormat = docSettings.image_format[formatNo];
-		if (promoFormat=="png" ||
-			promoFormat=="png24" ||
-			promoFormat=="svg")
-		{
-			promoImageFormats.push("png");
-		} else {
-			promoImageFormats.push(promoFormat);
-		}
-	}
-
-	pBar.setTitle(artboardName + ': Writing promo image...');
-
-	var tempPNGtransparency = docSettings.png_transparent;
+	tmpPngTransparency = docSettings.png_transparent;
 	docSettings.png_transparent = "no";
-	if (docSettings.write_image_files=="yes") {
-		exportImageFiles(imageDestination,promoW,promoH,promoImageFormats,promoScale,"no");
-		alert("Promo image created\nLocation: " + imageDestination);
-	}
-	docSettings.png_transparent = tempPNGtransparency;
+	exportImageFiles(imageDestination, promoW, promoH, [promoFormat], promoScale, "no");
+	docSettings.png_transparent = tmpPngTransparency;
+	alert("Promo image created\nLocation: " + imageDestination + "." + promoFormat);
 }
 
 function applyTemplate(template, atObject) {
