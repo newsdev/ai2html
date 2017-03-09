@@ -320,7 +320,6 @@ var lockedObjects          = [];
 var hiddenObjects		   = [];
 var largestArtboardIndex;
 var largestArtboardArea    = 0;
-var largestArtboardWidth   = 0;
 var	rgbBlackThreshold      = 36; // value between 0 and 255 lower than which if all three RGB values are below then force the RGB to #000 so it is a pure black
 
 var pBar = new ProgressBar();
@@ -341,7 +340,6 @@ var pBar = new ProgressBar();
 try {
 	main();
 } catch(e) {
-	alert(e)
 	errors.push("The script threw an error" + (e.message ? ": " + e.message : ''));
 }
 
@@ -395,7 +393,10 @@ pBar.close();
 // ==============================
 
 if (docSettings.show_completion_dialog_box=="true") {
-	showCompletionAlert();
+	// ignoring (obsolete) "create_promo_image" option setting
+	var promptForPromo = previewProjectType == "ai2html";
+	var showPromo = showCompletionAlert(promptForPromo);
+	if (showPromo) createPromoImage();
 }
 
 
@@ -429,16 +430,17 @@ function main() {
 	// read yml file if it exists to determine what type of project this is
 	// ================================================
 
-	previewProjectType = "config.yml is missing";
-
 	if (scriptEnvironment=="nyt") {
-
-		var yaml = readYamlFile(ymlFile) || {};
-		if (yaml.project_type == 'ai2html') {
-			previewProjectType = 'ai2html';
-		}
-		if (yaml.scoop_slug) {
-			docSettings.scoop_slug_from_config_yml = yaml.scoop_slug;
+		var yaml = readYamlFile(ymlFile);
+		if (!yaml) {
+			previewProjectType = "config.yml is missing";
+		} else {
+			if (yaml.project_type == 'ai2html') {
+				previewProjectType = 'ai2html';
+			}
+			if (yaml.scoop_slug) {
+				docSettings.scoop_slug_from_config_yml = yaml.scoop_slug;
+			}
 		}
 	}
 
@@ -449,15 +451,12 @@ function main() {
 
 	var defaultSettingsText   = "ai2html-settings";
 	var ai2htmlSettingsLength = 0;
-	// var ymlSettings           = {};
+
 	for (var setting in ai2htmlBaseSettings) {
 		if (ai2htmlBaseSettings[setting].includeInSettingsBlock) {
 			defaultSettingsText += "\r" + setting + ': ' + ai2htmlBaseSettings[setting].defaultValue;
 			ai2htmlSettingsLength += 1;
 		}
-		// if (ai2htmlBaseSettings[setting].includeInConfigFile) {
-		// 	ymlSettings[setting] = ai2htmlBaseSettings[setting].defaultValue;
-		// }
 		docSettings[setting] = ai2htmlBaseSettings[setting].defaultValue;
 	}
 
@@ -484,7 +483,6 @@ function main() {
 	var breakpoints        = {};
 	breakpoints.min        = "";
 	breakpoints.max        = "";
-	var artboardsToProcess = [];
 	var artboardsMaxMins   = [];
 	var artboardsLefts     = [];
 	var artboardsTops      = [];
@@ -495,7 +493,6 @@ function main() {
 			largestNyt5Breakpoint = nyt5Breakpoints[bpNumber].upperLimit;
 		}
 	}
-
 	// loop thru artboards and determine which ones to process.
 	// to manually force an artboard to appear at a specific pixel width,
 	// append the width to the end of the artboard name with a colon and then the number, eg. "Artboard name:720"
@@ -503,7 +500,6 @@ function main() {
 	pBar.setTitle('Determining artboards to process...');
 	for (var abNumber = 0; abNumber < doc.artboards.length; abNumber++) {
 		if (doc.artboards[abNumber].name.search(/^-/)==-1) {
-			artboardsToProcess.push(true);
 			var artboardWidthMatch   = false;
 			var currentArtboard      = doc.artboards[abNumber];
 			var currentArtboardWidth = 0;
@@ -530,8 +526,6 @@ function main() {
 			if (!artboardWidthMatch && docSettings.include_resizer_classes=="yes" && docSettings.ai2html_environment=="nyt") {
 				warnings.push('The width of the artboard named "' + currentArtboard.name + '" (#' + (abNumber+1) + ") does not match any of the NYT5 breakpoints and may produce unexpected results on your web page. The new script should be able to accommodate this, but please double check just in case.");
 			}
-		} else {
-			artboardsToProcess.push(false);
 		}
 	}
 
@@ -550,26 +544,25 @@ function main() {
 	for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
 		var currentBreakpoint = nyt5Breakpoints[bpNumber];
 		for (var abNumber = 0; abNumber < doc.artboards.length; abNumber++) {
-			if (artboardsToProcess[abNumber]) {
-				var currentArtboard = doc.artboards[abNumber];
+			var currentArtboard = doc.artboards[abNumber];
+			if (!artboardIsUsable(currentArtboard)) continue;
 
-				// calculate artboard width for purposes of determining viewport -- need to make this into a function
-				// need to figure out what to do here if responsiveness==fixed
-				// calculate artboard width for purposes of determining viewport -- need to make this into a function
-				if (doc.artboards[abNumber].name.search(/^.+:\d+$/)!=-1) {
-					currentArtboardWidth = (doc.artboards[abNumber].name.replace( /^.+:(\d+)$/ , "$1" ));
-				} else if (doc.artboards[abNumber].name.search(/^ai2html-\d+$/)!=-1) {
-					// this is the old way, supported for backward compatibility
-					currentArtboardWidth = (doc.artboards[abNumber].name.replace( /^ai2html-(\d+)$/ , "$1" ));
-				} else {
-					currentArtboardWidth = Math.round(currentArtboard.artboardRect[2]-currentArtboard.artboardRect[0]);
-				}
-				if (currentArtboardWidth>maxArtboardWidth) {
-					maxArtboardWidth = currentArtboardWidth;
-				}
-				if (currentArtboardWidth<=currentBreakpoint.upperLimit && currentArtboardWidth>currentBreakpoint.lowerLimit) {
-					currentBreakpoint.artboards.push(abNumber);
-				}
+			// calculate artboard width for purposes of determining viewport -- need to make this into a function
+			// need to figure out what to do here if responsiveness==fixed
+			// calculate artboard width for purposes of determining viewport -- need to make this into a function
+			if (currentArtboard.name.search(/^.+:\d+$/)!=-1) {
+				currentArtboardWidth = (currentArtboard.name.replace( /^.+:(\d+)$/ , "$1" ));
+			} else if (currentArtboard.name.search(/^ai2html-\d+$/)!=-1) {
+				// this is the old way, supported for backward compatibility
+				currentArtboardWidth = (currentArtboard.name.replace( /^ai2html-(\d+)$/ , "$1" ));
+			} else {
+				currentArtboardWidth = Math.round(currentArtboard.artboardRect[2]-currentArtboard.artboardRect[0]);
+			}
+			if (currentArtboardWidth>maxArtboardWidth) {
+				maxArtboardWidth = currentArtboardWidth;
+			}
+			if (currentArtboardWidth<=currentBreakpoint.upperLimit && currentArtboardWidth>currentBreakpoint.lowerLimit) {
+				currentBreakpoint.artboards.push(abNumber);
 			}
 		}
 		if (currentBreakpoint.artboards.length === 0) {
@@ -621,9 +614,9 @@ function main() {
 	// ================================================
 	pBar.setTitle('Processing settings text blocks...');
 	// check for settings text block
-	for (var tfNumber=0;tfNumber<doc.textFrames.length;tfNumber++) {
+	for (var tfNumber=0; tfNumber<doc.textFrames.length; tfNumber++) {
 		var thisFrame = doc.textFrames[tfNumber];
-		if ( thisFrame.contents !== "" ) {
+		if (thisFrame.contents !== "") {
 			if (thisFrame.paragraphs[0].contents=="ai2html-settings") {
 				docHadSettingsBlock = true;
 			}
@@ -675,7 +668,12 @@ function main() {
 
 	for (var tfNumber=0; tfNumber<doc.textFrames.length; tfNumber++) {
 		var thisFrame = doc.textFrames[tfNumber];
-		var firstLine = thisFrame.paragraphs.length > 0 ? thisFrame.paragraphs[0].contents : '';
+		if (thisFrame.characters.length === 0) {
+			// prevents an error (bug?) caused by referencing thisFrame.paragraphs[0]
+			// when the pg is empty
+			continue;
+		}
+		var firstLine = thisFrame.lines[0].contents;
 		if (firstLine == "ai2html-css") {
 			hideTextFrame(thisFrame);
 			customCssBlocks += 1;
@@ -809,23 +807,23 @@ function main() {
 	if (docSettings.include_resizer_widths == "yes") {
 		// measure breakpoints based on artboard widths
 		for (var abNumber = 0; abNumber < doc.artboards.length; abNumber++) {
-			if (artboardsToProcess[abNumber]) {
-				var abRect = doc.artboards[abNumber].artboardRect,
-					abW = Math.round(abRect[2]-abRect[0]),
-					customMinWidth = doc.artboards[abNumber].name.split(':')[1];
-				if (customMinWidth) abW = Math.round(+customMinWidth);
-				if (uniqueArtboardWidths.indexOf(abW) < 0) uniqueArtboardWidths.push(abW);
-			}
+			var ab = doc.artboards[abNumber];
+			if (!artboardIsUsable(ab)) continue;
+			var abRect = doc.artboards[abNumber].artboardRect,
+				abW = Math.round(abRect[2]-abRect[0]),
+				customMinWidth = doc.artboards[abNumber].name.split(':')[1];
+			if (customMinWidth) abW = Math.round(+customMinWidth);
+			if (uniqueArtboardWidths.indexOf(abW) < 0) uniqueArtboardWidths.push(abW);
 		}
 		uniqueArtboardWidths.sort(function(a,b){return a-b;});
 	}
 
 	var artboardHtml = "";
 	for (var abNumber = 0; abNumber < doc.artboards.length; abNumber++) {
-		if (!artboardsToProcess[abNumber]) continue;
+		var activeArtboard      =  doc.artboards[abNumber];
+		if (!artboardIsUsable(activeArtboard)) continue;
 		doc.artboards.setActiveArtboardIndex(abNumber);
 		// throw "done";
-		var activeArtboard      =  doc.artboards[abNumber];
 		docSettings.docName     =  makeKeyword(docSettings.project_name);
 		var artboardName        =  makeKeyword(activeArtboard.name.replace( /^(.+):\d+$/ , "$1"));
 		// var docArtboardName     =  makeKeyword(docSettings.project_name) + "-" + artboardName + "-" + abNumber;
@@ -839,16 +837,6 @@ function main() {
 
 		pBar.setTitle(docArtboardName + ': Starting to generate HTML...');
 		pBar.setProgress(abNumber/(doc.artboards.length));
-
-		// for determining which artboard to use for promo image
-		// if (abW>=largestArtboardWidth) {
-		// mbloch TODO move into function for generating promo image
-		if (abW*abH>largestArtboardArea) {
-			largestArtboardArea  = abW*abH;
-			// largestArtboardWidth = abW;
-			largestArtboardIndex = abNumber;
-		}
-		// }
 
 		var html = [];
 		var numHtmlStrands   = 12;
@@ -988,10 +976,11 @@ function main() {
 			html[6] += getTextFrameCss(thisFrame, activeArtboardRect) + '>\r';
 
 			// Generate a <p> tag for each paragraph of text
-			for (var k=0, l=0; k<thisFrame.paragraphs.length; k++) {
-				l = thisFrame.paragraphs[k].characters.length;
+			for (var k=0, l=0, p; k<thisFrame.paragraphs.length; k++) {
+				p = thisFrame.paragraphs[k];
+				l = p.characters.length;
 				if (runningChars<numChars && l > 0) {
-					var pData = convertParagraph(thisFrame.paragraphs[k], pClasses);
+					var pData = convertParagraph(p, pClasses);
 					// Warning: after calling convertParagraph(), a paragraph object may
 					// become unusable; simply referencing thisFrame.paragraphs[k] may throw an error
 					// (unclear why. sample file: 0125 web DISTRICTmap.ai)
@@ -1000,6 +989,7 @@ function main() {
 					runningChars += l+1;
 
 				} else {
+					// alert("empty paragraph " + p.characters);
 					html[6] += "\t\t\t\t<p>&nbsp;</p>\r";
 					runningChars += 1;
 				}
@@ -1113,12 +1103,6 @@ function main() {
 		configFile.close();
 	}
 
-	// Create promo image with largest artboard
-	if (docSettings.create_promo_image=="yes") {
-		T.start();
-		createPromoImage(largestArtboardIndex);
-		T.stop("Promo image creation");
-	}
 
 	if (docSettings.image_format.length === 0) {
 		warnings.push("No images output because no image formats were specified.");
@@ -1520,8 +1504,40 @@ function hideTextFrame(textFrame) {
 	textFrame.hidden = true;
 }
 
+function artboardIsUsable(ab) {
+	return ab.name.search(/^-/) == -1;
+}
 
-function createPromoImage(abNumber) {
+function forEachArtboard(cb) {
+	var ab;
+	for (var i=0; i<doc.artboards.length; i++) {
+		ab = doc.artboards[i];
+		if (artboardIsUsable(ab)) {
+			cb(ab, i);
+		}
+	}
+}
+
+// Returns id of largest artboard
+function findLargestArtboard() {
+	var largestId = -1;
+	var largestArea = 0;
+	forEachArtboard(function(ab, i) {
+		var info = getArtboardPos(ab.artboardRect);
+		var area = info.width * info.height;
+		if (area > largestArea) {
+			largestId = i;
+			largestArea = area;
+		}
+	});
+	return largestId;
+}
+
+// Create a promo image from the largest usable artboard
+function createPromoImage() {
+	var abNumber = findLargestArtboard();
+	if (abNumber == -1) return; // TODO: show error
+
 	doc.artboards.setActiveArtboardIndex(abNumber);
 	var activeArtboard       =  doc.artboards[abNumber],
 			activeArtboardRect   =  activeArtboard.artboardRect,
@@ -1555,34 +1571,6 @@ function createPromoImage(abNumber) {
 
 	// promoScale *= 1024 / promoW  // test 1024px promo width
 
-	// feedback.push("promoImageAspect = " + promoImageAspect + "\r" +
-	// 	"abNumber = " + abNumber + "\r" +
-	// 	"artboardAspectRatio = " + artboardAspectRatio + "\r" +
-	// 	"promoScale = " + promoScale + "\r" +
-	// 	"abW = " + abW + "\r" +
-	// 	"abH = " + abH + "\r" +
-	// 	"promoW = " + promoW + "\r" +
-	// 	"promoH = " + promoH);
-
-	// alert("promoImageAspect = " + promoImageAspect + "\r" +
-	// 	"abNumber = " + abNumber + "\r" +
-	// 	"artboardAspectRatio = " + artboardAspectRatio + "\r" +
-	// 	"promoScale = " + promoScale + "\r" +
-	// 	"abW = " + abW + "\r" +
-	// 	"abH = " + abH + "\r" +
-	// 	"promoW = " + promoW + "\r" +
-	// 	"promoH = " + promoH);
-
-	// var promoImageFormat = [];
-	// if (docSettings.image_format[0]=="png" ||
-	// 	docSettings.image_format[0]=="png24" ||
-	// 	docSettings.image_format[0]=="svg")
-	// {
-	// 	promoImageFormat.push("png");
-	// } else {
-	// 	promoImageFormat.push(docSettings.image_format[0]);
-	// };
-
 	var promoImageFormats = [];
 	for (var formatNo = 0; formatNo < docSettings.image_format.length; formatNo++) {
 		var promoFormat = docSettings.image_format[formatNo];
@@ -1602,6 +1590,7 @@ function createPromoImage(abNumber) {
 	docSettings.png_transparent = "no";
 	if (docSettings.write_image_files=="yes") {
 		exportImageFiles(imageDestination,promoW,promoH,promoImageFormats,promoScale,"no");
+		alert("Promo image created\nLocation: " + imageDestination);
 	}
 	docSettings.png_transparent = tempPNGtransparency;
 }
@@ -1923,7 +1912,6 @@ function getStyleKey(s) {
 	}
 	return key;
 }
-
 
 function getTextStyleClass(style, classes, name) {
 	var key = getStyleKey(style);
@@ -2476,9 +2464,11 @@ function generateHtml(pageContent, docName, docSettings) {
 	}
 }
 
-function showCompletionAlert() {
+function showCompletionAlert(showPrompt) {
 	var alertText = "";
 	var alertHed = "";
+	var retn = false;
+	var rule = "\n================\n";
 
 	if (scriptEnvironment == "nyt") {
 		alertHed = "Actually, that\u2019s not half bad."; // &rsquo;
@@ -2489,9 +2479,9 @@ function showCompletionAlert() {
 	if (errors.length > 0) {
 		alertHed = "The Script Was Unable to Finish";
 		if (errors.length == 1) {
-			alertText += "\rError\r================\r";
+			alertText += "\rError" + rule;
 		} else {
-			alertText += "\rErrors\r================\r";
+			alertText += "\rErrors" + rule;
 		}
 		for (var e = 0; e < errors.length; e++) {
 			alertText += "\u2022 " + errors[e] + "\r"; // \u2022 is •
@@ -2499,19 +2489,28 @@ function showCompletionAlert() {
 	}
 	if (warnings.length > 0) {
 		if (warnings.length == 1) {
-			alertText += "\rWarning\r================\r";
+			alertText += "\rWarning" + rule;
 		} else {
-			alertText += "\rWarnings\r================\r";
+			alertText += "\rWarnings" + rule;
 		}
 		for (var w = 0; w < warnings.length; w++) {
 			alertText += "\u2022 " + warnings[w] + "\r";
 		}
 	}
 	if (feedback.length > 0) {
-		alertText += "\rInformation\r================\r";
+		alertText += "\rInformation" + rule;
 		for (var f = 0; f < feedback.length; f++) {
 			alertText += "\u2022 " + feedback[f] + "\r";
 		}
 	}
-	alert(alertHed + "\n" + alertText + "\n\n\n================\nai2html-nyt5 v"+scriptVersion);
+	alertText += "\n";
+
+	if (showPrompt) {
+		alertText += rule + "Generate promo image?";
+		retn = confirm(alertHed  + alertText, false); // false: "Yes" is default
+	} else {
+		alertText += rule + "ai2html-nyt5 v" + scriptVersion;
+		alert(alertHed + alertText);
+	}
+	return retn;
 }
