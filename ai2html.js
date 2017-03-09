@@ -7,7 +7,6 @@ var scriptEnvironment = "nyt";
 // ai2html is a script for Adobe Illustrator that converts your Illustrator document into html and css.
 
 // Copyright (c) 2011-2015 The New York Times Company
-
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this library except in compliance with the License.
 // You may obtain a copy of the License at
@@ -313,8 +312,8 @@ var origFile               = new File (docPath + doc.name);
 var parentFolder           = docPath.toString().match( /[^\/]+\/$/ );
 var publicFolder           = new Folder( docPath + "../public/" );
 var srcFolder              = new Folder( docPath + "../src/" );
-var ymlFile                = new File( docPath + "../config.yml" );
-var gitConfigFile          = new File( docPath + "../.git/config");
+var ymlFile                = docPath + "../config.yml";
+var gitConfigFile          = docPath + "../.git/config";
 
 var textFramesToUnhide     = [];
 var lockedObjects          = [];
@@ -342,6 +341,7 @@ var pBar = new ProgressBar();
 try {
 	main();
 } catch(e) {
+	alert(e)
 	errors.push("The script threw an error" + (e.message ? ": " + e.message : ''));
 }
 
@@ -417,46 +417,29 @@ function main() {
 	// read .git/config file to get preview slug
 	// ================================================
 
-	if ( gitConfigFile.exists && scriptEnvironment=="nyt" ) {
-		gitConfigFile.open("r");
-		while(!gitConfigFile.eof) {
-			var line      = gitConfigFile.readln();
-			var lineArray = line.split("=");
-			if (lineArray.length>1) {
-				var gitConfigKey    = lineArray[0].replace( /^\s+/ , "" ).replace( /\s+$/ , "" );
-				var gitConfigValue  = lineArray[1].replace( /^\s+/ , "" ).replace( /\s+$/ , "" );
-				if ( gitConfigKey=="url" ) {
-					docSettings.preview_slug = gitConfigValue.replace( /^[^:]+:/ , "" ).replace( /\.git$/ , "");
-				}
-			}
+	if (scriptEnvironment=="nyt") {
+
+		var gitConfig = readGitConfigFile(gitConfigFile) || {};
+		if (gitConfig.url) {
+			docSettings.preview_slug = gitConfig.url.replace( /^[^:]+:/ , "" ).replace( /\.git$/ , "");
 		}
-		gitConfigFile.close();
 	}
 
 	// ================================================
 	// read yml file if it exists to determine what type of project this is
 	// ================================================
 
-	if ( ymlFile.exists && scriptEnvironment=="nyt"  ) {
-		ymlFile.open("r");
-		while(!ymlFile.eof) {
-			var line      = ymlFile.readln();
-			var lineArray = line.split(":");
-			if (lineArray.length>1) {
-				var ymlKey    = lineArray[0].replace( /^\s+/ , "" ).replace( /\s+$/ , "" );
-				var ymlValue  = lineArray[1].replace( /^\s+/ , "" ).replace( /\s+$/ , "" );
-				if ( ymlKey=="project_type" && ymlValue=="ai2html") {
-					previewProjectType = ymlValue;
-				}
-				if ( ymlKey=="scoop_slug" ) {
-					docSettings.scoop_slug_from_config_yml = ymlValue;
-				}
-			}
+	previewProjectType = "config.yml is missing";
+
+	if (scriptEnvironment=="nyt") {
+
+		var yaml = readYamlFile(ymlFile) || {};
+		if (yaml.project_type == 'ai2html') {
+			previewProjectType = 'ai2html';
 		}
-		ymlFile.close();
-	} else {
-		// if a config.yml file does not exist, then yml
-		previewProjectType = "config.yml is missing";
+		if (yaml.scoop_slug) {
+			docSettings.scoop_slug_from_config_yml = yaml.scoop_slug;
+		}
 	}
 
 	// ================================================
@@ -813,7 +796,6 @@ function main() {
 	if (errors.length > 0) {
 		return; // unable to continue
 	}
-
 
 	if ( parentFolder[0]==="ai/" && publicFolder.exists ) {
 		// TODO: use this to configure something
@@ -1240,6 +1222,42 @@ function pushIfUnique(arr, val) {
 	if (arr.indexOf(val) == -1) arr.push(val);
 }
 */
+
+function readYamlFile(path) {
+	var file = new File(path);
+	var o = null;
+	var parts;
+	if (file.exists) {
+		o = {};
+		file.open("r");
+		while(!file.eof) {
+			parts = file.readln().split(':');
+			if (parts.length > 1) {
+				o[trim(parts[0])] = trim(parts[1]);
+			}
+		}
+		file.close();
+	}
+	return o;
+}
+
+function readGitConfigFile(path) {
+	var file = new File(path);
+	var o = null;
+	var parts;
+	if (file.exists) {
+		o = {};
+		file.open("r");
+		while(!file.eof) {
+			parts = file.readln().split("=");
+			if (parts.length > 1) {
+				o[trim(parts[0])] = trim(parts[1]);
+			}
+		}
+		file.close();
+	}
+	return o;
+}
 
 
 // =====================================
