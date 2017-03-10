@@ -2463,7 +2463,7 @@ function showCompletionAlert(showPrompt) {
 	var rule = "\n================\n";
 
 	if (scriptEnvironment == "nyt") {
-		alertHed = "Actually, that\u2019s not half bad."; // &rsquo;
+		alertHed = "Actually, that\u2019s not half bad :)"; // &rsquo;
 	} else {
 		alertHed = "Nice work!";
 	}
