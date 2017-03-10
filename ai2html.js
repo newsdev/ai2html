@@ -290,15 +290,11 @@ var outputType          =  "pct"; // "abs" or "pct"
 var docSettings         = {};
 var previewProjectType = "";
 
-
 // vars to hold warnings and informational messages at the end
 var feedback  = [];
 var warnings  = [];
 var errors    = [];
 
-// flags
-// var docHasYml              = false;
-var docHadSettingsBlock    = false;
 var doc                    = app.activeDocument;
 var docPath                = doc.path + "/";
 // var origFilename           = doc.name;
@@ -400,7 +396,6 @@ if (docSettings.show_completion_dialog_box=="true") {
 	var showPromo = showCompletionAlert(promptForPromo);
 	if (showPromo) createPromoImage();
 }
-
 
 
 // =================================
@@ -509,7 +504,6 @@ function main() {
 
 	// assign artboards to their corresponding breakpoints -- can have more than one artboard per breakpoint.
 	// also figure out the min and max breakpoints that have artboards.
-	var breakpointsWithNoNativeArtboard = [];
 	var overrideArtboardWidth           = false;
 	var maxArtboardWidth                = 0;
 
@@ -537,9 +531,7 @@ function main() {
 				currentBreakpoint.artboards.push(abNumber);
 			}
 		}
-		if (currentBreakpoint.artboards.length === 0) {
-			breakpointsWithNoNativeArtboard.push(currentBreakpoint.name);
-		} else {
+		if (currentBreakpoint.artboards.length > 0) {
 			if (breakpoints.min === "") {
 				breakpoints.min = currentBreakpoint.upperLimit;
 			}
@@ -550,13 +542,7 @@ function main() {
 			}
 		}
 	}
-	var noNativeArtboardWarning = "These breakpoints have no native artboard: ";
-	for (var bpNumber = 0; bpNumber < breakpointsWithNoNativeArtboard.length; bpNumber++) {
-		noNativeArtboardWarning += breakpointsWithNoNativeArtboard[bpNumber];
-		if (bpNumber<breakpointsWithNoNativeArtboard.length-1) {
-			noNativeArtboardWarning += ", ";
-		}
-	}
+
 	// error message for breakpoints that have more than one native artboard
 	for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
 		var nyt5Breakpoint = nyt5Breakpoints[bpNumber];
@@ -565,8 +551,6 @@ function main() {
 		}
 	}
 	//put artboard in for breakpoints with no artboard starting from smallest to largest, leaving lower end empty if nothing at the bottom end.
-	var breakpointsWithNoArtboard = [];
-	var noArtboard = false;
 	for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
 		var currentBreakpoint = nyt5Breakpoints[bpNumber];
 		var previousArtboards = [];
@@ -576,10 +560,11 @@ function main() {
 		if (currentBreakpoint.artboards.length === 0) {
 			currentBreakpoint.artboards = previousArtboards;
 		}
-		if (currentBreakpoint.artboards.length === 0) {
-			breakpointsWithNoArtboard.push(currentBreakpoint.name);
-		}
 	}
+
+
+
+
 
 	// ================================================
 	// add settings text block if one does not exist
@@ -726,23 +711,21 @@ function main() {
 		errors.push('Convert document color mode to "RGB" before running script. (File>Document Color Mode>RGB Color)' );
 		return;
 	}
-	if (
-			(
-				(previewProjectType=="config.yml is missing") ||
+
+  if (docSettings.ai2html_environment=="nyt") {
+		if (previewProjectType=="config.yml is missing" ||
 				(previewProjectType=="ai2html" && !publicFolder.exists) ||
-				((previewProjectType!="ai2html" && previewProjectType!="config.yml is missing") && !srcFolder.exists)
-			) && docSettings.ai2html_environment=="nyt"
-	    ){
+				(previewProjectType!="ai2html" && !srcFolder.exists)) {
 			errors.push("Make sure your Illustrator file is inside the \u201Cai\u201D folder of a Preview project.");
 			errors.push("If the Illustrator file is in the correct folder, your Preview project may be missing a config.yml file or a \u201Cpublic\u201D or a \u201Csrc\u201D folder.");
 			errors.push("If this is an ai2html project, it is probably easier to just create a new ai2html Preview project and move this Illustrator file into the \u201Cai\u201D folder inside the project.");
-		return;
-	}
+			return;
+		}
+  }
 
 	if ( parentFolder[0]==="ai/" && publicFolder.exists ) {
 		// TODO: use this to configure something
 	}
-
 
 	var uniqueArtboardWidths = [];
 	if (docSettings.include_resizer_widths == "yes") {
@@ -903,15 +886,15 @@ function main() {
 		var pClasses = [];
 
 		forEach(selectFrames, function(thisFrame, i) {
-			var numChars = thisFrame.characters.length;
-			var range, rangeData;
+			var range, rangeData, frameId;
 
 			// Generate a <div> element for each text frame, including CSS styles
-			var thisFrameId = nameSpace + "ai" + abNumber + "-" + (i + 1);
 			if (thisFrame.name !== "") {
-				thisFrameId = makeKeyword(thisFrame.name);
+				frameId = makeKeyword(thisFrame.name);
+			} else {
+				frameId = nameSpace + "ai" + abNumber + "-" + (i + 1);
 			}
-			html[6] += '\t\t\t<div id="' + thisFrameId + '" ' +
+			html[6] += '\t\t\t<div id="' + frameId + '" ' +
 					getTextFrameCss(thisFrame, activeArtboardRect) + '>\r';
 
 			// Generate a <p> tag for each paragraph or line of text
@@ -1363,6 +1346,13 @@ function createSettingsBlock() {
 	textArea.textRange.characterAttributes.size = fontSize;
 	textArea.contents = settingsLines.join('\n');
 }
+
+
+function initBreakpoints() {
+
+
+}
+
 
 // Exports contents of current artboard (typically without text)
 // dest: full path of output file including the file name
@@ -1851,7 +1841,7 @@ function getCharStyle(c) {
 	} else if (fill.typename == 'NoColor') {
 		g = 255;
 		r = b = 0;
-		// warnings is processed later, after ranges of same-style chars are identified
+		// warnings are processed later, after ranges of same-style chars are identified
 		o.warning = "This text has no fill. Please fill it with an RGB color. It has been filled with green.";
 	} else {
 		r = g = b = 0;
@@ -1930,6 +1920,10 @@ function convertParagraphSegments(arr) {
 //
 function convertParagraph(p, classes) {
 	var segments, style, uniqStyle;
+	// Handle empty paragraphs
+	// It is hard or impossible to know the height of empty paragraphs
+	// TODO: Try to estimate the height of empty paragraph and generate
+	//    CSS to preserve this height
 	if (p.characters.length === 0) {
 		return {
 			classname: "",
@@ -1937,6 +1931,9 @@ function convertParagraph(p, classes) {
 		};
 	}
 	// TODO: consider basing the pstyle on the most common character style
+	// TODO: consider removing the default pg style, or use the most
+	//       common detected pg style as the default pg style
+	//       (this would require two passes to generate classes)
 	style = getParagraphStyle(p);
 	segments = getParagraphSegments(p, style);
 	uniqStyle = getTextStyleDiff(style, defaultParagraphStyle) || {};
