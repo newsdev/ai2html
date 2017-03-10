@@ -284,7 +284,7 @@ var defaultParagraphStyle = {
 var nameSpace           = "g-";
 var maxJpgImageScaling  = 776.19; // This is specified in the Javascript Object Reference under ExportOptionsJPEG.
 var pctPrecision        = 4;
-var outputType          = "pct"; // "abs" or "pct"
+var outputType          =  "pct"; // "abs" or "pct"
 
 // var settingsArrays      = ["image_format"] // put hash keys here for settings that are arrays -- in the illustrator file, the setting should be in the format "key: value,value,value"
 var docSettings         = {};
@@ -902,41 +902,33 @@ function main() {
 		pBar.setTitle(docArtboardName + ': Generating text...');
 		var pClasses = [];
 
-		for (var i=0; i<selectFrames.length; i++) {
-			var thisFrame = selectFrames[i];
+		forEach(selectFrames, function(thisFrame, i) {
 			var numChars = thisFrame.characters.length;
-			var runningChars = 0;
+			var range, rangeData;
 
 			// Generate a <div> element for each text frame, including CSS styles
-			var j = i+1;
-			var thisFrameId = nameSpace + "ai" + abNumber + "-" + j;
+			var thisFrameId = nameSpace + "ai" + abNumber + "-" + (i + 1);
 			if (thisFrame.name !== "") {
 				thisFrameId = makeKeyword(thisFrame.name);
 			}
-			html[6] += '\t\t\t<div id="' + thisFrameId + '" ';
-			html[6] += getTextFrameCss(thisFrame, activeArtboardRect) + '>\r';
+			html[6] += '\t\t\t<div id="' + thisFrameId + '" ' +
+					getTextFrameCss(thisFrame, activeArtboardRect) + '>\r';
 
-			// Generate a <p> tag for each paragraph of text
-			for (var k=0, l=0, p; k<thisFrame.paragraphs.length; k++) {
-				p = thisFrame.paragraphs[k];
-				l = p.characters.length;
-				if (runningChars<numChars && l > 0) {
-					var pData = convertParagraph(p, pClasses);
-					// Warning: after calling convertParagraph(), a paragraph object may
-					// become unusable; simply referencing thisFrame.paragraphs[k] may throw an error
-					// (unclear why. sample file: 0125 web DISTRICTmap.ai)
-					html[6] += "\t\t\t\t<p class='" + pData.classname + "'>";
-					html[6] += pData.html + "</p>\r";
-					runningChars += l+1;
+			// Generate a <p> tag for each paragraph or line of text
+			// The following code runs with either paragraphs or lines
+			// Using lines should prevent inconsistent word wrapping between AI and HTML
+			//
+			for (var k=0, n=thisFrame.lines.length; k<n; k++) {
+				range = thisFrame.lines[k];
+				rangeData = convertParagraph(range, pClasses);
+				// Warning: after calling convertParagraph(), a paragraph object may
+				// become unusable; simply referencing thisFrame.paragraphs[k] may throw an error
+				// (unclear why. sample file: 0125 web DISTRICTmap.ai)
+				html[6] += "\t\t\t\t<p class='" + rangeData.classname + "'>" + rangeData.html + "</p>\r";
 
-				} else {
-					// alert("empty paragraph " + p.characters);
-					html[6] += "\t\t\t\t<p>&nbsp;</p>\r";
-					runningChars += 1;
-				}
 			}
 			html[6] += "\t\t\t</div>\r";
-		}
+		});
 
 		// Generate CSS class definitions
 		for (var i=0; i<pClasses.length; i++) {
@@ -1915,7 +1907,6 @@ function getTextStyleClass(style, classes, name) {
 	return o.classname;
 }
 
-
 function convertParagraphSegments(arr) {
 	var html = "", o;
 	for (var i=0; i<arr.length; i++) {
@@ -1934,17 +1925,26 @@ function convertParagraphSegments(arr) {
 
 // Divide a pg into strings of the same style; capture style data
 // for each string of characters and for the entire paragraph
+// p: a TextRange object (could be a line or a paragraph)
+// classes: array of accumulated css classes
 //
 function convertParagraph(p, classes) {
-	var pstyle = getParagraphStyle(p);
-	// TODO: base the pstyle on the most common character style
-	var segments = getParagraphSegments(p, pstyle);
-	var uniqStyle = getTextStyleDiff(pstyle, defaultParagraphStyle) || {};
+	var segments, style, uniqStyle;
+	if (p.characters.length === 0) {
+		return {
+			classname: "",
+			html: "&nbsp;" // so default <p> line height is applied
+		};
+	}
+	// TODO: consider basing the pstyle on the most common character style
+	style = getParagraphStyle(p);
+	segments = getParagraphSegments(p, style);
+	uniqStyle = getTextStyleDiff(style, defaultParagraphStyle) || {};
 
 	return {
-		style: pstyle,
+		// style: style,
+		// sections: segments,
 		classname: getTextStyleClass(uniqStyle, classes),
-		sections: segments,
 		html: convertParagraphSegments(segments)
 	};
 }
