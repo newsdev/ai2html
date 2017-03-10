@@ -4,6 +4,7 @@ var scriptVersion     = "0.61";
 var scriptEnvironment = "nyt";
 // var scriptEnvironment = "";
 
+
 // ai2html is a script for Adobe Illustrator that converts your Illustrator document into html and css.
 
 // Copyright (c) 2011-2015 The New York Times Company
@@ -296,6 +297,7 @@ var warnings  = [];
 var errors    = [];
 
 var doc                    = app.activeDocument;
+var docIsSaved             = doc.saved;
 var docPath                = doc.path + "/";
 // var origFilename           = doc.name;
 
@@ -314,6 +316,7 @@ var largestArtboardArea    = 0;
 var	rgbBlackThreshold      = 36; // value between 0 and 255 lower than which if all three RGB values are below then force the RGB to #000 so it is a pure black
 
 var pBar = new ProgressBar();
+
 
 // TODO: ask Archie about these comments:
 // work on inlining responsive js and css
@@ -345,8 +348,6 @@ try {
 // restore document state
 // ==============================
 
-T.start();
-
 // Unhide stuff that was hidden during processing
 for (var i = 0; i < textFramesToUnhide.length; i++) {
 	var currentFrameToUnhide = textFramesToUnhide[i];
@@ -368,20 +369,27 @@ for (var i = hiddenObjects.length-1; i>=0; i--) {
 	hiddenObjects[i].visible = false;
 }
 
-pBar.setTitle('Saving Illustrator document...');
 pBar.setProgress(1.0);
 
 // Save the document if no errors occured
 if (parentFolder !== null && errors.length === 0) {
 	var saveOptions = new IllustratorSaveOptions();
 	saveOptions.pdfCompatible = false;
-	if (!doc.saved) {
+	// Only saving if doc was unsaved before this script is run
+	// (Saving is slow and usually unnecessary)
+	if (docIsSaved) {
+		// After showing/hiding objects, document goes to unsaved state
+		// This resets the doc to initial saved state without actually saving
+		doc.saved = true;
+	} else {
+		pBar.setTitle('Saving Illustrator document...');
+		T.start();
 		doc.saveAs(origFile, saveOptions);
+		T.stop("Saved document");
 		feedback.push("Your Illustrator file was saved.");
 	}
 }
 
-T.stop("Restore and save document");
 T.stop("Total time");
 
 pBar.close();
@@ -563,9 +571,6 @@ function main() {
 	}
 
 
-
-
-
 	// ================================================
 	// add settings text block if one does not exist
 	// ================================================
@@ -742,10 +747,15 @@ function main() {
 		uniqueArtboardWidths.sort(function(a,b){return a-b;});
 	}
 
+
+	// ================================================
+	// Generate HTML, CSS and images for contents of each artboard
+	// ================================================
+
 	var artboardHtml = "";
-	for (var abNumber = 0; abNumber < doc.artboards.length; abNumber++) {
-		var activeArtboard      =  doc.artboards[abNumber];
-		if (!artboardIsUsable(activeArtboard)) continue;
+	forEachArtboard(function(activeArtboard, abNumber) {
+		T.start();
+
 		doc.artboards.setActiveArtboardIndex(abNumber);
 		// throw "done";
 		docSettings.docName     =  makeKeyword(docSettings.project_name);
@@ -884,6 +894,7 @@ function main() {
 		T.start();
 		pBar.setTitle(docArtboardName + ': Generating text...');
 		var pClasses = [];
+		var charClasses = [];
 
 		forEach(selectFrames, function(thisFrame, i) {
 			var range, rangeData, frameId;
@@ -903,7 +914,7 @@ function main() {
 			//
 			for (var k=0, n=thisFrame.lines.length; k<n; k++) {
 				range = thisFrame.lines[k];
-				rangeData = convertParagraph(range, pClasses);
+				rangeData = convertParagraph(range, pClasses, charClasses);
 				// Warning: after calling convertParagraph(), a paragraph object may
 				// become unusable; simply referencing thisFrame.paragraphs[k] may throw an error
 				// (unclear why. sample file: 0125 web DISTRICTmap.ai)
@@ -914,10 +925,11 @@ function main() {
 		});
 
 		// Generate CSS class definitions
-		for (var i=0; i<pClasses.length; i++) {
+		forEach(pClasses.concat(charClasses), function(classObj) {
 			html[2] += "\t\t\t#" + nameSpace + docArtboardName + " ." +
-					pClasses[i].classname + " {" + pClasses[i].css + "\t\t\t}\r";
-		}
+					classObj.classname + " {" + classObj.css + "\t\t\t}\r";
+		});
+
 		html[2] += '\t\t\t.g-aiPtransformed p { white-space: nowrap; }\r';
 
 		T.stop("Text generation");
@@ -937,7 +949,6 @@ function main() {
 				selectFrames[i].hidden = false;
 			}
 		}
-
 
 		// ==========================
 		// Generate artboard image(s)
@@ -989,8 +1000,9 @@ function main() {
 			generateHtml(content, docArtboardName, docSettings);
 			artboardHtml = "";
 		}
+		T.stop("Total for artboard " + abNumber);
 
-	} // end artboard loop
+	}); // end artboard loop
 
 	//=====================================
 	// output html file here if doing one file for all artboards
@@ -1353,7 +1365,6 @@ function initBreakpoints() {
 
 }
 
-
 // Exports contents of current artboard (typically without text)
 // dest: full path of output file including the file name
 // width, height: the artboard width and height and only used to determine whether or not to use double res
@@ -1542,8 +1553,6 @@ function createPromoImage() {
 	// imageDestination = docPath + docSettings.docName + "-" + makeKeyword(ab.name) + "-" + abNumber + "-promo";
 
 	doc.artboards.setActiveArtboardIndex(abNumber);
-
-	alert(JSON.stringify(docSettings.image_format) +  ' > ' + String(docSettings.image_format.indexOf('jpg')));
 
 	// Using "jpg" if present in image_format setting, else using "png";
 	if (docSettings.image_format.indexOf('jpg') > -1) {
@@ -1749,7 +1758,6 @@ function getResizerScript() {
 	          maxwidth = el.getAttribute("data-max-width");
 	      widthById[parent.id] = width;
 
-	      console.log(">> resizer minw:", minwidth, "maxw:", maxwidth, "w:", width);
 	      if (+minwidth <= width && (+maxwidth >= width || maxwidth === null)) {
 	        var img = el.querySelector(".g-aiImg");
 	        if (img.getAttribute("data-src") && img.getAttribute("src") != img.getAttribute("data-src")) {
@@ -1814,8 +1822,8 @@ function getResizerScript() {
 	};
 
 	// convert function to JS source code
-	var js = '(' + trim(f.toString()) + ')("' + (scriptEnvironment || '') + '");';
-	return '<script type="text/javascript">\n' + js + '\n</script>\n\n';
+	var js = '\t(' + trim(f.toString()) + ')("' + (scriptEnvironment || '') + '");';
+	return '<script type="text/javascript">\n' + js + '\n\t</script>\n\n';
 }
 
 // Parse an AI CharacterAttributes object
@@ -1879,7 +1887,7 @@ function getStyleKey(s) {
 
 function getTextStyleClass(style, classes, name) {
 	var key = getStyleKey(style);
-	var cname = nameSpace + (name || 'aiPstyle');
+	var cname = nameSpace + (name || 'style');
 	var o, i;
 	for (i=0; i<classes.length; i++) {
 		o = classes[i];
@@ -1898,12 +1906,14 @@ function getTextStyleClass(style, classes, name) {
 }
 
 function convertParagraphSegments(arr) {
-	var html = "", o;
+	var html = "", o, cname;
 	for (var i=0; i<arr.length; i++) {
 		o = arr[i];
-		if (o.css) {
+		if (o.classname) {
+			html += '<span class="' + o.classname + '">' + o.text + '</span>';
+		} else if (o.css) { // inline css
 			html += '<span style="' + o.css + '">' + o.text + '</span>';
-		} else {
+		} else { // no css -- same style as enclosing paragraph
 			html += o.text;
 		}
 		if (o.warning) {
@@ -1918,7 +1928,7 @@ function convertParagraphSegments(arr) {
 // p: a TextRange object (could be a line or a paragraph)
 // classes: array of accumulated css classes
 //
-function convertParagraph(p, classes) {
+function convertParagraph(p, pClasses, charClasses) {
 	var segments, style, uniqStyle;
 	// Handle empty paragraphs
 	// It is hard or impossible to know the height of empty paragraphs
@@ -1935,13 +1945,13 @@ function convertParagraph(p, classes) {
 	//       common detected pg style as the default pg style
 	//       (this would require two passes to generate classes)
 	style = getParagraphStyle(p);
-	segments = getParagraphSegments(p, style);
+	segments = getParagraphSegments(p, style, charClasses);
 	uniqStyle = getTextStyleDiff(style, defaultParagraphStyle) || {};
 
 	return {
 		// style: style,
 		// sections: segments,
-		classname: getTextStyleClass(uniqStyle, classes),
+		classname: getTextStyleClass(uniqStyle, pClasses, 'aiPstyle'),
 		html: convertParagraphSegments(segments)
 	};
 }
@@ -2036,8 +2046,9 @@ function generateStyleCss(s, inline) {
 // Divide a paragraph into segments with the same style
 // p: AI paragraph object
 // pstyle: parsed paragraph style
+// charClasses: array of previously identified css classes
 //
-function getParagraphSegments(p, pstyle) {
+function getParagraphSegments(p, pstyle, charClasses) {
 	var segments = [];
 	var currRange;
 	var prev, curr, diff, cstr;
@@ -2049,7 +2060,9 @@ function getParagraphSegments(p, pstyle) {
 			currRange = {
 				text: "",
 				style: diff,
-				css: diff ? generateStyleCss(diff, true) : ''
+				classname: diff ? getTextStyleClass(diff, charClasses, 'aiCstyle') : ''
+				// this would generate inline styles instead of classes
+				// css: diff ? generateStyleCss(diff, true) : ''
 			};
 			segments.push(currRange);
 		}
