@@ -757,7 +757,8 @@ function main() {
 		T.start();
 
 		doc.artboards.setActiveArtboardIndex(abNumber);
-		// throw "done";
+		// doc.selectObjectsOnActiveArtboard();
+
 		docSettings.docName     =  makeKeyword(docSettings.project_name);
 		var artboardName        =  makeKeyword(activeArtboard.name.replace( /^(.+):\d+$/ , "$1"));
 		// var docArtboardName     =  makeKeyword(docSettings.project_name) + "-" + artboardName + "-" + abNumber;
@@ -898,6 +899,7 @@ function main() {
 
 		forEach(selectFrames, function(thisFrame, i) {
 			var range, rangeData, frameId;
+			// feedback.push("frame : " + thisFrame.visibleBounds);
 
 			// Generate a <div> element for each text frame, including CSS styles
 			if (thisFrame.name !== "") {
@@ -912,8 +914,8 @@ function main() {
 			// The following code runs with either paragraphs or lines
 			// Using lines should prevent inconsistent word wrapping between AI and HTML
 			//
-			for (var k=0, n=thisFrame.lines.length; k<n; k++) {
-				range = thisFrame.lines[k];
+			for (var k=0, n=thisFrame.paragraphs.length; k<n; k++) {
+				range = thisFrame.paragraphs[k];
 				rangeData = convertParagraph(range, pClasses, charClasses);
 				// Warning: after calling convertParagraph(), a paragraph object may
 				// become unusable; simply referencing thisFrame.paragraphs[k] may throw an error
@@ -1829,6 +1831,7 @@ function getResizerScript() {
 // Parse an AI CharacterAttributes object
 function getCharStyle(c) {
 	var fill = c.fillColor;
+	var filltype = fill.typename;
 	var caps = String(c.capitalization);
 	var o = {
 		aifont: c.textFont.name,
@@ -1837,23 +1840,24 @@ function getCharStyle(c) {
 		tracking: c.tracking
 	};
 	var r, g, b;
-	if (fill.typename == 'RGBColor') {
+
+	if (filltype == 'RGBColor') {
 		r = fill.red;
 		g = fill.green;
 		b = fill.blue;
 		if (r < rgbBlackThreshold && g < rgbBlackThreshold && b < rgbBlackThreshold) {
 			r = g = b = 0;
 		}
-	} else if (fill.typename == 'GrayColor') {
+	} else if (filltype == 'GrayColor') {
 		r = g = b = (100 - fill.gray) / 100 * 255;
-	} else if (fill.typename == 'NoColor') {
+	} else if (filltype == 'NoColor') {
 		g = 255;
 		r = b = 0;
 		// warnings are processed later, after ranges of same-style chars are identified
-		o.warning = "This text has no fill. Please fill it with an RGB color. It has been filled with green.";
+		o.warning = "Some text has no fill. Please fill it with an RGB color. It has been filled with green.";
 	} else {
 		r = g = b = 0;
-		o.warning = "This text is filled with a non-RGB color. Please fill it with an RGB color."
+		o.warning = "Some text has " + filltype + " fill. Please fill it with an RGB color.";
 	}
 	o.color = getCssColor(r, g, b);
 	return o;
@@ -1869,8 +1873,10 @@ function getParagraphStyle(p) {
 	s.spaceAfter = Math.round(p.spaceAfter);
 	s.justification = String(p.justification);
 
- 	// TODO: fix opacity -- try checking text frame // Math.round(p.opacity);
-	s.opacity = 100;
+ 	// TODO: try to detect opacity.
+ 	// Opacity of text ranges is not detectable via the API.
+ 	// (It is detectable on TextFrames, Groups, Layers, etc)
+	// s.opacity = 100;
 
 	return s;
 }
@@ -1905,54 +1911,33 @@ function getTextStyleClass(style, classes, name) {
 	return o.classname;
 }
 
-function convertParagraphSegments(arr) {
-	var html = "", o, cname;
-	for (var i=0; i<arr.length; i++) {
-		o = arr[i];
-		if (o.classname) {
-			html += '<span class="' + o.classname + '">' + o.text + '</span>';
-		} else if (o.css) { // inline css
-			html += '<span style="' + o.css + '">' + o.text + '</span>';
-		} else { // no css -- same style as enclosing paragraph
-			html += o.text;
-		}
-		if (o.warning) {
-			warnings.push(o.warning + "Text: \u201C" + o.text + "\u201D");
-		}
-	}
-	return html;
-}
-
 // Divide a pg into strings of the same style; capture style data
 // for each string of characters and for the entire paragraph
 // p: a TextRange object (could be a line or a paragraph)
-// classes: array of accumulated css classes
+// pClasses, charClasses: arrays of accumulated css class data
 //
 function convertParagraph(p, pClasses, charClasses) {
-	var segments, style, uniqStyle;
-	// Handle empty paragraphs
-	// It is hard or impossible to know the height of empty paragraphs
-	// TODO: Try to estimate the height of empty paragraph and generate
-	//    CSS to preserve this height
+	var pStyle, uniqStyle, html, classname;
 	if (p.characters.length === 0) {
-		return {
-			classname: "",
-			html: "&nbsp;" // so default <p> line height is applied
-		};
+		// Handle empty paragraphs
+		// It is hard or impossible to know the height of empty paragraphs
+		// TODO: Try to estimate the height of empty paragraph and generate
+		//    CSS to preserve this height
+		classname = "";
+		html = "&nbsp;" // so default <p> line height is applied
+	} else {
+		// TODO: consider basing the pstyle on the most common character style
+		// TODO: consider removing the default pg style, or use the most
+		//       common detected pg style as the default pg style
+		//       (this would require two passes to generate classes)
+		pStyle = getParagraphStyle(p);
+		html = convertParagraphSegments(getParagraphSegments(p, pStyle, charClasses));
+		uniqStyle = getTextStyleDiff(pStyle, defaultParagraphStyle) || {};
+		classname = getTextStyleClass(uniqStyle, pClasses, 'aiPstyle');
 	}
-	// TODO: consider basing the pstyle on the most common character style
-	// TODO: consider removing the default pg style, or use the most
-	//       common detected pg style as the default pg style
-	//       (this would require two passes to generate classes)
-	style = getParagraphStyle(p);
-	segments = getParagraphSegments(p, style, charClasses);
-	uniqStyle = getTextStyleDiff(style, defaultParagraphStyle) || {};
-
 	return {
-		// style: style,
-		// sections: segments,
-		classname: getTextStyleClass(uniqStyle, pClasses, 'aiPstyle'),
-		html: convertParagraphSegments(segments)
+		classname: classname,
+		html: html
 	};
 }
 
@@ -2009,11 +1994,13 @@ function generateStyleCss(s, inline) {
 	if ('leading' in s) {
 		styles.push("line-height:" + s.leading + "px;");
 	}
+	/*
 	if (('opacity' in s) && s.opacity != 100) {
 		styles.push("filter: alpha(opacity=" + (s.opacity * 100) + ");");
 		styles.push("-ms-filter:'progid:DXImageTransform.Microsoft.Alpha(Opacity=" + (s.opacity) + ")';");
 		styles.push("opacity:" + (s.opacity / 100) + ";");
 	}
+	*/
 	if (s.spaceBefore > 0) {
 		styles.push("padding-top:" + s.spaceBefore + "px;");
 	}
@@ -2049,27 +2036,48 @@ function generateStyleCss(s, inline) {
 // charClasses: array of previously identified css classes
 //
 function getParagraphSegments(p, pstyle, charClasses) {
+	var html = "";
 	var segments = [];
 	var currRange;
-	var prev, curr, diff, cstr;
+	var prev, curr, diff, c;
 	for (var i=0, n=p.characters.length; i<n; i++) {
-		cstr = p.characters[i].contents;
-		curr = getCharStyle(p.characters[i]);
+		c = p.characters[i];
+		curr = getCharStyle(c);
 		if (!prev || getTextStyleDiff(curr, prev)) {
 			diff = getTextStyleDiff(curr, pstyle);
 			currRange = {
 				text: "",
-				style: diff,
+				// style: diff,
 				classname: diff ? getTextStyleClass(diff, charClasses, 'aiCstyle') : ''
 				// this would generate inline styles instead of classes
 				// css: diff ? generateStyleCss(diff, true) : ''
 			};
+			// alert(c.characterAttributes.parent.textFrames[0].opacity);
 			segments.push(currRange);
 		}
-		currRange.text += cstr;
+		if (curr.warning) {
+			currRange.warning = curr.warning;
+		}
+		currRange.text += c.contents;
 		prev = curr;
 	}
 	return segments;
+}
+
+function convertParagraphSegments(segments) {
+	var html = "", o, cname;
+	for (var i=0; i<segments.length; i++) {
+		o = segments[i];
+		if (o.classname) {
+			html += '<span class="' + o.classname + '">' + o.text + '</span>';
+		} else { // no css -- same style as enclosing paragraph
+			html += o.text;
+		}
+		if (o.warning) {
+			warnings.push(o.warning + " Text: \u201C" + o.text + "\u201D");
+		}
+	}
+	return html;
 }
 
 
@@ -2122,7 +2130,6 @@ function textFrameIsRenderable(frame, artboardRect) {
 
 function findTextFramesToRender(frames, artboardRect) {
 	var selected = [];
-	// doc.selectObjectsOnActiveArtboard();
 	for (var i=0; i<frames.length; i++) {
 		if (textFrameIsRenderable(frames[i], artboardRect)) {
 			selected.push(frames[i]);
