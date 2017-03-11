@@ -887,19 +887,18 @@ function main() {
 		html[8]  += "\t\t</div>\r"; // closing the nameSpace+docArtboardName div
 		html[11] += "\t</div>\r";
 
-		var selectFrames  = findTextFramesToRender(doc.textFrames, activeArtboardRect);
 
 		// ========================
 		// Convert text objects
 		// ========================
 		T.start();
 		pBar.setTitle(docArtboardName + ': Generating text...');
+		var textFrames  = getTextFramesByArtboard(activeArtboard);
 		var pClasses = [];
 		var charClasses = [];
 
-		forEach(selectFrames, function(thisFrame, i) {
+		forEach(textFrames, function(thisFrame, i) {
 			var range, rangeData, frameId;
-			// feedback.push("frame : " + thisFrame.visibleBounds);
 
 			// Generate a <div> element for each text frame, including CSS styles
 			if (thisFrame.name !== "") {
@@ -941,14 +940,14 @@ function main() {
 
 		T.start();
 		// Hide text frames in preparation for image generation
-		for (var i=0;i<selectFrames.length;i++) {
-			hideTextFrame(selectFrames[i]);
+		for (var i=0;i<textFrames.length;i++) {
+			hideTextFrame(textFrames[i]);
 		}
 
 		// Unhide text now if in testing mode
 		if (docSettings.testing_mode=="yes") {
-			for (var i=0;i<selectFrames.length;i++) {
-				selectFrames[i].hidden = false;
+			for (var i=0;i<textFrames.length;i++) {
+				textFrames[i].hidden = false;
 			}
 		}
 
@@ -986,8 +985,8 @@ function main() {
 
 		// unhide text now if NOT in testing mode
 		if (docSettings.testing_mode!="yes") {
-			for (var i=0;i<selectFrames.length;i++) {
-				selectFrames[i].hidden = false;
+			for (var i=0;i<textFrames.length;i++) {
+				textFrames[i].hidden = false;
 			}
 		}
 		T.stop("Image generation");
@@ -1043,6 +1042,7 @@ function main() {
 	if (customHtmlBlocks>1)  { feedback.push(customHtmlBlocks + " custom HTML blocks were added."); }
 	if (customJsBlocks==1)   { feedback.push(customJsBlocks   + " custom JS block was added."); }
 	if (customJsBlocks>1)    { feedback.push(customJsBlocks   + " custom JS blocks were added."); }
+
 
 } // end main()
 
@@ -1522,6 +1522,14 @@ function forEachArtboard(cb) {
 	}
 }
 
+function forEachLayer(cb, parent) {
+	var layers = parent ? parent.layers : doc.layers;
+	for (var i=0, n=layers.length; i<n; i++) {
+		cb(layers[i]);
+		forEachLayer(cb, layers[i]);
+	}
+}
+
 // Returns id of largest artboard
 function findLargestArtboard() {
 	var largestId = -1;
@@ -1695,8 +1703,6 @@ function hideElementsOutsideArtboardRect(artbnds) {
 				var checkItemGroups = [layer.pathItems, layer.symbolItems, layer.compoundPathItems];
 				all_groups = [];
 				traverseGroups(layer);
-				// feedback.push('layer.groupItems '+layer.groupItems.length);
-				// alert('groups: '+groups.length);
 				for (var g=0; g<all_groups.length; g++) {
 					checkItemGroups.push(all_groups[g].pathItems);
 					checkItemGroups.push(all_groups[g].symbolItems);
@@ -2099,15 +2105,48 @@ function getCssColor(r, g, b) {
 	return 'rgb(' + r + ',' + g + ',' + b + ')';
 }
 
-function textFrameIsInBounds(frame, artboardRect) {
-	var visibleLeft   =  frame.visibleBounds[0];
-	var visibleTop    = -frame.visibleBounds[1];
-	var visibleRight  =  frame.visibleBounds[2];
-	var visibleBottom = -frame.visibleBounds[3];
-	var abLeft   =  artboardRect[0];
-	var abTop    = -artboardRect[1];
-	var abRight  =  artboardRect[2];
-	var abBottom = -artboardRect[3];
+
+function textFrameIsRenderable(frame, artboardRect) {
+	var inBounds = testBoundsIntersection(frame.visibleBounds, artboardRect);
+	var hidden = objectIsHidden(frame);
+	return inBounds && !hidden && frame.contents !== "" &&
+		(docSettings.render_rotated_skewed_text_as == "html" ||
+			(docSettings.render_rotated_skewed_text_as == "image" &&
+				!textIsTransformed(frame))) &&
+		(frame.kind=="TextType.AREATEXT" || frame.kind=="TextType.POINTTEXT");
+}
+
+
+// return elements in array "a" but not in array "b"
+function arraySubtract(a, b) {
+	var diff = [],
+			alen = a.length,
+			blen = b.length,
+			i, j;
+	for (i=0; i<alen; i++) {
+		diff.push(a[i]);
+		for (j=0; j<blen; j++) {
+			if (a[i] === b[j]) {
+				diff.pop();
+				break;
+			}
+		}
+	}
+	return diff;
+}
+
+// a, b: coordinate arrays, as from <PathItem>.geometricBounds
+//
+function testBoundsIntersection(a, b) {
+	var visibleLeft   =  a[0];
+	var visibleTop    = -a[1];
+	var visibleRight  =  a[2];
+	var visibleBottom = -a[3];
+	var abLeft   =  b[0];
+	var abTop    = -b[1];
+	var abRight  =  b[2];
+	var abBottom = -b[3];
+	// TODO: simplify -- don't need so many comparisons
 	// note: in ExtendScript, it seems that && and || have same priority (!)
 	var inX = (visibleLeft >= abLeft && visibleLeft <= abRight) ||
 		(visibleRight >= abLeft && visibleRight <= abRight) ||
@@ -2118,14 +2157,93 @@ function textFrameIsInBounds(frame, artboardRect) {
 	return inX && inY;
 }
 
-function textFrameIsRenderable(frame, artboardRect) {
-	var inBounds = textFrameIsInBounds(frame, artboardRect);
-	var hidden = objectIsHidden(frame);
-	return inBounds && !hidden && frame.contents !== "" &&
-		(docSettings.render_rotated_skewed_text_as == "html" ||
-			(docSettings.render_rotated_skewed_text_as == "image" &&
-				!textIsTransformed(frame))) &&
-		(frame.kind=="TextType.AREATEXT" || frame.kind=="TextType.POINTTEXT");
+function findClippingPath(paths) {
+	for (var i=0, n=paths.length; i<n; i++) {
+		if (paths[i].clipping) return paths[i];
+	}
+	return null;
+}
+
+// UNUSED -- remove?
+// Return all grouped PathItems objects with clipping property == true
+// (Ignores groups with no TextFrames)
+// This does not capture layer clipping paths -- a more difficult problem
+function getGroupClippingPaths() {
+	var found = [];
+	forEach(doc.groupItems, function(group) {
+		var clipPath;
+		if (group.clipped && group.textFrames.length > 0) {
+			clipPath = findClippingPath(group.pathItems);
+			if (clipPath) found.push(clipPath);
+		}
+	});
+	return found;
+}
+
+// Find clipped TextFrames that are inside an artboard but outside the bounding box
+// box of their clipping path
+// texts: array of text objects assocated with a clipping path
+// clipRect: bounding box of clipping path
+// abRect: bounds of arstboard to test
+//
+function selectMaskedTextFrames(texts, clipRect, abRect) {
+	var found = [];
+	var textRect, textInArtboard, textInMask, maskInArtboard;
+	for (var i=0; i<texts.length; i++) {
+		textRect = texts[i].geometricBounds;
+		// capture text items that intersect the artboard but are masked...
+		textInArtboard = testBoundsIntersection(abRect, textRect);
+		maskInArtboard = testBoundsIntersection(abRect, clipRect);
+		textInMask = testBoundsIntersection(textRect, clipRect);
+		if (textInArtboard && (!maskInArtboard || !textInMask)) {
+			found.push(texts[i]);
+		}
+	}
+	return found;
+}
+
+// Assumes mask is unlocked and any other clipping paths are locked
+function findTextFramesByClippingPath(mask) {
+	var texts = [], selection;
+	// Equivalent to Select > Object > Clipping Mask in GUI
+	app.executeMenuCommand('Clipping Masks menu item');
+	// Equivalent to Object > Clipping Mask > Edit Contents in GUI
+	app.executeMenuCommand('editMask');
+	selection = doc.selection;
+	for (var i=0, n=selection.length; i<n; i++) {
+		if (selection[i].typename == 'TextFrame') {
+			texts.push(selection[i]);
+		}
+	}
+	doc.selection = null;
+	return texts;
+}
+// Find clipped TextFrames that are inside an artboard by outside their
+// clipping path (using bounding box of clipping path to approximate clip area)
+function getClippedTextFramesByArtboard(ab) {
+	app.executeMenuCommand('Clipping Masks menu item');
+	var masks = doc.selection.concat();
+	var abRect = ab.artboardRect;
+	var frames = [];
+	forEach(masks, function(mask) {mask.locked = true;}); // lock clipping paths
+	forEach(masks, function(mask) {
+		mask.locked = false;
+		var clipRect = mask.geometricBounds;
+		var texts = findTextFramesByClippingPath(mask);
+		texts = selectMaskedTextFrames(texts, clipRect, abRect);
+		if (texts.length > 0) {
+			frames = frames.concat(texts);
+		}
+		mask.locked = true;
+	});
+	forEach(masks, function(mask) {mask.locked = false;}); // unlock clipping paths
+	return frames;
+}
+
+function getTextFramesByArtboard(ab) {
+	var candidateFrames = findTextFramesToRender(doc.textFrames, ab.artboardRect);
+	var excludedFrames = getClippedTextFramesByArtboard(ab);
+	return arraySubtract(candidateFrames, excludedFrames);
 }
 
 function findTextFramesToRender(frames, artboardRect) {
