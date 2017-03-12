@@ -1367,8 +1367,8 @@ function initBreakpoints() {
 
 }
 
-// Exports contents of current artboard (typically without text)
-// dest: full path of output file including the file name
+// Exports contents of active artboard (without text, unless in test mode)
+// dest: full path of output file including the file basename
 // width, height: the artboard width and height and only used to determine whether or not to use double res
 // formats: array of export format identifiers (png, png24, jpg, svg)
 // initialScaling: the proportion to scale the base image before considering whether to double res. Usually just 1.
@@ -2624,7 +2624,7 @@ function showCompletionAlert(showPrompt) {
 
 	if (showPrompt) {
 		alertText += rule + "Generate promo image?";
-		retn = confirm(alertHed  + alertText, false); // false: "Yes" is default
+		retn = confirm(alertHed  + alertText, true); // true: "No" is default
 	} else {
 		alertText += rule + "ai2html-nyt5 v" + scriptVersion;
 		alert(alertHed + alertText);
