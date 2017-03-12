@@ -1,9 +1,7 @@
 
 // ai2html.js
-var scriptVersion     = "0.70";
-var scriptEnvironment = "nyt";
-// var scriptEnvironment = "";
-
+var scriptVersion     = "0.62";
+var scriptEnvironment = "nyt";  // TODO: detect this setting
 
 // ai2html is a script for Adobe Illustrator that converts your Illustrator document into html and css.
 
@@ -40,13 +38,6 @@ var scriptEnvironment = "nyt";
 // - Go to the folder containing your Illustrator file. Inside will be a folder called ai2html-output.
 // - Open the html files in your browser to preview your output.
 
-// add polyfills, etc
-initScriptEnvironment();
-T.start();
-
-if (!app.documents.length) {
-	throw " No documents are open";
-}
 
 // ================================================
 // ai2html and config settings
@@ -166,7 +157,7 @@ if (scriptEnvironment=="nyt") {
 
 
 // ================================================
-// constants
+// Constant data
 // ================================================
 
 // html entity substitution
@@ -270,10 +261,6 @@ var textStyleKeys = [
 	"opacity"
 ];
 
-// ================================================
-// declarations
-// ================================================
-
 // user inputs, settings, etc
 var defaultParagraphStyle = {
 	aifont: 'NYTFranklin-Medium',
@@ -282,129 +269,48 @@ var defaultParagraphStyle = {
 	weight: 500,
 	color: getCssColor(0, 0, 0)
 };
+
 var nameSpace           = "g-";
 var maxJpgImageScaling  = 776.19; // This is specified in the Javascript Object Reference under ExportOptionsJPEG.
 var pctPrecision        = 4;
-var outputType          =  "pct"; // "abs" or "pct"
+var outputType          = "pct"; // "abs" or "pct"
+// value between 0 and 255 lower than which if all three RGB values are below
+// then force the RGB to #000 so it is a pure black
+var	rgbBlackThreshold  = 36;
 
-// var settingsArrays      = ["image_format"] // put hash keys here for settings that are arrays -- in the illustrator file, the setting should be in the format "key: value,value,value"
-var docSettings         = {};
-var previewProjectType = "";
+// ================================
+// Variable declarations
+// ================================
 
 // vars to hold warnings and informational messages at the end
-var feedback  = [];
-var warnings  = [];
-var errors    = [];
+var feedback = [];
+var warnings = [];
+var errors   = [];
 
-var doc                    = app.activeDocument;
-var docIsSaved             = doc.saved;
-var docPath                = doc.path + "/";
-// var origFilename           = doc.name;
-
-var origFile               = new File (docPath + doc.name);
-var parentFolder           = docPath.toString().match( /[^\/]+\/$/ );
-var publicFolder           = new Folder( docPath + "../public/" );
-var srcFolder              = new Folder( docPath + "../src/" );
-var ymlFile                = docPath + "../config.yml";
-var gitConfigFile          = docPath + "../.git/config";
-
-var textFramesToUnhide     = [];
-var lockedObjects          = [];
+var textFramesToUnhide = [];
+var lockedObjects      = [];
 var hiddenObjects		   = [];
-var largestArtboardIndex;
-var largestArtboardArea    = 0;
-var	rgbBlackThreshold      = 36; // value between 0 and 255 lower than which if all three RGB values are below then force the RGB to #000 so it is a pure black
 
-var pBar = new ProgressBar();
+// Global variables set by main()
+var docSettings         = {};
+var previewProjectType = "";
+var doc, docPath, docIsSaved, pBar;
 
 
-// TODO: ask Archie about these comments:
-// work on inlining responsive js and css
-// var responsiveCssFile      = new File( docPath + "../public/assets/resizerStyle.css");
-// var responsiveJsFile       = new File( docPath + "../public/assets/resizerScript.js");
-// var responsiveJs = "\t<script>\n";
-// responiveJs
-// inputFile,starterText,linePrefix,lineSuffix
-// readTextFileAndPutIntoAVariable
+// ===========================================================
+// Run script in AI context, setup for testing in Node context
+// ===========================================================
 
-// Unlock all objects
-unlockObjects(doc);
-
-// unhide layers that were hidden so objects inside could be locked
-for (var i = hiddenObjects.length-1; i>=0; i--) {
-	hiddenObjects[i].visible = false;
-}
-
-// =====================
-// call main function
-// =====================
-try {
+var jsEnvironment = typeof module === "object" && module.exports ? "node" : "ai";
+if (jsEnvironment == 'ai') {
 	main();
-} catch(e) {
-	errors.push("The script threw an error" + (e.message ? ": " + e.message : ''));
 }
-
-// ==============================
-// restore document state
-// ==============================
-
-// Unhide stuff that was hidden during processing
-for (var i = 0; i < textFramesToUnhide.length; i++) {
-	var currentFrameToUnhide = textFramesToUnhide[i];
-	currentFrameToUnhide.hidden = false;
+if (jsEnvironment == 'node') {
+	// export some functions for testing
+  module.exports.internal = {
+  	trim: trim
+  };
 }
-
-// Unhide layers so objects inside can be unlocked
-for (var i = hiddenObjects.length-1; i>=0; i--) {
-	hiddenObjects[i].visible = true;
-}
-
-// Restore locked objects
-for (var i = lockedObjects.length-1; i>=0; i--) {
-	lockedObjects[i].locked = true;
-}
-
-// Restore hidden layers
-for (var i = hiddenObjects.length-1; i>=0; i--) {
-	hiddenObjects[i].visible = false;
-}
-
-pBar.setProgress(1.0);
-
-// Save the document if no errors occured
-if (parentFolder !== null && errors.length === 0) {
-	var saveOptions = new IllustratorSaveOptions();
-	saveOptions.pdfCompatible = false;
-	// Only saving if doc was unsaved before this script is run
-	// (Saving is slow and usually unnecessary)
-	if (docIsSaved) {
-		// After showing/hiding objects, document goes to unsaved state
-		// This resets the doc to initial saved state without actually saving
-		doc.saved = true;
-	} else {
-		pBar.setTitle('Saving Illustrator document...');
-		T.start();
-		doc.saveAs(origFile, saveOptions);
-		T.stop("Saved document");
-		feedback.push("Your Illustrator file was saved.");
-	}
-}
-
-T.stop("Total time");
-
-pBar.close();
-
-// ==============================
-// Show alert box
-// ==============================
-
-if (docSettings.show_completion_dialog_box=="true") {
-	// ignoring (obsolete) "create_promo_image" option setting
-	var promptForPromo = previewProjectType == "ai2html" && docSettings.write_image_files=="yes";
-	var showPromo = showCompletionAlert(promptForPromo);
-	if (showPromo) createPromoImage();
-}
-
 
 // =================================
 // Main function
@@ -412,13 +318,112 @@ if (docSettings.show_completion_dialog_box=="true") {
 
 function main() {
 
+	// Setup global environment
+	initScriptEnvironment();
+	doc = app.activeDocument;
+	docPath = doc.path + "/";
+	docIsSaved = doc.saved;
+	pBar = new ProgressBar();
+
+	T.start();
+
+	// Unlock all objects
+	unlockObjects(doc);
+
+	// unhide layers that were hidden so objects inside could be locked
+	for (var i = hiddenObjects.length-1; i>=0; i--) {
+		hiddenObjects[i].visible = false;
+	}
+
+	// =====================
+	// Generate HTML
+	// =====================
+	try {
+		ai2html();
+	} catch(e) {
+		errors.push("The script threw an error" + (e.message ? ": " + e.message : ''));
+	}
+
+	// ==============================
+	// Restore document state
+	// ==============================
+
+	// Unhide stuff that was hidden during processing
+	for (var i = 0; i < textFramesToUnhide.length; i++) {
+		var currentFrameToUnhide = textFramesToUnhide[i];
+		currentFrameToUnhide.hidden = false;
+	}
+
+	// Unhide layers so objects inside can be unlocked
+	for (var i = hiddenObjects.length-1; i>=0; i--) {
+		hiddenObjects[i].visible = true;
+	}
+
+	// Restore locked objects
+	for (var i = lockedObjects.length-1; i>=0; i--) {
+		lockedObjects[i].locked = true;
+	}
+
+	// Restore hidden layers
+	for (var i = hiddenObjects.length-1; i>=0; i--) {
+		hiddenObjects[i].visible = false;
+	}
+
+	pBar.setProgress(1.0);
+
+	// Save the document if no errors occured
+	if (errors.length === 0) {
+		var saveOptions = new IllustratorSaveOptions();
+		saveOptions.pdfCompatible = false;
+		// Only saving if doc was unsaved before this script is run
+		// (Saving is slow and usually unnecessary)
+		if (docIsSaved) {
+			// After showing/hiding objects, document goes to unsaved state
+			// This resets the doc to initial saved state without actually saving
+			doc.saved = true;
+		} else {
+			pBar.setTitle('Saving Illustrator document...');
+			T.start();
+			doc.saveAs(new File(docPath + doc.name), saveOptions);
+			T.stop("Saved document");
+			feedback.push("Your Illustrator file was saved.");
+		}
+	}
+
+	T.stop("Total time");
+
+	pBar.close();
+
+	// ==============================
+	// Show alert box
+	// ==============================
+
+	if (docSettings.show_completion_dialog_box=="true") {
+		// ignoring (obsolete) "create_promo_image" option setting
+		var promptForPromo = previewProjectType == "ai2html" && docSettings.write_image_files=="yes";
+		var showPromo = showCompletionAlert(promptForPromo);
+		if (showPromo) createPromoImage();
+	}
+} // end main()
+
+
+// =================================
+// ai2html processing function
+// =================================
+
+function ai2html() {
+	if (!app.documents.length) {
+		errors.push("No documents are open");
+		return;
+	}
+
 	// ================================================
 	// Read .git/config file to get preview slug
 	// ================================================
 
 	if (scriptEnvironment=="nyt") {
 
-		var gitConfig = readGitConfigFile(gitConfigFile) || {};
+		var gitConfig = readGitConfigFile(docPath + "../.git/config") || {};
 		if (gitConfig.url) {
 			docSettings.preview_slug = gitConfig.url.replace( /^[^:]+:/ , "" ).replace( /\.git$/ , "");
 		}
@@ -429,7 +434,7 @@ function main() {
 	// ================================================
 
 	if (scriptEnvironment=="nyt") {
-		var yaml = readYamlFile(ymlFile);
+		var yaml = readYamlFile(docPath + "../config.yml");
 		if (!yaml) {
 			previewProjectType = "config.yml is missing";
 		} else {
@@ -708,7 +713,7 @@ function main() {
 	// check for things that should/could prevent the script from running, otherwise proceed
 	// ================================================
 
-	if (parentFolder === null) {
+	if (!documentFileExists()) {
 		errors.push('You need to save your Illustrator file before running this script');
 		return;
 	}
@@ -719,18 +724,14 @@ function main() {
 
   if (docSettings.ai2html_environment=="nyt") {
 		if (previewProjectType=="config.yml is missing" ||
-				(previewProjectType=="ai2html" && !publicFolder.exists) ||
-				(previewProjectType!="ai2html" && !srcFolder.exists)) {
+				(previewProjectType=="ai2html" && !folderExists(docPath + "../public/")) ||
+				(previewProjectType!="ai2html" && !folderExists(docPath + "../src/"))) {
 			errors.push("Make sure your Illustrator file is inside the \u201Cai\u201D folder of a Preview project.");
 			errors.push("If the Illustrator file is in the correct folder, your Preview project may be missing a config.yml file or a \u201Cpublic\u201D or a \u201Csrc\u201D folder.");
 			errors.push("If this is an ai2html project, it is probably easier to just create a new ai2html Preview project and move this Illustrator file into the \u201Cai\u201D folder inside the project.");
 			return;
 		}
   }
-
-	if ( parentFolder[0]==="ai/" && publicFolder.exists ) {
-		// TODO: use this to configure something
-	}
 
 	var uniqueArtboardWidths = [];
 	if (docSettings.include_resizer_widths == "yes") {
@@ -1043,8 +1044,7 @@ function main() {
 	if (customJsBlocks==1)   { feedback.push(customJsBlocks   + " custom JS block was added."); }
 	if (customJsBlocks>1)    { feedback.push(customJsBlocks   + " custom JS blocks were added."); }
 
-
-} // end main()
+} // end ai2html()
 
 
 // =================================
@@ -1125,6 +1125,10 @@ function round(number, precision) {
 	return Math.round(number * d) / d;
 }
 
+function folderExists(path) {
+	return new Folder(path).exists;
+}
+
 // TODO: value could change during program execution -- does this matter?
 function getDateTimeStamp() {
 	var d             = new Date();
@@ -1184,6 +1188,11 @@ function readGitConfigFile(path) {
 // =====================================
 // AI specific utility functions
 // =====================================
+
+function documentFileExists() {
+	// TODO: improve
+	return !!docPath.toString().match( /[^\/]+\/$/ );
+}
 
 function getArtboardPos(rect) {
 	var x = rect[0],
@@ -2631,3 +2640,6 @@ function showCompletionAlert(showPrompt) {
 	}
 	return retn;
 }
+
+
+
