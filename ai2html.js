@@ -394,7 +394,7 @@ function ai2html() {
 
 	// Unlock all objects
 	T.start();
-	unlockObjects(doc);
+	unlockObjects();
 	T.stop('Unlock objects');
 
 	// unhide layers that were hidden so objects inside could be locked
@@ -1421,56 +1421,52 @@ function exportImageFiles(dest,width,height,formats,initialScaling,doubleres) {
 	}
 }
 
-function unlockObjects(parentObj) {
-	var type = parentObj.typename;
-	var i, n, lyr, path, group, txt;
-	if (type=="Layer" || type=="Document") {
-		for (i=0, n=parentObj.layers.length; i<n; i++) {
-			lyr = parentObj.layers[i];
-			if (lyr.locked === true) {
-				lyr.locked = false;
-				lockedObjects.push(lyr);
-			}
-			// TODO: ask Archie why unhide layers
-			if (lyr.visible === false) {
-				lyr.visible = true;
-				hiddenObjects.push(lyr);
-			}
-			unlockObjects(lyr);
+
+function unlockObjectsInside(parent) {
+	var i, n, obj;
+	// unlock locked clipping paths (so masked-out text can be detected later)
+	for (i=0, n=parent.pathItems.length; i<n; i++) {
+		obj = parent.pathItems[i];
+		if (obj.locked === true && obj.clipping === true) {
+			obj.locked = false;
+			lockedObjects.push(obj);
+			break;
 		}
 	}
-	if (type == "Layer" || type == "GroupItem") {
-		for (i=0, n=parentObj.groupItems.length; i<n; i++) {
-			group = parentObj.groupItems[i];
-			if (group.locked === true) {
-				group.locked = false;
-				lockedObjects.push(group);
-			}
-			unlockObjects(group);
-		}
 
-		// unlock locked clipping paths (so masked-out text can be detected later)
-		// if (type != "GroupItem" || !parentObj.clipped) {
-			for (i=0, n=parentObj.pathItems.length; i<n; i++) {
-				path = parentObj.pathItems[i];
-				if (path.locked === true && path.clipping === true) {
-					path.locked = false;
-					lockedObjects.push(path);
-					break;
-				}
-			}
-		// }
-
-		// TODO: ask Archie why unlock text objects
-		for (i=0, n=parentObj.textFrames.length; i<n; i++) {
-			txt = parentObj.textFrames[i];
-			// this line is producing the MRAP error!!!
-			if (txt.locked === true) {
-				txt.locked = false;
-				lockedObjects.push(txt);
-			}
+	// TODO: ask Archie why bother to unlock text objects
+	for (i=0, n=parent.textFrames.length; i<n; i++) {
+		obj = parent.textFrames[i];
+		// this line is producing the MRAP error!!!
+		if (obj.locked === true) {
+			obj.locked = false;
+			lockedObjects.push(obj);
 		}
 	}
+}
+
+function unlockObjects() {
+	forEachLayer(function(lyr) {
+		if (lyr.locked === true) {
+			lyr.locked = false;
+			lockedObjects.push(lyr);
+		}
+		// TODO: ask Archie why unhide layers
+		if (lyr.visible === false) {
+			lyr.visible = true;
+			hiddenObjects.push(lyr);
+		}
+		unlockObjectsInside(lyr);
+	});
+
+	for (var i=0, n=doc.groupItems.length; i<n; i++) {
+		var group = doc.groupItems[i];
+		if (group.locked) {
+			group.locked = false;
+			lockedObjects.push(group);
+		}
+		unlockObjectsInside(group);
+	};
 }
 
 function hideTextFrame(textFrame) {
