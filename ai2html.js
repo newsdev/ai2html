@@ -393,7 +393,9 @@ function main() {
 function ai2html() {
 
 	// Unlock all objects
+	T.start();
 	unlockObjects(doc);
+	T.stop('Unlock objects');
 
 	// unhide layers that were hidden so objects inside could be locked
 	for (var i = hiddenObjects.length-1; i>=0; i--) {
@@ -1420,34 +1422,53 @@ function exportImageFiles(dest,width,height,formats,initialScaling,doubleres) {
 }
 
 function unlockObjects(parentObj) {
-	if (parentObj.typename=="Layer" || parentObj.typename=="Document") {
-		for (var layerNo = 0; layerNo < parentObj.layers.length; layerNo++) {
-			var currentLayer = parentObj.layers[layerNo];
-			if (currentLayer.locked === true) {
-				currentLayer.locked = false;
-				lockedObjects.push(currentLayer);
+	var type = parentObj.typename;
+	var i, n, lyr, path, group, txt;
+	if (type=="Layer" || type=="Document") {
+		for (i=0, n=parentObj.layers.length; i<n; i++) {
+			lyr = parentObj.layers[i];
+			if (lyr.locked === true) {
+				lyr.locked = false;
+				lockedObjects.push(lyr);
 			}
-			if (currentLayer.visible === false) {
-				currentLayer.visible = true;
-				hiddenObjects.push(currentLayer);
+			// TODO: ask Archie why unhide layers
+			if (lyr.visible === false) {
+				lyr.visible = true;
+				hiddenObjects.push(lyr);
 			}
-			unlockObjects(currentLayer);
+			unlockObjects(lyr);
 		}
 	}
-	for (var groupItemsNo = 0; groupItemsNo < parentObj.groupItems.length; groupItemsNo++) {
-		var currentGroupItem = parentObj.groupItems[groupItemsNo];
-		if (currentGroupItem.locked === true) {
-			currentGroupItem.locked = false;
-			lockedObjects.push(currentGroupItem);
+	if (type == "Layer" || type == "GroupItem") {
+		for (i=0, n=parentObj.groupItems.length; i<n; i++) {
+			group = parentObj.groupItems[i];
+			if (group.locked === true) {
+				group.locked = false;
+				lockedObjects.push(group);
+			}
+			unlockObjects(group);
 		}
-		unlockObjects(currentGroupItem);
-	}
-	for (var textFrameNo = 0; textFrameNo < parentObj.textFrames.length; textFrameNo++) {
-		var currentTextFrame = parentObj.textFrames[textFrameNo];
-		// this line is producing the MRAP error!!!
-		if (currentTextFrame.locked === true) {
-			currentTextFrame.locked = false;
-			lockedObjects.push(currentTextFrame);
+
+		// unlock locked clipping paths (so masked-out text can be detected later)
+		// if (type != "GroupItem" || !parentObj.clipped) {
+			for (i=0, n=parentObj.pathItems.length; i<n; i++) {
+				path = parentObj.pathItems[i];
+				if (path.locked === true && path.clipping === true) {
+					path.locked = false;
+					lockedObjects.push(path);
+					break;
+				}
+			}
+		// }
+
+		// TODO: ask Archie why unlock text objects
+		for (i=0, n=parentObj.textFrames.length; i<n; i++) {
+			txt = parentObj.textFrames[i];
+			// this line is producing the MRAP error!!!
+			if (txt.locked === true) {
+				txt.locked = false;
+				lockedObjects.push(txt);
+			}
 		}
 	}
 }
@@ -2059,13 +2080,19 @@ function getCssColor(r, g, b) {
 
 
 function textFrameIsRenderable(frame, artboardRect) {
-	var inBounds = testBoundsIntersection(frame.visibleBounds, artboardRect);
-	var hidden = objectIsHidden(frame);
-	return inBounds && !hidden && frame.contents !== "" &&
-		(docSettings.render_rotated_skewed_text_as == "html" ||
-			(docSettings.render_rotated_skewed_text_as == "image" &&
-				!textIsTransformed(frame))) &&
-		(frame.kind=="TextType.AREATEXT" || frame.kind=="TextType.POINTTEXT");
+	var good = true;
+	if (!testBoundsIntersection(frame.visibleBounds, artboardRect)) {
+		good = false;
+	} else if (frame.kind != "TextType.AREATEXT" && frame.kind != "TextType.POINTTEXT") {
+		good = false;
+	} else if (objectIsHidden(frame)) {
+		good = false;
+	} else if (frame.contents === "") {
+		good = false;
+	} else if (docSettings.render_rotated_skewed_text_as == "image" && textIsTransformed(frame)) {
+		good = false;
+	}
+	return good;
 }
 
 
@@ -2088,7 +2115,7 @@ function arraySubtract(a, b) {
 }
 
 //
-function testBoundsIntersection_(a, b) {
+function testBoundsIntersection(a, b) {
 	var visibleLeft   =  a[0];
 	var visibleTop    = -a[1];
 	var visibleRight  =  a[2];
@@ -2109,7 +2136,7 @@ function testBoundsIntersection_(a, b) {
 }
 
 // a, b: coordinate arrays, as from <PathItem>.geometricBounds
-function testBoundsIntersection(a, b) {
+function testBoundsIntersection_(a, b) {
 	return a[2] >= b[0] && b[2] >= a[0] && a[3] <= b[1] && b[3] <= a[1];
 }
 
@@ -2162,37 +2189,43 @@ function selectMaskedTextFrames(texts, clipRect, abRect) {
 function findTextFramesByClippingPath(mask) {
 	var texts = [], selection;
 	// Equivalent to Select > Object > Clipping Mask in GUI
-	T.start();
 	app.executeMenuCommand('Clipping Masks menu item');
-	T.stop('select mask');
-	T.start();
 	// Equivalent to Object > Clipping Mask > Edit Contents in GUI
 	app.executeMenuCommand('editMask');
-	T.stop('edit mask');
-	T.start();
 	selection = doc.selection;
 	for (var i=0, n=selection.length; i<n; i++) {
 		if (selection[i].typename == 'TextFrame') {
 			texts.push(selection[i]);
 		}
 	}
-	T.stop('find texts in selection');
 	doc.selection = null;
 	return texts;
 }
+
+function testSimilarBounds(a, b, maxOffs) {
+	if (maxOffs >= 0 === false) maxOffs = 1;
+	for (var i=0; i<4; i++) {
+		if (Math.abs(a[i] - b[i]) > maxOffs) return false;
+	}
+	return true;
+}
+
 // Find clipped TextFrames that are inside an artboard but outside their
 // clipping path (using bounding box of clipping path to approximate clip area)
 function getClippedTextFramesByArtboard(ab) {
-	T.start();
 	app.executeMenuCommand('Clipping Masks menu item');
 	var masks = doc.selection.concat();
-	T.stop('find masks');
 	var abRect = ab.artboardRect;
 	var frames = [];
 	forEach(masks, function(mask) {mask.locked = true;}); // lock clipping paths
 	forEach(masks, function(mask) {
-		mask.locked = false;
 		var clipRect = mask.geometricBounds;
+		if (testSimilarBounds(abRect, clipRect, 5)) {
+			// if clip path is masking to the current artboard, skip the test
+			// (optimization)
+			return;
+		}
+		mask.locked = false;
 		var texts = findTextFramesByClippingPath(mask);
 		texts = selectMaskedTextFrames(texts, clipRect, abRect);
 		if (texts.length > 0) {
