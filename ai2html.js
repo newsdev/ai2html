@@ -276,6 +276,7 @@ var outputType          = "pct"; // "abs" or "pct"
 // value between 0 and 255 lower than which if all three RGB values are below
 // then force the RGB to #000 so it is a pure black
 var	rgbBlackThreshold  = 36;
+var showDebugMessages  = true;
 
 // ================================
 // Variable declarations
@@ -1207,6 +1208,13 @@ function ProgressBar() {
 // ai2html functions
 // =====================================
 
+function message(msg) {
+	for (var i=1; i<arguments.length; i++) {
+		msg += ' ' + arguments[i];
+	}
+	if (showDebugMessages) feedback.push(msg);
+}
+
 // accept inconsistent true/yes values in settings
 function isTrue(val) {
 	return val == "true" || val == "yes";
@@ -1249,7 +1257,7 @@ function initDevEnvironment() {
 	  stop: function(note) {
 	    var msg = (+new Date() - T.stack.pop()) + 'ms';
 	    if (note) msg += " - " + note;
-	    feedback.push(msg);
+	    message(msg);
 	  }
 	};
 }
