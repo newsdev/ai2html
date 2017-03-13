@@ -997,19 +997,6 @@ if (!docHadSettingsBlock) {
 	};
 };
 
-// ================================================
-// increment build value
-// ================================================
-
-var buildLayer = doc.layers.getByName("ai2html-settings").textFrames.getByName("ai2html-build");
-
-var buildValue = Number(buildLayer.paragraphs[1].contents);
-if (isNaN(buildValue)) {
-  buildValue = 0;
-}
-var newBuildValue = buildValue + 1;
-buildLayer.paragraphs[1].contents = newBuildValue.toString();
-
 
 // ================================================
 // grab custom settings, html, css, js and text blocks
