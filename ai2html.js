@@ -667,11 +667,9 @@ function ai2html() {
 		html[1] += "\t\t\t}\r";
 
 		html[4] += "\t\t</style>\r";
-		html[4] += "\t\t<div id='"+nameSpace+docArtboardName+"-graphic'>\r";
 
     html[5] += generateImageHtml(abNumber, docSettings);
 
-		html[8]  += "\t\t</div>\r"; // closing the nameSpace+docArtboardName div
 		html[11] += "\t</div>\r";
 
 		// ========================
@@ -692,7 +690,7 @@ function ai2html() {
 			} else {
 				frameId = nameSpace + "ai" + abNumber + "-" + (i + 1);
 			}
-			html[6] += '\t\t\t<div id="' + frameId + '" ' +
+			html[6] += '\t\t<div id="' + frameId + '" ' +
 					getTextPositionCss(thisFrame, activeArtboard) + '>\r';
 
 			// Generate a <p> tag for each paragraph or line of text
@@ -705,10 +703,10 @@ function ai2html() {
 				// Warning: after calling convertParagraph(), a paragraph object may
 				// become unusable; simply referencing thisFrame.paragraphs[k] may throw an error
 				// (unclear why. sample file: 0125 web DISTRICTmap.ai)
-				html[6] += "\t\t\t\t<p class='" + rangeData.classname + "'>" + rangeData.html + "</p>\r";
+				html[6] += "\t\t\t<p class='" + rangeData.classname + "'>" + rangeData.html + "</p>\r";
 
 			}
-			html[6] += "\t\t\t</div>\r";
+			html[6] += "\t\t</div>\r";
 		});
 
 		// Generate CSS class definitions
@@ -989,29 +987,6 @@ function saveTextFile(dest, contents) {
   configFile.writeln(contents);
   configFile.close();
 }
-
-/*
-
-function testBoundsIntersection(a, b) {
-  var visibleLeft   =  a[0];
-  var visibleTop    = -a[1];
-  var visibleRight  =  a[2];
-  var visibleBottom = -a[3];
-  var abLeft   =  b[0];
-  var abTop    = -b[1];
-  var abRight  =  b[2];
-  var abBottom = -b[3];
-  // TODO: simplify -- don't need so many comparisons
-  // note: in ExtendScript, it seems that && and || have same priority (!)
-  var inX = (visibleLeft >= abLeft && visibleLeft <= abRight) ||
-    (visibleRight >= abLeft && visibleRight <= abRight) ||
-    (visibleLeft <= abLeft && visibleRight >= abRight);
-  var inY = (visibleTop >= abTop && visibleTop <= abBottom) ||
-    (visibleBottom >= abTop && visibleBottom <= abBottom) ||
-    (visibleTop <= abTop && visibleBottom >= abBottom);
-  return inX && inY;
-}
-*/
 
 // a, b: coordinate arrays, as from <PathItem>.geometricBounds
 function testBoundsIntersection(a, b) {
@@ -1407,7 +1382,7 @@ function getCharStyle(c) {
       r = g = b = 0;
     }
   } else if (filltype == 'GrayColor') {
-    r = g = b = (100 - fill.gray) / 100 * 255;
+    r = g = b = Math.round((100 - fill.gray) / 100 * 255);
   } else if (filltype == 'NoColor') {
     g = 255;
     r = b = 0;
@@ -1566,7 +1541,7 @@ function generateStyleCss(s, inline) {
     styles.push("padding-bottom:" + s.spaceAfter + "px;");
   }
   if (('tracking' in s) && s.tracking !== 0) {
-    styles.push("letter-spacing:" + (s.tracking / 1200) + "em;");
+    styles.push("letter-spacing:" + round(s.tracking / 1200, 3) + "em;");
   }
   if (s.justification && (tmp = getJustificationCss(s.justification))) {
     styles.push("text-align:" + tmp + ";");
@@ -2151,7 +2126,7 @@ function generateImageHtml(abNumber, settings) {
           settings.image_source_path) + abName + "." + extension,
       html;
 
-  html = '\t\t\t<img id="' + imgId + '"';
+  html = '\t\t<img id="' + imgId + '"';
   if (outputType == "abs") {
     html += ' class="' + nameSpace + 'aiAbs ' + nameSpace + 'aiImg" width="' +
         abPos.width + '" height="' + Math.round(abPos.height) + '"';
