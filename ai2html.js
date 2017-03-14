@@ -261,6 +261,17 @@ var textStyleKeys = [
 	"opacity"
 ];
 
+var nyt5Breakpoints = [
+  { name:"xsmall"    , lowerLimit:   0, upperLimit: 180, artboards:[] },
+  { name:"small"     , lowerLimit: 180, upperLimit: 300, artboards:[] },
+  { name:"smallplus" , lowerLimit: 300, upperLimit: 460, artboards:[] },
+  { name:"submedium" , lowerLimit: 460, upperLimit: 600, artboards:[] },
+  { name:"medium"    , lowerLimit: 600, upperLimit: 720, artboards:[] },
+  { name:"large"     , lowerLimit: 720, upperLimit: 945, artboards:[] },
+  { name:"xlarge"    , lowerLimit: 945, upperLimit:1050, artboards:[] },
+  { name:"xxlarge"   , lowerLimit:1050, upperLimit:1600, artboards:[] }
+];
+
 // user inputs, settings, etc
 var defaultParagraphStyle = {
 	aifont: 'NYTFranklin-Medium',
@@ -444,119 +455,11 @@ function ai2html() {
 	}
 
 	// ================================================
-	// Determine which artboards get which show classes
+  // assign artboards to their corresponding breakpoints
 	// ================================================
+  // (can have more than one artboard per breakpoint.)
 
-	var nyt5Breakpoints = [
-		{ name:"xsmall"    , lowerLimit:   0, upperLimit: 180, artboards:[] },
-		{ name:"small"     , lowerLimit: 180, upperLimit: 300, artboards:[] },
-		{ name:"smallplus" , lowerLimit: 300, upperLimit: 460, artboards:[] },
-		{ name:"submedium" , lowerLimit: 460, upperLimit: 600, artboards:[] },
-		{ name:"medium"    , lowerLimit: 600, upperLimit: 720, artboards:[] },
-		{ name:"large"     , lowerLimit: 720, upperLimit: 945, artboards:[] },
-		{ name:"xlarge"    , lowerLimit: 945, upperLimit:1050, artboards:[] },
-		{ name:"xxlarge"   , lowerLimit:1050, upperLimit:1600, artboards:[] }
-	];
-	var breakpoints        = {};
-	breakpoints.min        = "";
-	breakpoints.max        = "";
-
-	var largestNyt5Breakpoint = 0;
-	for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
-		if (nyt5Breakpoints[bpNumber].upperLimit>largestNyt5Breakpoint) {
-			largestNyt5Breakpoint = nyt5Breakpoints[bpNumber].upperLimit;
-		}
-	}
-	// loop thru artboards and determine which ones to process.
-	// to manually force an artboard to appear at a specific pixel width,
-	// append the width to the end of the artboard name with a colon and then the number, eg. "Artboard name:720"
-	// old way of doing this: name that artboard with a "ai2html-" followed by the upperlimit of the breakpoint, eg. ai2html-720
-
-	forEachArtboard(function(currentArtboard, abNumber) {
-		var artboardWidthMatch   = false;
-		var currentArtboardWidth = 0;
-
-		// calculate artboard width for purposes of determining viewport -- need to make this into a function
-		if (doc.artboards[abNumber].name.search(/^.+:\d+$/)!=-1) {
-			currentArtboardWidth = currentArtboard.name.replace( /^.+:(\d+)$/, "$1" );
-		} else if (currentArtboard.name.search(/^ai2html-\d+$/)!=-1) {
-			// this is the old way, supported for backward compatibility
-			currentArtboardWidth = currentArtboard.name.replace( /^ai2html-(\d+)$/, "$1");
-		} else {
-			currentArtboardWidth = Math.round(currentArtboard.artboardRect[2]-currentArtboard.artboardRect[0]);
-		}
-
-		for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
-			var currentBreakpointWidth = nyt5Breakpoints[bpNumber].upperLimit;
-			if (currentBreakpointWidth==currentArtboardWidth) {
-				artboardWidthMatch = true;
-			}
-		}
-		if (!artboardWidthMatch && docSettings.include_resizer_classes=="yes" && docSettings.ai2html_environment=="nyt") {
-			warnings.push('The width of the artboard named "' + currentArtboard.name + '" (#' + (abNumber+1) + ") does not match any of the NYT5 breakpoints and may produce unexpected results on your web page. The new script should be able to accommodate this, but please double check just in case.");
-		}
-	});
-
-	// assign artboards to their corresponding breakpoints -- can have more than one artboard per breakpoint.
-	// also figure out the min and max breakpoints that have artboards.
-	var overrideArtboardWidth           = false;
-	var maxArtboardWidth                = 0;
-
-	for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
-		var currentBreakpoint = nyt5Breakpoints[bpNumber];
-		for (var abNumber = 0; abNumber < doc.artboards.length; abNumber++) {
-			var currentArtboard = doc.artboards[abNumber];
-			if (!artboardIsUsable(currentArtboard)) continue;
-
-			// calculate artboard width for purposes of determining viewport -- need to make this into a function
-			// need to figure out what to do here if responsiveness==fixed
-			// calculate artboard width for purposes of determining viewport -- need to make this into a function
-			if (currentArtboard.name.search(/^.+:\d+$/)!=-1) {
-				currentArtboardWidth = (currentArtboard.name.replace( /^.+:(\d+)$/ , "$1" ));
-			} else if (currentArtboard.name.search(/^ai2html-\d+$/)!=-1) {
-				// this is the old way, supported for backward compatibility
-				currentArtboardWidth = (currentArtboard.name.replace( /^ai2html-(\d+)$/ , "$1" ));
-			} else {
-				currentArtboardWidth = Math.round(currentArtboard.artboardRect[2]-currentArtboard.artboardRect[0]);
-			}
-			if (currentArtboardWidth>maxArtboardWidth) {
-				maxArtboardWidth = currentArtboardWidth;
-			}
-			if (currentArtboardWidth<=currentBreakpoint.upperLimit && currentArtboardWidth>currentBreakpoint.lowerLimit) {
-				currentBreakpoint.artboards.push(abNumber);
-			}
-		}
-		if (currentBreakpoint.artboards.length > 0) {
-			if (breakpoints.min === "") {
-				breakpoints.min = currentBreakpoint.upperLimit;
-			}
-			if (overrideArtboardWidth === false) {
-				breakpoints.max = currentBreakpoint.upperLimit;
-			} else {
-				breakpoints.max = nyt5Breakpoints[nyt5Breakpoints.length-1].upperLimit;
-			}
-		}
-	}
-
-	// error message for breakpoints that have more than one native artboard
-	for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
-		var nyt5Breakpoint = nyt5Breakpoints[bpNumber];
-		if (nyt5Breakpoint.artboards.length>1 && docSettings.ai2html_environment=="nyt") {
-			warnings.push('The ' + nyt5Breakpoint.upperLimit + "px breakpoint has " + nyt5Breakpoint.artboards.length + " artboards. You probably want only one artboard per breakpoint.");
-		}
-	}
-	//put artboard in for breakpoints with no artboard starting from smallest to largest, leaving lower end empty if nothing at the bottom end.
-	for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
-		var currentBreakpoint = nyt5Breakpoints[bpNumber];
-		var previousArtboards = [];
-		if (bpNumber>0) {
-			previousArtboards = nyt5Breakpoints[bpNumber-1].artboards;
-		}
-		if (currentBreakpoint.artboards.length === 0) {
-			currentBreakpoint.artboards = previousArtboards;
-		}
-	}
-
+  var breakpoints = assignBreakpointsToArtboards(nyt5Breakpoints);
 
 	// ================================================
 	// add settings text block if one does not exist
@@ -579,20 +482,13 @@ function ai2html() {
 	var customCss      = "",
 		customJs         = "",
 		customHtml       = "",
-		customYml        = "",
 		customCssBlocks  = 0,
 		customHtmlBlocks = 0,
 		customJsBlocks   = 0;
 
-	customYml += "ai2html_version: " + scriptVersion      + "\n";
-	customYml += "project_type: "    + previewProjectType + "\n";
-	customYml += "tags: ai2html\n";
-
-	for (var tfNumber=0; tfNumber<doc.textFrames.length; tfNumber++) {
+	for (var tfNumber=0; tfNumber < doc.textFrames.length; tfNumber++) {
 		var thisFrame = doc.textFrames[tfNumber];
-		if (thisFrame.characters.length === 0) {
-			// prevents an error (AI bug?) caused by referencing thisFrame.paragraphs[0]
-			// when the pg is empty
+		if (thisFrame.lines.length < 2) {
 			continue;
 		}
 		var firstLine = thisFrame.lines[0].contents;
@@ -632,30 +528,8 @@ function ai2html() {
 		}
 	}
 
-	customYml += "min_width: "       + breakpoints.min    + "\n";
-	if (docSettings.max_width !== "") {
-		customYml += "max_width: " + docSettings.max_width + "\n";
-	} else if (docSettings.responsiveness != "fixed" && docSettings.ai2html_environment == "nyt") {
-		customYml += "max_width: " + largestNyt5Breakpoint + "\n";
-	} else if (docSettings.responsiveness != "fixed" && docSettings.ai2html_environment != "nyt") {
-		// don't write a max_width setting as there should be no max width in this case
-	} else {
-		// this is the case of fixed responsiveness
-		// customYml += "max_width: " + breakpoints.max + "\n";
-		customYml += "max_width: " + maxArtboardWidth + "\n";
-	}
-
-	// write out remaining values for config file
-	for (setting in docSettings) {
-		if (setting in ai2htmlBaseSettings && ai2htmlBaseSettings[setting].includeInConfigFile) {
-			var quoteMark = "";
-			if (ai2htmlBaseSettings[setting].useQuoteMarksInConfigFile) { quoteMark = '"'; }
-			customYml    += setting + ': ' + quoteMark + docSettings[setting] + quoteMark + "\n";
-		}
-	}
-
 	var imageExtension = ".png";
-	if (docSettings.image_format.length>0) {
+	if (docSettings.image_format.length > 0) {
 		imageExtension = "." + docSettings.image_format[0].substring(0,3);
 	}
 
@@ -694,7 +568,6 @@ function ai2html() {
 	// ================================================
 	// check for invalid NYT Preview environment
 	// ================================================
-
 
   if (docSettings.ai2html_environment=="nyt") {
 		if (previewProjectType=="config.yml is missing" ||
@@ -757,6 +630,7 @@ function ai2html() {
 
 		html[1] += "\r\t<!-- Artboard: " + artboardName + " -->\r";
 
+    /*
 		var showClass = "";
 
 		for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
@@ -773,10 +647,16 @@ function ai2html() {
 		if (docSettings.include_resizer_classes=="no") {
 			showClass = "";
 		}
+    */
+
+    var showClasses = "";
+    if (docSettings.include_resizer_classes != "no") {
+      showClasses = findShowClassesByArtboardId(abNumber, breakpoints);
+    }
 
 		// TODO: refactor this stuff
 		//
-		html[1] += "\t<div id='"+nameSpace+docArtboardName+"' class='"+nameSpace+"artboard "+nameSpace+"artboard-v3 "+showClass+"'";
+		html[1] += "\t<div id='"+nameSpace+docArtboardName+"' class='"+nameSpace+"artboard "+nameSpace+"artboard-v3 "+showClasses+"'";
 		if (docSettings.include_resizer_widths == "yes") {
 			// add data-min/max-width attributes
 			// find breakpoints
@@ -878,7 +758,7 @@ function ai2html() {
 				frameId = nameSpace + "ai" + abNumber + "-" + (i + 1);
 			}
 			html[6] += '\t\t\t<div id="' + frameId + '" ' +
-					getTextFrameCss(thisFrame, activeArtboardRect) + '>\r';
+					getTextPositionCss(thisFrame, activeArtboardRect) + '>\r';
 
 			// Generate a <p> tag for each paragraph or line of text
 			// The following code runs with either paragraphs or lines
@@ -906,8 +786,9 @@ function ai2html() {
 
 		T.stop("Text generation");
 
-		// Concatenate html fragments
-		artboardHtml += html.join('');
+    // ==========================
+    // Generate artboard image(s)
+    // ==========================
 
 		T.start();
 		// Hide text frames in preparation for image generation
@@ -922,10 +803,6 @@ function ai2html() {
 			}
 		}
 
-		// ==========================
-		// Generate artboard image(s)
-		// ==========================
-
 		if (docSettings.write_image_files=="yes") {
 			pBar.setTitle(docArtboardName + ': Writing image...');
 
@@ -934,18 +811,16 @@ function ai2html() {
 			var imageDestination = imageDestinationFolder + docArtboardName;
 
 			// if in svg export, hide path elements outside of the current artboard
-			if (docSettings.image_format[0] == 'svg') {
+			if (contains(docSettings.image_format, 'svg')) {
 				// save refs to elements we are hiding
 				var hiddenItemsOutsideArtboard = hideElementsOutsideArtboardRect(activeArtboardRect);
 			}
 
 			exportImageFiles(imageDestination,abW,abH,docSettings.image_format,1.0,docSettings.use_2x_images_if_possible);
 
-			if (docSettings.image_format[0] == 'svg' && hiddenItemsOutsideArtboard.length > 0) {
-			// unhide non-text elements hidden before export
-				for (var item_i=0; item_i < hiddenItemsOutsideArtboard.length; item_i++) {
-					hiddenItemsOutsideArtboard[item_i].hidden = false;
-				}
+			if (contains(docSettings.image_format, 'svg')) {
+        // unhide non-text elements hidden before export
+        forEach(hiddenItemsOutsideArtboard, function(item) {item.hidden = false;});
 			}
 		}
 
@@ -961,6 +836,9 @@ function ai2html() {
 		//=====================================
 		// output html file here if doing a file for every artboard
 		//=====================================
+
+    // Concatenate html fragments
+    artboardHtml += html.join('');
 
 		if (docSettings.output=="multiple-files") {
 			var content = getPageContent(artboardHtml, customHtml, customJs, customCss);
@@ -984,18 +862,12 @@ function ai2html() {
 	// write configuration file with graphic metadata
 	//=====================================
 
-	if (
-			(docSettings.ai2html_environment=="nyt" && previewProjectType=="ai2html") ||
-			(docSettings.ai2html_environment!="nyt" && docSettings.create_config_file)
-		) {
-		var configFileFolder = (docPath + docSettings.config_file_path).replace( /[^\/]+$/ , "");
-		checkForOutputFolder(configFileFolder , "configFileFolder");
-		var configFile = new File( docPath + docSettings.config_file_path );
-		configFile.open( "w", "TEXT", "TEXT" );
-		configFile.lineFeed = "Unix";
-		configFile.encoding = "UTF-8";
-		configFile.writeln(customYml);
-		configFile.close();
+	if ((docSettings.ai2html_environment=="nyt" && previewProjectType=="ai2html") ||
+			(docSettings.ai2html_environment!="nyt" && docSettings.create_config_file)) {
+    var yamlPath = docPath + docSettings.config_file_path,
+        yamlStr = generateYmlFileContent(breakpoints, docSettings);
+    checkForOutputFolder(yamlPath.replace(/[^\/]+$/, ""), "configFileFolder");
+    saveTextFile(yamlPath, yamlStr);
 	}
 
 
@@ -1013,7 +885,7 @@ function ai2html() {
 
 
 // =================================
-// general purpose utility functions
+// utility functions
 // =================================
 
 // Remove whitespace from beginning and end of a string
@@ -1032,6 +904,31 @@ function forEach(arr, cb) {
 	for (var i=0, n=arr.length; i<n; i++) {
 		cb(arr[i], i);
 	}
+}
+
+function contains(arr, val) {
+  for (var i=0, n=arr.length; i<n; i++) {
+    if (arr[i] === val) return true;
+  }
+  return false;
+}
+
+// return elements in array "a" but not in array "b"
+function arraySubtract(a, b) {
+  var diff = [],
+      alen = a.length,
+      blen = b.length,
+      i, j;
+  for (i=0; i<alen; i++) {
+    diff.push(a[i]);
+    for (j=0; j<blen; j++) {
+      if (a[i] === b[j]) {
+        diff.pop();
+        break;
+      }
+    }
+  }
+  return diff;
 }
 
 // multiple key sorting function based on https://github.com/Teun/thenBy.js
@@ -1126,10 +1023,65 @@ function readGitConfigFile(path) {
 	return o;
 }
 
+function getRGBColor(r,g,b) {
+  var col = new RGBColor();
+  col.red = r || 0;
+  col.green = g || 0;
+  col.blue = b || 0;
+  return col;
+}
 
-// =====================================
-// AI specific utility functions
-// =====================================
+function readTextFile(path) {
+  var outputText = "";
+  var file = new File(path);
+  if (file.exists) {
+    file.open("r");
+    while (!file.eof) {
+      outputText += file.readln() + "\n";
+    }
+    file.close();
+  } else {
+    warnings.push(path + " could not be found.");
+  }
+  return outputText;
+}
+
+function saveTextFile(dest, contents) {
+  var configFile = new File(dest);
+  configFile.open("w", "TEXT", "TEXT");
+  configFile.lineFeed = "Unix";
+  configFile.encoding = "UTF-8";
+  configFile.writeln(contents);
+  configFile.close();
+}
+
+/*
+
+function testBoundsIntersection(a, b) {
+  var visibleLeft   =  a[0];
+  var visibleTop    = -a[1];
+  var visibleRight  =  a[2];
+  var visibleBottom = -a[3];
+  var abLeft   =  b[0];
+  var abTop    = -b[1];
+  var abRight  =  b[2];
+  var abBottom = -b[3];
+  // TODO: simplify -- don't need so many comparisons
+  // note: in ExtendScript, it seems that && and || have same priority (!)
+  var inX = (visibleLeft >= abLeft && visibleLeft <= abRight) ||
+    (visibleRight >= abLeft && visibleRight <= abRight) ||
+    (visibleLeft <= abLeft && visibleRight >= abRight);
+  var inY = (visibleTop >= abTop && visibleTop <= abBottom) ||
+    (visibleBottom >= abTop && visibleBottom <= abBottom) ||
+    (visibleTop <= abTop && visibleBottom >= abBottom);
+  return inX && inY;
+}
+*/
+
+// a, b: coordinate arrays, as from <PathItem>.geometricBounds
+function testBoundsIntersection(a, b) {
+  return a[2] >= b[0] && b[2] >= a[0] && a[3] <= b[1] && b[3] <= a[1];
+}
 
 function getArtboardPos(rect) {
 	var x = rect[0],
@@ -1142,15 +1094,6 @@ function getArtboardPos(rect) {
 		width: w,
 		height: h
 	};
-}
-
-function textIsTransformed(textFrame) {
-	return !(textFrame.matrix.mValueA == 1 &&
-		textFrame.matrix.mValueB === 0 &&
-		textFrame.matrix.mValueC === 0 &&
-		textFrame.matrix.mValueD === 1);
-		// || textFrame.textRange.characterAttributes.horizontalScale != 100
-		// || textFrame.textRange.characterAttributes.verticalScale != 100;
 }
 
 function objectIsHidden(obj) {
@@ -1203,9 +1146,16 @@ function ProgressBar() {
 	};
 }
 
+function testSimilarBounds(a, b, maxOffs) {
+  if (maxOffs >= 0 === false) maxOffs = 1;
+  for (var i=0; i<4; i++) {
+    if (Math.abs(a[i] - b[i]) > maxOffs) return false;
+  }
+  return true;
+}
 
 // =====================================
-// ai2html functions
+// ai2html utility functions
 // =====================================
 
 function message(msg) {
@@ -1224,42 +1174,103 @@ function isFalse(val) {
 	return val == "false" || val == "no";
 }
 
+function unlockObjectsInside(parent) {
+  var i, n, obj;
+  // unlock locked clipping paths (so masked-out text can be detected later)
+  for (i=0, n=parent.pathItems.length; i<n; i++) {
+    obj = parent.pathItems[i];
+    if (obj.locked === true && obj.clipping === true) {
+      obj.locked = false;
+      lockedObjects.push(obj);
+      break;
+    }
+  }
+
+  // TODO: ask Archie why bother to unlock text objects
+  for (i=0, n=parent.textFrames.length; i<n; i++) {
+    obj = parent.textFrames[i];
+    // this line is producing the MRAP error!!!
+    if (obj.locked === true) {
+      obj.locked = false;
+      lockedObjects.push(obj);
+    }
+  }
+}
+
+function unlockObjects() {
+  forEachLayer(function(lyr) {
+    if (lyr.locked === true) {
+      lyr.locked = false;
+      lockedObjects.push(lyr);
+    }
+    // TODO: ask Archie why unhide layers
+    if (lyr.visible === false) {
+      lyr.visible = true;
+      hiddenObjects.push(lyr);
+    }
+    unlockObjectsInside(lyr);
+  });
+
+  for (var i=0, n=doc.groupItems.length; i<n; i++) {
+    var group = doc.groupItems[i];
+    if (group.locked) {
+      group.locked = false;
+      lockedObjects.push(group);
+    }
+    unlockObjectsInside(group);
+  };
+}
+
+
+function forEachLayer(cb, parent) {
+  var layers = parent ? parent.layers : doc.layers;
+  for (var i=0, n=layers.length; i<n; i++) {
+    cb(layers[i]);
+    forEachLayer(cb, layers[i]);
+  }
+}
+
+// ===========================
+// ai2html program state and settings
+// ===========================
+
+
 // Add polyfills, etc.
 function initScriptEnvironment() {
-	// TODO: don't setup dev environment for production use
-	initDevEnvironment();
+  // TODO: don't setup dev environment for production use
+  initDevEnvironment();
 
-	// Adding [].indexOf to Illustrator JavaScript
-	if (!Array.prototype.indexOf) {
-	    Array.prototype.indexOf = function(elt /*, from*/) {
-	        var len = this.length;
-	        var from = Number(arguments[1]) || 0;
-	        from = (from < 0) ? Math.ceil(from) : Math.floor(from);
-	        if (from < 0) from += len;
-	        for (; from < len; from++) {
-	            if (from in this && this[from] === elt) return from;
-	        }
-	        return -1;
-	   };
-	}
+  // Adding [].indexOf to Illustrator JavaScript
+  if (!Array.prototype.indexOf) {
+      Array.prototype.indexOf = function(elt /*, from*/) {
+          var len = this.length;
+          var from = Number(arguments[1]) || 0;
+          from = (from < 0) ? Math.ceil(from) : Math.floor(from);
+          if (from < 0) from += len;
+          for (; from < len; from++) {
+              if (from in this && this[from] === elt) return from;
+          }
+          return -1;
+     };
+  }
 }
 
 function initDevEnvironment() {
-	// include JSON for debugging objects
-	// @include "lib/json2.js"
+  // include JSON for debugging objects
+  // @include "lib/json2.js"
 
-	// Performance timing using T.start() and T.stop("message")
-	T = {
-	  stack: [],
-	  start: function() {
-	    T.stack.push(+new Date());
-	  },
-	  stop: function(note) {
-	    var msg = (+new Date() - T.stack.pop()) + 'ms';
-	    if (note) msg += " - " + note;
-	    message(msg);
-	  }
-	};
+  // Performance timing using T.start() and T.stop("message")
+  T = {
+    stack: [],
+    start: function() {
+      T.stack.push(+new Date());
+    },
+    stop: function(note) {
+      var msg = (+new Date() - T.stack.pop()) + 'ms';
+      if (note) msg += " - " + note;
+      message(msg);
+    }
+  };
 }
 
 function documentHasSettingsBlock() {
@@ -1271,23 +1282,6 @@ function documentHasSettingsBlock() {
 	});
 	return found;
 }
-
-// return rect of bounding box of all artboards
-function getArtboardBounds() {
-	var rect, bounds;
-	for (var i=0, n=doc.artboards.length; i<n; i++) {
-		rect = doc.artboards[i].artboardRect;
-		if (i === 0) {
-			bounds = rect;
-		} else {
-			bounds = [
-				Math.min(rect[0], bounds[0]), Math.max(rect[1], bounds[1]),
-				Math.max(rect[2], bounds[2]), Math.min(rect[3], bounds[3])];
-		}
-	}
-	return bounds;
-}
-
 
 function createSettingsBlock() {
 	var bounds			= getArtboardBounds();
@@ -1324,162 +1318,825 @@ function createSettingsBlock() {
 }
 
 
-// Exports contents of active artboard (without text, unless in test mode)
-// dest: full path of output file including the file basename
-// width, height: the artboard width and height and only used to determine whether or not to use double res
-// formats: array of export format identifiers (png, png24, jpg, svg)
-// initialScaling: the proportion to scale the base image before considering whether to double res. Usually just 1.
-// doubleres: "yes" or "no" whether you want to allow images to be double res
-//            to force ai2html to use doubleres, use "always"
-//
-function exportImageFiles(dest,width,height,formats,initialScaling,doubleres) {
-	 // max JPG scale is specified in the Javascript Object Reference under ExportOptionsJPEG.
-	var maxJpgImageScaling  = 776.19;
-	var pngScaling = 100 * initialScaling,
-			jpgScaling = 100 * initialScaling,
-			exportOptions, fileType;
+// Add ai2html settings contained in a text frame to the document settings object
+function parseSettingsTextBlock(frame, docSettings) {
+  try {
+    for (var p=1; p<frame.paragraphs.length; p++) {
+      var thisParagraph    = frame.paragraphs[p].contents;
+      var hashKey          = thisParagraph.replace( /^[ \t]*([^ \t:]*)[ \t]*:(.*)$/ , "$1" );
+      var hashValue        = thisParagraph.replace( /^[ \t]*([^ \t:]*)[ \t]*:(.*)$/ , "$2" );
+      hashKey              = trim(hashKey);
+      hashValue            = trim(hashValue);
+      hashValue            = straightenCurlyQuotesInsideAngleBrackets(hashValue);
 
-	if (doubleres=="yes" || doubleres=="always") {
-		pngScaling = 200 * initialScaling;
-		jpgScaling = 200 * initialScaling;
-		// if image is too big to use double-res, then just output single-res.
-		if (doubleres == 'always' || ((width*height) < (3*1024*1024/4) || (width >= 945))) {
-			// <3
-			// feedback.push("The jpg and png images are double resolution.");
-		} else if ( (width*height) < (3*1024*1024) ) {
-			// .75-3
-			pngScaling = 100;
-			// feedback.push("The png image is single resolution.");
-			// feedback.push("The jpg image is double resolution.");
-		} else if ( (width*height) < (32*1024*1024/4) ) {
-			// 3-8
-			pngScaling = 100;
-			// warnings.push("The png image is single resolution, but is too large to display on first-generation iPhones.");
-			// feedback.push("The jpg image is double resolution.");
-		} else if ( (width*height) < (32*1024*1024) ) {
-			// 8-32
-			pngScaling = 100;
-			jpgScaling = 100;
-			// warnings.push("The png image is single resolution, but is too large to display on first-generation iPhones.");
-			// feedback.push("The jpg image is single resolution.");
-		} else {
-			// 32+
-			pngScaling = 100;
-			jpgScaling = 100;
-			// warnings.push("The jpg and png images are single resolution, but are too large to display on first-generation iPhones.");
-		}
-	}
-
-	for (var formatNumber = 0; formatNumber < formats.length; formatNumber++) {
-		var format = formats[formatNumber];
-		if (format=="png") {
-			exportOptions = new ExportOptionsPNG8();
-			fileType = ExportType.PNG8;
-			exportOptions.colorCount       = docSettings.png_number_of_colors;
-			exportOptions.transparency     = (docSettings.png_transparent==="no") ? false : true;
-			exportOptions.artBoardClipping = true;
-			exportOptions.antiAliasing     = false;
-			exportOptions.horizontalScale  = pngScaling;
-			exportOptions.verticalScale    = pngScaling;
-			// feedback.push("exportOptions.png_number_of_colors = " + exportOptions.colorCount);
-			// feedback.push("exportOptions.transparency = " + exportOptions.transparency);
-
-		} else if (format=="png24") {
-			exportOptions = new ExportOptionsPNG24();
-			fileType = ExportType.PNG24;
-			exportOptions.transparency     = (docSettings.png_transparent==="no") ? false : true;
-			exportOptions.artBoardClipping = true;
-			exportOptions.antiAliasing     = false;
-			exportOptions.horizontalScale  = pngScaling;
-			exportOptions.verticalScale    = pngScaling;
-
-		} else if (format=="svg") {
-			fileType = ExportType.SVG;
-			exportOptions = new ExportOptionsSVG();
-			exportOptions.embedAllFonts         = false;
-			exportOptions.fontSubsetting        = SVGFontSubsetting.None;
-			exportOptions.compressed            = false;
-			exportOptions.documentEncoding      = SVGDocumentEncoding.UTF8;
-			exportOptions.embedRasterImages     = (docSettings.svg_embed_images==="yes") ? true : false;
-			// exportOptions.horizontalScale       = initialScaling;
-			// exportOptions.verticalScale         = initialScaling;
-			exportOptions.saveMultipleArtboards = false;
-			exportOptions.DTD                   = SVGDTDVersion.SVG1_1; // SVG1_0 SVGTINY1_1 <=default SVG1_1 SVGTINY1_1PLUS SVGBASIC1_1 SVGTINY1_2
-			exportOptions.cssProperties         = SVGCSSPropertyLocation.STYLEATTRIBUTES; // ENTITIES STYLEATTRIBUTES <=default PRESENTATIONATTRIBUTES STYLEELEMENTS
-
-		} else if (format=="jpg") {
-			if (jpgScaling > maxJpgImageScaling) {
-				jpgScaling = maxJpgImageScaling;
-				var promoImageFileName = dest.split("/").slice(-1)[0];
-				feedback.push(promoImageFileName + ".jpg was output at a lower scaling than desired because of a limit on jpg exports in Illustrator. If the file needs to be larger, change the image format to png which does not appear to have limits.");
-			}
-			fileType = ExportType.JPEG;
-			exportOptions = new ExportOptionsJPEG();
-			exportOptions.artBoardClipping = true;
-			exportOptions.antiAliasing     = false;
-			exportOptions.qualitySetting   = docSettings.jpg_quality;
-			exportOptions.horizontalScale  = jpgScaling;
-			exportOptions.verticalScale    = jpgScaling;
-
-		} else {
-			warnings.push("Unsupported image format: " + format);
-			continue;
-		}
-		app.activeDocument.exportFile(new File(dest), fileType, exportOptions);
-	}
+      // replace values from old versions of script with current values
+      if (hashKey=="output" && hashValue=="one-file-for-all-artboards") { hashValue="one-file"; }
+      if (hashKey=="output" && hashValue=="one-file-per-artboard")      { hashValue="multiple-files"; }
+      if (hashKey=="output" && hashValue=="preview-one-file")           { hashValue="one-file"; }
+      if (hashKey=="output" && hashValue=="preview-multiple-files")     { hashValue="multiple-files"; }
+      // handle stuff that goes in config file and other exceptions, like array values
+      if ((hashKey in ai2htmlBaseSettings) && ai2htmlBaseSettings[hashKey].includeInConfigFile) {
+        hashValue = (hashValue.replace( /(["])/g , '\\$1' )); // add stuff to ["] for chars that need to be esc in yml file
+      } else {
+        if ((hashKey in ai2htmlBaseSettings) && ai2htmlBaseSettings[hashKey].inputType=="array") {
+          hashValue = hashValue.replace( /[\s,]+/g , ',' );
+          if (hashValue.length === 0) {
+            hashValue = []; // have to do this because .split always returns an array of length at least 1 even if it's splitting an empty string
+          } else {
+            hashValue = hashValue.split(",");
+          }
+        }
+      }
+      docSettings[hashKey] = hashValue;
+    }
+  } catch(e) {
+    warnings.push("Error parsing settings block: " + e.message);
+  }
 }
 
 
-function unlockObjectsInside(parent) {
-	var i, n, obj;
-	// unlock locked clipping paths (so masked-out text can be detected later)
-	for (i=0, n=parent.pathItems.length; i<n; i++) {
-		obj = parent.pathItems[i];
-		if (obj.locked === true && obj.clipping === true) {
-			obj.locked = false;
-			lockedObjects.push(obj);
-			break;
-		}
-	}
+// Show alert or prompt; return true if promo image should be generated
+function showCompletionAlert(showPrompt) {
+  var alertText = "";
+  var alertHed = "";
+  var retn = false;
+  var rule = "\n================\n";
 
-	// TODO: ask Archie why bother to unlock text objects
-	for (i=0, n=parent.textFrames.length; i<n; i++) {
-		obj = parent.textFrames[i];
-		// this line is producing the MRAP error!!!
-		if (obj.locked === true) {
-			obj.locked = false;
-			lockedObjects.push(obj);
-		}
-	}
+  if (scriptEnvironment == "nyt") {
+    alertHed = "Actually, that\u2019s not half bad :)"; // &rsquo;
+  } else {
+    alertHed = "Nice work!";
+  }
+
+  if (errors.length > 0) {
+    alertHed = "The Script Was Unable to Finish";
+    if (errors.length == 1) {
+      alertText += "\rError" + rule;
+    } else {
+      alertText += "\rErrors" + rule;
+    }
+    for (var e = 0; e < errors.length; e++) {
+      alertText += "\u2022 " + errors[e] + "\r"; // \u2022 is •
+    }
+  }
+  if (warnings.length > 0) {
+    if (warnings.length == 1) {
+      alertText += "\rWarning" + rule;
+    } else {
+      alertText += "\rWarnings" + rule;
+    }
+    for (var w = 0; w < warnings.length; w++) {
+      alertText += "\u2022 " + warnings[w] + "\r";
+    }
+  }
+  if (feedback.length > 0) {
+    alertText += "\rInformation" + rule;
+    for (var f = 0; f < feedback.length; f++) {
+      alertText += "\u2022 " + feedback[f] + "\r";
+    }
+  }
+  alertText += "\n";
+
+  if (showPrompt) {
+    alertText += rule + "Generate promo image?";
+    retn = confirm(alertHed  + alertText, true); // true: "No" is default
+  } else {
+    alertText += rule + "ai2html-nyt5 v" + scriptVersion;
+    alert(alertHed + alertText);
+  }
+  return retn;
 }
 
-function unlockObjects() {
-	forEachLayer(function(lyr) {
-		if (lyr.locked === true) {
-			lyr.locked = false;
-			lockedObjects.push(lyr);
-		}
-		// TODO: ask Archie why unhide layers
-		if (lyr.visible === false) {
-			lyr.visible = true;
-			hiddenObjects.push(lyr);
-		}
-		unlockObjectsInside(lyr);
-	});
+function restoreDocumentState() {
+  // Unhide stuff that was hidden during processing
+  for (var i = 0; i < textFramesToUnhide.length; i++) {
+    var currentFrameToUnhide = textFramesToUnhide[i];
+    currentFrameToUnhide.hidden = false;
+  }
 
-	for (var i=0, n=doc.groupItems.length; i<n; i++) {
-		var group = doc.groupItems[i];
-		if (group.locked) {
-			group.locked = false;
-			lockedObjects.push(group);
-		}
-		unlockObjectsInside(group);
-	};
+  // Unhide layers so objects inside can be unlocked
+  for (var i = hiddenObjects.length-1; i>=0; i--) {
+    hiddenObjects[i].visible = true;
+  }
+
+  // Restore locked objects
+  for (var i = lockedObjects.length-1; i>=0; i--) {
+    lockedObjects[i].locked = true;
+  }
+
+  // Restore hidden layers
+  for (var i = hiddenObjects.length-1; i>=0; i--) {
+    hiddenObjects[i].visible = false;
+  }
+}
+
+
+// ==============================
+// ai2html text functions
+// ==============================
+
+function textIsTransformed(textFrame) {
+  return !(textFrame.matrix.mValueA == 1 &&
+    textFrame.matrix.mValueB === 0 &&
+    textFrame.matrix.mValueC === 0 &&
+    textFrame.matrix.mValueD === 1);
+    // || textFrame.textRange.characterAttributes.horizontalScale != 100
+    // || textFrame.textRange.characterAttributes.verticalScale != 100;
 }
 
 function hideTextFrame(textFrame) {
-	textFramesToUnhide.push(textFrame);
-	textFrame.hidden = true;
+  textFramesToUnhide.push(textFrame);
+  textFrame.hidden = true;
+}
+
+
+// Parse an AI CharacterAttributes object
+function getCharStyle(c) {
+  var fill = c.fillColor;
+  var filltype = fill.typename;
+  var caps = String(c.capitalization);
+  var o = {
+    aifont: c.textFont.name,
+    size: Math.round(c.size),
+    capitalization: caps == 'FontCapsOption.NORMALCAPS' ? '' : caps,
+    tracking: c.tracking
+  };
+  var r, g, b;
+
+  if (filltype == 'RGBColor') {
+    r = fill.red;
+    g = fill.green;
+    b = fill.blue;
+    if (r < rgbBlackThreshold && g < rgbBlackThreshold && b < rgbBlackThreshold) {
+      r = g = b = 0;
+    }
+  } else if (filltype == 'GrayColor') {
+    r = g = b = (100 - fill.gray) / 100 * 255;
+  } else if (filltype == 'NoColor') {
+    g = 255;
+    r = b = 0;
+    // warnings are processed later, after ranges of same-style chars are identified
+    o.warning = "Some text has no fill. Please fill it with an RGB color. It has been filled with green.";
+  } else {
+    r = g = b = 0;
+    o.warning = "Some text has " + filltype + " fill. Please fill it with an RGB color.";
+  }
+  o.color = getCssColor(r, g, b);
+  return o;
+}
+
+function getParagraphStyle(p) {
+  // get character style
+  var s = getCharStyle(p.characterAttributes);
+  // var s = getCharStyle(p.characters[0]);
+  // add paragraph-related styles
+  s.leading = Math.round(p.leading);
+  s.spaceBefore = Math.round(p.spaceBefore);
+  s.spaceAfter = Math.round(p.spaceAfter);
+  s.justification = String(p.justification);
+
+  // TODO: try to detect opacity.
+  // Opacity of text ranges is not detectable via the API.
+  // (It is detectable on TextFrames, Groups, Layers, etc)
+  // s.opacity = 100;
+
+  return s;
+}
+
+// s: style object
+function getStyleKey(s) {
+  // TODO: improve
+  var key = '';
+  for (var i=0, n=textStyleKeys.length; i<n; i++) {
+    key += '~' + (s[textStyleKeys[i]] || '');
+  }
+  return key;
+}
+
+function getTextStyleClass(style, classes, name) {
+  var key = getStyleKey(style);
+  var cname = nameSpace + (name || 'style');
+  var o, i;
+  for (i=0; i<classes.length; i++) {
+    o = classes[i];
+    if (o.key == key) {
+      return o.classname;
+    }
+  }
+  o = {
+    key: key,
+    style: style,
+    classname: cname + i,
+    css: generateStyleCss(style)
+  };
+  classes.push(o);
+  return o.classname;
+}
+
+// Divide a pg into strings of the same style; capture style data
+// for each string of characters and for the entire paragraph
+// p: a TextRange object (could be a line or a paragraph)
+// pClasses, charClasses: arrays of accumulated css class data
+//
+function convertParagraph(p, pClasses, charClasses) {
+  var pStyle, uniqStyle, html, classname;
+  if (p.characters.length === 0) {
+    // Handle empty paragraphs
+    // It is hard or impossible to know the height of empty paragraphs
+    // TODO: Try to estimate the height of empty paragraph and generate
+    //    CSS to preserve this height
+    classname = "";
+    html = "&nbsp;"; // default <p> line height is applied
+  } else {
+    // TODO: consider basing the pstyle on the most common character style
+    // TODO: consider removing the default pg style, or use the most
+    //       common detected pg style as the default pg style
+    //       (this would require two passes to generate classes)
+    pStyle = getParagraphStyle(p);
+    html = convertParagraphSegments(getParagraphSegments(p, pStyle, charClasses));
+    uniqStyle = getTextStyleDiff(pStyle, defaultParagraphStyle) || {};
+    classname = getTextStyleClass(uniqStyle, pClasses, 'aiPstyle');
+  }
+  return {
+    classname: classname,
+    html: html
+  };
+}
+
+// Lookup an AI font name in the font table
+function findFontInfo(aifont) {
+  for (var k=0; k<fonts.length; k++) {
+    if (aifont == fonts[k].aifont) {
+      return fonts[k];
+    }
+  }
+  return null;
+}
+
+// ai: AI justification value
+function getJustificationCss(ai) {
+  for (var k=0; k<align.length; k++) {
+    if (ai == align[k].ai) {
+      return align[k].html;
+    }
+  }
+  return "initial"; // CSS default
+}
+
+// ai: AI capitalization value
+function getCapitalizationCss(ai) {
+  for (k=0; k<caps.length; k++) {
+    if (ai == caps[k].ai) {
+      return caps[k].html;
+    }
+  }
+  return "";
+}
+
+// Convert a parsed style object into a CSS block or inline CSS
+// s: style object
+// inline: (bool) whether to generate inline CSS or a CSS block
+function generateStyleCss(s, inline) {
+  var styles = [];
+  var fontInfo, css, tmp;
+  if (s.aifont && (fontInfo = findFontInfo(s.aifont))) {
+    if (fontInfo.family) {
+      styles.push("font-family:" + fontInfo.family + ";");
+    }
+    if (fontInfo.weight) {
+      styles.push("font-weight:" + fontInfo.weight + ";");
+    }
+    if (fontInfo.style) {
+      styles.push("font-style:" + fontInfo.style + ";");
+    }
+  }
+  if (s.size > 0) {
+    styles.push("font-size:" + s.size + "px;");
+  }
+  if ('leading' in s) {
+    styles.push("line-height:" + s.leading + "px;");
+  }
+  /*
+  if (('opacity' in s) && s.opacity != 100) {
+    styles.push("filter: alpha(opacity=" + (s.opacity * 100) + ");");
+    styles.push("-ms-filter:'progid:DXImageTransform.Microsoft.Alpha(Opacity=" + (s.opacity) + ")';");
+    styles.push("opacity:" + (s.opacity / 100) + ";");
+  }
+  */
+  if (s.spaceBefore > 0) {
+    styles.push("padding-top:" + s.spaceBefore + "px;");
+  }
+  if (s.spaceAfter > 0) {
+    styles.push("padding-bottom:" + s.spaceAfter + "px;");
+  }
+  if (('tracking' in s) && s.tracking !== 0) {
+    styles.push("letter-spacing:" + (s.tracking / 1200) + "em;");
+  }
+  if (s.justification && (tmp = getJustificationCss(s.justification))) {
+    styles.push("text-align:" + tmp + ";");
+  }
+  if (s.capitalization && (tmp = getCapitalizationCss(s.capitalization))) {
+    styles.push("text-transform:" + tmp + ";");
+  }
+  if (s.color) {
+    styles.push("color:" + s.color + ";");
+  }
+
+  if (!styles.length) {
+    css = "";
+  } else if (inline) {
+    css = styles.join(' ');
+  } else {
+    css = "\r\t\t\t\t" + styles.join("\r\t\t\t\t") + "\r";
+  }
+  return css;
+}
+
+// Divide a paragraph into segments with the same style
+// p: AI paragraph object
+// pstyle: parsed paragraph style
+// charClasses: array of previously identified css classes
+//
+function getParagraphSegments(p, pstyle, charClasses) {
+  var html = "";
+  var segments = [];
+  var currRange;
+  var prev, curr, diff, c;
+  for (var i=0, n=p.characters.length; i<n; i++) {
+    c = p.characters[i];
+    curr = getCharStyle(c);
+    if (!prev || getTextStyleDiff(curr, prev)) {
+      diff = getTextStyleDiff(curr, pstyle);
+      currRange = {
+        text: "",
+        // style: diff,
+        classname: diff ? getTextStyleClass(diff, charClasses, 'aiCstyle') : ''
+        // this would generate inline styles instead of classes
+        // css: diff ? generateStyleCss(diff, true) : ''
+      };
+      // alert(c.characterAttributes.parent.textFrames[0].opacity);
+      segments.push(currRange);
+      if (curr.warning) {
+
+      }
+    }
+    if (curr.warning) {
+      currRange.warning = curr.warning;
+    }
+    currRange.text += c.contents;
+    prev = curr;
+  }
+  return segments;
+}
+
+function convertParagraphSegments(segments) {
+  var html = "", o, cname;
+  for (var i=0; i<segments.length; i++) {
+    o = segments[i];
+    if (o.classname) {
+      html += '<span class="' + o.classname + '">' + o.text + '</span>';
+    } else { // no css -- same style as enclosing paragraph
+      html += o.text;
+    }
+    if (o.warning) {
+      warnings.push(o.warning + " Text: \u201C" + o.text + "\u201D");
+    }
+  }
+  return html;
+}
+
+
+// return styles that are in a but not b
+// a, b: style objects
+// properties: array of properties to consider
+function getTextStyleDiff(a, b) {
+  var diff = null;
+  for (var k in a) {
+    if (a[k] != b[k] && a.hasOwnProperty(k)) {
+      diff = diff || {};
+      diff[k] = a[k];
+    }
+  }
+  return diff;
+}
+
+function getCssColor(r, g, b) {
+  return 'rgb(' + r + ',' + g + ',' + b + ')';
+}
+
+
+function textFrameIsRenderable(frame, artboardRect) {
+  var good = true;
+  if (!testBoundsIntersection(frame.visibleBounds, artboardRect)) {
+    good = false;
+  } else if (frame.kind != "TextType.AREATEXT" && frame.kind != "TextType.POINTTEXT") {
+    good = false;
+  } else if (objectIsHidden(frame)) {
+    good = false;
+  } else if (frame.contents === "") {
+    good = false;
+  } else if (docSettings.render_rotated_skewed_text_as == "image" && textIsTransformed(frame)) {
+    good = false;
+  }
+  return good;
+}
+
+
+// Find clipped TextFrames that are inside an artboard but outside the bounding box
+// box of their clipping path
+// texts: array of text objects assocated with a clipping path
+// clipRect: bounding box of clipping path
+// abRect: bounds of arstboard to test
+//
+function selectMaskedTextFrames(texts, clipRect, abRect) {
+  var found = [];
+  var textRect, textInArtboard, textInMask, maskInArtboard;
+  for (var i=0; i<texts.length; i++) {
+    textRect = texts[i].geometricBounds;
+    // capture text items that intersect the artboard but are masked...
+    textInArtboard = testBoundsIntersection(abRect, textRect);
+    maskInArtboard = testBoundsIntersection(abRect, clipRect);
+    textInMask = testBoundsIntersection(textRect, clipRect);
+    if (textInArtboard && (!maskInArtboard || !textInMask)) {
+      found.push(texts[i]);
+    }
+  }
+  return found;
+}
+
+// Assumes mask is unlocked and any other clipping paths are locked
+function findTextFramesByClippingPath(mask) {
+  var texts = [], selection;
+  // Equivalent to Select > Object > Clipping Mask in GUI
+  app.executeMenuCommand('Clipping Masks menu item');
+  // Equivalent to Object > Clipping Mask > Edit Contents in GUI
+  app.executeMenuCommand('editMask');
+  selection = doc.selection;
+  for (var i=0, n=selection.length; i<n; i++) {
+    if (selection[i].typename == 'TextFrame') {
+      texts.push(selection[i]);
+    }
+  }
+  doc.selection = null;
+  return texts;
+}
+
+// Find clipped TextFrames that are inside an artboard but outside their
+// clipping path (using bounding box of clipping path to approximate clip area)
+function getClippedTextFramesByArtboard(ab) {
+  app.executeMenuCommand('Clipping Masks menu item');
+  var masks = doc.selection.concat();
+  var abRect = ab.artboardRect;
+  var frames = [];
+  forEach(masks, function(mask) {mask.locked = true;}); // lock clipping paths
+  forEach(masks, function(mask) {
+    var clipRect = mask.geometricBounds;
+    if (testSimilarBounds(abRect, clipRect, 5)) {
+      // if clip path is masking to the current artboard, skip the test
+      // (optimization)
+      return;
+    }
+    mask.locked = false;
+    var texts = findTextFramesByClippingPath(mask);
+    texts = selectMaskedTextFrames(texts, clipRect, abRect);
+    if (texts.length > 0) {
+      frames = frames.concat(texts);
+    }
+    mask.locked = true;
+  });
+  forEach(masks, function(mask) {mask.locked = false;}); // unlock clipping paths
+  return frames;
+}
+
+// Get array of TextFrames belonging to an artboard
+function getTextFramesByArtboard(ab) {
+  var candidateFrames = findTextFramesToRender(doc.textFrames, ab.artboardRect);
+  var excludedFrames = getClippedTextFramesByArtboard(ab);
+  var goodFrames = arraySubtract(candidateFrames, excludedFrames);
+  return goodFrames;
+}
+
+function findTextFramesToRender(frames, artboardRect) {
+  var selected = [];
+  for (var i=0; i<frames.length; i++) {
+    if (textFrameIsRenderable(frames[i], artboardRect)) {
+      selected.push(frames[i]);
+    }
+  }
+  // Sort frames top to bottom, left to right.
+  selected.sort(
+      firstBy(function (v1, v2) { return v2.top  - v1.top; })
+      .thenBy(function (v1, v2) { return v1.left - v2.left; })
+  );
+  return selected;
+}
+
+function parseTextFrameNote(note) {
+  // Read in attribute variables from notes field of a text frame
+  var thisFrameAttributes = {};
+  var rawNotes = note.split("\r");
+  for (var rNo = 0; rNo < rawNotes.length; rNo++) {
+    var rn = rawNotes[rNo];
+    var rnKey   = rn.replace( /^[ \t]*([^ \t:]*)[ \t]*:(.*)$/ , "$1" );
+    var rnValue = rn.replace( /^[ \t]*([^ \t:]*)[ \t]*:(.*)$/ , "$2" );
+    rnKey       = rnKey.replace( /^\s+/ , "" ).replace( /\s+$/ , "" );
+    rnValue     = rnValue.replace( /^\s+/ , "" ).replace( /\s+$/ , "" );
+    thisFrameAttributes[rnKey] = rnValue;
+  }
+  return thisFrameAttributes;
+}
+
+// Create class="" and style="" CSS for positioning a text div
+function getTextPositionCss(thisFrame, artboardRect) {
+  var style = "";
+  var vFactor = 0.5; // This is an adjustment to correct for vertical placement.
+  var kind, htmlY, htmlT, htmlB, htmlTM, htmlH, htmlL, htmlR, htmlW, htmlLM, alignment, extraWidthPct;
+  var thisFrameAttributes = parseTextFrameNote(thisFrame.note);
+  var abPos = getArtboardPos(artboardRect);
+
+  if (thisFrame.kind=="TextType.POINTTEXT") {
+    kind = "point";
+    // /this line throws an error if the first paragraph of the frame is empty.
+    // var htmlY = Math.round(-thisFrame.position[1] - (((thisFrame.paragraphs[0].characters[0].leading - thisFrame.paragraphs[0].characters[0].size)*vFactor) + thisFrame.paragraphs[0].spaceBefore)-abY);
+    htmlY = Math.round(-thisFrame.position[1] - (((thisFrame.characters[0].leading - thisFrame.characters[0].size)*vFactor) + thisFrame.characters[0].spaceBefore) - abPos.y);
+  } else if (thisFrame.kind=="TextType.AREATEXT") {
+    kind = "area";
+    // var htmlY = Math.round(-thisFrame.position[1] - (((thisFrame.paragraphs[0].characters[0].leading - thisFrame.paragraphs[0].characters[0].size)*vFactor) + thisFrame.paragraphs[0].spaceBefore)-abY);
+    htmlY = Math.round(-thisFrame.position[1] - (((thisFrame.characters[0].leading - thisFrame.characters[0].size)*vFactor) + thisFrame.characters[0].spaceBefore) - abPos.y);
+  } else {
+    kind = "other";
+  }
+  htmlH = Math.round(thisFrame.height);
+  if (thisFrameAttributes.valign === "bottom") {
+    htmlB = htmlY + thisFrame.height;
+  // } else if (thisFrameAttributes.valign==="center") {
+  //  htmlT  = htmlY+(thisFrame.height/2);
+  //  htmlTM = thisFrame.height*(1/2*-1);
+  } else {
+    htmlT = htmlY;
+  }
+
+  // additional width for box to allow for slight variations in font widths
+  if (kind=="area") {
+    extraWidthPct = 0; // was 3 percent -- but need to account for when it hits the edge of the box since we are now overflow hidden
+  } else {
+    extraWidthPct = 100;
+  }
+  htmlW = thisFrame.width*(1+(extraWidthPct/100));
+  if (thisFrame.characters[0].justification=="Justification.LEFT") {
+    alignment = "left";
+    htmlL = thisFrame.left - abPos.x;
+    htmlR = abPos.width - (thisFrame.left + htmlW - abPos.x);
+  } else if (thisFrame.characters[0].justification=="Justification.RIGHT") {
+    alignment = "right";
+    htmlL = thisFrame.left - (thisFrame.width * (1 + (extraWidthPct / 100))) - abPos.x;
+    htmlR = abPos.width - (thisFrame.left + thisFrame.width - abPos.x);
+  } else if (thisFrame.characters[0].justification=="Justification.CENTER") {
+    alignment = "center";
+    htmlL  = thisFrame.left - abPos.x +  (thisFrame.width / 2); // thanks jeremy!
+    htmlLM = thisFrame.width * (1 + (extraWidthPct/100)) / 2 * -1;
+  } else {
+    alignment = "other";
+    // htmlX = Math.round(thisFrame.left-abX);
+  }
+
+  // check if text is transformed
+  if (textIsTransformed(thisFrame)) {
+    // find transformed anchor point pre-transformation
+    var t_bounds = thisFrame.geometricBounds,
+      u_bounds = getUntransformedTextBounds(thisFrame),
+      u_width = u_bounds[2] - u_bounds[0],
+      t_width = t_bounds[2] - t_bounds[0],
+      u_height = u_bounds[3] - u_bounds[1],
+      t_height = t_bounds[3] - t_bounds[1],
+      v_align = thisFrameAttributes.valign || 'top',
+      t_scale_x = thisFrame.textRange.characterAttributes.horizontalScale / 100,
+      t_scale_y = thisFrame.textRange.characterAttributes.verticalScale / 100,
+      t_anchor = getAnchorPoint(u_bounds, thisFrame.matrix, alignment, v_align, t_scale_x, t_scale_y),
+      t_trans_x = 0,
+      t_trans_y = 0;
+
+    // position div on transformed anchor point
+    style += "left:" + round((t_anchor[0] - abPos.x) / abPos.width * 100, pctPrecision) + "%;";
+    style += "top:" + round((-t_anchor[1]- abPos.y) / abPos.height * 100, pctPrecision) + "%;";
+
+    // move "back" to left or top to center or right align text
+    if (alignment == 'center') t_trans_x -= u_width * 0.5;
+    else if (alignment == 'right') t_trans_x -= u_width;
+    if (v_align == 'center' || v_align == 'middle') t_trans_y -= u_height * 0.5;
+    else if (v_align == 'bottom') t_trans_y -= u_height;
+
+    var mat = thisFrame.matrix;
+
+    mat = app.concatenateMatrix(app.getTranslationMatrix(t_trans_x, t_trans_y),
+        app.concatenateTranslationMatrix(mat, -mat.mValueTX, -mat.mValueTY));
+
+    // var mat, mat0 = thisFrame.matrix;
+    // mat0 = app.concatenateTranslationMatrix(mat0, -mat0.mValueTX, -mat0.mValueTY);
+    // mat = app.concatenateMatrix(app.getTranslationMatrix(t_trans_x, t_trans_y), mat0);
+
+    var transform = "matrix(" +
+        round(mat.mValueA, pctPrecision) + ',' +
+        round(-1*mat.mValueB, pctPrecision) + ',' +
+        round(-1*mat.mValueC, pctPrecision) + ',' +
+        round(mat.mValueD, pctPrecision) + ',' +
+        round(t_trans_x, pctPrecision) + ',' +
+        round(-t_trans_y, pctPrecision) + ') ' +
+        "scaleX("+round(t_scale_x, pctPrecision) + ") " +
+        "scaleY("+round(t_scale_y, pctPrecision) + ")";
+
+    var transformOrigin = alignment + ' '+(v_align == 'middle' ? 'center' : v_align);
+
+    style += "transform: " + transform + ";";
+    style += "transform-origin: " + transformOrigin + ";";
+    style += "-webkit-transform: " + transform + ";";
+    style += "-webkit-transform-origin: " + transformOrigin + ";";
+    style += "-ms-transform: " + transform + ";";
+    style += "-ms-transform-origin: " + transformOrigin + ";";
+
+    if (kind == 'area') style += "width: " + (u_width * (1 + (extraWidthPct/100))) + "px;";
+
+  } else {
+
+    if (outputType=="abs") {
+      style += "top:" + round(htmlY) + "px;";
+      if (alignment=="left") {
+        style += "left:"  + round(htmlL) + "px;";
+        style += "width:" + round(htmlW) + "px;";
+      } else if (alignment=="right") {
+        style += "right:" + round(htmlR) + "px;";
+        style += "width:" + round(htmlW) + "px;";
+      } if (alignment=="center") {
+        style += "left:"  + round(htmlL) + "px;";
+        style += "width:" + round(htmlW) + "px;";
+        style += "margin-left:" + round(htmlLM) + "px;";
+      }
+    } else if (outputType=="pct") {
+      if (thisFrameAttributes.valign==="bottom") {
+        style += "bottom:" + round(100 - (htmlB / abPos.height * 100), pctPrecision) + "%;";
+      } else {
+        style += "top:" + round(htmlT / abPos.height * 100, pctPrecision) + "%;";
+      }
+      if (alignment=="right") {
+        style += "right:" + round(htmlR / abPos.width * 100, pctPrecision) + "%;";
+        if (kind=="area") {
+          style += "width:" + round(htmlW / abPos.width * 100, pctPrecision) + "%;";
+        }
+      } else if (alignment=="center") {
+        style += "left:" + round(htmlL / abPos.width * 100, pctPrecision) + "%;";
+        style += "width:" + round(htmlW / abPos.width * 100, pctPrecision) + "%;";
+        style += "margin-left:" + round(htmlLM / abPos.width * 100, pctPrecision) + "%;";
+      } else {
+        style += "left:" + round(htmlL / abPos.width * 100, pctPrecision) + "%;";
+        if (kind=="area") {
+          style += "width:" + round(htmlW / abPos.width * 100, pctPrecision) + "%;";
+        }
+      }
+    }
+  }
+  var frameLayer = makeKeyword(thisFrame.layer.name);
+  return 'class="' + nameSpace + frameLayer + " " + nameSpace + "aiAbs" +
+    (textIsTransformed(thisFrame) && kind == "point" ? ' g-aiPtransformed' : '') +
+    '" style="' + style + '"';
+}
+
+function getAnchorPoint(untransformedBounds, matrix, hAlign, vAlign, sx, sy) {
+  var center_x = (untransformedBounds[0] + untransformedBounds[2]) * 0.5,
+    center_y = (untransformedBounds[1] + untransformedBounds[3]) * 0.5,
+    anchor_x = (hAlign == 'left' ? untransformedBounds[0] :
+      (hAlign == 'center' ? center_x : untransformedBounds[2])),
+    anchor_y = (vAlign == 'top' ? untransformedBounds[1] :
+      (vAlign == 'bottom' ? untransformedBounds[3] : center_y)),
+    anchor_dx = (anchor_x - center_x),
+    anchor_dy = (anchor_y - center_y);
+
+  var mat = app.concatenateMatrix(app.getScaleMatrix(sx*100, sy*100), matrix);
+
+  var t_anchor_x = center_x + mat.mValueA * anchor_dx + mat.mValueC * anchor_dy,
+    t_anchor_y = center_y + mat.mValueB * anchor_dx + mat.mValueD * anchor_dy;
+
+  return [t_anchor_x, t_anchor_y];
+}
+
+function getUntransformedTextBounds(textFrame) {
+  var oldSelection = activeDocument.selection;
+  activeDocument.selection = [textFrame];
+  app.copy();
+  app.paste(); // See Issue #50 https://github.com/newsdev/ai2html/issues/50
+  var textFrameCopy = activeDocument.selection[0];
+  // move to same position
+  textFrameCopy.left = textFrame.left;
+  textFrameCopy.top = textFrame.top;
+  var bnds = textFrameCopy.geometricBounds;
+
+  var old_center_x = (bnds[0] + bnds[2]) * 0.5,
+    old_center_y = (bnds[1] + bnds[3]) * 0.5;
+
+  // inverse transformation of copied text frame
+  textFrameCopy.transform(app.invertMatrix(textFrame.matrix));
+  // remove scale
+  textFrameCopy.textRange.characterAttributes.horizontalScale = 100;
+  textFrameCopy.textRange.characterAttributes.verticalScale = 100;
+  // move transformed text frame back to old center point
+  var new_center_x, new_center_y;
+  var max_iter = 5;
+
+  while (--max_iter > 0) {
+    bnds = textFrameCopy.geometricBounds;
+    new_center_x = (bnds[0] + bnds[2]) * 0.5;
+    new_center_y = (bnds[1] + bnds[3]) * 0.5;
+    textFrameCopy.translate(old_center_x - new_center_x, old_center_y - new_center_y);
+  }
+
+  var bounds = textFrameCopy.geometricBounds;
+  textFrameCopy.textRange.characterAttributes.fillColor = getRGBColor(250, 50, 50);
+  textFrameCopy.remove();
+
+  // reset selection
+  activeDocument.selection = oldSelection;
+  return bounds;
+}
+
+// ==============================
+// ai2html artboard functions
+// ==============================
+
+// return rect of bounding box of all artboards
+function getArtboardBounds() {
+  var rect, bounds;
+  for (var i=0, n=doc.artboards.length; i<n; i++) {
+    rect = doc.artboards[i].artboardRect;
+    if (i === 0) {
+      bounds = rect;
+    } else {
+      bounds = [
+        Math.min(rect[0], bounds[0]), Math.max(rect[1], bounds[1]),
+        Math.max(rect[2], bounds[2]), Math.min(rect[3], bounds[3])];
+    }
+  }
+  return bounds;
+}
+
+// return array info about each usable artboard, sorted from narrow to wide
+function getArtboardInfo() {
+  var artboards = [];
+  forEachArtboard(function(ab, i) {
+    var pos = getArtboardPos(ab.artboardRect);
+    var name = ab.name || "";
+    // parse width from artboard name in two formats: <name>:<width> and ai2html-<width>
+    var widthFromName = (/^(?:.*:|ai2html-)(\d+)$/.exec(name) || [])[1];
+    artboards.push({
+      name: ab.name || "",
+      width: pos.width,
+      effectiveWidth: widthFromName ? +widthFromName : pos.width,
+      id: i
+    });
+  });
+  artboards.sort(function(a, b) {return a.effectiveWidth - b.effectiveWidth});
+  return artboards;
+}
+
+function findShowClassesByArtboardId(id, breakpoints) {
+  var classes = [];
+  forEach(breakpoints, function(bp) {
+    if (bp.artboards.indexOf(id) > -1) {
+      classes.push('g-show-' + bp.name);
+    }
+  });
+  return classes.join(' ');
+}
+
+// Get array of data records about breakpoints with artboards assigned to them
+// (sorted from narrow to wide)
+function assignBreakpointsToArtboards(breakpoints) {
+  var abArr = getArtboardInfo(); // get data records for each artboard
+  var bpArr = [];
+  forEach(breakpoints, function(breakpoint) {
+    var bpPrev = bpArr[bpArr.length - 1],
+        bpInfo = {
+          name: breakpoint.name,
+          range: [breakpoint.lowerLimit, breakpoint.upperLimit],
+          artboards: []
+        },
+        abInfo;
+    for (var i=0; i<abArr.length; i++) {
+      abInfo = abArr[i];
+      if (abInfo.effectiveWidth <= breakpoint.upperLimit &&
+          abInfo.effectiveWidth > breakpoint.lowerLimit) {
+        bpInfo.artboards.push(abInfo.id);
+      }
+    }
+    if (bpInfo.artboards.length > 1 && docSettings.ai2html_environment=="nyt") {
+      warnings.push('The ' + breakpoint.upperLimit + "px breakpoint has " + bpInfo.artboards.length + " artboards. You probably want only one artboard per breakpoint.");
+    }
+    if (bpInfo.artboards.length === 0 && bpPrev) {
+      bpInfo.artboards = bpPrev.artboards.concat();
+    }
+    if (bpInfo.artboards.length > 0) {
+      bpArr.push(bpInfo);
+    }
+  });
+  return bpArr;
 }
 
 function artboardIsUsable(ab) {
@@ -1496,28 +2153,49 @@ function forEachArtboard(cb) {
 	}
 }
 
-function forEachLayer(cb, parent) {
-	var layers = parent ? parent.layers : doc.layers;
-	for (var i=0, n=layers.length; i<n; i++) {
-		cb(layers[i]);
-		forEachLayer(cb, layers[i]);
-	}
-}
-
 // Returns id of largest artboard
 function findLargestArtboard() {
-	var largestId = -1;
-	var largestArea = 0;
-	forEachArtboard(function(ab, i) {
-		var info = getArtboardPos(ab.artboardRect);
-		var area = info.width * info.height;
-		if (area > largestArea) {
-			largestId = i;
-			largestArea = area;
-		}
-	});
-	return largestId;
+  var largestId = -1;
+  var largestArea = 0;
+  forEachArtboard(function(ab, i) {
+    var info = getArtboardPos(ab.artboardRect);
+    var area = info.width * info.height;
+    if (area > largestArea) {
+      largestId = i;
+      largestArea = area;
+    }
+  });
+  return largestId;
 }
+
+function hideElementsOutsideArtboardRect(artboardRect) {
+  var hidden = [];
+  forEachLayer(function(layer) {
+    if (layer.visible) { // only deal with visible layers
+      forEach(layer.pathItems, hideIfOutside);
+      forEach(layer.symbolItems, hideIfOutside);
+      forEach(layer.compoundPathItems, hideIfOutside);
+      forEach(layer.groupItems, hideOutsideGroup);
+    }
+  });
+  function hideIfOutside(item) {
+    if (!testBoundsIntersection(item.visibleBounds, artboardRect)) {
+      item.hidden = true;
+      hidden.push(item);
+    }
+  }
+  function hideOutsideGroup(group) {
+    hideIfOutside(group);
+    forEach(group.groupItems, hideOutsideGroup);
+  }
+  return hidden;
+}
+
+
+// =================================
+// ai2html image functions
+// =================================
+
 
 // Create a promo image from the largest usable artboard
 function createPromoImage() {
@@ -1552,6 +2230,142 @@ function createPromoImage() {
 	alert("Promo image created\nLocation: " + imageDestination + "." + promoFormat);
 }
 
+// Exports contents of active artboard (without text, unless in test mode)
+// dest: full path of output file including the file basename
+// width, height: the artboard width and height and only used to determine whether or not to use double res
+// formats: array of export format identifiers (png, png24, jpg, svg)
+// initialScaling: the proportion to scale the base image before considering whether to double res. Usually just 1.
+// doubleres: "yes" or "no" whether you want to allow images to be double res
+//            to force ai2html to use doubleres, use "always"
+//
+function exportImageFiles(dest,width,height,formats,initialScaling,doubleres) {
+   // max JPG scale is specified in the Javascript Object Reference under ExportOptionsJPEG.
+  var maxJpgImageScaling  = 776.19;
+  var pngScaling = 100 * initialScaling,
+      jpgScaling = 100 * initialScaling,
+      exportOptions, fileType;
+
+  if (doubleres=="yes" || doubleres=="always") {
+    pngScaling = 200 * initialScaling;
+    jpgScaling = 200 * initialScaling;
+    // if image is too big to use double-res, then just output single-res.
+    if (doubleres == 'always' || ((width*height) < (3*1024*1024/4) || (width >= 945))) {
+      // <3
+      // feedback.push("The jpg and png images are double resolution.");
+    } else if ( (width*height) < (3*1024*1024) ) {
+      // .75-3
+      pngScaling = 100;
+      // feedback.push("The png image is single resolution.");
+      // feedback.push("The jpg image is double resolution.");
+    } else if ( (width*height) < (32*1024*1024/4) ) {
+      // 3-8
+      pngScaling = 100;
+      // warnings.push("The png image is single resolution, but is too large to display on first-generation iPhones.");
+      // feedback.push("The jpg image is double resolution.");
+    } else if ( (width*height) < (32*1024*1024) ) {
+      // 8-32
+      pngScaling = 100;
+      jpgScaling = 100;
+      // warnings.push("The png image is single resolution, but is too large to display on first-generation iPhones.");
+      // feedback.push("The jpg image is single resolution.");
+    } else {
+      // 32+
+      pngScaling = 100;
+      jpgScaling = 100;
+      // warnings.push("The jpg and png images are single resolution, but are too large to display on first-generation iPhones.");
+    }
+  }
+
+  for (var formatNumber = 0; formatNumber < formats.length; formatNumber++) {
+    var format = formats[formatNumber];
+    if (format=="png") {
+      exportOptions = new ExportOptionsPNG8();
+      fileType = ExportType.PNG8;
+      exportOptions.colorCount       = docSettings.png_number_of_colors;
+      exportOptions.transparency     = (docSettings.png_transparent==="no") ? false : true;
+      exportOptions.artBoardClipping = true;
+      exportOptions.antiAliasing     = false;
+      exportOptions.horizontalScale  = pngScaling;
+      exportOptions.verticalScale    = pngScaling;
+      // feedback.push("exportOptions.png_number_of_colors = " + exportOptions.colorCount);
+      // feedback.push("exportOptions.transparency = " + exportOptions.transparency);
+
+    } else if (format=="png24") {
+      exportOptions = new ExportOptionsPNG24();
+      fileType = ExportType.PNG24;
+      exportOptions.transparency     = (docSettings.png_transparent==="no") ? false : true;
+      exportOptions.artBoardClipping = true;
+      exportOptions.antiAliasing     = false;
+      exportOptions.horizontalScale  = pngScaling;
+      exportOptions.verticalScale    = pngScaling;
+
+    } else if (format=="svg") {
+      fileType = ExportType.SVG;
+      exportOptions = new ExportOptionsSVG();
+      exportOptions.embedAllFonts         = false;
+      exportOptions.fontSubsetting        = SVGFontSubsetting.None;
+      exportOptions.compressed            = false;
+      exportOptions.documentEncoding      = SVGDocumentEncoding.UTF8;
+      exportOptions.embedRasterImages     = (docSettings.svg_embed_images==="yes") ? true : false;
+      // exportOptions.horizontalScale       = initialScaling;
+      // exportOptions.verticalScale         = initialScaling;
+      exportOptions.saveMultipleArtboards = false;
+      exportOptions.DTD                   = SVGDTDVersion.SVG1_1; // SVG1_0 SVGTINY1_1 <=default SVG1_1 SVGTINY1_1PLUS SVGBASIC1_1 SVGTINY1_2
+      exportOptions.cssProperties         = SVGCSSPropertyLocation.STYLEATTRIBUTES; // ENTITIES STYLEATTRIBUTES <=default PRESENTATIONATTRIBUTES STYLEELEMENTS
+
+    } else if (format=="jpg") {
+      if (jpgScaling > maxJpgImageScaling) {
+        jpgScaling = maxJpgImageScaling;
+        var promoImageFileName = dest.split("/").slice(-1)[0];
+        feedback.push(promoImageFileName + ".jpg was output at a lower scaling than desired because of a limit on jpg exports in Illustrator. If the file needs to be larger, change the image format to png which does not appear to have limits.");
+      }
+      fileType = ExportType.JPEG;
+      exportOptions = new ExportOptionsJPEG();
+      exportOptions.artBoardClipping = true;
+      exportOptions.antiAliasing     = false;
+      exportOptions.qualitySetting   = docSettings.jpg_quality;
+      exportOptions.horizontalScale  = jpgScaling;
+      exportOptions.verticalScale    = jpgScaling;
+
+    } else {
+      warnings.push("Unsupported image format: " + format);
+      continue;
+    }
+    app.activeDocument.exportFile(new File(dest), fileType, exportOptions);
+  }
+}
+
+
+// ===================================
+// ai2html output generation functions
+// ===================================
+
+function generateYmlFileContent(breakpoints, settings) {
+  var lines = [];
+  lines.push("ai2html_version: " + scriptVersion);
+  lines.push("project_type: " + previewProjectType);
+  lines.push("tags: ai2html");
+  lines.push("min_width: " + breakpoints[0].range[1]); // TODO: ask why upperLimit
+  if (settings.max_width !== "") {
+    lines.push("max_width: " + docSettings.max_width);
+  } else if (docSettings.responsiveness != "fixed" && docSettings.ai2html_environment == "nyt") {
+    lines.push("max_width: " + breakpoints[breakpoints.length-1].range[1]);
+  } else if (docSettings.responsiveness != "fixed" && docSettings.ai2html_environment != "nyt") {
+    // don't write a max_width setting as there should be no max width in this case
+  } else {
+    // this is the case of fixed responsiveness
+    lines.push("max_width: " + getArtboardInfo().pop().effectiveWidth);
+  }
+  // write out remaining values for config file
+  for (setting in settings) {
+    if (setting in ai2htmlBaseSettings && ai2htmlBaseSettings[setting].includeInConfigFile) {
+      var quoteMark = ai2htmlBaseSettings[setting].useQuoteMarksInConfigFile ? '"': '';
+      lines.push(setting + ': ' + quoteMark + settings[setting] + quoteMark);
+    }
+  }
+  return lines.join('\n') + '\n';
+}
+
 function applyTemplate(template, atObject) {
 	var newText = template;
 	for (var atKey in atObject) {
@@ -1573,20 +2387,6 @@ function outputHtml(htmlText, fileDestination) {
 	htmlFile.close();
 }
 
-function readTextFileAndPutIntoAVariable(inputFile,starterText,linePrefix,lineSuffix) {
-	var outputText = starterText;
-	if ( inputFile.exists ) {
-		inputFile.open("r");
-		while (!inputFile.eof) {
-			outputText += linePrefix + inputFile.readln() + lineSuffix;
-		}
-		inputFile.close();
-	} else {
-		warnings.push(inputFile + " could not be found.");
-	}
-	return outputText;
-}
-
 function checkForOutputFolder(folderPath, nickname) {
 	var outputFolder = new Folder( folderPath );
 	if (!outputFolder.exists) {
@@ -1597,130 +2397,6 @@ function checkForOutputFolder(folderPath, nickname) {
 			warnings.push("The " + nickname + " folder did not exist and could not be created.");
 		}
 	}
-}
-
-function getUntransformedTextBounds(textFrame) {
-	var oldSelection = activeDocument.selection;
-
-	activeDocument.selection = [textFrame];
-	app.copy();
-	app.paste(); // See Issue #50 https://github.com/newsdev/ai2html/issues/50
-	var textFrameCopy = activeDocument.selection[0];
-	// move to same position
-	textFrameCopy.left = textFrame.left;
-	textFrameCopy.top = textFrame.top;
-	var bnds = textFrameCopy.geometricBounds;
-
-	var old_center_x = (bnds[0] + bnds[2]) * 0.5,
-		old_center_y = (bnds[1] + bnds[3]) * 0.5;
-
-	// inverse transformation of copied text frame
-	textFrameCopy.transform(app.invertMatrix(textFrame.matrix));
-	// remove scale
-	textFrameCopy.textRange.characterAttributes.horizontalScale = 100;
-	textFrameCopy.textRange.characterAttributes.verticalScale = 100;
-	// move transformed text frame back to old center point
-	var new_center_x, new_center_y;
-	var max_iter = 5;
-
-	while (--max_iter > 0) {
-		bnds = textFrameCopy.geometricBounds;
-		new_center_x = (bnds[0] + bnds[2]) * 0.5;
-		new_center_y = (bnds[1] + bnds[3]) * 0.5;
-		textFrameCopy.translate(old_center_x - new_center_x, old_center_y - new_center_y);
-	}
-
-	var bounds = textFrameCopy.geometricBounds;
-	textFrameCopy.textRange.characterAttributes.fillColor = getRGBColor(250, 50, 50);
-	textFrameCopy.remove();
-
-	// reset selection
-	activeDocument.selection = oldSelection;
-	return bounds;
-}
-
-function getRGBColor(r,g,b) {
-	var col = new RGBColor();
-	col.red = r || 0;
-	col.green = g || 0;
-	col.blue = b || 0;
-	return col;
-}
-
-function getAnchorPoint(untransformedBounds, matrix, hAlign, vAlign, sx, sy) {
-	var center_x = (untransformedBounds[0] + untransformedBounds[2]) * 0.5,
-		center_y = (untransformedBounds[1] + untransformedBounds[3]) * 0.5,
-		anchor_x = (hAlign == 'left' ? untransformedBounds[0] :
-			(hAlign == 'center' ? center_x : untransformedBounds[2])),
-		anchor_y = (vAlign == 'top' ? untransformedBounds[1] :
-			(vAlign == 'bottom' ? untransformedBounds[3] : center_y)),
-		anchor_dx = (anchor_x - center_x),
-		anchor_dy = (anchor_y - center_y);
-
-	var mat = app.concatenateMatrix(app.getScaleMatrix(sx*100, sy*100), matrix);
-
-	var t_anchor_x = center_x + mat.mValueA * anchor_dx + mat.mValueC * anchor_dy,
-		t_anchor_y = center_y + mat.mValueB * anchor_dx + mat.mValueD * anchor_dy;
-
-	return [t_anchor_x, t_anchor_y];
-}
-
-
-function hideElementsOutsideArtboardRect(artbnds) {
-	var hidden = [], all_groups;
-	checkLayers(doc.layers);
-
-	function checkLayers(layers) {
-		for (var lid=0; lid<layers.length; lid++) {
-			var layer = layers[lid];
-			if (layer.visible) { // only deal with visible layers
-				var checkItemGroups = [layer.pathItems, layer.symbolItems, layer.compoundPathItems];
-				all_groups = [];
-				traverseGroups(layer);
-				for (var g=0; g<all_groups.length; g++) {
-					checkItemGroups.push(all_groups[g].pathItems);
-					checkItemGroups.push(all_groups[g].symbolItems);
-					checkItemGroups.push(all_groups[g].compoundPathItems);
-				}
-				for (var cig=0; cig<checkItemGroups.length; cig++) {
-					for (var item_i=0; item_i<checkItemGroups[cig].length; item_i++) {
-						var check_item = checkItemGroups[cig][item_i],
-							item_bnds = check_item.visibleBounds;
-						// bounds are [left,-top,right,-bottom]
-						if (item_bnds[0] > artbnds[2] ||
-							item_bnds[2] < artbnds[0] ||
-							item_bnds[1] < artbnds[3] ||
-							item_bnds[3] > artbnds[1]) {
-							if (!check_item.hidden) {
-								hidden.push(check_item);
-								check_item.hidden = true;
-							}
-						}
-					}
-				}
-				if (layer.layers.length > 0) checkLayers(layer.layers);
-			}
-		}
-		function traverseGroups(groupItems) {
-			for (var g=0;g<groupItems.length;g++) {
-				// check group bounds
-				var bnds = groupItems[g].visibleBounds;
-				if (bnds[0] > artbnds[2] || bnds[2] < artbnds[0] || bnds[1] < artbnds[3] || bnds[3] > artbnds[1]) {
-					// group entirely out of artboard, so ignore
-					groupItems[g].hidden = true;
-					hidden.push(groupItems[g]);
-				} else {
-					// recursively check sub-groups
-					all_groups.push(groupItems[g]);
-					if (groupItems[g].groupItems.length > 0) {
-						traverseGroups(groupItems[g].groupItems);
-					}
-				}
-			}
-		}
-	}
-
-	return hidden;
 }
 
 function getResizerScript() {
@@ -1808,671 +2484,10 @@ function getResizerScript() {
 	return '<script type="text/javascript">\n' + js + '\n\t</script>\n\n';
 }
 
-// Parse an AI CharacterAttributes object
-function getCharStyle(c) {
-	var fill = c.fillColor;
-	var filltype = fill.typename;
-	var caps = String(c.capitalization);
-	var o = {
-		aifont: c.textFont.name,
-		size: Math.round(c.size),
-		capitalization: caps == 'FontCapsOption.NORMALCAPS' ? '' : caps,
-		tracking: c.tracking
-	};
-	var r, g, b;
-
-	if (filltype == 'RGBColor') {
-		r = fill.red;
-		g = fill.green;
-		b = fill.blue;
-		if (r < rgbBlackThreshold && g < rgbBlackThreshold && b < rgbBlackThreshold) {
-			r = g = b = 0;
-		}
-	} else if (filltype == 'GrayColor') {
-		r = g = b = (100 - fill.gray) / 100 * 255;
-	} else if (filltype == 'NoColor') {
-		g = 255;
-		r = b = 0;
-		// warnings are processed later, after ranges of same-style chars are identified
-		o.warning = "Some text has no fill. Please fill it with an RGB color. It has been filled with green.";
-	} else {
-		r = g = b = 0;
-		o.warning = "Some text has " + filltype + " fill. Please fill it with an RGB color.";
-	}
-	o.color = getCssColor(r, g, b);
-	return o;
-}
-
-function getParagraphStyle(p) {
-	// get character style
-	var s = getCharStyle(p.characterAttributes);
-	// var s = getCharStyle(p.characters[0]);
-	// add paragraph-related styles
-	s.leading = Math.round(p.leading);
-	s.spaceBefore = Math.round(p.spaceBefore);
-	s.spaceAfter = Math.round(p.spaceAfter);
-	s.justification = String(p.justification);
-
- 	// TODO: try to detect opacity.
- 	// Opacity of text ranges is not detectable via the API.
- 	// (It is detectable on TextFrames, Groups, Layers, etc)
-	// s.opacity = 100;
-
-	return s;
-}
-
-// s: style object
-function getStyleKey(s) {
-	// TODO: improve
-	var key = '';
-	for (var i=0, n=textStyleKeys.length; i<n; i++) {
-		key += '~' + (s[textStyleKeys[i]] || '');
-	}
-	return key;
-}
-
-function getTextStyleClass(style, classes, name) {
-	var key = getStyleKey(style);
-	var cname = nameSpace + (name || 'style');
-	var o, i;
-	for (i=0; i<classes.length; i++) {
-		o = classes[i];
-		if (o.key == key) {
-			return o.classname;
-		}
-	}
-	o = {
-		key: key,
-		style: style,
-		classname: cname + i,
-		css: generateStyleCss(style)
-	};
-	classes.push(o);
-	return o.classname;
-}
-
-// Divide a pg into strings of the same style; capture style data
-// for each string of characters and for the entire paragraph
-// p: a TextRange object (could be a line or a paragraph)
-// pClasses, charClasses: arrays of accumulated css class data
-//
-function convertParagraph(p, pClasses, charClasses) {
-	var pStyle, uniqStyle, html, classname;
-	if (p.characters.length === 0) {
-		// Handle empty paragraphs
-		// It is hard or impossible to know the height of empty paragraphs
-		// TODO: Try to estimate the height of empty paragraph and generate
-		//    CSS to preserve this height
-		classname = "";
-		html = "&nbsp;"; // default <p> line height is applied
-	} else {
-		// TODO: consider basing the pstyle on the most common character style
-		// TODO: consider removing the default pg style, or use the most
-		//       common detected pg style as the default pg style
-		//       (this would require two passes to generate classes)
-		pStyle = getParagraphStyle(p);
-		html = convertParagraphSegments(getParagraphSegments(p, pStyle, charClasses));
-		uniqStyle = getTextStyleDiff(pStyle, defaultParagraphStyle) || {};
-		classname = getTextStyleClass(uniqStyle, pClasses, 'aiPstyle');
-	}
-	return {
-		classname: classname,
-		html: html
-	};
-}
-
-// Lookup an AI font name in the font table
-function findFontInfo(aifont) {
-	for (var k=0; k<fonts.length; k++) {
-		if (aifont == fonts[k].aifont) {
-			return fonts[k];
-		}
-	}
-	return null;
-}
-
-// ai: AI justification value
-function getJustificationCss(ai) {
-	for (var k=0; k<align.length; k++) {
-		if (ai == align[k].ai) {
-			return align[k].html;
-		}
-	}
-	return "initial"; // CSS default
-}
-
-// ai: AI capitalization value
-function getCapitalizationCss(ai) {
-	for (k=0; k<caps.length; k++) {
-		if (ai == caps[k].ai) {
-			return caps[k].html;
-		}
-	}
-	return "";
-}
-
-// Convert a parsed style object into a CSS block or inline CSS
-// s: style object
-// inline: (bool) whether to generate inline CSS or a CSS block
-function generateStyleCss(s, inline) {
-	var styles = [];
-	var fontInfo, css, tmp;
-	if (s.aifont && (fontInfo = findFontInfo(s.aifont))) {
-		if (fontInfo.family) {
-			styles.push("font-family:" + fontInfo.family + ";");
-		}
-		if (fontInfo.weight) {
-			styles.push("font-weight:" + fontInfo.weight + ";");
-		}
-		if (fontInfo.style) {
-			styles.push("font-style:" + fontInfo.style + ";");
-		}
-	}
-	if (s.size > 0) {
-		styles.push("font-size:" + s.size + "px;");
-	}
-	if ('leading' in s) {
-		styles.push("line-height:" + s.leading + "px;");
-	}
-	/*
-	if (('opacity' in s) && s.opacity != 100) {
-		styles.push("filter: alpha(opacity=" + (s.opacity * 100) + ");");
-		styles.push("-ms-filter:'progid:DXImageTransform.Microsoft.Alpha(Opacity=" + (s.opacity) + ")';");
-		styles.push("opacity:" + (s.opacity / 100) + ";");
-	}
-	*/
-	if (s.spaceBefore > 0) {
-		styles.push("padding-top:" + s.spaceBefore + "px;");
-	}
-	if (s.spaceAfter > 0) {
-		styles.push("padding-bottom:" + s.spaceAfter + "px;");
-	}
-	if (('tracking' in s) && s.tracking !== 0) {
-		styles.push("letter-spacing:" + (s.tracking / 1200) + "em;");
-	}
-	if (s.justification && (tmp = getJustificationCss(s.justification))) {
-		styles.push("text-align:" + tmp + ";");
-	}
-	if (s.capitalization && (tmp = getCapitalizationCss(s.capitalization))) {
-		styles.push("text-transform:" + tmp + ";");
-	}
-	if (s.color) {
-		styles.push("color:" + s.color + ";");
-	}
-
-	if (!styles.length) {
-		css = "";
-	} else if (inline) {
-		css = styles.join(' ');
-	} else {
-		css = "\r\t\t\t\t" + styles.join("\r\t\t\t\t") + "\r";
-	}
-	return css;
-}
-
-// Divide a paragraph into segments with the same style
-// p: AI paragraph object
-// pstyle: parsed paragraph style
-// charClasses: array of previously identified css classes
-//
-function getParagraphSegments(p, pstyle, charClasses) {
-	var html = "";
-	var segments = [];
-	var currRange;
-	var prev, curr, diff, c;
-	for (var i=0, n=p.characters.length; i<n; i++) {
-		c = p.characters[i];
-		curr = getCharStyle(c);
-		if (!prev || getTextStyleDiff(curr, prev)) {
-			diff = getTextStyleDiff(curr, pstyle);
-			currRange = {
-				text: "",
-				// style: diff,
-				classname: diff ? getTextStyleClass(diff, charClasses, 'aiCstyle') : ''
-				// this would generate inline styles instead of classes
-				// css: diff ? generateStyleCss(diff, true) : ''
-			};
-			// alert(c.characterAttributes.parent.textFrames[0].opacity);
-			segments.push(currRange);
-			if (curr.warning) {
-
-			}
-		}
-		if (curr.warning) {
-			currRange.warning = curr.warning;
-		}
-		currRange.text += c.contents;
-		prev = curr;
-	}
-	return segments;
-}
-
-function convertParagraphSegments(segments) {
-	var html = "", o, cname;
-	for (var i=0; i<segments.length; i++) {
-		o = segments[i];
-		if (o.classname) {
-			html += '<span class="' + o.classname + '">' + o.text + '</span>';
-		} else { // no css -- same style as enclosing paragraph
-			html += o.text;
-		}
-		if (o.warning) {
-			warnings.push(o.warning + " Text: \u201C" + o.text + "\u201D");
-		}
-	}
-	return html;
-}
-
-
-// return styles that are in a but not b
-// a, b: style objects
-// properties: array of properties to consider
-function getTextStyleDiff(a, b) {
-	var diff = null;
-	for (var k in a) {
-		if (a[k] != b[k] && a.hasOwnProperty(k)) {
-			diff = diff || {};
-			diff[k] = a[k];
-		}
-	}
-	return diff;
-}
-
-function getCssColor(r, g, b) {
-	return 'rgb(' + r + ',' + g + ',' + b + ')';
-}
-
-
-function textFrameIsRenderable(frame, artboardRect) {
-	var good = true;
-	if (!testBoundsIntersection(frame.visibleBounds, artboardRect)) {
-		good = false;
-	} else if (frame.kind != "TextType.AREATEXT" && frame.kind != "TextType.POINTTEXT") {
-		good = false;
-	} else if (objectIsHidden(frame)) {
-		good = false;
-	} else if (frame.contents === "") {
-		good = false;
-	} else if (docSettings.render_rotated_skewed_text_as == "image" && textIsTransformed(frame)) {
-		good = false;
-	}
-	return good;
-}
-
-
-// return elements in array "a" but not in array "b"
-function arraySubtract(a, b) {
-	var diff = [],
-			alen = a.length,
-			blen = b.length,
-			i, j;
-	for (i=0; i<alen; i++) {
-		diff.push(a[i]);
-		for (j=0; j<blen; j++) {
-			if (a[i] === b[j]) {
-				diff.pop();
-				break;
-			}
-		}
-	}
-	return diff;
-}
-
-//
-function testBoundsIntersection(a, b) {
-	var visibleLeft   =  a[0];
-	var visibleTop    = -a[1];
-	var visibleRight  =  a[2];
-	var visibleBottom = -a[3];
-	var abLeft   =  b[0];
-	var abTop    = -b[1];
-	var abRight  =  b[2];
-	var abBottom = -b[3];
-	// TODO: simplify -- don't need so many comparisons
-	// note: in ExtendScript, it seems that && and || have same priority (!)
-	var inX = (visibleLeft >= abLeft && visibleLeft <= abRight) ||
-		(visibleRight >= abLeft && visibleRight <= abRight) ||
-		(visibleLeft <= abLeft && visibleRight >= abRight);
-	var inY = (visibleTop >= abTop && visibleTop <= abBottom) ||
-		(visibleBottom >= abTop && visibleBottom <= abBottom) ||
-		(visibleTop <= abTop && visibleBottom >= abBottom);
-	return inX && inY;
-}
-
-// a, b: coordinate arrays, as from <PathItem>.geometricBounds
-function testBoundsIntersection_(a, b) {
-	return a[2] >= b[0] && b[2] >= a[0] && a[3] <= b[1] && b[3] <= a[1];
-}
-
-function findClippingPath(paths) {
-	for (var i=0, n=paths.length; i<n; i++) {
-		if (paths[i].clipping) return paths[i];
-	}
-	return null;
-}
-
-// UNUSED -- remove?
-// Return all grouped PathItems objects with clipping property == true
-// (Ignores groups with no TextFrames)
-// This does not capture layer clipping paths -- a more difficult problem
-function getGroupClippingPaths() {
-	var found = [];
-	forEach(doc.groupItems, function(group) {
-		var clipPath;
-		if (group.clipped && group.textFrames.length > 0) {
-			clipPath = findClippingPath(group.pathItems);
-			if (clipPath) found.push(clipPath);
-		}
-	});
-	return found;
-}
-
-// Find clipped TextFrames that are inside an artboard but outside the bounding box
-// box of their clipping path
-// texts: array of text objects assocated with a clipping path
-// clipRect: bounding box of clipping path
-// abRect: bounds of arstboard to test
-//
-function selectMaskedTextFrames(texts, clipRect, abRect) {
-	var found = [];
-	var textRect, textInArtboard, textInMask, maskInArtboard;
-	for (var i=0; i<texts.length; i++) {
-		textRect = texts[i].geometricBounds;
-		// capture text items that intersect the artboard but are masked...
-		textInArtboard = testBoundsIntersection(abRect, textRect);
-		maskInArtboard = testBoundsIntersection(abRect, clipRect);
-		textInMask = testBoundsIntersection(textRect, clipRect);
-		if (textInArtboard && (!maskInArtboard || !textInMask)) {
-			found.push(texts[i]);
-		}
-	}
-	return found;
-}
-
-// Assumes mask is unlocked and any other clipping paths are locked
-function findTextFramesByClippingPath(mask) {
-	var texts = [], selection;
-	// Equivalent to Select > Object > Clipping Mask in GUI
-	app.executeMenuCommand('Clipping Masks menu item');
-	// Equivalent to Object > Clipping Mask > Edit Contents in GUI
-	app.executeMenuCommand('editMask');
-	selection = doc.selection;
-	for (var i=0, n=selection.length; i<n; i++) {
-		if (selection[i].typename == 'TextFrame') {
-			texts.push(selection[i]);
-		}
-	}
-	doc.selection = null;
-	return texts;
-}
-
-function testSimilarBounds(a, b, maxOffs) {
-	if (maxOffs >= 0 === false) maxOffs = 1;
-	for (var i=0; i<4; i++) {
-		if (Math.abs(a[i] - b[i]) > maxOffs) return false;
-	}
-	return true;
-}
-
-// Find clipped TextFrames that are inside an artboard but outside their
-// clipping path (using bounding box of clipping path to approximate clip area)
-function getClippedTextFramesByArtboard(ab) {
-	app.executeMenuCommand('Clipping Masks menu item');
-	var masks = doc.selection.concat();
-	var abRect = ab.artboardRect;
-	var frames = [];
-	forEach(masks, function(mask) {mask.locked = true;}); // lock clipping paths
-	forEach(masks, function(mask) {
-		var clipRect = mask.geometricBounds;
-		if (testSimilarBounds(abRect, clipRect, 5)) {
-			// if clip path is masking to the current artboard, skip the test
-			// (optimization)
-			return;
-		}
-		mask.locked = false;
-		var texts = findTextFramesByClippingPath(mask);
-		texts = selectMaskedTextFrames(texts, clipRect, abRect);
-		if (texts.length > 0) {
-			frames = frames.concat(texts);
-		}
-		mask.locked = true;
-	});
-	forEach(masks, function(mask) {mask.locked = false;}); // unlock clipping paths
-	return frames;
-}
-
-// Get array of TextFrames belonging to an artboard
-function getTextFramesByArtboard(ab) {
-	var candidateFrames = findTextFramesToRender(doc.textFrames, ab.artboardRect);
-	var excludedFrames = getClippedTextFramesByArtboard(ab);
-	var goodFrames = arraySubtract(candidateFrames, excludedFrames);
-	return goodFrames;
-}
-
-function findTextFramesToRender(frames, artboardRect) {
-	var selected = [];
-	for (var i=0; i<frames.length; i++) {
-		if (textFrameIsRenderable(frames[i], artboardRect)) {
-			selected.push(frames[i]);
-		}
-	}
-	// Sort frames top to bottom, left to right.
-	selected.sort(
-	    firstBy(function (v1, v2) { return v2.top  - v1.top; })
-	    .thenBy(function (v1, v2) { return v1.left - v2.left; })
-	);
-	return selected;
-}
-
-function parseTextFrameNote(note) {
-	// Read in attribute variables from notes field of a text frame
-	var thisFrameAttributes = {};
-	var rawNotes = note.split("\r");
-	for (var rNo = 0; rNo < rawNotes.length; rNo++) {
-		var rn = rawNotes[rNo];
-		var rnKey   = rn.replace( /^[ \t]*([^ \t:]*)[ \t]*:(.*)$/ , "$1" );
-		var rnValue = rn.replace( /^[ \t]*([^ \t:]*)[ \t]*:(.*)$/ , "$2" );
-		rnKey       = rnKey.replace( /^\s+/ , "" ).replace( /\s+$/ , "" );
-		rnValue     = rnValue.replace( /^\s+/ , "" ).replace( /\s+$/ , "" );
-		thisFrameAttributes[rnKey] = rnValue;
-	}
-	return thisFrameAttributes;
-}
-
-// Create class="" and style="" CSS for positioning a text div
-function getTextFrameCss(thisFrame, artboardRect) {
-	var style = "";
-	var vFactor = 0.5; // This is an adjustment to correct for vertical placement.
-	var kind, htmlY, htmlT, htmlB, htmlTM, htmlH, htmlL, htmlR, htmlW, htmlLM, alignment, extraWidthPct;
-	var thisFrameAttributes = parseTextFrameNote(thisFrame.note);
-	var abPos = getArtboardPos(artboardRect);
-
-	if (thisFrame.kind=="TextType.POINTTEXT") {
-		kind = "point";
-		// /this line throws an error if the first paragraph of the frame is empty.
-		// var htmlY = Math.round(-thisFrame.position[1] - (((thisFrame.paragraphs[0].characters[0].leading - thisFrame.paragraphs[0].characters[0].size)*vFactor) + thisFrame.paragraphs[0].spaceBefore)-abY);
-		htmlY = Math.round(-thisFrame.position[1] - (((thisFrame.characters[0].leading - thisFrame.characters[0].size)*vFactor) + thisFrame.characters[0].spaceBefore) - abPos.y);
-	} else if (thisFrame.kind=="TextType.AREATEXT") {
-		kind = "area";
-		// var htmlY = Math.round(-thisFrame.position[1] - (((thisFrame.paragraphs[0].characters[0].leading - thisFrame.paragraphs[0].characters[0].size)*vFactor) + thisFrame.paragraphs[0].spaceBefore)-abY);
-		htmlY = Math.round(-thisFrame.position[1] - (((thisFrame.characters[0].leading - thisFrame.characters[0].size)*vFactor) + thisFrame.characters[0].spaceBefore) - abPos.y);
-	} else {
-		kind = "other";
-	}
-	htmlH = Math.round(thisFrame.height);
-	if (thisFrameAttributes.valign === "bottom") {
-		htmlB = htmlY + thisFrame.height;
-	// } else if (thisFrameAttributes.valign==="center") {
-	// 	htmlT  = htmlY+(thisFrame.height/2);
-	// 	htmlTM = thisFrame.height*(1/2*-1);
-	} else {
-		htmlT = htmlY;
-	}
-
-	// additional width for box to allow for slight variations in font widths
-	if (kind=="area") {
-		extraWidthPct = 0; // was 3 percent -- but need to account for when it hits the edge of the box since we are now overflow hidden
-	} else {
-		extraWidthPct = 100;
-	}
-	htmlW = thisFrame.width*(1+(extraWidthPct/100));
-	if (thisFrame.characters[0].justification=="Justification.LEFT") {
-		alignment = "left";
-		htmlL = thisFrame.left - abPos.x;
-		htmlR = abPos.width - (thisFrame.left + htmlW - abPos.x);
-	} else if (thisFrame.characters[0].justification=="Justification.RIGHT") {
-		alignment = "right";
-		htmlL = thisFrame.left - (thisFrame.width * (1 + (extraWidthPct / 100))) - abPos.x;
-		htmlR = abPos.width - (thisFrame.left + thisFrame.width - abPos.x);
-	} else if (thisFrame.characters[0].justification=="Justification.CENTER") {
-		alignment = "center";
-		htmlL  = thisFrame.left - abPos.x +  (thisFrame.width / 2); // thanks jeremy!
-		htmlLM = thisFrame.width * (1 + (extraWidthPct/100)) / 2 * -1;
-	} else {
-		alignment = "other";
-		// htmlX = Math.round(thisFrame.left-abX);
-	}
-
-	// check if text is transformed
-	if (textIsTransformed(thisFrame)) {
-		// find transformed anchor point pre-transformation
-		var t_bounds = thisFrame.geometricBounds,
-			u_bounds = getUntransformedTextBounds(thisFrame),
-			u_width = u_bounds[2] - u_bounds[0],
-			t_width = t_bounds[2] - t_bounds[0],
-			u_height = u_bounds[3] - u_bounds[1],
-			t_height = t_bounds[3] - t_bounds[1],
-			v_align = thisFrameAttributes.valign || 'top',
-			t_scale_x = thisFrame.textRange.characterAttributes.horizontalScale / 100,
-			t_scale_y = thisFrame.textRange.characterAttributes.verticalScale / 100,
-			t_anchor = getAnchorPoint(u_bounds, thisFrame.matrix, alignment, v_align, t_scale_x, t_scale_y),
-			t_trans_x = 0,
-			t_trans_y = 0;
-
-		// position div on transformed anchor point
-		style += "left:" + round((t_anchor[0] - abPos.x) / abPos.width * 100, pctPrecision) + "%;";
-		style += "top:" + round((-t_anchor[1]- abPos.y) / abPos.height * 100, pctPrecision) + "%;";
-
-		// move "back" to left or top to center or right align text
-		if (alignment == 'center') t_trans_x -= u_width * 0.5;
-		else if (alignment == 'right') t_trans_x -= u_width;
-		if (v_align == 'center' || v_align == 'middle') t_trans_y -= u_height * 0.5;
-		else if (v_align == 'bottom') t_trans_y -= u_height;
-
-		var mat = thisFrame.matrix;
-
-		mat = app.concatenateMatrix(app.getTranslationMatrix(t_trans_x, t_trans_y),
-				app.concatenateTranslationMatrix(mat, -mat.mValueTX, -mat.mValueTY));
-
-		// var mat, mat0 = thisFrame.matrix;
-		// mat0 = app.concatenateTranslationMatrix(mat0, -mat0.mValueTX, -mat0.mValueTY);
-		// mat = app.concatenateMatrix(app.getTranslationMatrix(t_trans_x, t_trans_y), mat0);
-
-		var transform = "matrix(" +
-				round(mat.mValueA, pctPrecision) + ',' +
-				round(-1*mat.mValueB, pctPrecision) + ',' +
-				round(-1*mat.mValueC, pctPrecision) + ',' +
-				round(mat.mValueD, pctPrecision) + ',' +
-				round(t_trans_x, pctPrecision) + ',' +
-				round(-t_trans_y, pctPrecision) + ') ' +
-				"scaleX("+round(t_scale_x, pctPrecision) + ") " +
-				"scaleY("+round(t_scale_y, pctPrecision) + ")";
-
-		var transformOrigin = alignment + ' '+(v_align == 'middle' ? 'center' : v_align);
-
-		style += "transform: " + transform + ";";
-		style += "transform-origin: " + transformOrigin + ";";
-		style += "-webkit-transform: " + transform + ";";
-		style += "-webkit-transform-origin: " + transformOrigin + ";";
-		style += "-ms-transform: " + transform + ";";
-		style += "-ms-transform-origin: " + transformOrigin + ";";
-
-		if (kind == 'area') style += "width: " + (u_width * (1 + (extraWidthPct/100))) + "px;";
-
-	} else {
-
-		if (outputType=="abs") {
-			style += "top:" + round(htmlY) + "px;";
-			if (alignment=="left") {
-				style += "left:"  + round(htmlL) + "px;";
-				style += "width:" + round(htmlW) + "px;";
-			} else if (alignment=="right") {
-				style += "right:" + round(htmlR) + "px;";
-				style += "width:" + round(htmlW) + "px;";
-			} if (alignment=="center") {
-				style += "left:"  + round(htmlL) + "px;";
-				style += "width:" + round(htmlW) + "px;";
-				style += "margin-left:" + round(htmlLM) + "px;";
-			}
-		} else if (outputType=="pct") {
-			if (thisFrameAttributes.valign==="bottom") {
-				style += "bottom:" + round(100 - (htmlB / abPos.height * 100), pctPrecision) + "%;";
-			} else {
-				style += "top:" + round(htmlT / abPos.height * 100, pctPrecision) + "%;";
-			}
-			if (alignment=="right") {
-				style += "right:" + round(htmlR / abPos.width * 100, pctPrecision) + "%;";
-				if (kind=="area") {
-					style += "width:" + round(htmlW / abPos.width * 100, pctPrecision) + "%;";
-				}
-			} else if (alignment=="center") {
-				style += "left:" + round(htmlL / abPos.width * 100, pctPrecision) + "%;";
-				style += "width:" + round(htmlW / abPos.width * 100, pctPrecision) + "%;";
-				style += "margin-left:" + round(htmlLM / abPos.width * 100, pctPrecision) + "%;";
-			} else {
-				style += "left:" + round(htmlL / abPos.width * 100, pctPrecision) + "%;";
-				if (kind=="area") {
-					style += "width:" + round(htmlW / abPos.width * 100, pctPrecision) + "%;";
-				}
-			}
-		}
-	}
-	var frameLayer = makeKeyword(thisFrame.layer.name);
-	return 'class="' + nameSpace + frameLayer + " " + nameSpace + "aiAbs" +
-		(textIsTransformed(thisFrame) && kind == "point" ? ' g-aiPtransformed' : '') +
-		'" style="' + style + '"';
-}
-
-// Add ai2html settings contained in a text frame to the document settings object
-function parseSettingsTextBlock(frame, docSettings) {
-	try {
-		for (var p=1; p<frame.paragraphs.length; p++) {
-			var thisParagraph    = frame.paragraphs[p].contents;
-			var hashKey          = thisParagraph.replace( /^[ \t]*([^ \t:]*)[ \t]*:(.*)$/ , "$1" );
-			var hashValue        = thisParagraph.replace( /^[ \t]*([^ \t:]*)[ \t]*:(.*)$/ , "$2" );
-			hashKey              = trim(hashKey);
-			hashValue            = trim(hashValue);
-			hashValue            = straightenCurlyQuotesInsideAngleBrackets(hashValue);
-
-			// replace values from old versions of script with current values
-			if (hashKey=="output" && hashValue=="one-file-for-all-artboards") { hashValue="one-file"; }
-			if (hashKey=="output" && hashValue=="one-file-per-artboard")      { hashValue="multiple-files"; }
-			if (hashKey=="output" && hashValue=="preview-one-file")           { hashValue="one-file"; }
-			if (hashKey=="output" && hashValue=="preview-multiple-files")     { hashValue="multiple-files"; }
-			// handle stuff that goes in config file and other exceptions, like array values
-			if ((hashKey in ai2htmlBaseSettings) && ai2htmlBaseSettings[hashKey].includeInConfigFile) {
-				hashValue = (hashValue.replace( /(["])/g , '\\$1' )); // add stuff to ["] for chars that need to be esc in yml file
-			} else {
-				if ((hashKey in ai2htmlBaseSettings) && ai2htmlBaseSettings[hashKey].inputType=="array") {
-					hashValue = hashValue.replace( /[\s,]+/g , ',' );
-					if (hashValue.length === 0) {
-						hashValue = []; // have to do this because .split always returns an array of length at least 1 even if it's splitting an empty string
-					} else {
-						hashValue = hashValue.split(",");
-					}
-				}
-			}
-			docSettings[hashKey] = hashValue;
-		}
-	} catch(e) {
-		warnings.push("Error parsing settings block: " + e.message);
-	}
-}
 
 // Write an HTML page to a file for NYT Preview
 function outputLocalPreviewPage(textForFile, localPreviewDestination, docSettings) {
-	var localPreviewTemplateFile = new File(docPath + docSettings.local_preview_template);
-	var localPreviewTemplateText = readTextFileAndPutIntoAVariable(localPreviewTemplateFile,"","","\n");
+	var localPreviewTemplateText = readTextFile(docPath + docSettings.local_preview_template);
 	docSettings.ai2htmlPartial = textForFile; // TODO: don't modify global settings this way
 	var localPreviewHtml = applyTemplate(localPreviewTemplateText, docSettings);
 	outputHtml(localPreviewHtml, localPreviewDestination);
@@ -2581,80 +2596,5 @@ function generateHtml(pageContent, docName, docSettings) {
 		// TODO: may have missed a condition, need to compare with original version
 		var previewFileDestination = htmlFileDestinationFolder + docKey + ".preview.html";
 		outputLocalPreviewPage(textForFile, previewFileDestination, docSettings);
-	}
-}
-
-// Show alert or prompt; return true if promo image should be generated
-function showCompletionAlert(showPrompt) {
-	var alertText = "";
-	var alertHed = "";
-	var retn = false;
-	var rule = "\n================\n";
-
-	if (scriptEnvironment == "nyt") {
-		alertHed = "Actually, that\u2019s not half bad :)"; // &rsquo;
-	} else {
-		alertHed = "Nice work!";
-	}
-
-	if (errors.length > 0) {
-		alertHed = "The Script Was Unable to Finish";
-		if (errors.length == 1) {
-			alertText += "\rError" + rule;
-		} else {
-			alertText += "\rErrors" + rule;
-		}
-		for (var e = 0; e < errors.length; e++) {
-			alertText += "\u2022 " + errors[e] + "\r"; // \u2022 is •
-		}
-	}
-	if (warnings.length > 0) {
-		if (warnings.length == 1) {
-			alertText += "\rWarning" + rule;
-		} else {
-			alertText += "\rWarnings" + rule;
-		}
-		for (var w = 0; w < warnings.length; w++) {
-			alertText += "\u2022 " + warnings[w] + "\r";
-		}
-	}
-	if (feedback.length > 0) {
-		alertText += "\rInformation" + rule;
-		for (var f = 0; f < feedback.length; f++) {
-			alertText += "\u2022 " + feedback[f] + "\r";
-		}
-	}
-	alertText += "\n";
-
-	if (showPrompt) {
-		alertText += rule + "Generate promo image?";
-		retn = confirm(alertHed  + alertText, true); // true: "No" is default
-	} else {
-		alertText += rule + "ai2html-nyt5 v" + scriptVersion;
-		alert(alertHed + alertText);
-	}
-	return retn;
-}
-
-function restoreDocumentState() {
-	// Unhide stuff that was hidden during processing
-	for (var i = 0; i < textFramesToUnhide.length; i++) {
-		var currentFrameToUnhide = textFramesToUnhide[i];
-		currentFrameToUnhide.hidden = false;
-	}
-
-	// Unhide layers so objects inside can be unlocked
-	for (var i = hiddenObjects.length-1; i>=0; i--) {
-		hiddenObjects[i].visible = true;
-	}
-
-	// Restore locked objects
-	for (var i = lockedObjects.length-1; i>=0; i--) {
-		lockedObjects[i].locked = true;
-	}
-
-	// Restore hidden layers
-	for (var i = hiddenObjects.length-1; i>=0; i--) {
-		hiddenObjects[i].visible = false;
 	}
 }
