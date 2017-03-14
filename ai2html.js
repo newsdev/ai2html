@@ -392,9 +392,9 @@ var checkForOutputFolder = function(folderPath, nickname) {
 	if (!outputFolder.exists) {
 		var outputFolderCreated = outputFolder.create();
 		if (outputFolderCreated) {
-			feedback.push("The " + nickname + " folder did not exist, so the folder was created.");
+			feedback.push("\rThe " + nickname + " folder did not exist, so the folder was created.");
 		} else {
-			warnings.push("The " + nickname + " folder did not exist and could not be created.");
+			warnings.push("\rThe " + nickname + " folder did not exist and could not be created.");
 		};
 	};
 };
@@ -731,29 +731,6 @@ unlockStuff(doc);
 for (var i = hiddenObjects.length-1; i>=0; i--) {
 	hiddenObjects[i].visible = false;
 };
-
-// ================================================
-// read .git/config file to get preview slug
-// ================================================
-
-
-if ( gitConfigFile.exists && scriptEnvironment=="nyt" ) {
-	gitConfigFile.open("r");
-	while(!gitConfigFile.eof) {
-		var line      = gitConfigFile.readln();
-		var lineArray = line.split("=");
-		if (lineArray.length>1) {
-			var gitConfigKey    = lineArray[0].replace( /^\s+/ , "" ).replace( /\s+$/ , "" );
-			var gitConfigValue  = lineArray[1].replace( /^\s+/ , "" ).replace( /\s+$/ , "" );
-			if ( gitConfigKey=="url" ) {
-				docSettings.preview_slug = gitConfigValue.replace( /^[^:]+:/ , "" ).replace( /\.git$/ , "");
-				// feedback.push("preview slug = " + docSettings.preview_slug);
-			};
-		};
-	};
-	gitConfigFile.close();
-};
-
 
 // ================================================
 // read yml file if it exists to determine what type of project this is
@@ -2176,7 +2153,7 @@ if (parentFolder !== null) {
 	saveOptions.pdfCompatible = false;
 	// if (!doc.saved) { doc.save() };
 	if (!doc.saved) { doc.saveAs( origFile , saveOptions ) };
-	feedback.push("Your Illustrator file was saved.")
+	feedback.push("\rYour Illustrator file was saved.")
 }
 
 // ==============================
@@ -2201,7 +2178,7 @@ if (errors.length == 1) {
 };
 if (errors.length > 0) {
 	for (var e = 0; e < errors.length; e++) {
-		alertText += "• " + errors[e] + "\r";
+		alertText += errors[e] + "\r";
 	};
 };
 if (warnings.length == 1) {
@@ -2211,13 +2188,13 @@ if (warnings.length == 1) {
 };
 if (warnings.length > 0) {
 	for (var w = 0; w < warnings.length; w++) {
-		alertText += "• " + warnings[w] + "\r";
+		alertText += warnings[w] + "\r";
 	};
 };
 if (feedback.length > 0) {
 	alertText += "\rInformation\r================\r";
 	for (var f = 0; f < feedback.length; f++) {
-		alertText += "• " + feedback[f] + "\r";
+		alertText += feedback[f] + "\r";
 	};
 };
 
@@ -2256,24 +2233,6 @@ function getResizerScript() {
 	resizerScript += "\n" + "                    el.style.display = \"none\";";
 	resizerScript += "\n" + "                }";
 	resizerScript += "\n" + "            });";
-
-
-	if (scriptEnvironment=="nyt") {
-		resizerScript += "\n" + "            try {";
-		resizerScript += "\n" + "                if (window.parent && window.parent.$) {";
-		resizerScript += "\n" + "                    window.parent.$(\"body\").trigger(\"resizedcontent\", [window]);";
-		resizerScript += "\n" + "                }";
-		resizerScript += "\n" + "                document.documentElement.dispatchEvent(new Event('resizedcontent'));";
-		resizerScript += "\n" + "                if (window.require && document.querySelector('meta[name=sourceApp]') && document.querySelector('meta[name=sourceApp]').content == 'nyt-v5') {";
-		resizerScript += "\n" + "                    require(['foundation\/main'], function() {";
-		resizerScript += "\n" + "                        require(['shared\/interactive\/instances\/app-communicator'], function(AppCommunicator) {";
-		resizerScript += "\n" + "                            AppCommunicator.triggerResize();";
-		resizerScript += "\n" + "                        });";
-		resizerScript += "\n" + "                    });";
-		resizerScript += "\n" + "                }";
-		resizerScript += "\n" + "            } catch(e) { console.log(e); }";
-	}
-
 	resizerScript += "\n" + "        }";
 	resizerScript += "\n" + "";
 	resizerScript += "\n" + "        resizer();";
