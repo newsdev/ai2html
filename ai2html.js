@@ -2,7 +2,7 @@
 var scriptVersion     = "0.61";
 // var scriptEnvironment = "nyt";
 var scriptEnvironment = "";
-var axiosVersion = "1.1";
+var axiosVersion = "0.1.2";
 
 // ai2html is a script for Adobe Illustrator that converts your Illustrator document into html and css.
 
@@ -662,7 +662,7 @@ var defaultWeight       = "400";
 var defaultStyle        = "";
 var defaultSize         = 13;
 var defaultLeading      = 18;
-var nameSpace           = "av-";
+var nameSpace           = "g-";
 var imageScale          = 200;
 var maxJpgImageScaling  = 776.19; // This is specified in the Javascript Object Reference under ExportOptionsJPEG.
 var pctPrecision        = 4;
