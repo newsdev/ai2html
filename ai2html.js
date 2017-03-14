@@ -528,10 +528,6 @@ function ai2html() {
 		}
 	}
 
-	var imageExtension = ".png";
-	if (docSettings.image_format.length > 0) {
-		imageExtension = "." + docSettings.image_format[0].substring(0,3);
-	}
 
 	// ================================================
 	// validate settings
@@ -605,20 +601,13 @@ function ai2html() {
 
 	forEachArtboard(function(activeArtboard, abNumber) {
 		T.start();
-
 		doc.artboards.setActiveArtboardIndex(abNumber);
-		// doc.selectObjectsOnActiveArtboard();
 
-		docSettings.docName     =  makeKeyword(docSettings.project_name);
-		var artboardName        =  makeKeyword(activeArtboard.name.replace( /^(.+):\d+$/ , "$1"));
-		// var docArtboardName     =  makeKeyword(docSettings.project_name) + "-" + artboardName + "-" + abNumber;
-		var docArtboardName     =  docSettings.docName + "-" + artboardName;
-		var activeArtboardRect  =  activeArtboard.artboardRect;
-		var abX                 =  activeArtboardRect[0];
-		var abY                 = -activeArtboardRect[1];
-		var abW                 =  Math.round(activeArtboardRect[2]-abX);
-		var abH                 = -activeArtboardRect[3]-abY;
-		var artboardAspectRatio =  abH/abW;
+		docSettings.docName  = makeKeyword(docSettings.project_name);
+		var docArtboardName  = getArtboardFullName(activeArtboard);
+		var abPos            = getArtboardPos(activeArtboard);
+		var abW              = abPos.width;
+		var abH              = abPos.height;
 
 		pBar.setTitle(docArtboardName + ': Starting to generate HTML...');
 		pBar.setProgress(abNumber/(doc.artboards.length));
@@ -627,27 +616,7 @@ function ai2html() {
 		var numHtmlStrands   = 12;
 		for (var i=0;i<numHtmlStrands;i++) {html[i] = "";}
 
-
-		html[1] += "\r\t<!-- Artboard: " + artboardName + " -->\r";
-
-    /*
-		var showClass = "";
-
-		for (var bpNumber = 0; bpNumber < nyt5Breakpoints.length; bpNumber++) {
-			var nyt5Breakpoint = nyt5Breakpoints[bpNumber];
-			for (var bpArtboardNumber = 0; bpArtboardNumber < nyt5Breakpoint.artboards.length; bpArtboardNumber++) {
-				var bpArtboard = nyt5Breakpoint.artboards[bpArtboardNumber];
-				if (abNumber==bpArtboard) {
-					showClass += (showClass.length>0) ? " ":"";
-					showClass += "g-show-" + nyt5Breakpoint.name;
-				}
-			}
-		}
-
-		if (docSettings.include_resizer_classes=="no") {
-			showClass = "";
-		}
-    */
+		html[1] += "\r\t<!-- Artboard: " + getArtboardName(activeArtboard) + " -->\r";
 
     var showClasses = "";
     if (docSettings.include_resizer_classes != "no") {
@@ -700,44 +669,10 @@ function ai2html() {
 		html[4] += "\t\t</style>\r";
 		html[4] += "\t\t<div id='"+nameSpace+docArtboardName+"-graphic'>\r";
 
-		if (outputType=="abs") {
-			// this option appears to not really be needed
-			html[5] += "\t\t\t<img id='" +nameSpace+"ai"+abNumber+"-0'\r";
-			html[5] += "\t\t\t\tclass='" +nameSpace+"aiAbs "+nameSpace+"aiImg'\r";
-			if (docSettings.ai2html_environment=="nyt") {
-				html[5] += "\t\t\t\tsrc='"   + docSettings.preview_image_path + docArtboardName + imageExtension + "'\r";
-			} else {
-				html[5] += "\t\t\t\tsrc='"   + docSettings.image_source_path + docArtboardName + imageExtension + "'\r";
-			}
-			html[5] += "\t\t\t\twidth="  + Math.round(abW) + "\r";
-			html[5] += "\t\t\t\theight=" + Math.round(abH) + "\r";
-			html[5] += "\t\t\t\t/>\r";
-		} else if (outputType=="pct") {
-			// this is the default option which seems to work with both fixed and dynamic responsiveness
-			html[5] += "\t\t\t<img id='" +nameSpace+"ai"+abNumber+"-0'\r";
-			html[5] += "\t\t\t\tclass='" +nameSpace+"aiImg'\r";
-			// html[5] += "\t\t\t\tstyle='width:100% !important;'\r";
-			if (docSettings.use_lazy_loader=="no") {
-				if (docSettings.ai2html_environment=="nyt") {
-					html[5] += "\t\t\t\tsrc='"   + docSettings.preview_image_path + docArtboardName + imageExtension + "'\r";
-				} else {
-					html[5] += "\t\t\t\tsrc='"   + docSettings.image_source_path + docArtboardName + imageExtension + "'\r";
-				}
-			} else {
-				html[5] += "\t\t\t\tsrc='data:image/gif;base64,R0lGODlhCgAKAIAAAB8fHwAAACH5BAEAAAAALAAAAAAKAAoAAAIIhI+py+0PYysAOw=='\r"; // dummy image to hold space while image loads
-				if (docSettings.ai2html_environment=="nyt") {
-					html[5] += "\t\t\t\tdata-src='"   + docSettings.preview_image_path + docArtboardName + imageExtension + "'\r";
-				} else {
-					html[5] += "\t\t\t\tdata-src='"   + docSettings.image_source_path + docArtboardName + imageExtension + "'\r";
-				}
-				html[5] += "\t\t\t\tdata-height-multiplier='" + round(artboardAspectRatio,4) + "'\r";
-			}
-			html[5] += "\t\t\t\t/>\r";
-		}
+    html[5] += generateImageHtml(abNumber, docSettings);
 
 		html[8]  += "\t\t</div>\r"; // closing the nameSpace+docArtboardName div
 		html[11] += "\t</div>\r";
-
 
 		// ========================
 		// Convert text objects
@@ -758,7 +693,7 @@ function ai2html() {
 				frameId = nameSpace + "ai" + abNumber + "-" + (i + 1);
 			}
 			html[6] += '\t\t\t<div id="' + frameId + '" ' +
-					getTextPositionCss(thisFrame, activeArtboardRect) + '>\r';
+					getTextPositionCss(thisFrame, activeArtboard) + '>\r';
 
 			// Generate a <p> tag for each paragraph or line of text
 			// The following code runs with either paragraphs or lines
@@ -813,7 +748,7 @@ function ai2html() {
 			// if in svg export, hide path elements outside of the current artboard
 			if (contains(docSettings.image_format, 'svg')) {
 				// save refs to elements we are hiding
-				var hiddenItemsOutsideArtboard = hideElementsOutsideArtboardRect(activeArtboardRect);
+				var hiddenItemsOutsideArtboard = hideElementsOutsideArtboard(activeArtboard);
 			}
 
 			exportImageFiles(imageDestination,abW,abH,docSettings.image_format,1.0,docSettings.use_2x_images_if_possible);
@@ -1083,8 +1018,9 @@ function testBoundsIntersection(a, b) {
   return a[2] >= b[0] && b[2] >= a[0] && a[3] <= b[1] && b[3] <= a[1];
 }
 
-function getArtboardPos(rect) {
-	var x = rect[0],
+function getArtboardPos(ab) {
+  var rect = ab.artboardRect,
+      x = rect[0],
 			y = -rect[1],
 			w = Math.round(rect[2] - x),
 			h = -rect[3] - y;
@@ -1847,12 +1783,12 @@ function parseTextFrameNote(note) {
 }
 
 // Create class="" and style="" CSS for positioning a text div
-function getTextPositionCss(thisFrame, artboardRect) {
+function getTextPositionCss(thisFrame, ab) {
   var style = "";
   var vFactor = 0.5; // This is an adjustment to correct for vertical placement.
   var kind, htmlY, htmlT, htmlB, htmlTM, htmlH, htmlL, htmlR, htmlW, htmlLM, alignment, extraWidthPct;
   var thisFrameAttributes = parseTextFrameNote(thisFrame.note);
-  var abPos = getArtboardPos(artboardRect);
+  var abPos = getArtboardPos(ab);
 
   if (thisFrame.kind=="TextType.POINTTEXT") {
     kind = "point";
@@ -2061,6 +1997,14 @@ function getUntransformedTextBounds(textFrame) {
 // ai2html artboard functions
 // ==============================
 
+function getArtboardName(ab) {
+  return makeKeyword(ab.name.replace( /^(.+):\d+$/ , "$1"));
+}
+
+function getArtboardFullName(ab) {
+  return docSettings.docName + "-" + getArtboardName(ab);
+}
+
 // return rect of bounding box of all artboards
 function getArtboardBounds() {
   var rect, bounds;
@@ -2081,7 +2025,7 @@ function getArtboardBounds() {
 function getArtboardInfo() {
   var artboards = [];
   forEachArtboard(function(ab, i) {
-    var pos = getArtboardPos(ab.artboardRect);
+    var pos = getArtboardPos(ab);
     var name = ab.name || "";
     // parse width from artboard name in two formats: <name>:<width> and ai2html-<width>
     var widthFromName = (/^(?:.*:|ai2html-)(\d+)$/.exec(name) || [])[1];
@@ -2158,7 +2102,7 @@ function findLargestArtboard() {
   var largestId = -1;
   var largestArea = 0;
   forEachArtboard(function(ab, i) {
-    var info = getArtboardPos(ab.artboardRect);
+    var info = getArtboardPos(ab);
     var area = info.width * info.height;
     if (area > largestArea) {
       largestId = i;
@@ -2168,7 +2112,8 @@ function findLargestArtboard() {
   return largestId;
 }
 
-function hideElementsOutsideArtboardRect(artboardRect) {
+function hideElementsOutsideArtboard(ab) {
+  var artboardRect = ab.artboardRect;
   var hidden = [];
   forEachLayer(function(layer) {
     if (layer.visible) { // only deal with visible layers
@@ -2196,6 +2141,32 @@ function hideElementsOutsideArtboardRect(artboardRect) {
 // ai2html image functions
 // =================================
 
+function generateImageHtml(abNumber, settings) {
+  var ab = doc.artboards[abNumber],
+      abName = getArtboardFullName(ab),
+      abPos = getArtboardPos(ab),
+      imgId = nameSpace + "ai" + abNumber + "-0",
+      extension = (settings.image_format[0] || "png").substring(0,3),
+      src = (settings.ai2html_environment=="nyt" ? settings.preview_image_path :
+          settings.image_source_path) + abName + "." + extension,
+      html;
+
+  html = '\t\t\t<img id="' + imgId + '"';
+  if (outputType == "abs") {
+    html += ' class="' + nameSpace + 'aiAbs ' + nameSpace + 'aiImg" width="' +
+        abPos.width + '" height="' + Math.round(abPos.height) + '"';
+  } else if (outputType == "pct") {
+    html += ' class="' + nameSpace + 'aiImg"';
+    if (isTrue(settings.use_lazy_loader)) {
+      html += ' data-height-multiplier="' + round(abPos.height / abPos.width, 4) + '"';
+      html += ' data-src="' + src + '"';
+      // spaceholder while image loads
+      src = 'data:image/gif;base64,R0lGODlhCgAKAIAAAB8fHwAAACH5BAEAAAAALAAAAAAKAAoAAAIIhI+py+0PYysAOw==';
+    }
+  }
+  html += ' src="' + src + '"/>\r';
+  return html;
+}
 
 // Create a promo image from the largest usable artboard
 function createPromoImage() {
@@ -2204,7 +2175,7 @@ function createPromoImage() {
 	if (abNumber == -1) return; // TODO: show error
 
 	var artboard         =  doc.artboards[abNumber],
-			abPos            =  getArtboardPos(artboard.artboardRect),
+			abPos            =  getArtboardPos(artboard),
 			promoScale       =  PROMO_WIDTH / abPos.width,
 			promoW           =  abPos.width * promoScale,
 			promoH           =  abPos.height * promoScale,
@@ -2536,8 +2507,6 @@ function getContentHeader(docKey, docSettings) {
 
 // Wrap content HTML in a <div>, add styles and resizer script, write to a file
 function generateHtml(pageContent, docName, docSettings) {
-
-	var multiMode = docSettings.output == 'multiple-files';
 	var linkSrc = docSettings.clickable_link || "";
 	var docKey = makeKeyword(docName);
 	var textForFile = "";
@@ -2579,12 +2548,11 @@ function generateHtml(pageContent, docName, docSettings) {
 	textForFile += "\t<!-- End ai2html" + " - " + getDateTimeStamp() + " -->\r</div>\r";
 
 	textForFile = applyTemplate(textForFile, docSettings);
-
 	htmlFileDestinationFolder = docPath + docSettings.html_output_path;
 	checkForOutputFolder(htmlFileDestinationFolder, "html_output_path");
 	htmlFileDestination = htmlFileDestinationFolder + docKey + docSettings.html_output_extension;
 
-	if (multiMode && previewProjectType == 'ai2html') {
+	if (docSettings.output == 'one-file' && previewProjectType == 'ai2html') {
 		htmlFileDestination = htmlFileDestinationFolder + "index" + docSettings.html_output_extension;
 	}
 
