@@ -304,10 +304,13 @@ var hiddenObjects       = [];
 // Global variables set by main()
 var docSettings         = {};
 var previewProjectType = "";
-var doc, docPath, docName, docIsSaved, pBar;
+var doc, docPath, docName, docIsSaved, pBar, T;
+
+// include JSON for debugging objects
+// @include "lib/json2.js"
 
 // ===========================================================
-// Run script in AI context, setup for testing in Node context
+// In AI context: run script. In Node: export functions for testing
 // ===========================================================
 
 var jsEnvironment = typeof module === "object" && module.exports ? "node" : "ai";
@@ -329,8 +332,19 @@ if (jsEnvironment == 'node') {
 // =================================
 
 function main() {
-  initScriptEnvironment();
   pBar = new ProgressBar();
+
+  // Performance timing using T.start() and T.stop("message")
+  T = {
+    stack: [],
+    start: function() {
+      T.stack.push(+new Date());
+    },
+    stop: function(note) {
+      message((+new Date() - T.stack.pop()) + 'ms - ' + note);
+    }
+  };
+
   T.start();
 
   // initialize docSettings
@@ -362,7 +376,7 @@ function main() {
   }
 
   // ==========================================
-  // Save the AI document (in some cases)
+  // Save the AI document (if needed)
   // ==========================================
 
   if (docIsSaved) {
@@ -440,7 +454,7 @@ function render() {
         parseSettingsTextBlock(thisFrame, docSettings);
       } else if (type == 'text') {
         parseSettingsTextBlock(thisFrame, docSettings);
-      } else {
+      } else { // custom js, css and html
         for (var i=1, n=thisFrame.paragraphs.length; i<n; i++) {
           try {
             content += "\t\t" + cleanText(thisFrame.paragraphs[i].contents) + "\r";
@@ -534,25 +548,19 @@ function render() {
 
 
   // ================================================
-  // Generate HTML, CSS and images for contents of each artboard
+  // Generate HTML, CSS and images for each artboard
   // ================================================
 
   var artboardContent = "";
 
   forEachArtboard(function(activeArtboard, abNumber) {
-    T.start();
     var textHtml = "";
+    var docArtboardName  = getArtboardFullName(activeArtboard);
     doc.artboards.setActiveArtboardIndex(abNumber);
 
-    var docArtboardName  = getArtboardFullName(activeArtboard);
-    var abPos            = getArtboardPos(activeArtboard);
-    var abW              = abPos.width;
-    var abH              = abPos.height;
-
+    T.start();
     pBar.setTitle(docArtboardName + ': Starting to generate HTML...');
     pBar.setProgress(abNumber/(doc.artboards.length));
-
-    // TODO: ask Archie -- why generate <img> tag but not image?
 
     // ========================
     // Convert text objects
@@ -988,45 +996,6 @@ function forEachLayer(cb, parent) {
 // ===========================
 // ai2html program state and settings
 // ===========================
-
-// Add polyfills, etc.
-function initScriptEnvironment() {
-  // TODO: don't setup dev environment for production use
-  initDevEnvironment();
-
-  // Adding [].indexOf to Illustrator JavaScript
-  if (!Array.prototype.indexOf) {
-      Array.prototype.indexOf = function(elt /*, from*/) {
-          var len = this.length;
-          var from = Number(arguments[1]) || 0;
-          from = (from < 0) ? Math.ceil(from) : Math.floor(from);
-          if (from < 0) from += len;
-          for (; from < len; from++) {
-              if (from in this && this[from] === elt) return from;
-          }
-          return -1;
-     };
-  }
-}
-
-function initDevEnvironment() {
-  // include JSON for debugging objects
-  // @include "lib/json2.js"
-
-  // Performance timing using T.start() and T.stop("message")
-  T = {
-    stack: [],
-    start: function() {
-      T.stack.push(+new Date());
-    },
-    stop: function(note) {
-      var msg = (+new Date() - T.stack.pop()) + 'ms';
-      if (note) msg += " - " + note;
-      message(msg);
-    }
-  };
-}
-
 
 function createSettingsBlock() {
   var bounds      = getArtboardBounds();
@@ -2062,7 +2031,7 @@ function createPromoImage(settings) {
   doc.artboards.setActiveArtboardIndex(abNumber);
 
   // Using "jpg" if present in image_format setting, else using "png";
-  if (settings.image_format.indexOf('jpg') > -1) {
+  if (contains(settings.image_format, 'jpg')) {
     promoFormat = 'jpg';
   } else {
     promoFormat = 'png';
