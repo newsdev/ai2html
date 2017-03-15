@@ -165,99 +165,99 @@ var htmlCharacterCodes = [["\xA0","&nbsp;"], ["\xA1","&iexcl;"], ["\xA2","&cent;
 
 // Add to the fonts array to make the script work with your own custom fonts.
 // To make it easier to add to this array, use the "fonts" worksheet of this Google Spreadsheet:
-	// https://docs.google.com/spreadsheets/d/13ESQ9ktfkdzFq78FkWLGaZr2s3lNbv2cN25F2pYf5XM/edit?usp=sharing
-	// Make a copy of the spreadsheet for yourself.
-	// Modify the settings to taste.
+  // https://docs.google.com/spreadsheets/d/13ESQ9ktfkdzFq78FkWLGaZr2s3lNbv2cN25F2pYf5XM/edit?usp=sharing
+  // Make a copy of the spreadsheet for yourself.
+  // Modify the settings to taste.
 var fonts = [
-	{"aifont":"ArialMT","family":"arial,helvetica,sans-serif","weight":"","style":""},
-	{"aifont":"Arial-BoldMT","family":"arial,helvetica,sans-serif","weight":"bold","style":""},
-	{"aifont":"Arial-ItalicMT","family":"arial,helvetica,sans-serif","weight":"","style":"italic"},
-	{"aifont":"Arial-BoldItalicMT","family":"arial,helvetica,sans-serif","weight":"bold","style":"italic"},
-	{"aifont":"Georgia","family":"georgia,'times new roman',times,serif","weight":"","style":""},
-	{"aifont":"Georgia-Bold","family":"georgia,'times new roman',times,serif","weight":"bold","style":""},
-	{"aifont":"Georgia-Italic","family":"georgia,'times new roman',times,serif","weight":"","style":"italic"},
-	{"aifont":"Georgia-BoldItalic","family":"georgia,'times new roman',times,serif","weight":"bold","style":"italic"},
-	{"aifont":"NYTFranklin-Light","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"300","style":""},
-	{"aifont":"NYTFranklin-Medium","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"500","style":""},
-	{"aifont":"NYTFranklin-SemiBold","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"600","style":""},
-	{"aifont":"NYTFranklinSemiBold-Regular","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"600","style":""},
-	{"aifont":"NYTFranklin-Bold","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"700","style":""},
-	{"aifont":"NYTFranklin-LightItalic","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"300","style":"italic"},
-	{"aifont":"NYTFranklin-MediumItalic","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"500","style":"italic"},
-	{"aifont":"NYTFranklin-BoldItalic","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"700","style":"italic"},
-	{"aifont":"NYTFranklin-Headline","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"bold","style":""},
-	{"aifont":"NYTFranklin-HeadlineItalic","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"bold","style":"italic"},
-	{"aifont":"NYTCheltenham-ExtraLight","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"200","style":""},
-	{"aifont":"NYTCheltenhamExtLt-Regular","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"200","style":""},
-	{"aifont":"NYTCheltenham-Light","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"300","style":""},
-	{"aifont":"NYTCheltenhamLt-Regular","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"300","style":""},
-	{"aifont":"NYTCheltenham-Book","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"400","style":""},
-	{"aifont":"NYTCheltenhamBook-Regular","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"400","style":""},
-	{"aifont":"NYTCheltenham-Wide","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"","style":""},
-	{"aifont":"NYTCheltenhamMedium-Regular","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"500","style":""},
-	{"aifont":"NYTCheltenham-Medium","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"500","style":""},
-	{"aifont":"NYTCheltenham-Bold","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"700","style":""},
-	{"aifont":"NYTCheltenham-BoldCond","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"bold","style":""},
-	{"aifont":"NYTCheltenham-BoldExtraCond","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"bold","style":""},
-	{"aifont":"NYTCheltenham-ExtraBold","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"bold","style":""},
-	{"aifont":"NYTCheltenham-ExtraLightIt","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"","style":"italic"},
-	{"aifont":"NYTCheltenham-ExtraLightItal","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"","style":"italic"},
-	{"aifont":"NYTCheltenham-LightItalic","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"","style":"italic"},
-	{"aifont":"NYTCheltenham-BookItalic","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"","style":"italic"},
-	{"aifont":"NYTCheltenham-WideItalic","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"","style":"italic"},
-	{"aifont":"NYTCheltenham-MediumItalic","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"","style":"italic"},
-	{"aifont":"NYTCheltenham-BoldItalic","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"700","style":"italic"},
-	{"aifont":"NYTCheltenham-ExtraBoldItal","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"bold","style":"italic"},
-	{"aifont":"NYTCheltenham-ExtraBoldItalic","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"bold","style":"italic"},
-	{"aifont":"NYTKarnakText-Regular","family":"nyt-karnak-display-130124,georgia,'times new roman',times,serif","weight":"400","style":""},
-	{"aifont":"NYTKarnakDisplay-Regular","family":"nyt-karnak-display-130124,georgia,'times new roman',times,serif","weight":"400","style":""},
-	{"aifont":"NYTStymieLight-Regular","family":"nyt-stymie,arial,helvetica,sans-serif","weight":"300","style":""},
-	{"aifont":"NYTStymieMedium-Regular","family":"nyt-stymie,arial,helvetica,sans-serif","weight":"500","style":""},
-	{"aifont":"StymieNYT-Light","family":"nyt-stymie,arial,helvetica,sans-serif","weight":"300","style":""},
-	{"aifont":"StymieNYT-LightPhoenetic","family":"nyt-stymie,arial,helvetica,sans-serif","weight":"300","style":""},
-	{"aifont":"StymieNYT-Lightitalic","family":"nyt-stymie,arial,helvetica,sans-serif","weight":"300","style":"italic"},
-	{"aifont":"StymieNYT-Medium","family":"nyt-stymie,arial,helvetica,sans-serif","weight":"500","style":""},
-	{"aifont":"StymieNYT-MediumItalic","family":"nyt-stymie,arial,helvetica,sans-serif","weight":"500","style":"italic"},
-	{"aifont":"StymieNYT-Bold","family":"nyt-stymie,arial,helvetica,sans-serif","weight":"700","style":""},
-	{"aifont":"StymieNYT-BoldItalic","family":"nyt-stymie,arial,helvetica,sans-serif","weight":"700","style":"italic"},
-	{"aifont":"StymieNYT-ExtraBold","family":"nyt-stymie,arial,helvetica,sans-serif","weight":"700","style":""},
-	{"aifont":"StymieNYT-ExtraBoldText","family":"nyt-stymie,arial,helvetica,sans-serif","weight":"700","style":""},
-	{"aifont":"StymieNYT-ExtraBoldTextItal","family":"nyt-stymie,arial,helvetica,sans-serif","weight":"700","style":"italic"},
-	{"aifont":"StymieNYTBlack-Regular","family":"nyt-stymie,arial,helvetica,sans-serif","weight":"700","style":""},
-	{"aifont":"StymieBT-ExtraBold","family":"nyt-stymie,arial,helvetica,sans-serif","weight":"700","style":""},
-	{"aifont":"Stymie-Thin","family":"nyt-stymie,arial,helvetica,sans-serif","weight":"300","style":""},
-	{"aifont":"Stymie-UltraLight","family":"nyt-stymie,arial,helvetica,sans-serif","weight":"300","style":""},
-	{"aifont":"NYTMagSans-Regular","family":"'nyt-mag-sans',arial,helvetica,sans-serif","weight":"500","style":""},
-	{"aifont":"NYTMagSans-Bold","family":"'nyt-mag-sans',arial,helvetica,sans-serif","weight":"700","style":""}
+  {"aifont":"ArialMT","family":"arial,helvetica,sans-serif","weight":"","style":""},
+  {"aifont":"Arial-BoldMT","family":"arial,helvetica,sans-serif","weight":"bold","style":""},
+  {"aifont":"Arial-ItalicMT","family":"arial,helvetica,sans-serif","weight":"","style":"italic"},
+  {"aifont":"Arial-BoldItalicMT","family":"arial,helvetica,sans-serif","weight":"bold","style":"italic"},
+  {"aifont":"Georgia","family":"georgia,'times new roman',times,serif","weight":"","style":""},
+  {"aifont":"Georgia-Bold","family":"georgia,'times new roman',times,serif","weight":"bold","style":""},
+  {"aifont":"Georgia-Italic","family":"georgia,'times new roman',times,serif","weight":"","style":"italic"},
+  {"aifont":"Georgia-BoldItalic","family":"georgia,'times new roman',times,serif","weight":"bold","style":"italic"},
+  {"aifont":"NYTFranklin-Light","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"300","style":""},
+  {"aifont":"NYTFranklin-Medium","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"500","style":""},
+  {"aifont":"NYTFranklin-SemiBold","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"600","style":""},
+  {"aifont":"NYTFranklinSemiBold-Regular","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"600","style":""},
+  {"aifont":"NYTFranklin-Bold","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"700","style":""},
+  {"aifont":"NYTFranklin-LightItalic","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"300","style":"italic"},
+  {"aifont":"NYTFranklin-MediumItalic","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"500","style":"italic"},
+  {"aifont":"NYTFranklin-BoldItalic","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"700","style":"italic"},
+  {"aifont":"NYTFranklin-Headline","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"bold","style":""},
+  {"aifont":"NYTFranklin-HeadlineItalic","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"bold","style":"italic"},
+  {"aifont":"NYTCheltenham-ExtraLight","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"200","style":""},
+  {"aifont":"NYTCheltenhamExtLt-Regular","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"200","style":""},
+  {"aifont":"NYTCheltenham-Light","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"300","style":""},
+  {"aifont":"NYTCheltenhamLt-Regular","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"300","style":""},
+  {"aifont":"NYTCheltenham-Book","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"400","style":""},
+  {"aifont":"NYTCheltenhamBook-Regular","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"400","style":""},
+  {"aifont":"NYTCheltenham-Wide","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"","style":""},
+  {"aifont":"NYTCheltenhamMedium-Regular","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"500","style":""},
+  {"aifont":"NYTCheltenham-Medium","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"500","style":""},
+  {"aifont":"NYTCheltenham-Bold","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"700","style":""},
+  {"aifont":"NYTCheltenham-BoldCond","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"bold","style":""},
+  {"aifont":"NYTCheltenham-BoldExtraCond","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"bold","style":""},
+  {"aifont":"NYTCheltenham-ExtraBold","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"bold","style":""},
+  {"aifont":"NYTCheltenham-ExtraLightIt","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"","style":"italic"},
+  {"aifont":"NYTCheltenham-ExtraLightItal","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"","style":"italic"},
+  {"aifont":"NYTCheltenham-LightItalic","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"","style":"italic"},
+  {"aifont":"NYTCheltenham-BookItalic","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"","style":"italic"},
+  {"aifont":"NYTCheltenham-WideItalic","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"","style":"italic"},
+  {"aifont":"NYTCheltenham-MediumItalic","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"","style":"italic"},
+  {"aifont":"NYTCheltenham-BoldItalic","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"700","style":"italic"},
+  {"aifont":"NYTCheltenham-ExtraBoldItal","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"bold","style":"italic"},
+  {"aifont":"NYTCheltenham-ExtraBoldItalic","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"bold","style":"italic"},
+  {"aifont":"NYTKarnakText-Regular","family":"nyt-karnak-display-130124,georgia,'times new roman',times,serif","weight":"400","style":""},
+  {"aifont":"NYTKarnakDisplay-Regular","family":"nyt-karnak-display-130124,georgia,'times new roman',times,serif","weight":"400","style":""},
+  {"aifont":"NYTStymieLight-Regular","family":"nyt-stymie,arial,helvetica,sans-serif","weight":"300","style":""},
+  {"aifont":"NYTStymieMedium-Regular","family":"nyt-stymie,arial,helvetica,sans-serif","weight":"500","style":""},
+  {"aifont":"StymieNYT-Light","family":"nyt-stymie,arial,helvetica,sans-serif","weight":"300","style":""},
+  {"aifont":"StymieNYT-LightPhoenetic","family":"nyt-stymie,arial,helvetica,sans-serif","weight":"300","style":""},
+  {"aifont":"StymieNYT-Lightitalic","family":"nyt-stymie,arial,helvetica,sans-serif","weight":"300","style":"italic"},
+  {"aifont":"StymieNYT-Medium","family":"nyt-stymie,arial,helvetica,sans-serif","weight":"500","style":""},
+  {"aifont":"StymieNYT-MediumItalic","family":"nyt-stymie,arial,helvetica,sans-serif","weight":"500","style":"italic"},
+  {"aifont":"StymieNYT-Bold","family":"nyt-stymie,arial,helvetica,sans-serif","weight":"700","style":""},
+  {"aifont":"StymieNYT-BoldItalic","family":"nyt-stymie,arial,helvetica,sans-serif","weight":"700","style":"italic"},
+  {"aifont":"StymieNYT-ExtraBold","family":"nyt-stymie,arial,helvetica,sans-serif","weight":"700","style":""},
+  {"aifont":"StymieNYT-ExtraBoldText","family":"nyt-stymie,arial,helvetica,sans-serif","weight":"700","style":""},
+  {"aifont":"StymieNYT-ExtraBoldTextItal","family":"nyt-stymie,arial,helvetica,sans-serif","weight":"700","style":"italic"},
+  {"aifont":"StymieNYTBlack-Regular","family":"nyt-stymie,arial,helvetica,sans-serif","weight":"700","style":""},
+  {"aifont":"StymieBT-ExtraBold","family":"nyt-stymie,arial,helvetica,sans-serif","weight":"700","style":""},
+  {"aifont":"Stymie-Thin","family":"nyt-stymie,arial,helvetica,sans-serif","weight":"300","style":""},
+  {"aifont":"Stymie-UltraLight","family":"nyt-stymie,arial,helvetica,sans-serif","weight":"300","style":""},
+  {"aifont":"NYTMagSans-Regular","family":"'nyt-mag-sans',arial,helvetica,sans-serif","weight":"500","style":""},
+  {"aifont":"NYTMagSans-Bold","family":"'nyt-mag-sans',arial,helvetica,sans-serif","weight":"700","style":""}
 ];
 
 var caps = [
-	{"ai":"FontCapsOption.NORMALCAPS","html":""},
-	{"ai":"FontCapsOption.ALLCAPS","html":"uppercase"},
-	{"ai":"FontCapsOption.SMALLCAPS","html":"uppercase"}
+  {"ai":"FontCapsOption.NORMALCAPS","html":""},
+  {"ai":"FontCapsOption.ALLCAPS","html":"uppercase"},
+  {"ai":"FontCapsOption.SMALLCAPS","html":"uppercase"}
 ];
 
 var align = [
-	{"ai":"Justification.LEFT","html":""},
-	{"ai":"Justification.RIGHT","html":"right"},
-	{"ai":"Justification.CENTER","html":"center"},
-	{"ai":"Justification.FULLJUSTIFY","html":"justify"},
-	{"ai":"Justification.FULLJUSTIFYLASTLINELEFT","html":"justify"},
-	{"ai":"Justification.FULLJUSTIFYLASTLINECENTER","html":"justify"},
-	{"ai":"Justification.FULLJUSTIFYLASTLINERIGHT","html":"justify"}
+  {"ai":"Justification.LEFT","html":""},
+  {"ai":"Justification.RIGHT","html":"right"},
+  {"ai":"Justification.CENTER","html":"center"},
+  {"ai":"Justification.FULLJUSTIFY","html":"justify"},
+  {"ai":"Justification.FULLJUSTIFYLASTLINELEFT","html":"justify"},
+  {"ai":"Justification.FULLJUSTIFYLASTLINECENTER","html":"justify"},
+  {"ai":"Justification.FULLJUSTIFYLASTLINERIGHT","html":"justify"}
 ];
 
 var textStyleKeys = [
-	"aifont",
-	"size",
-	"capitalization",
-	"color",
-	"tracking",
-	"leading",
-	"spaceBefore",
-	"spaceAfter",
-	"justification",
-	"opacity"
+  "aifont",
+  "size",
+  "capitalization",
+  "color",
+  "tracking",
+  "leading",
+  "spaceBefore",
+  "spaceAfter",
+  "justification",
+  "opacity"
 ];
 
 var nyt5Breakpoints = [
@@ -273,11 +273,11 @@ var nyt5Breakpoints = [
 
 // user inputs, settings, etc
 var defaultParagraphStyle = {
-	aifont: 'NYTFranklin-Medium',
-	size: 13,
-	leading: 18,
-	weight: 500,
-	color: getCssColor(0, 0, 0)
+  aifont: 'NYTFranklin-Medium',
+  size: 13,
+  leading: 18,
+  weight: 500,
+  color: getCssColor(0, 0, 0)
 };
 
 var nameSpace           = "g-";
@@ -285,7 +285,7 @@ var cssPrecision        = 4;
 var outputType          = "pct"; // "abs" or "pct"
 // value between 0 and 255 lower than which if all three RGB values are below
 // then force the RGB to #000 so it is a pure black
-var	rgbBlackThreshold  = 36;
+var  rgbBlackThreshold  = 36;
 var showDebugMessages  = true;
 
 // ================================
@@ -299,7 +299,7 @@ var errors   = [];
 
 var textFramesToUnhide = [];
 var lockedObjects      = [];
-var hiddenObjects		   = [];
+var hiddenObjects       = [];
 
 // Global variables set by main()
 var docSettings         = {};
@@ -312,14 +312,14 @@ var doc, docPath, docName, docIsSaved, pBar;
 
 var jsEnvironment = typeof module === "object" && module.exports ? "node" : "ai";
 if (jsEnvironment == 'ai') {
-	main();
+  main();
 }
 if (jsEnvironment == 'node') {
-	// export functions for testing
-	// TODO: write more tests
+  // export functions for testing
+  // TODO: write more tests
   module.exports = {
-  	testBoundsIntersection: testBoundsIntersection,
-  	trim: trim
+    testBoundsIntersection: testBoundsIntersection,
+    trim: trim
   };
 }
 
@@ -329,71 +329,71 @@ if (jsEnvironment == 'node') {
 // =================================
 
 function main() {
-	initScriptEnvironment();
-	pBar = new ProgressBar();
-	T.start();
+  initScriptEnvironment();
+  pBar = new ProgressBar();
+  T.start();
 
-	// initialize docSettings
-	for (var setting in ai2htmlBaseSettings) {
-		docSettings[setting] = ai2htmlBaseSettings[setting].defaultValue;
-	}
+  // initialize docSettings
+  for (var setting in ai2htmlBaseSettings) {
+    docSettings[setting] = ai2htmlBaseSettings[setting].defaultValue;
+  }
 
-	if (!app.documents.length) {
-		errors.push("No documents are open");
+  if (!app.documents.length) {
+    errors.push("No documents are open");
 
-	} else if (!String(app.activeDocument.path)) {
-		errors.push('You need to save your Illustrator file before running this script');
+  } else if (!String(app.activeDocument.path)) {
+    errors.push('You need to save your Illustrator file before running this script');
 
-	} else if (app.activeDocument.documentColorSpace!="DocumentColorSpace.RGB") {
-		errors.push('Convert document color mode to "RGB" before running script. (File>Document Color Mode>RGB Color)' );
+  } else if (app.activeDocument.documentColorSpace!="DocumentColorSpace.RGB") {
+    errors.push('Convert document color mode to "RGB" before running script. (File>Document Color Mode>RGB Color)' );
 
-	} else {
-		doc = app.activeDocument;
-		docPath = doc.path + "/";
-		docIsSaved = doc.saved;
+  } else {
+    doc = app.activeDocument;
+    docPath = doc.path + "/";
+    docIsSaved = doc.saved;
 
-		try {
-			render();
-		} catch(e) {
-			errors.push("The script threw an error" + (e.message ? ": " + e.message : ''));
-		}
-		restoreDocumentState();
-		pBar.setProgress(1.0);
-	}
+    try {
+      render();
+    } catch(e) {
+      errors.push("The script threw an error" + (e.message ? ": " + e.message : ''));
+    }
+    restoreDocumentState();
+    pBar.setProgress(1.0);
+  }
 
-	// ==========================================
-	// Save the AI document (in some cases)
-	// ==========================================
+  // ==========================================
+  // Save the AI document (in some cases)
+  // ==========================================
 
-	if (docIsSaved) {
-		// If document was originally in a saved state, reset the document's
-		// saved flag (the document goes to unsaved state during the script,
-		// because of unlocking / relocking of objects
-		doc.saved = true;
-	} else if (errors.length === 0) {
-		// Auto-save the document if no errors occurred
-		var saveOptions = new IllustratorSaveOptions();
-		saveOptions.pdfCompatible = false;
-		pBar.setTitle('Saving Illustrator document...');
-		T.start();
-		doc.saveAs(new File(docPath + doc.name), saveOptions);
-		T.stop("Saved document");
-		feedback.push("Your Illustrator file was saved.");
-	}
+  if (docIsSaved) {
+    // If document was originally in a saved state, reset the document's
+    // saved flag (the document goes to unsaved state during the script,
+    // because of unlocking / relocking of objects
+    doc.saved = true;
+  } else if (errors.length === 0) {
+    // Auto-save the document if no errors occurred
+    var saveOptions = new IllustratorSaveOptions();
+    saveOptions.pdfCompatible = false;
+    pBar.setTitle('Saving Illustrator document...');
+    T.start();
+    doc.saveAs(new File(docPath + doc.name), saveOptions);
+    T.stop("Saved document");
+    feedback.push("Your Illustrator file was saved.");
+  }
 
-	pBar.close();
-	T.stop("Total time");
+  pBar.close();
+  T.stop("Total time");
 
-	// =========================================================
-	// Show alert box, optionally prompt to generate promo image
-	// =========================================================
+  // =========================================================
+  // Show alert box, optionally prompt to generate promo image
+  // =========================================================
 
-	if (isTrue(docSettings.show_completion_dialog_box)) {
-		// ignoring (obsolete) "create_promo_image" option setting
-		var promptForPromo = previewProjectType == "ai2html" && docSettings.write_image_files=="yes";
-		var showPromo = showCompletionAlert(promptForPromo);
-		if (showPromo) createPromoImage(docSettings);
-	}
+  if (isTrue(docSettings.show_completion_dialog_box)) {
+    // ignoring (obsolete) "create_promo_image" option setting
+    var promptForPromo = previewProjectType == "ai2html" && docSettings.write_image_files=="yes";
+    var showPromo = showCompletionAlert(promptForPromo);
+    if (showPromo) createPromoImage(docSettings);
+  }
 } // end main()
 
 
@@ -403,194 +403,194 @@ function main() {
 
 function render() {
 
-	// Unlock all objects
-	T.start();
-	unlockObjects();
-	T.stop('Unlock objects');
+  // Unlock all objects
+  T.start();
+  unlockObjects();
+  T.stop('Unlock objects');
 
-	// unhide layers that were hidden so objects inside could be locked
-	for (var i = hiddenObjects.length-1; i>=0; i--) {
-		hiddenObjects[i].visible = false;
-	}
+  // unhide layers that were hidden so objects inside could be locked
+  for (var i = hiddenObjects.length-1; i>=0; i--) {
+    hiddenObjects[i].visible = false;
+  }
 
-	// ================================================
+  // ================================================
   // assign artboards to their corresponding breakpoints
-	// ================================================
+  // ================================================
   // (can have more than one artboard per breakpoint.)
 
   // TODO: seems to assume NYT5 environment -- check that it works outside NYT
   var breakpoints = assignBreakpointsToArtboards(nyt5Breakpoints);
 
 
-	// ================================================
-	// grab custom settings, html, css, js and text blocks
-	// ================================================
-	var documentHasSettingsBlock = false;
-	var customBlocks = {};
+  // ================================================
+  // grab custom settings, html, css, js and text blocks
+  // ================================================
+  var documentHasSettingsBlock = false;
+  var customBlocks = {};
 
-	forEach(doc.textFrames, function(thisFrame) {
-		var firstLine = thisFrame.lines.length > 1 ? thisFrame.lines[0].contents : '';
-		var match = /^ai2html-(css|js|html|settings|text)$/.exec(firstLine);
-		var type = match ? match[1] : null;
-		var content = "";
-		if (type) {
-			hideTextFrame(thisFrame);
-			if (type == 'settings') {
-				documentHasSettingsBlock = true;
-				parseSettingsTextBlock(thisFrame, docSettings);
-			} else if (type == 'text') {
-				parseSettingsTextBlock(thisFrame, docSettings);
-			} else {
-				for (var i=1, n=thisFrame.paragraphs.length; i<n; i++) {
-					try {
-						content += "\t\t" + cleanText(thisFrame.paragraphs[i].contents) + "\r";
-					} catch(e) {}
-				}
-				if (!customBlocks[type]) {
-					customBlocks[type] = [];
-				}
-				customBlocks[type].push(content);
-			}
-		}
-	});
-
-
-	// ================================================
-	// add settings text block if one does not exist
-	// ================================================
-
-	if (!documentHasSettingsBlock) {
-		createSettingsBlock();
-		if (docSettings.ai2html_environment=="nyt") {
-			feedback.push("A settings text block was created to the left of all your artboards. Fill out the settings to link your project to the Scoop asset.");
-			return; // Exit the script
-		} else {
-			feedback.push("A settings text block was created to the left of all your artboards. You can use it to customize your output.");
-		}
-	}
+  forEach(doc.textFrames, function(thisFrame) {
+    var firstLine = thisFrame.lines.length > 1 ? thisFrame.lines[0].contents : '';
+    var match = /^ai2html-(css|js|html|settings|text)$/.exec(firstLine);
+    var type = match ? match[1] : null;
+    var content = "";
+    if (type) {
+      hideTextFrame(thisFrame);
+      if (type == 'settings') {
+        documentHasSettingsBlock = true;
+        parseSettingsTextBlock(thisFrame, docSettings);
+      } else if (type == 'text') {
+        parseSettingsTextBlock(thisFrame, docSettings);
+      } else {
+        for (var i=1, n=thisFrame.paragraphs.length; i<n; i++) {
+          try {
+            content += "\t\t" + cleanText(thisFrame.paragraphs[i].contents) + "\r";
+          } catch(e) {}
+        }
+        if (!customBlocks[type]) {
+          customBlocks[type] = [];
+        }
+        customBlocks[type].push(content);
+      }
+    }
+  });
 
 
-	// ================================================
-	// initialization for NYT environment
-	// ================================================
+  // ================================================
+  // add settings text block if one does not exist
+  // ================================================
 
-  if (docSettings.ai2html_environment == "nyt") {
-
-		// Read yml file if it exists to determine what type of project this is
-		//
-		var yaml = readYamlFile(docPath + "../config.yml");
-		if (!yaml) {
-			previewProjectType = "config.yml is missing";
-		} else {
-			if (yaml.project_type == 'ai2html') {
-				previewProjectType = 'ai2html';
-			}
-			if (yaml.scoop_slug) {
-				docSettings.scoop_slug_from_config_yml = yaml.scoop_slug;
-			}
-		}
-
-		if (previewProjectType=="config.yml is missing" ||
-				(previewProjectType=="ai2html" && !folderExists(docPath + "../public/")) ||
-				(previewProjectType!="ai2html" && !folderExists(docPath + "../src/"))) {
-			errors.push("Make sure your Illustrator file is inside the \u201Cai\u201D folder of a Preview project.");
-			errors.push("If the Illustrator file is in the correct folder, your Preview project may be missing a config.yml file or a \u201Cpublic\u201D or a \u201Csrc\u201D folder.");
-			errors.push("If this is an ai2html project, it is probably easier to just create a new ai2html Preview project and move this Illustrator file into the \u201Cai\u201D folder inside the project.");
-			return;
-		}
-
-		// Read .git/config file to get preview slug
-		var gitConfig = readGitConfigFile(docPath + "../.git/config") || {};
-		if (gitConfig.url) {
-			docSettings.preview_slug = gitConfig.url.replace( /^[^:]+:/ , "" ).replace( /\.git$/ , "");
-		}
-
-		docSettings.image_source_path = "_assets/";
-
-		if (previewProjectType=="ai2html") {
-			docSettings.html_output_path      = "/../public/";
-			docSettings.html_output_extension = ".html";
-			docSettings.image_output_path     = "_assets/";
-		}
-
-		if (docSettings.max_width !== "" && !contains(breakpoints, function(bp) {
-			return +docSettings.max_width == bp.upperLimit;
-		})) {
-			warnings.push('The max_width setting of "' + docSettings.max_width + '" is not a valid breakpoint and will create an error when you "preview publish."');
-		}
+  if (!documentHasSettingsBlock) {
+    createSettingsBlock();
+    if (docSettings.ai2html_environment=="nyt") {
+      feedback.push("A settings text block was created to the left of all your artboards. Fill out the settings to link your project to the Scoop asset.");
+      return; // Exit the script
+    } else {
+      feedback.push("A settings text block was created to the left of all your artboards. You can use it to customize your output.");
+    }
   }
 
 
-	// ================================================
-	// initialization for all environments
-	// ================================================
+  // ================================================
+  // initialization for NYT environment
+  // ================================================
 
-	docName = docSettings.project_name || doc.name.replace(/(.+)\.[aieps]+$/,"$1").replace(/ +/g,"-");
-	docName = makeKeyword(docName);
+  if (docSettings.ai2html_environment == "nyt") {
 
-	if (docSettings.image_source_path === null) {
-		docSettings.image_source_path = docSettings.image_output_path;
-	}
+    // Read yml file if it exists to determine what type of project this is
+    //
+    var yaml = readYamlFile(docPath + "../config.yml");
+    if (!yaml) {
+      previewProjectType = "config.yml is missing";
+    } else {
+      if (yaml.project_type == 'ai2html') {
+        previewProjectType = 'ai2html';
+      }
+      if (yaml.scoop_slug) {
+        docSettings.scoop_slug_from_config_yml = yaml.scoop_slug;
+      }
+    }
+
+    if (previewProjectType=="config.yml is missing" ||
+        (previewProjectType=="ai2html" && !folderExists(docPath + "../public/")) ||
+        (previewProjectType!="ai2html" && !folderExists(docPath + "../src/"))) {
+      errors.push("Make sure your Illustrator file is inside the \u201Cai\u201D folder of a Preview project.");
+      errors.push("If the Illustrator file is in the correct folder, your Preview project may be missing a config.yml file or a \u201Cpublic\u201D or a \u201Csrc\u201D folder.");
+      errors.push("If this is an ai2html project, it is probably easier to just create a new ai2html Preview project and move this Illustrator file into the \u201Cai\u201D folder inside the project.");
+      return;
+    }
+
+    // Read .git/config file to get preview slug
+    var gitConfig = readGitConfigFile(docPath + "../.git/config") || {};
+    if (gitConfig.url) {
+      docSettings.preview_slug = gitConfig.url.replace( /^[^:]+:/ , "" ).replace( /\.git$/ , "");
+    }
+
+    docSettings.image_source_path = "_assets/";
+
+    if (previewProjectType=="ai2html") {
+      docSettings.html_output_path      = "/../public/";
+      docSettings.html_output_extension = ".html";
+      docSettings.image_output_path     = "_assets/";
+    }
+
+    if (docSettings.max_width !== "" && !contains(breakpoints, function(bp) {
+      return +docSettings.max_width == bp.upperLimit;
+    })) {
+      warnings.push('The max_width setting of "' + docSettings.max_width + '" is not a valid breakpoint and will create an error when you "preview publish."');
+    }
+  }
 
 
-	// ================================================
-	// Generate HTML, CSS and images for contents of each artboard
-	// ================================================
+  // ================================================
+  // initialization for all environments
+  // ================================================
 
-	var artboardContent = "";
+  docName = docSettings.project_name || doc.name.replace(/(.+)\.[aieps]+$/,"$1").replace(/ +/g,"-");
+  docName = makeKeyword(docName);
 
-	forEachArtboard(function(activeArtboard, abNumber) {
-		T.start();
-		var textHtml = "";
-		doc.artboards.setActiveArtboardIndex(abNumber);
+  if (docSettings.image_source_path === null) {
+    docSettings.image_source_path = docSettings.image_output_path;
+  }
 
-		var docArtboardName  = getArtboardFullName(activeArtboard);
-		var abPos            = getArtboardPos(activeArtboard);
-		var abW              = abPos.width;
-		var abH              = abPos.height;
 
-		pBar.setTitle(docArtboardName + ': Starting to generate HTML...');
-		pBar.setProgress(abNumber/(doc.artboards.length));
+  // ================================================
+  // Generate HTML, CSS and images for contents of each artboard
+  // ================================================
+
+  var artboardContent = "";
+
+  forEachArtboard(function(activeArtboard, abNumber) {
+    T.start();
+    var textHtml = "";
+    doc.artboards.setActiveArtboardIndex(abNumber);
+
+    var docArtboardName  = getArtboardFullName(activeArtboard);
+    var abPos            = getArtboardPos(activeArtboard);
+    var abW              = abPos.width;
+    var abH              = abPos.height;
+
+    pBar.setTitle(docArtboardName + ': Starting to generate HTML...');
+    pBar.setProgress(abNumber/(doc.artboards.length));
 
     // TODO: ask Archie -- why generate <img> tag but not image?
 
-		// ========================
-		// Convert text objects
-		// ========================
-		T.start();
-		pBar.setTitle(docArtboardName + ': Generating text...');
-		var textFrames  = getTextFramesByArtboard(activeArtboard);
-		var pClasses = [];
-		var charClasses = [];
+    // ========================
+    // Convert text objects
+    // ========================
+    T.start();
+    pBar.setTitle(docArtboardName + ': Generating text...');
+    var textFrames  = getTextFramesByArtboard(activeArtboard);
+    var pClasses = [];
+    var charClasses = [];
 
-		forEach(textFrames, function(thisFrame, i) {
-			var textRange, textData, frameId;
+    forEach(textFrames, function(thisFrame, i) {
+      var textRange, textData, frameId;
 
-			// Generate a <div> element for each text frame, including CSS styles
-			if (thisFrame.name !== "") {
-				frameId = makeKeyword(thisFrame.name);
-			} else {
-				frameId = nameSpace + "ai" + abNumber + "-" + (i + 1);
-			}
-			textHtml += '\t\t<div id="' + frameId + '" ' + getTextPositionCss(thisFrame, activeArtboard) + '>\r';
+      // Generate a <div> element for each text frame, including CSS styles
+      if (thisFrame.name !== "") {
+        frameId = makeKeyword(thisFrame.name);
+      } else {
+        frameId = nameSpace + "ai" + abNumber + "-" + (i + 1);
+      }
+      textHtml += '\t\t<div id="' + frameId + '" ' + getTextPositionCss(thisFrame, activeArtboard) + '>\r';
 
-			// Generate a <p> tag for each paragraph or line of text
-			// The following code runs with either paragraphs or lines
-			// Using lines should prevent inconsistent word wrapping between AI and HTML
-			//
-			for (var k=0, n=thisFrame.paragraphs.length; k<n; k++) {
-				textRange = thisFrame.paragraphs[k];
-				textData = convertParagraph(textRange, pClasses, charClasses);
-				// Warning: after calling convertParagraph(), a paragraph object may
-				// become unusable; simply referencing thisFrame.paragraphs[k] may throw an error
-				// (unclear why. sample file: 0125 web DISTRICTmap.ai)
-				textHtml += "\t\t\t<p class='" + textData.classname + "'>" + textData.html + "</p>\r";
+      // Generate a <p> tag for each paragraph or line of text
+      // The following code runs with either paragraphs or lines
+      // Using lines should prevent inconsistent word wrapping between AI and HTML
+      //
+      for (var k=0, n=thisFrame.paragraphs.length; k<n; k++) {
+        textRange = thisFrame.paragraphs[k];
+        textData = convertParagraph(textRange, pClasses, charClasses);
+        // Warning: after calling convertParagraph(), a paragraph object may
+        // become unusable; simply referencing thisFrame.paragraphs[k] may throw an error
+        // (unclear why. sample file: 0125 web DISTRICTmap.ai)
+        textHtml += "\t\t\t<p class='" + textData.classname + "'>" + textData.html + "</p>\r";
 
-			}
-			textHtml += "\t\t</div>\r";
-		});
+      }
+      textHtml += "\t\t</div>\r";
+    });
 
-		T.stop("Text generation");
+    T.stop("Text generation");
 
     // ==========================
     // generate artboard image(s)
@@ -603,53 +603,53 @@ function render() {
       T.stop("Image generation");
     }
 
-		//=====================================
-		// output html file here if doing a file for every artboard
-		//=====================================
+    //=====================================
+    // output html file here if doing a file for every artboard
+    //=====================================
 
-		artboardContent +=
-			"\r\t<!-- Artboard: " + getArtboardName(activeArtboard) + " -->\r" +
-    	generateArtboardDiv(activeArtboard, breakpoints, docSettings) +
-			generateArtboardCss(activeArtboard, pClasses.concat(charClasses), docSettings) +
-			generateImageHtml(activeArtboard, docSettings) +
-			textHtml +
-			"\t</div>\r";
+    artboardContent +=
+      "\r\t<!-- Artboard: " + getArtboardName(activeArtboard) + " -->\r" +
+      generateArtboardDiv(activeArtboard, breakpoints, docSettings) +
+      generateArtboardCss(activeArtboard, pClasses.concat(charClasses), docSettings) +
+      generateImageHtml(activeArtboard, docSettings) +
+      textHtml +
+      "\t</div>\r";
 
-		if (docSettings.output=="multiple-files") {
-			generateHtml(addCustomContent(artboardContent, customBlocks), docArtboardName, docSettings);
-			artboardContent = "";
-		}
-		T.stop("Total for artboard " + abNumber);
+    if (docSettings.output=="multiple-files") {
+      generateHtml(addCustomContent(artboardContent, customBlocks), docArtboardName, docSettings);
+      artboardContent = "";
+    }
+    T.stop("Total for artboard " + abNumber);
 
-	}); // end artboard loop
+  }); // end artboard loop
 
-	//=====================================
-	// output html file here if doing one file for all artboards
-	//=====================================
+  //=====================================
+  // output html file here if doing one file for all artboards
+  //=====================================
 
-	if (docSettings.output=="one-file") {
-		generateHtml(addCustomContent(artboardContent, customBlocks), docName, docSettings);
-	}
+  if (docSettings.output=="one-file") {
+    generateHtml(addCustomContent(artboardContent, customBlocks), docName, docSettings);
+  }
 
-	//=====================================
-	// write configuration file with graphic metadata
-	//=====================================
+  //=====================================
+  // write configuration file with graphic metadata
+  //=====================================
 
-	if ((docSettings.ai2html_environment=="nyt" && previewProjectType=="ai2html") ||
-			(docSettings.ai2html_environment!="nyt" && isTrue(docSettings.create_config_file))) {
+  if ((docSettings.ai2html_environment=="nyt" && previewProjectType=="ai2html") ||
+      (docSettings.ai2html_environment!="nyt" && isTrue(docSettings.create_config_file))) {
     var yamlPath = docPath + docSettings.config_file_path,
         yamlStr = generateYmlFileContent(breakpoints, docSettings);
     checkForOutputFolder(yamlPath.replace(/[^\/]+$/, ""), "configFileFolder");
     saveTextFile(yamlPath, yamlStr);
-	}
+  }
 
-	if (docSettings.image_format.length === 0) {
-		warnings.push("No images were created because no image formats were specified.");
-	}
+  if (docSettings.image_format.length === 0) {
+    warnings.push("No images were created because no image formats were specified.");
+  }
 
-	if (customBlocks.css)  {feedback.push("Custom CSS blocks: " + customBlocks.css.length);}
-	if (customBlocks.html) {feedback.push("Custom HTML blocks: " + customBlocks.html.length);}
-	if (customBlocks.js)   {feedback.push("Custom JS blocks: " + customBlocks.js.length);}
+  if (customBlocks.css)  {feedback.push("Custom CSS blocks: " + customBlocks.css.length);}
+  if (customBlocks.html) {feedback.push("Custom HTML blocks: " + customBlocks.html.length);}
+  if (customBlocks.js)   {feedback.push("Custom JS blocks: " + customBlocks.js.length);}
 
 } // end render()
 
@@ -660,28 +660,28 @@ function render() {
 
 // Remove whitespace from beginning and end of a string
 function trim(s) {
-	return s.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
+  return s.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
 }
 
 // http://samuelmullen.com/2012/03/left-pad-zeroes-in-javascript/
 function zeroPad(value, padding) {
-	var zeroes = "0";
-	for (var i = 0; i < padding; i++) { zeroes += "0"; }
-	return (zeroes + value).slice(padding * -1);
+  var zeroes = "0";
+  for (var i = 0; i < padding; i++) { zeroes += "0"; }
+  return (zeroes + value).slice(padding * -1);
 }
 
 function forEach(arr, cb) {
-	for (var i=0, n=arr.length; i<n; i++) {
-		cb(arr[i], i);
-	}
+  for (var i=0, n=arr.length; i<n; i++) {
+    cb(arr[i], i);
+  }
 }
 
 // obj: value or test function
 function contains(arr, obj) {
-	var test = typeof obj == 'function' ? obj : null;
+  var test = typeof obj == 'function' ? obj : null;
   for (var i=0, n=arr.length; i<n; i++) {
     if (test ? test(arr[i]) : arr[i] === obj) {
-    	return true;
+      return true;
     }
   }
   return false;
@@ -713,88 +713,88 @@ function arraySubtract(a, b) {
 //     .thenBy(function (v1, v2) { return v1.id - v2.id; });
 // );
 function firstBy(f1, f2) {
-	var compare = f2 ? function(a, b) {return f1(a, b) || f2(a, b);} : f1;
-	compare.thenBy = function(f) {return firstBy(compare, f);};
-	return compare;
+  var compare = f2 ? function(a, b) {return f1(a, b) || f2(a, b);} : f1;
+  compare.thenBy = function(f) {return firstBy(compare, f);};
+  return compare;
 }
 
 function makeKeyword(text) {
-	return text.replace( /[^A-Za-z0-9_\-]+/g , "_" );
+  return text.replace( /[^A-Za-z0-9_\-]+/g , "_" );
 }
 
 function cleanText(text) {
-	for (var i=0; i < htmlCharacterCodes.length; i++) {
-		var charCode = htmlCharacterCodes[i];
-		if (text.indexOf(charCode[0]) > -1) {
-			text = text.replace(new RegExp(charCode[0],'g'), charCode[1]);
-		}
-	}
-	return text;
+  for (var i=0; i < htmlCharacterCodes.length; i++) {
+    var charCode = htmlCharacterCodes[i];
+    if (text.indexOf(charCode[0]) > -1) {
+      text = text.replace(new RegExp(charCode[0],'g'), charCode[1]);
+    }
+  }
+  return text;
 }
 
 function straightenCurlyQuotesInsideAngleBrackets(text) {
-	// thanks to jashkenas
-	var tagFinder = /<[^\n]+?>/g;
-	var quoteFinder = /[\u201C‘’\u201D]([^\n]*?)[\u201C‘’\u201D]/g;
-	return text.replace(tagFinder, function(tag){
-		return tag.replace( /[\u201C\u201D]/g , '"' ).replace( /[‘’]/g , "'" );
-	});
+  // thanks to jashkenas
+  var tagFinder = /<[^\n]+?>/g;
+  var quoteFinder = /[\u201C‘’\u201D]([^\n]*?)[\u201C‘’\u201D]/g;
+  return text.replace(tagFinder, function(tag){
+    return tag.replace( /[\u201C\u201D]/g , '"' ).replace( /[‘’]/g , "'" );
+  });
 }
 
 function round(number, precision) {
-	var d = Math.pow(10, precision || 0);
-	return Math.round(number * d) / d;
+  var d = Math.pow(10, precision || 0);
+  return Math.round(number * d) / d;
 }
 
 function folderExists(path) {
-	return new Folder(path).exists;
+  return new Folder(path).exists;
 }
 
 // TODO: value could change during program execution -- does this matter?
 function getDateTimeStamp() {
-	var d             = new Date();
-	var currYear      = d.getFullYear();
-	var currDate      = zeroPad(d.getDate(),2);
-	var currMonth     = zeroPad(d.getMonth() + 1,2); //Months are zero based
-	var currHour      = zeroPad(d.getHours(),2);
-	var currMin       = zeroPad(d.getMinutes(),2);
+  var d             = new Date();
+  var currYear      = d.getFullYear();
+  var currDate      = zeroPad(d.getDate(),2);
+  var currMonth     = zeroPad(d.getMonth() + 1,2); //Months are zero based
+  var currHour      = zeroPad(d.getHours(),2);
+  var currMin       = zeroPad(d.getMinutes(),2);
   return currYear + "-" + currMonth + "-" + currDate + " - " + currHour + ":" + currMin;
 }
 
 function readYamlFile(path) {
-	var file = new File(path);
-	var o = null;
-	var parts;
-	if (file.exists) {
-		o = {};
-		file.open("r");
-		while(!file.eof) {
-			parts = file.readln().split(':');
-			if (parts.length > 1) {
-				o[trim(parts[0])] = trim(parts[1]);
-			}
-		}
-		file.close();
-	}
-	return o;
+  var file = new File(path);
+  var o = null;
+  var parts;
+  if (file.exists) {
+    o = {};
+    file.open("r");
+    while(!file.eof) {
+      parts = file.readln().split(':');
+      if (parts.length > 1) {
+        o[trim(parts[0])] = trim(parts[1]);
+      }
+    }
+    file.close();
+  }
+  return o;
 }
 
 function readGitConfigFile(path) {
-	var file = new File(path);
-	var o = null;
-	var parts;
-	if (file.exists) {
-		o = {};
-		file.open("r");
-		while(!file.eof) {
-			parts = file.readln().split("=");
-			if (parts.length > 1) {
-				o[trim(parts[0])] = trim(parts[1]);
-			}
-		}
-		file.close();
-	}
-	return o;
+  var file = new File(path);
+  var o = null;
+  var parts;
+  if (file.exists) {
+    o = {};
+    file.open("r");
+    while(!file.eof) {
+      parts = file.readln().split("=");
+      if (parts.length > 1) {
+        o[trim(parts[0])] = trim(parts[1]);
+      }
+    }
+    file.close();
+  }
+  return o;
 }
 
 function getRGBColor(r,g,b) {
@@ -837,28 +837,28 @@ function testBoundsIntersection(a, b) {
 function getArtboardPos(ab) {
   var rect = ab.artboardRect,
       x = rect[0],
-			y = -rect[1],
-			w = Math.round(rect[2] - x),
-			h = -rect[3] - y;
-	return {
-		x: x,
-		y: y,
-		width: w,
-		height: h
-	};
+      y = -rect[1],
+      w = Math.round(rect[2] - x),
+      h = -rect[3] - y;
+  return {
+    x: x,
+    y: y,
+    width: w,
+    height: h
+  };
 }
 
 function objectIsHidden(obj) {
-	var hidden = false;
-	while (!hidden && obj && obj.typename != "Document"){
-		if (obj.typename == "Layer") {
-			hidden = !obj.visible;
-		} else {
-			hidden = obj.hidden;
-		}
-		obj = obj.parent;
-	}
-	return hidden;
+  var hidden = false;
+  while (!hidden && obj && obj.typename != "Document"){
+    if (obj.typename == "Layer") {
+      hidden = !obj.visible;
+    } else {
+      hidden = obj.hidden;
+    }
+    obj = obj.parent;
+  }
+  return hidden;
 }
 
 function ProgressBar() {
@@ -868,34 +868,34 @@ function ProgressBar() {
   win.pnl.progBarLabel = win.pnl.add("statictext", [20, 20, 320, 35], "0%");
   win.show();
 
-	function getProgress() {
-	  return win.pnl.progBar.value/win.pnl.progBar.maxvalue;
-	}
+  function getProgress() {
+    return win.pnl.progBar.value/win.pnl.progBar.maxvalue;
+  }
 
-	this.setProgress = function(progress) {
-	  var max = win.pnl.progBar.maxvalue;
-	  // progress is always 0.0 to 1.0
-	  var pct = progress * max;
-	  win.pnl.progBar.value = pct;
-	  win.pnl.progBarLabel.text = Math.round(pct) + "%";
-	  win.update();
-	};
+  this.setProgress = function(progress) {
+    var max = win.pnl.progBar.maxvalue;
+    // progress is always 0.0 to 1.0
+    var pct = progress * max;
+    win.pnl.progBar.value = pct;
+    win.pnl.progBarLabel.text = Math.round(pct) + "%";
+    win.update();
+  };
 
-	this.setTitle = function(title) {
-	  win.pnl.text = title;
-	  win.update();
-	};
+  this.setTitle = function(title) {
+    win.pnl.text = title;
+    win.update();
+  };
 
-	this.increment = function(amount) {
-	  amount = amount || 0.01;
-	  this.setProgress(getProgress() + amount);
-	  win.update();
-	};
+  this.increment = function(amount) {
+    amount = amount || 0.01;
+    this.setProgress(getProgress() + amount);
+    win.update();
+  };
 
-	this.close = function() {
-		win.update();
-		win.close();
-	};
+  this.close = function() {
+    win.update();
+    win.close();
+  };
 }
 
 function testSimilarBounds(a, b, maxOffs) {
@@ -913,19 +913,19 @@ function testSimilarBounds(a, b, maxOffs) {
 // display debugging message in completion alert box
 // (in debug mode)
 function message(msg) {
-	for (var i=1; i<arguments.length; i++) {
-		msg += ' ' + arguments[i];
-	}
-	if (showDebugMessages) feedback.push(msg);
+  for (var i=1; i<arguments.length; i++) {
+    msg += ' ' + arguments[i];
+  }
+  if (showDebugMessages) feedback.push(msg);
 }
 
 // accept inconsistent true/yes setting value
 function isTrue(val) {
-	return val == "true" || val == "yes" || val === true;
+  return val == "true" || val == "yes" || val === true;
 }
 
 function isFalse(val) {
-	return val == "false" || val == "no" || val === false;
+  return val == "false" || val == "no" || val === false;
 }
 
 // Unlock objects necessary for rendering
@@ -1029,37 +1029,37 @@ function initDevEnvironment() {
 
 
 function createSettingsBlock() {
-	var bounds			= getArtboardBounds();
-	var fontSize 		= 15;
-	var leading     = 22;
-	var extraLines  = 6;
-	var width       = 400;
-	var left        = bounds[0] - width - 50;
-	var top 				= bounds[1];
-	var settingsLines = ["ai2html-settings"];
-	var layer, rect, textArea, height;
+  var bounds      = getArtboardBounds();
+  var fontSize     = 15;
+  var leading     = 22;
+  var extraLines  = 6;
+  var width       = 400;
+  var left        = bounds[0] - width - 50;
+  var top         = bounds[1];
+  var settingsLines = ["ai2html-settings"];
+  var layer, rect, textArea, height;
 
-	for (var name in ai2htmlBaseSettings) {
-		if (ai2htmlBaseSettings[name].includeInSettingsBlock) {
-			settingsLines.push(name + ": " + ai2htmlBaseSettings[name].defaultValue);
-		}
-	}
+  for (var name in ai2htmlBaseSettings) {
+    if (ai2htmlBaseSettings[name].includeInSettingsBlock) {
+      settingsLines.push(name + ": " + ai2htmlBaseSettings[name].defaultValue);
+    }
+  }
 
-	try {
-		layer = doc.layers.getByName("ai2html-settings");
-	} catch(e) {
-		layer = doc.layers.add();
-		layer.zOrder(ZOrderMethod.BRINGTOFRONT);
-		layer.name  = "ai2html-settings";
-	}
+  try {
+    layer = doc.layers.getByName("ai2html-settings");
+  } catch(e) {
+    layer = doc.layers.add();
+    layer.zOrder(ZOrderMethod.BRINGTOFRONT);
+    layer.name  = "ai2html-settings";
+  }
 
-	height = leading * (settingsLines.length + extraLines);
-	rect = layer.pathItems.rectangle(top, left, width, height);
-	textArea = layer.textFrames.areaText(rect);
-	textArea.textRange.autoLeading = false;
-	textArea.textRange.characterAttributes.leading = leading;
-	textArea.textRange.characterAttributes.size = fontSize;
-	textArea.contents = settingsLines.join('\n');
+  height = leading * (settingsLines.length + extraLines);
+  rect = layer.pathItems.rectangle(top, left, width, height);
+  textArea = layer.textFrames.areaText(rect);
+  textArea.textRange.autoLeading = false;
+  textArea.textRange.characterAttributes.leading = leading;
+  textArea.textRange.characterAttributes.size = fontSize;
+  textArea.contents = settingsLines.join('\n');
 }
 
 
@@ -1838,24 +1838,24 @@ function getArtboardBounds() {
 }
 
 function getArtboardWidthRange(ab) {
-	var id = getArtboardId(ab);
-	var infoArr = getArtboardInfo();
-	var minw, maxw;
-	// find min width, which is the artboard's own effective width
-	forEach(infoArr, function(info) {
-		if (info.id == id) {
-			minw = info.effectiveWidth;
-		}
-	});
-	// find max width, which is the effective width of the next widest
-	// artboard (if any), minus one pixel
-	forEach(infoArr, function(info) {
-		var w = info.effectiveWidth;
-		if (w > minw && (!maxw || w < maxw)) {
-			maxw = w;
-		}
-	});
-	return [minw, maxw ? maxw - 1 : Infinity];
+  var id = getArtboardId(ab);
+  var infoArr = getArtboardInfo();
+  var minw, maxw;
+  // find min width, which is the artboard's own effective width
+  forEach(infoArr, function(info) {
+    if (info.id == id) {
+      minw = info.effectiveWidth;
+    }
+  });
+  // find max width, which is the effective width of the next widest
+  // artboard (if any), minus one pixel
+  forEach(infoArr, function(info) {
+    var w = info.effectiveWidth;
+    if (w > minw && (!maxw || w < maxw)) {
+      maxw = w;
+    }
+  });
+  return [minw, maxw ? maxw - 1 : Infinity];
 }
 
 // return array info about each usable artboard, sorted from narrow to wide
@@ -1923,17 +1923,17 @@ function assignBreakpointsToArtboards(breakpoints) {
 }
 
 function artboardIsUsable(ab) {
-	return ab.name.search(/^-/) == -1;
+  return ab.name.search(/^-/) == -1;
 }
 
 function forEachArtboard(cb) {
-	var ab;
-	for (var i=0; i<doc.artboards.length; i++) {
-		ab = doc.artboards[i];
-		if (artboardIsUsable(ab)) {
-			cb(ab, i);
-		}
-	}
+  var ab;
+  for (var i=0; i<doc.artboards.length; i++) {
+    ab = doc.artboards[i];
+    if (artboardIsUsable(ab)) {
+      cb(ab, i);
+    }
+  }
 }
 
 // Returns id of largest artboard
@@ -2044,35 +2044,35 @@ function generateImageHtml(ab, settings) {
 
 // Create a promo image from the largest usable artboard
 function createPromoImage(settings) {
-	var PROMO_WIDTH = 1024;
-	var abNumber = findLargestArtboard();
-	if (abNumber == -1) return; // TODO: show error
+  var PROMO_WIDTH = 1024;
+  var abNumber = findLargestArtboard();
+  if (abNumber == -1) return; // TODO: show error
 
-	var artboard         =  doc.artboards[abNumber],
-			abPos            =  getArtboardPos(artboard),
-			promoScale       =  PROMO_WIDTH / abPos.width,
-			promoW           =  abPos.width * promoScale,
-			promoH           =  abPos.height * promoScale,
-			imageDestination =  docPath + docName + "-promo",
-			promoFormat, tmpPngTransparency;
+  var artboard         =  doc.artboards[abNumber],
+      abPos            =  getArtboardPos(artboard),
+      promoScale       =  PROMO_WIDTH / abPos.width,
+      promoW           =  abPos.width * promoScale,
+      promoH           =  abPos.height * promoScale,
+      imageDestination =  docPath + docName + "-promo",
+      promoFormat, tmpPngTransparency;
 
-	// Previous file name was more complicated:
-	// imageDestination = docPath + docSettings.docName + "-" + makeKeyword(ab.name) + "-" + abNumber + "-promo";
+  // Previous file name was more complicated:
+  // imageDestination = docPath + docSettings.docName + "-" + makeKeyword(ab.name) + "-" + abNumber + "-promo";
 
-	doc.artboards.setActiveArtboardIndex(abNumber);
+  doc.artboards.setActiveArtboardIndex(abNumber);
 
-	// Using "jpg" if present in image_format setting, else using "png";
-	if (settings.image_format.indexOf('jpg') > -1) {
-		promoFormat = 'jpg';
-	} else {
-		promoFormat = 'png';
-	}
+  // Using "jpg" if present in image_format setting, else using "png";
+  if (settings.image_format.indexOf('jpg') > -1) {
+    promoFormat = 'jpg';
+  } else {
+    promoFormat = 'png';
+  }
 
-	tmpPngTransparency = settings.png_transparent;
-	settings.png_transparent = "no";
-	exportImageFiles(imageDestination, artboard, [promoFormat], promoScale, "no");
-	settings.png_transparent = tmpPngTransparency;
-	alert("Promo image created\nLocation: " + imageDestination + "." + promoFormat);
+  tmpPngTransparency = settings.png_transparent;
+  settings.png_transparent = "no";
+  exportImageFiles(imageDestination, artboard, [promoFormat], promoScale, "no");
+  settings.png_transparent = tmpPngTransparency;
+  alert("Promo image created\nLocation: " + imageDestination + "." + promoFormat);
 }
 
 // Exports contents of active artboard (without text, unless in test mode)
@@ -2189,16 +2189,15 @@ function exportImageFiles(dest, ab, formats, initialScaling, doubleres) {
 // ===================================
 
 function generateArtboardDiv(ab, breakpoints, settings) {
-	var divId = nameSpace + getArtboardFullName(ab);
-	var classnames = nameSpace + "artboard " + nameSpace + "artboard-v3";
-	var widthRange = getArtboardWidthRange(ab);
-	var html = "";
+  var divId = nameSpace + getArtboardFullName(ab);
+  var classnames = nameSpace + "artboard " + nameSpace + "artboard-v3";
+  var widthRange = getArtboardWidthRange(ab);
+  var html = "";
   if (settings.include_resizer_classes != "no") {
     classnames += " " + findShowClassesForArtboard(ab, breakpoints);
   }
   html += '\t<div id="' + divId + '" class="' + classnames + '"';
   if (settings.include_resizer_widths == "yes") {
-  	message("width range:", JSON.stringify(widthRange))
     // add data-min/max-width attributes
     // TODO: see if we can use breakpoint data to set min and max widths
     html += " data-min-width='" + widthRange[0] + "'";
@@ -2278,235 +2277,235 @@ function generateYmlFileContent(breakpoints, settings) {
 }
 
 function applyTemplate(template, atObject) {
-	var newText = template;
-	for (var atKey in atObject) {
-		var mustachePattern = new RegExp("\\{\\{\\{? *" + atKey + " *\\}\\}\\}?","g");
-		var ejsPattern      = new RegExp("\\<\\%[=]? *" + atKey + " *\\%\\>","g");
-		var replacePattern  = atObject[atKey];
-		newText = newText.replace( mustachePattern , replacePattern );
-		newText = newText.replace( ejsPattern      , replacePattern );
-	}
-	return newText;
+  var newText = template;
+  for (var atKey in atObject) {
+    var mustachePattern = new RegExp("\\{\\{\\{? *" + atKey + " *\\}\\}\\}?","g");
+    var ejsPattern      = new RegExp("\\<\\%[=]? *" + atKey + " *\\%\\>","g");
+    var replacePattern  = atObject[atKey];
+    newText = newText.replace( mustachePattern , replacePattern );
+    newText = newText.replace( ejsPattern      , replacePattern );
+  }
+  return newText;
 }
 
 function outputHtml(htmlText, fileDestination) {
-	var htmlFile = new File(fileDestination);
-	htmlFile.open("w", "TEXT", "TEXT");
-	htmlFile.lineFeed = "Unix";
-	htmlFile.encoding = "UTF-8";
-	htmlFile.writeln(htmlText);
-	htmlFile.close();
+  var htmlFile = new File(fileDestination);
+  htmlFile.open("w", "TEXT", "TEXT");
+  htmlFile.lineFeed = "Unix";
+  htmlFile.encoding = "UTF-8";
+  htmlFile.writeln(htmlText);
+  htmlFile.close();
 }
 
 function checkForOutputFolder(folderPath, nickname) {
-	var outputFolder = new Folder( folderPath );
-	if (!outputFolder.exists) {
-		var outputFolderCreated = outputFolder.create();
-		if (outputFolderCreated) {
-			feedback.push("The " + nickname + " folder did not exist, so the folder was created.");
-		} else {
-			warnings.push("The " + nickname + " folder did not exist and could not be created.");
-		}
-	}
+  var outputFolder = new Folder( folderPath );
+  if (!outputFolder.exists) {
+    var outputFolderCreated = outputFolder.create();
+    if (outputFolderCreated) {
+      feedback.push("The " + nickname + " folder did not exist, so the folder was created.");
+    } else {
+      warnings.push("The " + nickname + " folder did not exist and could not be created.");
+    }
+  }
 }
 
 function getResizerScript() {
-	var f = function(scriptEnvironment) {
-	  // only want one resizer on the page
-	  if (document.documentElement.className.indexOf("g-resizer-v3-init") > -1) return;
-	  document.documentElement.className += " g-resizer-v3-init";
-	  // require IE9+
-	  if (!("querySelector" in document)) return;
-	  function resizer() {
-	    var elements = Array.prototype.slice.call(document.querySelectorAll(".g-artboard-v3[data-min-width]")),
-	        widthById = {};
-	    elements.forEach(function(el) {
-	      var parent = el.parentNode,
-	          width = widthById[parent.id] || parent.getBoundingClientRect().width,
-	          minwidth = el.getAttribute("data-min-width"),
-	          maxwidth = el.getAttribute("data-max-width");
-	      widthById[parent.id] = width;
+  var resizer = function (scriptEnvironment) {
+		// only want one resizer on the page
+		if (document.documentElement.className.indexOf("g-resizer-v3-init") > -1) return;
+		document.documentElement.className += " g-resizer-v3-init";
+		// require IE9+
+		if (!("querySelector" in document)) return;
+		function updateSize() {
+			var elements = Array.prototype.slice.call(document.querySelectorAll(".g-artboard-v3[data-min-width]")),
+					widthById = {};
+			elements.forEach(function(el) {
+				var parent = el.parentNode,
+						width = widthById[parent.id] || parent.getBoundingClientRect().width,
+						minwidth = el.getAttribute("data-min-width"),
+						maxwidth = el.getAttribute("data-max-width");
+				widthById[parent.id] = width;
 
-	      if (+minwidth <= width && (+maxwidth >= width || maxwidth === null)) {
-	        var img = el.querySelector(".g-aiImg");
-	        if (img.getAttribute("data-src") && img.getAttribute("src") != img.getAttribute("data-src")) {
-	          img.setAttribute("src", img.getAttribute("data-src"));
-	        }
-	        el.style.display = "block";
-	      } else {
-	        el.style.display = "none";
-	      }
-	    });
+				if (+minwidth <= width && (+maxwidth >= width || maxwidth === null)) {
+					var img = el.querySelector(".g-aiImg");
+					if (img.getAttribute("data-src") && img.getAttribute("src") != img.getAttribute("data-src")) {
+						img.setAttribute("src", img.getAttribute("data-src"));
+					}
+					el.style.display = "block";
+				} else {
+					el.style.display = "none";
+				}
+			});
 
-	    if (scriptEnvironment=="nyt") {
-	      try {
-	        if (window.parent && window.parent.$) {
-	          window.parent.$("body").trigger("resizedcontent", [window]);
-	        }
-	        document.documentElement.dispatchEvent(new Event("resizedcontent"));
-	        if (window.require && document.querySelector("meta[name=sourceApp]") && document.querySelector("meta[name=sourceApp]").content == "nyt-v5") {
-	          require(["foundation/main"], function() {
-	            require(["shared/interactive/instances/app-communicator"], function(AppCommunicator) {
-	              AppCommunicator.triggerResize();
-	            });
-	          });
-	        }
-	      } catch(e) { console.log(e); }
-	    }
-	  }
+			if (scriptEnvironment=="nyt") {
+				try {
+					if (window.parent && window.parent.$) {
+						window.parent.$("body").trigger("resizedcontent", [window]);
+					}
+					document.documentElement.dispatchEvent(new Event("resizedcontent"));
+					if (window.require && document.querySelector("meta[name=sourceApp]") && document.querySelector("meta[name=sourceApp]").content == "nyt-v5") {
+						require(["foundation/main"], function() {
+							require(["shared/interactive/instances/app-communicator"], function(AppCommunicator) {
+								AppCommunicator.triggerResize();
+							});
+						});
+					}
+				} catch(e) { console.log(e); }
+			}
+		}
 
-	  resizer();
-	  document.addEventListener("DOMContentLoaded", resizer);
-	  // feel free to replace throttle with _.throttle, if available
-	  window.addEventListener("resize", throttle(resizer, 200));
+		updateSize();
+		document.addEventListener("DOMContentLoaded", updateSize);
+		// feel free to replace throttle with _.throttle, if available
+		window.addEventListener("resize", throttle(updateSize, 200));
 
-	  function throttle(func, wait) {
-	    // from underscore.js
-	    var _now = Date.now || function() { return new Date().getTime(); },
-	        context, args, result, timeout = null, previous = 0;
-	    var later = function() {
-	        previous = _now();
-	        timeout = null;
-	        result = func.apply(context, args);
-	        if (!timeout) context = args = null;
-	    };
-	    return function() {
-	      var now = _now(), remaining = wait - (now - previous);
-	      context = this;
-	      args = arguments;
-	      if (remaining <= 0 || remaining > wait) {
-	        if (timeout) {
-	          clearTimeout(timeout);
-	          timeout = null;
-	        }
-	        previous = now;
-	        result = func.apply(context, args);
-	        if (!timeout) context = args = null;
-	      } else if (!timeout) {
-	        timeout = setTimeout(later, remaining);
-	      }
-	      return result;
-	    };
-	  }
+		function throttle(func, wait) {
+			// from underscore.js
+			var _now = Date.now || function() { return new Date().getTime(); },
+					context, args, result, timeout = null, previous = 0;
+			var later = function() {
+					previous = _now();
+					timeout = null;
+					result = func.apply(context, args);
+					if (!timeout) context = args = null;
+			};
+			return function() {
+				var now = _now(), remaining = wait - (now - previous);
+				context = this;
+				args = arguments;
+				if (remaining <= 0 || remaining > wait) {
+					if (timeout) {
+						clearTimeout(timeout);
+						timeout = null;
+					}
+					previous = now;
+					result = func.apply(context, args);
+					if (!timeout) context = args = null;
+				} else if (!timeout) {
+					timeout = setTimeout(later, remaining);
+				}
+				return result;
+			};
+		}
 	};
 
-	// convert function to JS source code
-	var js = '\t(' + trim(f.toString()) + ')("' + (scriptEnvironment || '') + '");';
-	return '<script type="text/javascript">\n' + js + '\n\t</script>\n\n';
+  // convert function to JS source code
+  var js = '\t(' + trim(resizer.toString()) + ')("' + scriptEnvironment + '");';
+  return '<script type="text/javascript">\n' + js + '\n\t</script>\n\n';
 }
 
 
 // Write an HTML page to a file for NYT Preview
 function outputLocalPreviewPage(textForFile, localPreviewDestination, settings) {
-	var localPreviewTemplateText = readTextFile(docPath + settings.local_preview_template);
-	settings.ai2htmlPartial = textForFile; // TODO: don't modify global settings this way
-	var localPreviewHtml = applyTemplate(localPreviewTemplateText, settings);
-	outputHtml(localPreviewHtml, localPreviewDestination);
+  var localPreviewTemplateText = readTextFile(docPath + settings.local_preview_template);
+  settings.ai2htmlPartial = textForFile; // TODO: don't modify global settings this way
+  var localPreviewHtml = applyTemplate(localPreviewTemplateText, settings);
+  outputHtml(localPreviewHtml, localPreviewDestination);
 }
 
 function addCustomContent(content, customBlocks) {
-	if (customBlocks.css) {
-		content = "\r\t<style type='text/css' media='screen,print'>\r" +
-			"\t\t/* Custom CSS */\r\t\t" + customBlocks.join('\r\t\t') +
-			"\t</style>\r" + content;
-	}
-	if (customBlocks.html) {
-		content += "\r\t<!-- Custom HTML -->\r" + customBlocks.html.join('\r') + '\r';
-	}
-	// TODO: assumed JS contained in <script> tag -- verify this?
-	if (customBlocks.js) {
-		content += "\r\t<!-- Custom JS -->\r" + customBlocks.js.join('\r') + '\r';
-	}
-	return content;
+  if (customBlocks.css) {
+    content = "\r\t<style type='text/css' media='screen,print'>\r" +
+      "\t\t/* Custom CSS */\r\t\t" + customBlocks.join('\r\t\t') +
+      "\t</style>\r" + content;
+  }
+  if (customBlocks.html) {
+    content += "\r\t<!-- Custom HTML -->\r" + customBlocks.html.join('\r') + '\r';
+  }
+  // TODO: assumed JS contained in <script> tag -- verify this?
+  if (customBlocks.js) {
+    content += "\r\t<!-- Custom JS -->\r" + customBlocks.js.join('\r') + '\r';
+  }
+  return content;
 }
 
 function generatePageCss(pageName, settings) {
-	var css = "\r\t<style type='text/css' media='screen,print'>\r";
-	if (settings.max_width !== "") {
-		css += "\t\t#" + nameSpace + pageName + "-box {\r";
-		css += "\t\t\tmax-width:" + settings.max_width + "px;\r";
-		css += "\t\t}\r";
-	}
-	if (settings.center_html_output) {
-		css += "\t\t." + nameSpace + "artboard {\r";
-		css += "\t\t\tmargin:0 auto;\r";
-		css += "\t\t}\r";
-	}
-	if (settings.clickable_link !== "") {
-		css += "\t\t." + nameSpace + "ai2htmlLink {\r";
-		css += "\t\t\tdisplay: block;\r";
-		css += "\t\t}\r";
-	}
-	css += "\t</style>\r";
-	css += "\r";
+  var css = "\r\t<style type='text/css' media='screen,print'>\r";
+  if (settings.max_width !== "") {
+    css += "\t\t#" + nameSpace + pageName + "-box {\r";
+    css += "\t\t\tmax-width:" + settings.max_width + "px;\r";
+    css += "\t\t}\r";
+  }
+  if (settings.center_html_output) {
+    css += "\t\t." + nameSpace + "artboard {\r";
+    css += "\t\t\tmargin:0 auto;\r";
+    css += "\t\t}\r";
+  }
+  if (settings.clickable_link !== "") {
+    css += "\t\t." + nameSpace + "ai2htmlLink {\r";
+    css += "\t\t\tdisplay: block;\r";
+    css += "\t\t}\r";
+  }
+  css += "\t</style>\r";
+  css += "\r";
 
-	return css;
+  return css;
 }
 
 // Wrap content HTML in a <div>, add styles and resizer script, write to a file
 function generateHtml(pageContent, pageName, settings) {
-	var linkSrc = settings.clickable_link || "";
-	var textForFile = "";
-	var responsiveCss = "";
-	var responsiveJs = "";
-	var htmlFileDestination, htmlFileDestinationFolder;
+  var linkSrc = settings.clickable_link || "";
+  var textForFile = "";
+  var responsiveCss = "";
+  var responsiveJs = "";
+  var htmlFileDestination, htmlFileDestinationFolder;
 
-	pBar.setTitle('Writing HTML output...');
+  pBar.setTitle('Writing HTML output...');
 
-	if (settings.ai2html_environment == "nyt" && settings.include_resizer_css_js != "no") {
-		responsiveJs = '\t<script src="_assets/resizerScript.js"></script>' + "\n";
-		if (previewProjectType == "ai2html") {
-			responsiveCss = '\t<link rel="stylesheet" href="_assets/resizerStyle.css">' + "\n";
-		}
-	}
-	if (settings.include_resizer_script=="yes") {
-		responsiveJs  = '\t' + getResizerScript() + '\n';
-		responsiveCss = "";
-	}
+  if (settings.ai2html_environment == "nyt" && settings.include_resizer_css_js != "no") {
+    responsiveJs = '\t<script src="_assets/resizerScript.js"></script>' + "\n";
+    if (previewProjectType == "ai2html") {
+      responsiveCss = '\t<link rel="stylesheet" href="_assets/resizerStyle.css">' + "\n";
+    }
+  }
+  if (settings.include_resizer_script=="yes") {
+    responsiveJs  = '\t' + getResizerScript() + '\n';
+    responsiveCss = "";
+  }
 
-	// wrap content in a <div> tag
-	textForFile += "<div id='" + nameSpace + pageName + "-box' class='ai2html'>\r";
+  // wrap content in a <div> tag
+  textForFile += "<div id='" + nameSpace + pageName + "-box' class='ai2html'>\r";
 
-	textForFile += "\t<!-- Generated by ai2html v" + scriptVersion + " - " + getDateTimeStamp() + " -->\r";
-	textForFile += "\t<!-- ai file: " + doc.name + " -->\r";
-	if (settings.ai2html_environment == "nyt") {
-		textForFile += "\t<!-- preview: " + settings.preview_slug + " -->\r";
-		textForFile += "\t<!-- scoop  : " + settings.scoop_slug_from_config_yml + " -->\r";
-	}
-	textForFile += generatePageCss(pageName, settings);
+  textForFile += "\t<!-- Generated by ai2html v" + scriptVersion + " - " + getDateTimeStamp() + " -->\r";
+  textForFile += "\t<!-- ai file: " + doc.name + " -->\r";
+  if (settings.ai2html_environment == "nyt") {
+    textForFile += "\t<!-- preview: " + settings.preview_slug + " -->\r";
+    textForFile += "\t<!-- scoop  : " + settings.scoop_slug_from_config_yml + " -->\r";
+  }
+  textForFile += generatePageCss(pageName, settings);
 
-	// optional link around content
-	if (linkSrc) {
-		textForFile += "\t<a class='" + nameSpace + "ai2htmlLink' href='" + linkSrc + "'>\r";
-	}
+  // optional link around content
+  if (linkSrc) {
+    textForFile += "\t<a class='" + nameSpace + "ai2htmlLink' href='" + linkSrc + "'>\r";
+  }
 
-	textForFile += responsiveCss;
-	textForFile += pageContent;
-	textForFile += responsiveJs;
+  textForFile += responsiveCss;
+  textForFile += pageContent;
+  textForFile += responsiveJs;
 
-	if (linkSrc) {
-		textForFile += "\t</a>\r";
-	}
+  if (linkSrc) {
+    textForFile += "\t</a>\r";
+  }
 
-	// close <div>
-	textForFile += "\t<!-- End ai2html" + " - " + getDateTimeStamp() + " -->\r</div>\r";
+  // close <div>
+  textForFile += "\t<!-- End ai2html" + " - " + getDateTimeStamp() + " -->\r</div>\r";
 
-	textForFile = applyTemplate(textForFile, settings);
-	htmlFileDestinationFolder = docPath + settings.html_output_path;
-	checkForOutputFolder(htmlFileDestinationFolder, "html_output_path");
-	htmlFileDestination = htmlFileDestinationFolder + pageName + settings.html_output_extension;
+  textForFile = applyTemplate(textForFile, settings);
+  htmlFileDestinationFolder = docPath + settings.html_output_path;
+  checkForOutputFolder(htmlFileDestinationFolder, "html_output_path");
+  htmlFileDestination = htmlFileDestinationFolder + pageName + settings.html_output_extension;
 
-	if (settings.output == 'one-file' && previewProjectType == 'ai2html') {
-		htmlFileDestination = htmlFileDestinationFolder + "index" + settings.html_output_extension;
-	}
+  if (settings.output == 'one-file' && previewProjectType == 'ai2html') {
+    htmlFileDestination = htmlFileDestinationFolder + "index" + settings.html_output_extension;
+  }
 
-	// write file
-	outputHtml(textForFile, htmlFileDestination);
+  // write file
+  outputHtml(textForFile, htmlFileDestination);
 
-	// process local preview template if appropriate
-	if (settings.local_preview_template !== "") {
-		// TODO: may have missed a condition, need to compare with original version
-		var previewFileDestination = htmlFileDestinationFolder + pageName + ".preview.html";
-		outputLocalPreviewPage(textForFile, previewFileDestination, settings);
-	}
+  // process local preview template if appropriate
+  if (settings.local_preview_template !== "") {
+    // TODO: may have missed a condition, need to compare with original version
+    var previewFileDestination = htmlFileDestinationFolder + pageName + ".preview.html";
+    outputLocalPreviewPage(textForFile, previewFileDestination, settings);
+  }
 }
