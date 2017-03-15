@@ -588,7 +588,7 @@ function render() {
       //
       for (var k=0, n=thisFrame.paragraphs.length; k<n; k++) {
         textRange = thisFrame.paragraphs[k];
-        textData = convertParagraph(textRange, pClasses, charClasses);
+        textData = convertParagraph(textRange, pClasses, charClasses, thisFrame);
         // Warning: after calling convertParagraph(), a paragraph object may
         // become unusable; simply referencing thisFrame.paragraphs[k] may throw an error
         // (unclear why. sample file: 0125 web DISTRICTmap.ai)
@@ -842,20 +842,6 @@ function testBoundsIntersection(a, b) {
   return a[2] >= b[0] && b[2] >= a[0] && a[3] <= b[1] && b[3] <= a[1];
 }
 
-function getArtboardPos(ab) {
-  var rect = ab.artboardRect,
-      x = rect[0],
-      y = -rect[1],
-      w = Math.round(rect[2] - x),
-      h = -rect[3] - y;
-  return {
-    x: x,
-    y: y,
-    width: w,
-    height: h
-  };
-}
-
 function objectIsHidden(obj) {
   var hidden = false;
   while (!hidden && obj && obj.typename != "Document"){
@@ -867,6 +853,15 @@ function objectIsHidden(obj) {
     obj = obj.parent;
   }
   return hidden;
+}
+
+function getComputedOpacity(obj) {
+  var opacity = 1;
+  while (obj && obj.typename != "Document") {
+    opacity *= obj.opacity / 100;
+    obj = obj.parent;
+  }
+  return opacity * 100;
 }
 
 function ProgressBar() {
@@ -1202,19 +1197,14 @@ function getCharStyle(c) {
 
 function getParagraphStyle(p) {
   // get character style
+  // TODO: consider using the most common character style for the characters
+  //    in this paragraph instead of p.characterAttributes
   var s = getCharStyle(p.characterAttributes);
-  // var s = getCharStyle(p.characters[0]);
   // add paragraph-related styles
   s.leading = Math.round(p.leading);
   s.spaceBefore = Math.round(p.spaceBefore);
   s.spaceAfter = Math.round(p.spaceAfter);
   s.justification = String(p.justification);
-
-  // TODO: try to detect opacity.
-  // Opacity of text ranges is not detectable via the API.
-  // (It is detectable on TextFrames, Groups, Layers, etc)
-  // s.opacity = 100;
-
   return s;
 }
 
@@ -1252,8 +1242,9 @@ function getTextStyleClass(style, classes, name) {
 // for each string of characters and for the entire paragraph
 // p: a TextRange object (could be a line or a paragraph)
 // pClasses, charClasses: arrays of accumulated css class data
+// textFrame: TextFrame object containing this text
 //
-function convertParagraph(p, pClasses, charClasses) {
+function convertParagraph(p, pClasses, charClasses, textFrame) {
   var pStyle, uniqStyle, html, classname;
   if (p.characters.length === 0) {
     // Handle empty paragraphs
@@ -1268,6 +1259,10 @@ function convertParagraph(p, pClasses, charClasses) {
     //       common detected pg style as the default pg style
     //       (this would require two passes to generate classes)
     pStyle = getParagraphStyle(p);
+    // The scripting API doesn't give us access to opacity of TextRange objects
+    //   (including individual characters). The best we can do is get the
+    //   computed opacity of the current TextFrame
+    pStyle.opacity = getComputedOpacity(textFrame);
     html = convertParagraphSegments(getParagraphSegments(p, pStyle, charClasses));
     uniqStyle = getTextStyleDiff(pStyle, defaultParagraphStyle) || {};
     classname = getTextStyleClass(uniqStyle, pClasses, 'aiPstyle');
@@ -1331,13 +1326,12 @@ function generateStyleCss(s, inline) {
   if ('leading' in s) {
     styles.push("line-height:" + s.leading + "px;");
   }
-  /*
-  if (('opacity' in s) && s.opacity != 100) {
-    styles.push("filter: alpha(opacity=" + (s.opacity * 100) + ");");
-    styles.push("-ms-filter:'progid:DXImageTransform.Microsoft.Alpha(Opacity=" + (s.opacity) + ")';");
-    styles.push("opacity:" + (s.opacity / 100) + ";");
+  if (('opacity' in s) && s.opacity < 100) {
+    styles.push("filter: alpha(opacity=" + Math.round(s.opacity) + ");");
+    styles.push("-ms-filter:'progid:DXImageTransform.Microsoft.Alpha(Opacity=" +
+        Math.round(s.opacity) + ")';");
+    styles.push("opacity:" + round(s.opacity / 100, cssPrecision) + ";");
   }
-  */
   if (s.spaceBefore > 0) {
     styles.push("padding-top:" + s.spaceBefore + "px;");
   }
@@ -1774,6 +1768,20 @@ function getUntransformedTextBounds(textFrame) {
 // ==============================
 // ai2html artboard functions
 // ==============================
+
+function getArtboardPos(ab) {
+  var rect = ab.artboardRect,
+      x = rect[0],
+      y = -rect[1],
+      w = Math.round(rect[2] - x),
+      h = -rect[3] - y;
+  return {
+    x: x,
+    y: y,
+    width: w,
+    height: h
+  };
+}
 
 // Get numerical index of an artboard in the doc.artboards array
 function getArtboardId(ab) {
