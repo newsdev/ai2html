@@ -527,7 +527,7 @@ function render() {
       docSettings.image_output_path     = "_assets/";
     }
 
-    if (docSettings.max_width !== "" && !contains(breakpoints, function(bp) {
+    if (docSettings.max_width && !contains(breakpoints, function(bp) {
       return +docSettings.max_width == bp.upperLimit;
     })) {
       warnings.push('The max_width setting of "' + docSettings.max_width + '" is not a valid breakpoint and will create an error when you "preview publish."');
@@ -982,7 +982,7 @@ function unlockObjects() {
       lockedObjects.push(group);
     }
     unlockObjectsInside(group);
-  };
+  }
 }
 
 function forEachLayer(cb, parent) {
@@ -1122,24 +1122,25 @@ function showCompletionAlert(showPrompt) {
 }
 
 function restoreDocumentState() {
+  var i;
   // Unhide stuff that was hidden during processing
-  for (var i = 0; i < textFramesToUnhide.length; i++) {
+  for (i = 0; i < textFramesToUnhide.length; i++) {
     var currentFrameToUnhide = textFramesToUnhide[i];
     currentFrameToUnhide.hidden = false;
   }
 
   // Unhide layers so objects inside can be unlocked
-  for (var i = hiddenObjects.length-1; i>=0; i--) {
+  for (i = hiddenObjects.length-1; i>=0; i--) {
     hiddenObjects[i].visible = true;
   }
 
   // Restore locked objects
-  for (var i = lockedObjects.length-1; i>=0; i--) {
+  for (i = lockedObjects.length-1; i>=0; i--) {
     lockedObjects[i].locked = true;
   }
 
   // Restore hidden layers
-  for (var i = hiddenObjects.length-1; i>=0; i--) {
+  for (i = hiddenObjects.length-1; i>=0; i--) {
     hiddenObjects[i].visible = false;
   }
 }
@@ -1956,11 +1957,12 @@ function captureArtboardImage(ab, textFrames, settings) {
   var docArtboardName = getArtboardFullName(ab);
   var imageDestinationFolder = docPath + settings.html_output_path + settings.image_output_path;
   var imageDestination = imageDestinationFolder + docArtboardName;
+  var hiddenItemsOutsideArtboard, i;
   checkForOutputFolder(imageDestinationFolder, "image_output_path");
 
   if (settings.testing_mode != "yes") {
     // Hide text frames in preparation for image generation
-    for (var i=0; i<textFrames.length; i++) {
+    for (i=0; i<textFrames.length; i++) {
       textFrames[i].hidden = true;
     }
   }
@@ -1968,19 +1970,21 @@ function captureArtboardImage(ab, textFrames, settings) {
   // if in svg export, hide path elements outside of the current artboard
   // TODO: ask Archie about this -- why only "path elements" in comment
   if (contains(settings.image_format, 'svg')) {
-    var hiddenItemsOutsideArtboard = hideElementsOutsideArtboard(ab);
+    hiddenItemsOutsideArtboard = hideElementsOutsideArtboard(ab);
   }
 
   exportImageFiles(imageDestination, ab, settings.image_format, 1, docSettings.use_2x_images_if_possible);
 
   if (contains(settings.image_format, 'svg')) {
     // unhide non-text elements hidden before export
-    forEach(hiddenItemsOutsideArtboard, function(item) {item.hidden = false;});
+    for (i=0; i<hiddenItemsOutsideArtboard.length; i++) {
+      hiddenItemsOutsideArtboard[i].hidden = false;
+    }
   }
 
   // unhide text now if NOT in testing mode
   if (settings.testing_mode != "yes") {
-    for (var i=0; i<textFrames.length; i++) {
+    for (i=0; i<textFrames.length; i++) {
       textFrames[i].hidden = false;
     }
   }
@@ -2281,87 +2285,89 @@ function checkForOutputFolder(folderPath, nickname) {
 
 function getResizerScript() {
   var resizer = function (scriptEnvironment) {
-		// only want one resizer on the page
-		if (document.documentElement.className.indexOf("g-resizer-v3-init") > -1) return;
-		document.documentElement.className += " g-resizer-v3-init";
-		// require IE9+
-		if (!("querySelector" in document)) return;
-		function updateSize() {
-			var elements = Array.prototype.slice.call(document.querySelectorAll(".g-artboard-v3[data-min-width]")),
-					widthById = {};
-			elements.forEach(function(el) {
-				var parent = el.parentNode,
-						width = widthById[parent.id] || parent.getBoundingClientRect().width,
-						minwidth = el.getAttribute("data-min-width"),
-						maxwidth = el.getAttribute("data-max-width");
-				widthById[parent.id] = width;
+    // only want one resizer on the page
+    if (document.documentElement.className.indexOf("g-resizer-v3-init") > -1) return;
+    document.documentElement.className += " g-resizer-v3-init";
+    // require IE9+
+    if (!("querySelector" in document)) return;
+    function updateSize() {
+      var elements = Array.prototype.slice.call(document.querySelectorAll(".g-artboard-v3[data-min-width]")),
+          widthById = {};
+      elements.forEach(function(el) {
+        var parent = el.parentNode,
+            width = widthById[parent.id] || parent.getBoundingClientRect().width,
+            minwidth = el.getAttribute("data-min-width"),
+            maxwidth = el.getAttribute("data-max-width");
+        widthById[parent.id] = width;
 
-				if (+minwidth <= width && (+maxwidth >= width || maxwidth === null)) {
-					var img = el.querySelector(".g-aiImg");
-					if (img.getAttribute("data-src") && img.getAttribute("src") != img.getAttribute("data-src")) {
-						img.setAttribute("src", img.getAttribute("data-src"));
-					}
-					el.style.display = "block";
-				} else {
-					el.style.display = "none";
-				}
-			});
+        if (+minwidth <= width && (+maxwidth >= width || maxwidth === null)) {
+          var img = el.querySelector(".g-aiImg");
+          if (img.getAttribute("data-src") && img.getAttribute("src") != img.getAttribute("data-src")) {
+            img.setAttribute("src", img.getAttribute("data-src"));
+          }
+          el.style.display = "block";
+        } else {
+          el.style.display = "none";
+        }
+      });
 
-			if (scriptEnvironment=="nyt") {
-				try {
-					if (window.parent && window.parent.$) {
-						window.parent.$("body").trigger("resizedcontent", [window]);
-					}
-					document.documentElement.dispatchEvent(new Event("resizedcontent"));
-					if (window.require && document.querySelector("meta[name=sourceApp]") && document.querySelector("meta[name=sourceApp]").content == "nyt-v5") {
-						require(["foundation/main"], function() {
-							require(["shared/interactive/instances/app-communicator"], function(AppCommunicator) {
-								AppCommunicator.triggerResize();
-							});
-						});
-					}
-				} catch(e) { console.log(e); }
-			}
-		}
+      if (scriptEnvironment=="nyt") {
+        try {
+          if (window.parent && window.parent.$) {
+            window.parent.$("body").trigger("resizedcontent", [window]);
+          }
+          document.documentElement.dispatchEvent(new Event("resizedcontent"));
+          if (window.require && document.querySelector("meta[name=sourceApp]") && document.querySelector("meta[name=sourceApp]").content == "nyt-v5") {
+            require(["foundation/main"], function() {
+              require(["shared/interactive/instances/app-communicator"], function(AppCommunicator) {
+                AppCommunicator.triggerResize();
+              });
+            });
+          }
+        } catch(e) { console.log(e); }
+      }
+    }
 
-		updateSize();
-		document.addEventListener("DOMContentLoaded", updateSize);
-		// feel free to replace throttle with _.throttle, if available
-		window.addEventListener("resize", throttle(updateSize, 200));
+    updateSize();
+    document.addEventListener("DOMContentLoaded", updateSize);
+    // feel free to replace throttle with _.throttle, if available
+    window.addEventListener("resize", throttle(updateSize, 200));
 
-		function throttle(func, wait) {
-			// from underscore.js
-			var _now = Date.now || function() { return new Date().getTime(); },
-					context, args, result, timeout = null, previous = 0;
-			var later = function() {
-					previous = _now();
-					timeout = null;
-					result = func.apply(context, args);
-					if (!timeout) context = args = null;
-			};
-			return function() {
-				var now = _now(), remaining = wait - (now - previous);
-				context = this;
-				args = arguments;
-				if (remaining <= 0 || remaining > wait) {
-					if (timeout) {
-						clearTimeout(timeout);
-						timeout = null;
-					}
-					previous = now;
-					result = func.apply(context, args);
-					if (!timeout) context = args = null;
-				} else if (!timeout) {
-					timeout = setTimeout(later, remaining);
-				}
-				return result;
-			};
-		}
-	};
+    function throttle(func, wait) {
+      // from underscore.js
+      var _now = Date.now || function() { return new Date().getTime(); },
+          context, args, result, timeout = null, previous = 0;
+      var later = function() {
+          previous = _now();
+          timeout = null;
+          result = func.apply(context, args);
+          if (!timeout) context = args = null;
+      };
+      return function() {
+        var now = _now(), remaining = wait - (now - previous);
+        context = this;
+        args = arguments;
+        if (remaining <= 0 || remaining > wait) {
+          if (timeout) {
+            clearTimeout(timeout);
+            timeout = null;
+          }
+          previous = now;
+          result = func.apply(context, args);
+          if (!timeout) context = args = null;
+        } else if (!timeout) {
+          timeout = setTimeout(later, remaining);
+        }
+        return result;
+      };
+    }
+  };
 
   // convert function to JS source code
-  var js = '\t(' + trim(resizer.toString()) + ')("' + scriptEnvironment + '");';
-  return '<script type="text/javascript">\n' + js + '\n\t</script>\n\n';
+  var resizerJs = '(' +
+    trim(resizer.toString().replace(/  /g, '\t')) + // indent with tabs
+    ')("' + scriptEnvironment + '");';
+  return '<script type="text/javascript">\n\t' + resizerJs + '\n\t</script>\n\n';
 }
 
 
