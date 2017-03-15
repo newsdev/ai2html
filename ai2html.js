@@ -1774,6 +1774,7 @@ function getUntransformedTextBounds(textFrame) {
 // ai2html artboard functions
 // ==============================
 
+// Get numerical index of an artboard in the doc.artboards array
 function getArtboardId(ab) {
   var id = 0;
   forEachArtboard(function(ab2, i) {
@@ -1782,6 +1783,8 @@ function getArtboardId(ab) {
   return id;
 }
 
+// TODO: prevent duplicate names? or treat duplicate names an an error condition?
+// (artboard name is assumed to be unique in several places)
 function getArtboardName(ab) {
   return makeKeyword(ab.name.replace( /^(.+):\d+$/, "$1"));
 }
@@ -1806,6 +1809,7 @@ function getArtboardBounds() {
   return bounds;
 }
 
+// return responsive artboard widths as an array [minw, maxw]
 function getArtboardWidthRange(ab) {
   var id = getArtboardId(ab);
   var infoArr = getArtboardInfo();
@@ -1827,7 +1831,7 @@ function getArtboardWidthRange(ab) {
   return [minw, maxw ? maxw - 1 : Infinity];
 }
 
-// return array info about each usable artboard, sorted from narrow to wide
+// return array of data records about each usable artboard, sorted from narrow to wide
 function getArtboardInfo() {
   var artboards = [];
   forEachArtboard(function(ab, i) {
@@ -1857,8 +1861,9 @@ function findShowClassesForArtboard(ab, breakpoints) {
   return classes.join(' ');
 }
 
-// Get array of data records about breakpoints with artboards assigned to them
+// Get array of data records for breakpoints that have artboards assigned to them
 // (sorted from narrow to wide)
+// breakpoints: Array of data about all possible breakpoints
 function assignBreakpointsToArtboards(breakpoints) {
   var abArr = getArtboardInfo(); // get data records for each artboard
   var bpArr = [];
@@ -1891,21 +1896,17 @@ function assignBreakpointsToArtboards(breakpoints) {
   return bpArr;
 }
 
-function artboardIsUsable(ab) {
-  return ab.name.search(/^-/) == -1;
-}
-
 function forEachArtboard(cb) {
   var ab;
   for (var i=0; i<doc.artboards.length; i++) {
     ab = doc.artboards[i];
-    if (artboardIsUsable(ab)) {
+    if (!/^-/.test(ab.name)) { // exclude artboards with names starting w/ "-"
       cb(ab, i);
     }
   }
 }
 
-// Returns id of largest artboard
+// Returns id of artboard with largest area
 function findLargestArtboard() {
   var largestId = -1;
   var largestArea = 0;
