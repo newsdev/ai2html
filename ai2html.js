@@ -2261,7 +2261,7 @@ if (feedback.length > 0) {
 
 pBar.close();
 
-if (docSettings.show_completion_dialog_box=="true") {
+if (docSettings.show_completion_dialog_box=="true" || docSettings.show_completion_dialog_box=="yes") {
 	alert(alertHed + "\n" + alertText + "\n\n\n================\nai2html-nyt5 v"+scriptVersion);
 };
 
