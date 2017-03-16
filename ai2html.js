@@ -279,7 +279,6 @@ var defaultParagraphStyle = {
 
 var nameSpace           = "g-";
 var cssPrecision        = 4;
-var outputType          = "pct"; // "abs" or "pct"
 // value between 0 and 255 lower than which if all three RGB values are below
 // then force the RGB to #000 so it is a pure black
 var  rgbBlackThreshold  = 36;
@@ -1731,40 +1730,24 @@ function getTextPositionCss(thisFrame, ab) {
     if (kind == 'area') style += "width: " + (u_width * (1 + (extraWidthPct/100))) + "px;";
 
   } else {
-
-    if (outputType=="abs") {
-      style += "top:" + roundTo(htmlY) + "px;";
-      if (alignment=="left") {
-        style += "left:"  + roundTo(htmlL) + "px;";
-        style += "width:" + roundTo(htmlW) + "px;";
-      } else if (alignment=="right") {
-        style += "right:" + roundTo(htmlR) + "px;";
-        style += "width:" + roundTo(htmlW) + "px;";
-      } if (alignment=="center") {
-        style += "left:"  + roundTo(htmlL) + "px;";
-        style += "width:" + roundTo(htmlW) + "px;";
-        style += "margin-left:" + roundTo(htmlLM) + "px;";
-      }
-    } else if (outputType=="pct") {
-      if (thisFrameAttributes.valign==="bottom") {
-        style += "bottom:" + roundTo(100 - (htmlB / abPos.height * 100), cssPrecision) + "%;";
-      } else {
-        style += "top:" + roundTo(htmlT / abPos.height * 100, cssPrecision) + "%;";
-      }
-      if (alignment=="right") {
-        style += "right:" + roundTo(htmlR / abPos.width * 100, cssPrecision) + "%;";
-        if (kind=="area") {
-          style += "width:" + roundTo(htmlW / abPos.width * 100, cssPrecision) + "%;";
-        }
-      } else if (alignment=="center") {
-        style += "left:" + roundTo(htmlL / abPos.width * 100, cssPrecision) + "%;";
+    if (thisFrameAttributes.valign==="bottom") {
+      style += "bottom:" + roundTo(100 - (htmlB / abPos.height * 100), cssPrecision) + "%;";
+    } else {
+      style += "top:" + roundTo(htmlT / abPos.height * 100, cssPrecision) + "%;";
+    }
+    if (alignment=="right") {
+      style += "right:" + roundTo(htmlR / abPos.width * 100, cssPrecision) + "%;";
+      if (kind=="area") {
         style += "width:" + roundTo(htmlW / abPos.width * 100, cssPrecision) + "%;";
-        style += "margin-left:" + roundTo(htmlLM / abPos.width * 100, cssPrecision) + "%;";
-      } else {
-        style += "left:" + roundTo(htmlL / abPos.width * 100, cssPrecision) + "%;";
-        if (kind=="area") {
-          style += "width:" + roundTo(htmlW / abPos.width * 100, cssPrecision) + "%;";
-        }
+      }
+    } else if (alignment=="center") {
+      style += "left:" + roundTo(htmlL / abPos.width * 100, cssPrecision) + "%;";
+      style += "width:" + roundTo(htmlW / abPos.width * 100, cssPrecision) + "%;";
+      style += "margin-left:" + roundTo(htmlLM / abPos.width * 100, cssPrecision) + "%;";
+    } else {
+      style += "left:" + roundTo(htmlL / abPos.width * 100, cssPrecision) + "%;";
+      if (kind=="area") {
+        style += "width:" + roundTo(htmlW / abPos.width * 100, cssPrecision) + "%;";
       }
     }
   }
@@ -2074,18 +2057,12 @@ function generateImageHtml(ab, settings) {
       src = settings.image_source_path + abName + "." + extension,
       html;
 
-  html = '\t\t<img id="' + imgId + '"';
-  if (outputType == "abs") {
-    html += ' class="' + nameSpace + 'aiAbs ' + nameSpace + 'aiImg" width="' +
-        abPos.width + '" height="' + Math.round(abPos.height) + '"';
-  } else if (outputType == "pct") {
-    html += ' class="' + nameSpace + 'aiImg"';
-    if (isTrue(settings.use_lazy_loader)) {
-      html += ' data-height-multiplier="' + roundTo(abPos.height / abPos.width, 4) + '"';
-      html += ' data-src="' + src + '"';
-      // spaceholder while image loads
-      src = 'data:image/gif;base64,R0lGODlhCgAKAIAAAB8fHwAAACH5BAEAAAAALAAAAAAKAAoAAAIIhI+py+0PYysAOw==';
-    }
+  html = '\t\t<img id="' + imgId + '" class="' + nameSpace + 'aiImg"';
+  if (isTrue(settings.use_lazy_loader)) {
+    html += ' data-height-multiplier="' + roundTo(abPos.height / abPos.width, 4) + '"';
+    html += ' data-src="' + src + '"';
+    // spaceholder while image loads
+    src = 'data:image/gif;base64,R0lGODlhCgAKAIAAAB8fHwAAACH5BAEAAAAALAAAAAAKAAoAAAIIhI+py+0PYysAOw==';
   }
   html += ' src="' + src + '"/>\r';
   return html;
