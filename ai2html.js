@@ -325,6 +325,9 @@ if (jsEnvironment == 'node') {
     contains,
     arraySubtract,
     firstBy,
+    zeroPad,
+    roundTo,
+    folderExists,
     readGitConfigFile,
     readYamlConfigFile
   ].forEach(function(f) {
@@ -687,11 +690,10 @@ function trim(s) {
   return s.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
 }
 
-// http://samuelmullen.com/2012/03/left-pad-zeroes-in-javascript/
-function zeroPad(value, padding) {
-  var zeroes = "0";
-  for (var i = 0; i < padding; i++) { zeroes += "0"; }
-  return (zeroes + value).slice(padding * -1);
+function zeroPad(val, digits) {
+  var str = String(val);
+  while (str.length < digits) str = '0' + str;
+  return str;
 }
 
 function forEach(arr, cb) {
@@ -765,7 +767,7 @@ function straightenCurlyQuotesInsideAngleBrackets(text) {
   });
 }
 
-function round(number, precision) {
+function roundTo(number, precision) {
   var d = Math.pow(10, precision || 0);
   return Math.round(number * d) / d;
 }
@@ -776,13 +778,13 @@ function folderExists(path) {
 
 // TODO: value could change during program execution -- does this matter?
 function getDateTimeStamp() {
-  var d             = new Date();
-  var currYear      = d.getFullYear();
-  var currDate      = zeroPad(d.getDate(),2);
-  var currMonth     = zeroPad(d.getMonth() + 1,2); //Months are zero based
-  var currHour      = zeroPad(d.getHours(),2);
-  var currMin       = zeroPad(d.getMinutes(),2);
-  return currYear + "-" + currMonth + "-" + currDate + " - " + currHour + ":" + currMin;
+  var d     = new Date();
+  var year  = d.getFullYear();
+  var date  = zeroPad(d.getDate(),2);
+  var month = zeroPad(d.getMonth() + 1,2);
+  var hour  = zeroPad(d.getHours(),2);
+  var min   = zeroPad(d.getMinutes(),2);
+  return year + "-" + month + "-" + date + " - " + hour + ":" + min;
 }
 
 // Very simple Yaml parsing. Does not implement nested properties and other features
@@ -1382,7 +1384,7 @@ function generateStyleCss(s, inline) {
     styles.push("filter: alpha(opacity=" + Math.round(s.opacity) + ");");
     styles.push("-ms-filter:'progid:DXImageTransform.Microsoft.Alpha(Opacity=" +
         Math.round(s.opacity) + ")';");
-    styles.push("opacity:" + round(s.opacity / 100, cssPrecision) + ";");
+    styles.push("opacity:" + roundTo(s.opacity / 100, cssPrecision) + ";");
   }
   if (s.spaceBefore > 0) {
     styles.push("padding-top:" + s.spaceBefore + "px;");
@@ -1391,7 +1393,7 @@ function generateStyleCss(s, inline) {
     styles.push("padding-bottom:" + s.spaceAfter + "px;");
   }
   if (('tracking' in s) && s.tracking !== 0) {
-    styles.push("letter-spacing:" + round(s.tracking / 1200, cssPrecision) + "em;");
+    styles.push("letter-spacing:" + roundTo(s.tracking / 1200, cssPrecision) + "em;");
   }
   if (s.justification && (tmp = getJustificationCss(s.justification))) {
     styles.push("text-align:" + tmp + ";");
@@ -1677,8 +1679,8 @@ function getTextPositionCss(thisFrame, ab) {
       t_trans_y = 0;
 
     // position div on transformed anchor point
-    style += "left:" + round((t_anchor[0] - abPos.x) / abPos.width * 100, cssPrecision) + "%;";
-    style += "top:" + round((-t_anchor[1]- abPos.y) / abPos.height * 100, cssPrecision) + "%;";
+    style += "left:" + roundTo((t_anchor[0] - abPos.x) / abPos.width * 100, cssPrecision) + "%;";
+    style += "top:" + roundTo((-t_anchor[1]- abPos.y) / abPos.height * 100, cssPrecision) + "%;";
 
     // move "back" to left or top to center or right align text
     if (alignment == 'center') t_trans_x -= u_width * 0.5;
@@ -1696,14 +1698,14 @@ function getTextPositionCss(thisFrame, ab) {
     // mat = app.concatenateMatrix(app.getTranslationMatrix(t_trans_x, t_trans_y), mat0);
 
     var transform = "matrix(" +
-        round(mat.mValueA, cssPrecision) + ',' +
-        round(-1*mat.mValueB, cssPrecision) + ',' +
-        round(-1*mat.mValueC, cssPrecision) + ',' +
-        round(mat.mValueD, cssPrecision) + ',' +
-        round(t_trans_x, cssPrecision) + ',' +
-        round(-t_trans_y, cssPrecision) + ') ' +
-        "scaleX("+round(t_scale_x, cssPrecision) + ") " +
-        "scaleY("+round(t_scale_y, cssPrecision) + ")";
+        roundTo(mat.mValueA, cssPrecision) + ',' +
+        roundTo(-1*mat.mValueB, cssPrecision) + ',' +
+        roundTo(-1*mat.mValueC, cssPrecision) + ',' +
+        roundTo(mat.mValueD, cssPrecision) + ',' +
+        roundTo(t_trans_x, cssPrecision) + ',' +
+        roundTo(-t_trans_y, cssPrecision) + ') ' +
+        "scaleX("+roundTo(t_scale_x, cssPrecision) + ") " +
+        "scaleY("+roundTo(t_scale_y, cssPrecision) + ")";
 
     var transformOrigin = alignment + ' '+(v_align == 'middle' ? 'center' : v_align);
 
@@ -1719,37 +1721,37 @@ function getTextPositionCss(thisFrame, ab) {
   } else {
 
     if (outputType=="abs") {
-      style += "top:" + round(htmlY) + "px;";
+      style += "top:" + roundTo(htmlY) + "px;";
       if (alignment=="left") {
-        style += "left:"  + round(htmlL) + "px;";
-        style += "width:" + round(htmlW) + "px;";
+        style += "left:"  + roundTo(htmlL) + "px;";
+        style += "width:" + roundTo(htmlW) + "px;";
       } else if (alignment=="right") {
-        style += "right:" + round(htmlR) + "px;";
-        style += "width:" + round(htmlW) + "px;";
+        style += "right:" + roundTo(htmlR) + "px;";
+        style += "width:" + roundTo(htmlW) + "px;";
       } if (alignment=="center") {
-        style += "left:"  + round(htmlL) + "px;";
-        style += "width:" + round(htmlW) + "px;";
-        style += "margin-left:" + round(htmlLM) + "px;";
+        style += "left:"  + roundTo(htmlL) + "px;";
+        style += "width:" + roundTo(htmlW) + "px;";
+        style += "margin-left:" + roundTo(htmlLM) + "px;";
       }
     } else if (outputType=="pct") {
       if (thisFrameAttributes.valign==="bottom") {
-        style += "bottom:" + round(100 - (htmlB / abPos.height * 100), cssPrecision) + "%;";
+        style += "bottom:" + roundTo(100 - (htmlB / abPos.height * 100), cssPrecision) + "%;";
       } else {
-        style += "top:" + round(htmlT / abPos.height * 100, cssPrecision) + "%;";
+        style += "top:" + roundTo(htmlT / abPos.height * 100, cssPrecision) + "%;";
       }
       if (alignment=="right") {
-        style += "right:" + round(htmlR / abPos.width * 100, cssPrecision) + "%;";
+        style += "right:" + roundTo(htmlR / abPos.width * 100, cssPrecision) + "%;";
         if (kind=="area") {
-          style += "width:" + round(htmlW / abPos.width * 100, cssPrecision) + "%;";
+          style += "width:" + roundTo(htmlW / abPos.width * 100, cssPrecision) + "%;";
         }
       } else if (alignment=="center") {
-        style += "left:" + round(htmlL / abPos.width * 100, cssPrecision) + "%;";
-        style += "width:" + round(htmlW / abPos.width * 100, cssPrecision) + "%;";
-        style += "margin-left:" + round(htmlLM / abPos.width * 100, cssPrecision) + "%;";
+        style += "left:" + roundTo(htmlL / abPos.width * 100, cssPrecision) + "%;";
+        style += "width:" + roundTo(htmlW / abPos.width * 100, cssPrecision) + "%;";
+        style += "margin-left:" + roundTo(htmlLM / abPos.width * 100, cssPrecision) + "%;";
       } else {
-        style += "left:" + round(htmlL / abPos.width * 100, cssPrecision) + "%;";
+        style += "left:" + roundTo(htmlL / abPos.width * 100, cssPrecision) + "%;";
         if (kind=="area") {
-          style += "width:" + round(htmlW / abPos.width * 100, cssPrecision) + "%;";
+          style += "width:" + roundTo(htmlW / abPos.width * 100, cssPrecision) + "%;";
         }
       }
     }
@@ -2067,7 +2069,7 @@ function generateImageHtml(ab, settings) {
   } else if (outputType == "pct") {
     html += ' class="' + nameSpace + 'aiImg"';
     if (isTrue(settings.use_lazy_loader)) {
-      html += ' data-height-multiplier="' + round(abPos.height / abPos.width, 4) + '"';
+      html += ' data-height-multiplier="' + roundTo(abPos.height / abPos.width, 4) + '"';
       html += ' data-src="' + src + '"';
       // spaceholder while image loads
       src = 'data:image/gif;base64,R0lGODlhCgAKAIAAAB8fHwAAACH5BAEAAAAALAAAAAAKAAoAAAIIhI+py+0PYysAOw==';

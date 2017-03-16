@@ -4,6 +4,19 @@ var assert = require('assert');
 
 describe('Illustrator utility functions', function () {
 
+  describe('folderExists()', function () {
+    it('returns false if folder does not exist', function () {
+      assert.equal(lib.folderExists('adfadf'), false)
+    })
+    it('returns false if path is a file', function () {
+      assert.equal(lib.folderExists('test/data/config'), false)
+    })
+    it('returns true if path is a folder', function () {
+      assert.equal(lib.folderExists('test'), true)
+    })
+  })
+
+
   describe('readGitConfigFile()', function () {
     it ('returns null if file does not exist', function() {
       var data = lib.readGitConfigFile('./missing_file');
@@ -20,7 +33,6 @@ describe('Illustrator utility functions', function () {
         merge: 'refs/heads/master'
       });
     });
-
   });
 
   describe('readYamlConfigFile()', function () {

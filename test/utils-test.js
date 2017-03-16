@@ -21,6 +21,24 @@ describe('Utility function tests', function() {
     });
   });
 
+  describe('zeroPad()', function() {
+    it('left-pads numbers or strings with zeros', function() {
+      assert.equal(lib.zeroPad(1, 2), '01');
+      assert.equal(lib.zeroPad("", 2), '00');
+      assert.equal(lib.zeroPad("10", 2), '10');
+      assert.equal(lib.zeroPad(100, 2), '100');
+    });
+  });
+
+  describe('roundTo()', function() {
+    it('rounds number to specified decimals', function() {
+      assert.equal(lib.roundTo(0.111111, 2), 0.11);
+      assert.equal(lib.roundTo(0.1, 2), 0.1);
+      assert.equal(lib.roundTo(0, 2), 0);
+      assert.equal(lib.roundTo(110.1, 0), 110);
+    });
+  });
+
   describe('contains()', function() {
     it('false if item not in array', function() {
       assert.equal(lib.contains([], 'a'), false);
