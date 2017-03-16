@@ -1,7 +1,6 @@
 
 // ai2html.js
 var scriptVersion     = "0.62";
-var scriptEnvironment = "nyt";  // TODO: detect this setting
 
 // ai2html is a script for Adobe Illustrator that converts your Illustrator document into html and css.
 // Copyright (c) 2011-2015 The New York Times Company
@@ -153,8 +152,6 @@ var defaultBaseSettings = {
 
 // End of settings blocks copied from Google Spreadsheet.
 
-var ai2htmlBaseSettings = scriptEnvironment == "nyt" ? nytBaseSettings : defaultBaseSettings;
-
 // ================================================
 // Constant data
 // ================================================
@@ -299,12 +296,14 @@ var errors   = [];
 
 var textFramesToUnhide = [];
 var lockedObjects      = [];
-var hiddenObjects       = [];
+var hiddenObjects      = [];
 
 // Global variables set by main()
-var docSettings         = {};
-var previewProjectType = "";
-var doc, docPath, docName, docIsSaved, pBar, T;
+var docSettings = {};
+var ai2htmlBaseSettings;
+var previewProjectType, scriptEnvironment;
+var doc, docPath, docName, docIsSaved;
+var pBar, T;
 
 // include JSON for debugging objects
 // @include "lib/json2.js"
@@ -336,7 +335,6 @@ if (jsEnvironment == 'node') {
 }
 
 
-
 // =================================
 // Main function
 // =================================
@@ -357,11 +355,6 @@ function main() {
 
   T.start();
 
-  // initialize docSettings
-  for (var setting in ai2htmlBaseSettings) {
-    docSettings[setting] = ai2htmlBaseSettings[setting].defaultValue;
-  }
-
   if (!app.documents.length) {
     errors.push("No documents are open");
 
@@ -372,6 +365,7 @@ function main() {
     errors.push('Convert document color mode to "RGB" before running script. (File>Document Color Mode>RGB Color)' );
 
   } else {
+
     doc = app.activeDocument;
     docPath = doc.path + "/";
     docIsSaved = doc.saved;
@@ -384,6 +378,7 @@ function main() {
     restoreDocumentState();
     pBar.setProgress(1.0);
   }
+
 
   // ==========================================
   // Save the AI document (if needed)
@@ -412,9 +407,8 @@ function main() {
   // Show alert box, optionally prompt to generate promo image
   // =========================================================
 
-  if (isTrue(docSettings.show_completion_dialog_box)) {
-    // ignoring (obsolete) "create_promo_image" option setting
-    var promptForPromo = previewProjectType == "ai2html" && docSettings.write_image_files=="yes";
+  if (errors.length > 0 || isTrue(docSettings.show_completion_dialog_box)) {
+    var promptForPromo = previewProjectType == "ai2html" && isTrue(docSettings.write_image_files);
     var showPromo = showCompletionAlert(promptForPromo);
     if (showPromo) createPromoImage(docSettings);
   }
@@ -426,6 +420,23 @@ function main() {
 // =================================
 
 function render() {
+
+  // detect ai2html environment
+  if (folderExists(docPath + "../public/_assets")) {
+    // Use "nyt" environment if it looks like the document is in a Preview project
+    ai2htmlBaseSettings = nytBaseSettings;
+    scriptEnvironment = "nyt";
+  } else {
+    ai2htmlBaseSettings = defaultBaseSettings;
+    scriptEnvironment = "";
+  }
+
+  // initialize document settings
+  // TODO: remove obsolete options: ai2html_environment, create_promo_image
+  for (var setting in ai2htmlBaseSettings) {
+    docSettings[setting] = ai2htmlBaseSettings[setting].defaultValue;
+  }
+
   // Fix for issue #50
   // If a text range is selected when the script runs, it interferes
   // with script-driven selection. The fix is to clear this kind of selection.
@@ -494,7 +505,7 @@ function render() {
 
   if (!documentHasSettingsBlock) {
     createSettingsBlock();
-    if (docSettings.ai2html_environment=="nyt") {
+    if (scriptEnvironment=="nyt") {
       feedback.push("A settings text block was created to the left of all your artboards. Fill out the settings to link your project to the Scoop asset.");
       return; // Exit the script
     } else {
@@ -507,7 +518,7 @@ function render() {
   // initialization for NYT environment
   // ================================================
 
-  if (docSettings.ai2html_environment == "nyt") {
+  if (scriptEnvironment == "nyt") {
 
     // Read yml file if it exists to determine what type of project this is
     //
@@ -624,6 +635,7 @@ function render() {
 
     T.stop("Text generation");
 
+
     // ==========================
     // generate artboard image(s)
     // ==========================
@@ -671,8 +683,8 @@ function render() {
   // write configuration file with graphic metadata
   //=====================================
 
-  if ((docSettings.ai2html_environment=="nyt" && previewProjectType=="ai2html") ||
-      (docSettings.ai2html_environment!="nyt" && isTrue(docSettings.create_config_file))) {
+  if ((scriptEnvironment=="nyt" && previewProjectType=="ai2html") ||
+      (scriptEnvironment!="nyt" && isTrue(docSettings.create_config_file))) {
     var yamlPath = docPath + docSettings.config_file_path,
         yamlStr = generateYmlFileContent(breakpoints, docSettings);
     checkForOutputFolder(yamlPath.replace(/[^\/]+$/, ""), "configFileFolder");
@@ -1946,7 +1958,7 @@ function assignBreakpointsToArtboards(breakpoints) {
         bpInfo.artboards.push(abInfo.id);
       }
     }
-    if (bpInfo.artboards.length > 1 && docSettings.ai2html_environment=="nyt") {
+    if (bpInfo.artboards.length > 1 && scriptEnvironment=="nyt") {
       warnings.push('The ' + breakpoint.upperLimit + "px breakpoint has " + bpInfo.artboards.length +
           " artboards. You probably want only one artboard per breakpoint.");
     }
@@ -2429,7 +2441,7 @@ function outputLocalPreviewPage(textForFile, localPreviewDestination, settings) 
   var localPreviewTemplateText = readTextFile(docPath + settings.local_preview_template);
   settings.ai2htmlPartial = textForFile; // TODO: don't modify global settings this way
   var localPreviewHtml = applyTemplate(localPreviewTemplateText, settings);
-  saveTextFile(localPreviewHtml, localPreviewDestination);
+  saveTextFile(localPreviewDestination, localPreviewHtml);
 }
 
 function addCustomContent(content, customBlocks) {
@@ -2529,7 +2541,7 @@ function generateHtml(pageContent, pageName, settings) {
   }
 
   // write file
-  saveTextFile(textForFile, htmlFileDestination);
+  saveTextFile(htmlFileDestination, textForFile);
 
   // process local preview template if appropriate
   if (settings.local_preview_template !== "") {
