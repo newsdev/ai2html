@@ -473,6 +473,10 @@ function render() {
     }
   });
 
+  if (customBlocks.css)  {feedback.push("Custom CSS blocks: " + customBlocks.css.length);}
+  if (customBlocks.html) {feedback.push("Custom HTML blocks: " + customBlocks.html.length);}
+  if (customBlocks.js)   {feedback.push("Custom JS blocks: " + customBlocks.js.length);}
+
 
   // ================================================
   // add settings text block if one does not exist
@@ -551,6 +555,10 @@ function render() {
     docSettings.image_source_path = docSettings.image_output_path;
   }
 
+  if (docSettings.image_format.length === 0) {
+    warnings.push("No images were created because no image formats were specified.");
+  }
+
 
   // ================================================
   // Generate HTML, CSS and images for each artboard
@@ -617,7 +625,7 @@ function render() {
     }
 
     //=====================================
-    // output html file here if doing a file for every artboard
+    // finish rendering artboard content
     //=====================================
 
     artboardContent +=
@@ -627,6 +635,10 @@ function render() {
       generateImageHtml(activeArtboard, docSettings) +
       textHtml +
       "\t</div>\r";
+
+    //=====================================
+    // output html file here if doing a file for every artboard
+    //=====================================
 
     if (docSettings.output=="multiple-files") {
       generateHtml(addCustomContent(artboardContent, customBlocks), docArtboardName, docSettings);
@@ -655,15 +667,6 @@ function render() {
     checkForOutputFolder(yamlPath.replace(/[^\/]+$/, ""), "configFileFolder");
     saveTextFile(yamlPath, yamlStr);
   }
-
-  if (docSettings.image_format.length === 0) {
-    warnings.push("No images were created because no image formats were specified.");
-  }
-
-  if (customBlocks.css)  {feedback.push("Custom CSS blocks: " + customBlocks.css.length);}
-  if (customBlocks.html) {feedback.push("Custom HTML blocks: " + customBlocks.html.length);}
-  if (customBlocks.js)   {feedback.push("Custom JS blocks: " + customBlocks.js.length);}
-
 } // end render()
 
 
