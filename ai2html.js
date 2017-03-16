@@ -369,7 +369,7 @@ function main() {
     try {
       render();
     } catch(e) {
-      errors.push("The script threw an error" + (e.message ? ": " + e.message : ''));
+      errors.push(formatError(e));
     }
     restoreDocumentState();
     pBar.setProgress(1.0);
@@ -416,6 +416,12 @@ function main() {
 // =================================
 
 function render() {
+  // Fix for issue #50
+  // If a text range is selected when the script runs, it interferes
+  // with script-driven selection. The fix is to clear this kind of selection.
+  if (doc.selection && doc.selection.typename) {
+    app.executeMenuCommand("deselectall");
+  }
 
   // Unlock all objects
   T.start();
@@ -434,7 +440,6 @@ function render() {
 
   // TODO: seems to assume NYT5 environment -- check that it works outside NYT
   var breakpoints = assignBreakpointsToArtboards(nyt5Breakpoints);
-
 
   // ================================================
   // grab custom settings, html, css, js and text blocks
@@ -913,13 +918,40 @@ function testSimilarBounds(a, b, maxOffs) {
 // ai2html utility functions
 // =====================================
 
+function formatError(e) {
+  var msg = "Runtime error";
+  if (e.line) msg += " on line " + e.line;
+  if (e.message) msg += ": " + e.message;
+  return msg;
+}
+
+
 // display debugging message in completion alert box
 // (in debug mode)
-function message(msg) {
-  for (var i=1; i<arguments.length; i++) {
-    msg += ' ' + arguments[i];
+function message() {
+  var msg = "", arg;
+  for (var i=0; i<arguments.length; i++) {
+    arg = arguments[i];
+    if (msg.length > 0) msg += ' ';
+    if (typeof arg == 'object') {
+      try { // json2.json implementation throws error if object contains a cycle
+        msg += JSON.stringify(arg);
+      } catch(e) {
+        msg += String(arg);
+      }
+    } else {
+      msg += arg;
+    }
   }
   if (showDebugMessages) feedback.push(msg);
+}
+
+function keys(obj) {
+  var keys = [];
+  for (var k in obj) {
+    keys.push(k);
+  }
+  return keys;
 }
 
 // accept inconsistent true/yes setting value
@@ -1493,7 +1525,7 @@ function findTextFramesByClippingPath(mask) {
 // clipping path (using bounding box of clipping path to approximate clip area)
 function getClippedTextFramesByArtboard(ab) {
   app.executeMenuCommand('Clipping Masks menu item');
-  var masks = doc.selection.concat();
+  var masks = doc.selection ? doc.selection.concat() : [];
   var abRect = ab.artboardRect;
   var frames = [];
   forEach(masks, function(mask) {mask.locked = true;}); // lock clipping paths
