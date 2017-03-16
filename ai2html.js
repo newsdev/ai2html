@@ -320,14 +320,18 @@ if (jsEnvironment == 'ai') {
 if (jsEnvironment == 'node') {
   // export functions for testing
   // TODO: write more tests
-  module.exports = {
-    testBoundsIntersection: testBoundsIntersection,
-    trim: trim,
-    contains: contains,
-    arraySubtract: arraySubtract,
-    firstBy: firstBy
-  };
+  [ testBoundsIntersection,
+    trim,
+    contains,
+    arraySubtract,
+    firstBy,
+    readGitConfigFile,
+    readYamlConfigFile
+  ].forEach(function(f) {
+    module.exports[f.name] = f;
+  });
 }
+
 
 
 // =================================
@@ -504,7 +508,7 @@ function render() {
 
     // Read yml file if it exists to determine what type of project this is
     //
-    var yaml = readYamlFile(docPath + "../config.yml");
+    var yaml = readYamlConfigFile(docPath + "../config.yml");
     if (!yaml) {
       previewProjectType = "config.yml is missing";
     } else {
@@ -781,17 +785,24 @@ function getDateTimeStamp() {
   return currYear + "-" + currMonth + "-" + currDate + " - " + currHour + ":" + currMin;
 }
 
-function readYamlFile(path) {
+// Very simple Yaml parsing. Does not implement nested properties and other features
+function readYamlConfigFile(path) {
   var file = new File(path);
+  var dqRxp = /^"(?:[^"\\]|\\.)*"$/;
   var o = null;
-  var parts;
+  var parts, k, v;
   if (file.exists) {
     o = {};
     file.open("r");
     while(!file.eof) {
       parts = file.readln().split(':');
       if (parts.length > 1) {
-        o[trim(parts[0])] = trim(parts[1]);
+        k = trim(parts.shift());
+        v = trim(parts.join(':'));
+        if (dqRxp.test(v)) {
+          v = JSON.parse(v);
+        }
+        o[k] = v;
       }
     }
     file.close();
@@ -799,6 +810,8 @@ function readYamlFile(path) {
   return o;
 }
 
+// TODO: improve
+// (currently ignores bracketed sections of the config file)
 function readGitConfigFile(path) {
   var file = new File(path);
   var o = null;
@@ -2038,7 +2051,7 @@ function captureArtboardImage(ab, textFrames, settings) {
   }
 }
 
-
+// Create an <img> tag for the artboard image
 function generateImageHtml(ab, settings) {
   var abName = getArtboardFullName(ab),
       abPos = getArtboardPos(ab),
@@ -2230,7 +2243,6 @@ function generateArtboardDiv(ab, breakpoints, settings) {
   html += ">\r";
   return html;
 }
-
 
 function generateArtboardCss(ab, textClasses, settings) {
   var t3 = '\t\t\t',
