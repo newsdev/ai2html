@@ -322,7 +322,10 @@ if (jsEnvironment == 'node') {
   // TODO: write more tests
   module.exports = {
     testBoundsIntersection: testBoundsIntersection,
-    trim: trim
+    trim: trim,
+    contains: contains,
+    arraySubtract: arraySubtract,
+    firstBy: firstBy
   };
 }
 
@@ -539,7 +542,8 @@ function render() {
     if (docSettings.max_width && !contains(breakpoints, function(bp) {
       return +docSettings.max_width == bp.upperLimit;
     })) {
-      warnings.push('The max_width setting of "' + docSettings.max_width + '" is not a valid breakpoint and will create an error when you "preview publish."');
+      warnings.push('The max_width setting of "' + docSettings.max_width +
+        '" is not a valid breakpoint and will create an error when you "preview publish."');
     }
   }
 
@@ -837,12 +841,12 @@ function readTextFile(path) {
 }
 
 function saveTextFile(dest, contents) {
-  var configFile = new File(dest);
-  configFile.open("w", "TEXT", "TEXT");
-  configFile.lineFeed = "Unix";
-  configFile.encoding = "UTF-8";
-  configFile.writeln(contents);
-  configFile.close();
+  var fd = new File(dest);
+  fd.open("w", "TEXT", "TEXT");
+  fd.lineFeed = "Unix";
+  fd.encoding = "UTF-8";
+  fd.writeln(contents);
+  fd.close();
 }
 
 // a, b: coordinate arrays, as from <PathItem>.geometricBounds
@@ -1928,7 +1932,8 @@ function assignBreakpointsToArtboards(breakpoints) {
       }
     }
     if (bpInfo.artboards.length > 1 && docSettings.ai2html_environment=="nyt") {
-      warnings.push('The ' + breakpoint.upperLimit + "px breakpoint has " + bpInfo.artboards.length + " artboards. You probably want only one artboard per breakpoint.");
+      warnings.push('The ' + breakpoint.upperLimit + "px breakpoint has " + bpInfo.artboards.length +
+          " artboards. You probably want only one artboard per breakpoint.");
     }
     if (bpInfo.artboards.length === 0 && bpPrev) {
       bpInfo.artboards = bpPrev.artboards.concat();
@@ -2305,15 +2310,6 @@ function applyTemplate(template, atObject) {
   return newText;
 }
 
-function outputHtml(htmlText, fileDestination) {
-  var htmlFile = new File(fileDestination);
-  htmlFile.open("w", "TEXT", "TEXT");
-  htmlFile.lineFeed = "Unix";
-  htmlFile.encoding = "UTF-8";
-  htmlFile.writeln(htmlText);
-  htmlFile.close();
-}
-
 function checkForOutputFolder(folderPath, nickname) {
   var outputFolder = new Folder( folderPath );
   if (!outputFolder.exists) {
@@ -2419,7 +2415,7 @@ function outputLocalPreviewPage(textForFile, localPreviewDestination, settings) 
   var localPreviewTemplateText = readTextFile(docPath + settings.local_preview_template);
   settings.ai2htmlPartial = textForFile; // TODO: don't modify global settings this way
   var localPreviewHtml = applyTemplate(localPreviewTemplateText, settings);
-  outputHtml(localPreviewHtml, localPreviewDestination);
+  saveTextFile(localPreviewHtml, localPreviewDestination);
 }
 
 function addCustomContent(content, customBlocks) {
@@ -2519,7 +2515,7 @@ function generateHtml(pageContent, pageName, settings) {
   }
 
   // write file
-  outputHtml(textForFile, htmlFileDestination);
+  saveTextFile(textForFile, htmlFileDestination);
 
   // process local preview template if appropriate
   if (settings.local_preview_template !== "") {
