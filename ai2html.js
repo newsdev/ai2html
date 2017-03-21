@@ -1,5 +1,5 @@
 // ai2html.js
-var scriptVersion     = "0.62";
+var scriptVersion     = "0.63";
 // var scriptEnvironment = "nyt";
 var scriptEnvironment = "";
 
@@ -2279,7 +2279,7 @@ function getResizerScript() {
 	resizerScript += "\n" + "                widthById = {};";
 	resizerScript += "\n" + "            elements.forEach(function(el) {";
 	resizerScript += "\n" + "                var parent = el.parentNode,";
-	resizerScript += "\n" + "                    width = widthById[parent.id] || parent.getBoundingClientRect().width,";
+	resizerScript += "\n" + "                    width = Math.round(widthById[parent.id]) || Math.round(parent.getBoundingClientRect().width),";
 	resizerScript += "\n" + "                    minwidth = el.getAttribute(\"data-min-width\"),";
 	resizerScript += "\n" + "                    maxwidth = el.getAttribute(\"data-max-width\");";
 	resizerScript += "\n" + "                widthById[parent.id] = width;";
