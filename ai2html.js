@@ -337,7 +337,6 @@ if (jsEnvironment == 'node') {
 // =================================
 
 function main() {
-  pBar = new ProgressBar();
 
   // Performance timing using T.start() and T.stop("message")
   T = {
@@ -365,6 +364,7 @@ function main() {
     doc = app.activeDocument;
     docPath = doc.path + "/";
     docIsSaved = doc.saved;
+    pBar = new ProgressBar({name: "Ai2html progress", steps: calcProgressBarSteps()});
 
     try {
       render();
@@ -372,7 +372,6 @@ function main() {
       errors.push(formatError(e));
     }
     restoreDocumentState();
-    pBar.setProgress(1.0);
   }
 
 
@@ -396,7 +395,7 @@ function main() {
     feedback.push("Your Illustrator file was saved.");
   }
 
-  pBar.close();
+  if (pBar) pBar.close();
   T.stop("Total time");
 
   // =========================================================
@@ -409,7 +408,6 @@ function main() {
     if (showPromo) createPromoImage(docSettings);
   }
 } // end main()
-
 
 // =================================
 // ai2html render function
@@ -590,8 +588,6 @@ function render() {
     doc.artboards.setActiveArtboardIndex(abNumber);
 
     T.start();
-    pBar.setTitle(docArtboardName + ': Starting to generate HTML...');
-    pBar.setProgress(abNumber/(doc.artboards.length));
 
     // ========================
     // Convert text objects
@@ -629,6 +625,7 @@ function render() {
       textHtml += "\t\t</div>\r";
     });
 
+    pBar.step();
     T.stop("Text generation");
 
 
@@ -642,6 +639,7 @@ function render() {
       captureArtboardImage(activeArtboard, textFrames, masks, docSettings);
       T.stop("Image generation");
     }
+    pBar.step();
 
     //=====================================
     // finish rendering artboard content
@@ -947,8 +945,11 @@ function getComputedOpacity(obj) {
   return opacity * 100;
 }
 
-function ProgressBar() {
-  var win = new Window("palette", "Ai2html progress", [150, 150, 600, 260]);
+function ProgressBar(opts) {
+  opts = opts || {};
+  var steps = opts.steps || 0;
+  var step = 0;
+  var win = new Window("palette", opts.name || "Progress", [150, 150, 600, 260]);
   win.pnl = win.add("panel", [10, 10, 440, 100], "Progress");
   win.pnl.progBar      = win.pnl.add("progressbar", [20, 35, 410, 60], 0, 100);
   win.pnl.progBarLabel = win.pnl.add("statictext", [20, 20, 320, 35], "0%");
@@ -957,6 +958,11 @@ function ProgressBar() {
   function getProgress() {
     return win.pnl.progBar.value/win.pnl.progBar.maxvalue;
   }
+
+  this.step = function() {
+    step = Math.min(step + 1, steps);
+    this.setProgress(step / steps);
+  };
 
   this.setProgress = function(progress) {
     var max = win.pnl.progBar.maxvalue;
@@ -988,6 +994,14 @@ function ProgressBar() {
 // =====================================
 // ai2html specific utility functions
 // =====================================
+
+function calcProgressBarSteps() {
+  var n = 0;
+  forEachArtboard(function() {
+    n += 2;
+  });
+  return n;
+}
 
 function formatError(e) {
   var msg = "Runtime error";
