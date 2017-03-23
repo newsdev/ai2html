@@ -2523,10 +2523,10 @@ function getResizerScript() {
           widthById = {};
       elements.forEach(function(el) {
         var parent = el.parentNode,
-            width = widthById[parent.id] || parent.getBoundingClientRect().width,
+            width = widthById[parent.id] || Math.round(parent.getBoundingClientRect().width),
             minwidth = el.getAttribute("data-min-width"),
             maxwidth = el.getAttribute("data-max-width");
-        widthById[parent.id] = width;
+        if (parent.id) widthById[parent.id] = width; // only if parent.id is set
 
         if (+minwidth <= width && (+maxwidth >= width || maxwidth === null)) {
           var img = el.querySelector(".g-aiImg");
