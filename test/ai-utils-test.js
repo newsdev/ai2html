@@ -2,6 +2,9 @@ var env = require('./ai-env');
 var lib = require('../');
 var assert = require('assert');
 
+
+// Utility functions that require Illustrator classes like File and Folder
+
 describe('Illustrator utility functions', function () {
 
   describe('folderExists()', function () {
@@ -15,7 +18,6 @@ describe('Illustrator utility functions', function () {
       assert.equal(lib.folderExists('test'), true)
     })
   })
-
 
   describe('readGitConfigFile()', function () {
     it ('returns null if file does not exist', function() {

@@ -1,6 +1,8 @@
 var lib = require('../');
 var assert = require('assert');
 
+// Utility functions that don't depend on Illustrator context
+
 describe('Utility function tests', function() {
 
   describe('testBoundsIntersection()', function() {

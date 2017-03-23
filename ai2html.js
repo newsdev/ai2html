@@ -1,6 +1,5 @@
-
 // ai2html.js
-var scriptVersion     = "0.62";
+var scriptVersion     = "0.70";
 
 // ai2html is a script for Adobe Illustrator that converts your Illustrator document into html and css.
 // Copyright (c) 2011-2015 The New York Times Company
@@ -268,7 +267,6 @@ var nyt5Breakpoints = [
   { name:"xxlarge"   , lowerLimit:1050, upperLimit:1600 }
 ];
 
-// user inputs, settings, etc
 var defaultParagraphStyle = {
   aifont: 'NYTFranklin-Medium',
   size: 13,
@@ -395,7 +393,7 @@ function main() {
     pBar.setTitle('Saving Illustrator document...');
     T.start();
     doc.saveAs(new File(docPath + doc.name), saveOptions);
-    T.stop("Saved document");
+    T.stop("Saved document " + doc.name);
     feedback.push("Your Illustrator file was saved.");
   }
 
@@ -440,7 +438,7 @@ function render() {
   // If a text range is selected when the script runs, it interferes
   // with script-driven selection. The fix is to clear this kind of selection.
   if (doc.selection && doc.selection.typename) {
-    app.executeMenuCommand("deselectall");
+    clearSelection();
   }
 
   // Unlock all objects
@@ -586,6 +584,7 @@ function render() {
   // ================================================
 
   var artboardContent = "";
+  var masks = findMasks();
 
   forEachArtboard(function(activeArtboard, abNumber) {
     var textHtml = "";
@@ -601,7 +600,7 @@ function render() {
     // ========================
     T.start();
     pBar.setTitle(docArtboardName + ': Generating text...');
-    var textFrames  = getTextFramesByArtboard(activeArtboard);
+    var textFrames = getTextFramesByArtboard(activeArtboard, masks);
     var pClasses = [];
     var charClasses = [];
 
@@ -642,7 +641,7 @@ function render() {
     if (docSettings.write_image_files=="yes") {
       pBar.setTitle(docArtboardName + ': Writing image...');
       T.start();
-      captureArtboardImage(activeArtboard, textFrames, docSettings);
+      captureArtboardImage(activeArtboard, textFrames, masks, docSettings);
       T.stop("Image generation");
     }
 
@@ -693,19 +692,8 @@ function render() {
 
 
 // =================================
-// utility functions
+// JS utility functions
 // =================================
-
-// Remove whitespace from beginning and end of a string
-function trim(s) {
-  return s.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
-}
-
-function zeroPad(val, digits) {
-  var str = String(val);
-  while (str.length < digits) str = '0' + str;
-  return str;
-}
 
 function forEach(arr, cb) {
   for (var i=0, n=arr.length; i<n; i++) {
@@ -713,15 +701,34 @@ function forEach(arr, cb) {
   }
 }
 
+function filter(arr, test) {
+  var filtered = [];
+  for (var i=0, n=arr.length; i<n; i++) {
+    if (test(arr[i], i)) {
+      filtered.push(arr[i]);
+    }
+  }
+  return filtered;
+}
+
 // obj: value or test function
-function contains(arr, obj) {
+function indexOf(arr, obj) {
   var test = typeof obj == 'function' ? obj : null;
   for (var i=0, n=arr.length; i<n; i++) {
     if (test ? test(arr[i]) : arr[i] === obj) {
-      return true;
+      return i;
     }
   }
-  return false;
+  return -1;
+}
+
+function find(arr, obj) {
+  var i = indexOf(arr, obj);
+  return i == -1 ? null : arr[i];
+}
+
+function contains(arr, obj) {
+  return indexOf(arr, obj) >= 0;
 }
 
 // return elements in array "a" but not in array "b"
@@ -742,6 +749,15 @@ function arraySubtract(a, b) {
   return diff;
 }
 
+// Copy elements of an array-like object to an array
+function toArray(obj) {
+  var arr = [];
+  for (var i=0, n=obj.length; i<n; i++) {
+    arr[i] = obj[i];
+  }
+  return arr;
+}
+
 // multiple key sorting function based on https://github.com/Teun/thenBy.js
 // first by length of name, then by population, then by ID
 // data.sort(
@@ -753,6 +769,25 @@ function firstBy(f1, f2) {
   var compare = f2 ? function(a, b) {return f1(a, b) || f2(a, b);} : f1;
   compare.thenBy = function(f) {return firstBy(compare, f);};
   return compare;
+}
+
+function keys(obj) {
+  var keys = [];
+  for (var k in obj) {
+    keys.push(k);
+  }
+  return keys;
+}
+
+// Remove whitespace from beginning and end of a string
+function trim(s) {
+  return s.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
+}
+
+function zeroPad(val, digits) {
+  var str = String(val);
+  while (str.length < digits) str = '0' + str;
+  return str;
 }
 
 function makeKeyword(text) {
@@ -783,10 +818,6 @@ function roundTo(number, precision) {
   return Math.round(number * d) / d;
 }
 
-function folderExists(path) {
-  return new Folder(path).exists;
-}
-
 // TODO: value could change during program execution -- does this matter?
 function getDateTimeStamp() {
   var d     = new Date();
@@ -796,6 +827,22 @@ function getDateTimeStamp() {
   var hour  = zeroPad(d.getHours(),2);
   var min   = zeroPad(d.getMinutes(),2);
   return year + "-" + month + "-" + date + " - " + hour + ":" + min;
+}
+
+function testSimilarBounds(a, b, maxOffs) {
+  if (maxOffs >= 0 === false) maxOffs = 1;
+  for (var i=0; i<4; i++) {
+    if (Math.abs(a[i] - b[i]) > maxOffs) return false;
+  }
+  return true;
+}
+
+// =====================================
+// Illustrator specific utility functions
+// =====================================
+
+function folderExists(path) {
+  return new Folder(path).exists;
 }
 
 // Very simple Yaml parsing. Does not implement nested properties and other features
@@ -939,16 +986,9 @@ function ProgressBar() {
   };
 }
 
-function testSimilarBounds(a, b, maxOffs) {
-  if (maxOffs >= 0 === false) maxOffs = 1;
-  for (var i=0; i<4; i++) {
-    if (Math.abs(a[i] - b[i]) > maxOffs) return false;
-  }
-  return true;
-}
 
 // =====================================
-// ai2html utility functions
+// ai2html specific utility functions
 // =====================================
 
 function formatError(e) {
@@ -958,7 +998,6 @@ function formatError(e) {
   return msg;
 }
 
-
 // display debugging message in completion alert box
 // (in debug mode)
 function message() {
@@ -967,7 +1006,9 @@ function message() {
     arg = arguments[i];
     if (msg.length > 0) msg += ' ';
     if (typeof arg == 'object') {
-      try { // json2.json implementation throws error if object contains a cycle
+      try {
+        // json2.json implementation throws error if object contains a cycle
+        // and many Illustrator objects have cycles.
         msg += JSON.stringify(arg);
       } catch(e) {
         msg += String(arg);
@@ -979,13 +1020,6 @@ function message() {
   if (showDebugMessages) feedback.push(msg);
 }
 
-function keys(obj) {
-  var keys = [];
-  for (var k in obj) {
-    keys.push(k);
-  }
-  return keys;
-}
 
 // accept inconsistent true/yes setting value
 function isTrue(val) {
@@ -1128,57 +1162,42 @@ function parseSettingsTextBlock(frame, docSettings) {
   }
 }
 
-
 // Show alert or prompt; return true if promo image should be generated
 function showCompletionAlert(showPrompt) {
-  var alertText = "";
-  var alertHed = "";
-  var retn = false;
   var rule = "\n================\n";
+  var alertText, alertHed, makePromo;
 
-  if (scriptEnvironment == "nyt") {
+  if (errors.length > 0) {
+    alertHed = "The Script Was Unable to Finish";
+  } else if (scriptEnvironment == "nyt") {
     alertHed = "Actually, that\u2019s not half bad :)"; // &rsquo;
   } else {
     alertHed = "Nice work!";
   }
-
-  if (errors.length > 0) {
-    alertHed = "The Script Was Unable to Finish";
-    if (errors.length == 1) {
-      alertText += "\rError" + rule;
-    } else {
-      alertText += "\rErrors" + rule;
-    }
-    for (var e = 0; e < errors.length; e++) {
-      alertText += "\u2022 " + errors[e] + "\r"; // \u2022 is •
-    }
-  }
-  if (warnings.length > 0) {
-    if (warnings.length == 1) {
-      alertText += "\rWarning" + rule;
-    } else {
-      alertText += "\rWarnings" + rule;
-    }
-    for (var w = 0; w < warnings.length; w++) {
-      alertText += "\u2022 " + warnings[w] + "\r";
-    }
-  }
-  if (feedback.length > 0) {
-    alertText += "\rInformation" + rule;
-    for (var f = 0; f < feedback.length; f++) {
-      alertText += "\u2022 " + feedback[f] + "\r";
-    }
-  }
+  alertText  = makeList(errors, "Error", "Errors");
+  alertText += makeList(warnings, "Warning", "Warnings");
+  alertText += makeList(feedback, "Information", "Information");
   alertText += "\n";
-
   if (showPrompt) {
     alertText += rule + "Generate promo image?";
-    retn = confirm(alertHed  + alertText, true); // true: "No" is default
+    makePromo = confirm(alertHed  + alertText, true); // true: "No" is default
   } else {
     alertText += rule + "ai2html-nyt5 v" + scriptVersion;
     alert(alertHed + alertText);
+    makePromo = false;
   }
-  return retn;
+
+  function makeList(items, singular, plural) {
+    var list = "";
+    if (items.length > 0) {
+      list += "\r" + (items.length == 1 ? singular : plural) + rule;
+      for (var i = 0; i < items.length; i++) {
+        list += "\u2022 " + items[i] + "\r";
+      }
+    }
+    return list;
+  }
+  return makePromo;
 }
 
 function restoreDocumentState() {
@@ -1515,76 +1534,55 @@ function textFrameIsRenderable(frame, artboardRect) {
   return good;
 }
 
-// Find clipped TextFrames that are inside an artboard but outside the bounding box
+// Find clipped art objects that are inside an artboard but outside the bounding box
 // box of their clipping path
-// texts: array of text objects assocated with a clipping path
+// items: array of PageItems assocated with a clipping path
 // clipRect: bounding box of clipping path
-// abRect: bounds of arstboard to test
+// abRect: bounds of artboard to test
 //
-function selectMaskedTextFrames(texts, clipRect, abRect) {
+function selectMaskedItems(items, clipRect, abRect) {
   var found = [];
-  var textRect, textInArtboard, textInMask, maskInArtboard;
-  for (var i=0; i<texts.length; i++) {
-    textRect = texts[i].geometricBounds;
-    // capture text items that intersect the artboard but are masked...
-    textInArtboard = testBoundsIntersection(abRect, textRect);
+  var itemRect, itemInArtboard, itemInMask, maskInArtboard;
+  for (var i=0; i<items.length; i++) {
+    itemRect = items[i].geometricBounds;
+    // capture items that intersect the artboard but are masked...
+    itemInArtboard = testBoundsIntersection(abRect, itemRect);
     maskInArtboard = testBoundsIntersection(abRect, clipRect);
-    textInMask = testBoundsIntersection(textRect, clipRect);
-    if (textInArtboard && (!maskInArtboard || !textInMask)) {
-      found.push(texts[i]);
+    itemInMask = testBoundsIntersection(itemRect, clipRect);
+    if (itemInArtboard && (!maskInArtboard || !itemInMask)) {
+      found.push(items[i]);
     }
   }
   return found;
 }
 
-// Assumes mask is unlocked and any other clipping paths are locked
-function findTextFramesByClippingPath(mask) {
-  var texts = [], selection;
-  // Equivalent to Select > Object > Clipping Mask in GUI
-  app.executeMenuCommand('Clipping Masks menu item');
-  // Equivalent to Object > Clipping Mask > Edit Contents in GUI
-  app.executeMenuCommand('editMask');
-  selection = doc.selection;
-  for (var i=0, n=selection.length; i<n; i++) {
-    if (selection[i].typename == 'TextFrame') {
-      texts.push(selection[i]);
-    }
-  }
-  doc.selection = null;
-  return texts;
-}
 
 // Find clipped TextFrames that are inside an artboard but outside their
 // clipping path (using bounding box of clipping path to approximate clip area)
-function getClippedTextFramesByArtboard(ab) {
-  app.executeMenuCommand('Clipping Masks menu item');
-  var masks = doc.selection ? doc.selection.concat() : [];
+function getClippedTextFramesByArtboard(ab, masks) {
   var abRect = ab.artboardRect;
   var frames = [];
-  forEach(masks, function(mask) {mask.locked = true;}); // lock clipping paths
-  forEach(masks, function(mask) {
-    var clipRect = mask.geometricBounds;
+  forEach(masks, function(o) {
+    var clipRect = o.mask.geometricBounds;
     if (testSimilarBounds(abRect, clipRect, 5)) {
-      // if clip path is masking to the current artboard, skip the test
+      // if clip path is masking the current artboard, skip the test
       // (optimization)
       return;
     }
-    mask.locked = false;
-    var texts = findTextFramesByClippingPath(mask);
-    texts = selectMaskedTextFrames(texts, clipRect, abRect);
+    var texts = filter(o.items, function(item) {return item.typename == 'TextFrame';});
+    texts = selectMaskedItems(texts, clipRect, abRect);
     if (texts.length > 0) {
       frames = frames.concat(texts);
     }
-    mask.locked = true;
   });
-  forEach(masks, function(mask) {mask.locked = false;}); // unlock clipping paths
   return frames;
 }
 
+
 // Get array of TextFrames belonging to an artboard
-function getTextFramesByArtboard(ab) {
+function getTextFramesByArtboard(ab, masks) {
   var candidateFrames = findTextFramesToRender(doc.textFrames, ab.artboardRect);
-  var excludedFrames = getClippedTextFramesByArtboard(ab);
+  var excludedFrames = getClippedTextFramesByArtboard(ab, masks);
   var goodFrames = arraySubtract(candidateFrames, excludedFrames);
   return goodFrames;
 }
@@ -1776,18 +1774,12 @@ function getAnchorPoint(untransformedBounds, matrix, hAlign, vAlign, sx, sy) {
 }
 
 function getUntransformedTextBounds(textFrame) {
-  var oldSelection = activeDocument.selection;
-  activeDocument.selection = [textFrame];
-  app.copy();
-  app.paste(); // See Issue #50 https://github.com/newsdev/ai2html/issues/50
-  var textFrameCopy = activeDocument.selection[0];
-  // move to same position
-  textFrameCopy.left = textFrame.left;
-  textFrameCopy.top = textFrame.top;
+  var textFrameCopy = textFrame.duplicate(textFrame.parent, ElementPlacement.PLACEATEND);
   var bnds = textFrameCopy.geometricBounds;
-
   var old_center_x = (bnds[0] + bnds[2]) * 0.5,
     old_center_y = (bnds[1] + bnds[3]) * 0.5;
+  var new_center_x, new_center_y;
+  var max_iter = 5;
 
   // inverse transformation of copied text frame
   textFrameCopy.transform(app.invertMatrix(textFrame.matrix));
@@ -1795,23 +1787,15 @@ function getUntransformedTextBounds(textFrame) {
   textFrameCopy.textRange.characterAttributes.horizontalScale = 100;
   textFrameCopy.textRange.characterAttributes.verticalScale = 100;
   // move transformed text frame back to old center point
-  var new_center_x, new_center_y;
-  var max_iter = 5;
-
   while (--max_iter > 0) {
     bnds = textFrameCopy.geometricBounds;
     new_center_x = (bnds[0] + bnds[2]) * 0.5;
     new_center_y = (bnds[1] + bnds[3]) * 0.5;
     textFrameCopy.translate(old_center_x - new_center_x, old_center_y - new_center_y);
   }
-
-  var bounds = textFrameCopy.geometricBounds;
-  textFrameCopy.textRange.characterAttributes.fillColor = getRGBColor(250, 50, 50);
+  bnds = textFrameCopy.geometricBounds;
   textFrameCopy.remove();
-
-  // reset selection
-  activeDocument.selection = oldSelection;
-  return bounds;
+  return bnds;
 }
 
 // ==============================
@@ -2005,42 +1989,39 @@ function hideElementsOutsideArtboard(ab) {
 }
 
 
+function clearSelection() {
+  // setting selection to null doesn't always work:
+  // it doesn't deselect text range selection and also seems to interfere with
+  // subsequent mask operations using executeMenuCommand().
+  // doc.selection = null;
+  // the following seems to work reliably.
+  app.executeMenuCommand('deselectall');
+}
+
 // =================================
 // ai2html image functions
 // =================================
 
 // ab: artboard (assumed to be the active artboard)
-// textFrames:  text objects belonging to the active artboard
-function captureArtboardImage(ab, textFrames, settings) {
+// textFrames:  text frames belonging to the active artboard
+function captureArtboardImage(ab, textFrames, masks, settings) {
   var docArtboardName = getArtboardFullName(ab);
   var imageDestinationFolder = docPath + settings.html_output_path + settings.image_output_path;
   var imageDestination = imageDestinationFolder + docArtboardName;
-  var hiddenItemsOutsideArtboard, i;
+  var i;
   checkForOutputFolder(imageDestinationFolder, "image_output_path");
 
   if (settings.testing_mode != "yes") {
-    // Hide text frames in preparation for image generation
     for (i=0; i<textFrames.length; i++) {
       textFrames[i].hidden = true;
     }
   }
 
-  // if in svg export, hide path elements outside of the current artboard
-  // TODO: ask Archie about this -- why only "path elements" in comment
-  if (contains(settings.image_format, 'svg')) {
-    hiddenItemsOutsideArtboard = hideElementsOutsideArtboard(ab);
-  }
-
   exportImageFiles(imageDestination, ab, settings.image_format, 1, docSettings.use_2x_images_if_possible);
-
   if (contains(settings.image_format, 'svg')) {
-    // unhide non-text elements hidden before export
-    for (i=0; i<hiddenItemsOutsideArtboard.length; i++) {
-      hiddenItemsOutsideArtboard[i].hidden = false;
-    }
+    exportSVG(imageDestination, ab, masks);
   }
 
-  // unhide text now if NOT in testing mode
   if (settings.testing_mode != "yes") {
     for (i=0; i<textFrames.length; i++) {
       textFrames[i].hidden = false;
@@ -2101,114 +2082,296 @@ function createPromoImage(settings) {
   alert("Promo image created\nLocation: " + imageDestination + "." + promoFormat);
 }
 
+// Returns 1 or 2 (corresponding to standard pixel scale and "retina" pixel scale)
+// format: png, png24 or jpg
+// doubleres: yes, always or no (no is default)
+function getPixelRatio(width, height, format, doubleres) {
+  // Maximum pixel sizes are based on mobile Safari limits
+  // TODO: check to see if these numbers are still relevant
+  var maxPngSize = 3*1024*1024;
+  var maxJpgSize = 32*1024*1024;
+  var k = (doubleres == "always" || doubleres == "yes") ? 2 : 1;
+  var pixels = width * height * k * k;
+
+  if (doubleres == "yes" && width < 945) { // assume wide images are desktop-only
+    // use single res if image might run into mobile browser limits
+    if (((format == "png" || format == "png24") && pixels > maxPngSize) ||
+        (format == "jpg" && pixels > maxJpgSize)) {
+      k = 1;
+    }
+  }
+  return k;
+}
+
 // Exports contents of active artboard (without text, unless in test mode)
-// dest: full path of output file including the file basename
+//
+// dest: full path of output file excluding the file extension
 // ab: assumed to be active artboard
 // formats: array of export format identifiers (png, png24, jpg, svg)
 // initialScaling: the proportion to scale the base image before considering whether to double res. Usually just 1.
-// doubleres: "yes" or "no" whether you want to allow images to be double res
-//            to force ai2html to use doubleres, use "always"
+// doubleres: "yes", "no" or "always" ("yes" may be overridden if the image is very large)
 //
 function exportImageFiles(dest, ab, formats, initialScaling, doubleres) {
-   // max JPG scale is specified in the Javascript Object Reference under ExportOptionsJPEG.
-  var maxJpgImageScaling  = 776.19;
-  var pngScaling = 100 * initialScaling,
-      jpgScaling = 100 * initialScaling,
-      abPos = getArtboardPos(ab),
-      width = abPos.width * initialScaling,
-      height = abPos.height * initialScaling,
-      exportOptions, fileType;
 
-  if (doubleres=="yes" || doubleres=="always") {
-    pngScaling = 200 * initialScaling;
-    jpgScaling = 200 * initialScaling;
-    // if image is too big to use double-res, then just output single-res.
-    if (doubleres == 'always' || ((width*height) < (3*1024*1024/4) || (width >= 945))) {
-      // <3
-      // feedback.push("The jpg and png images are double resolution.");
-    } else if ( (width*height) < (3*1024*1024) ) {
-      // .75-3
-      pngScaling = 100;
-      // feedback.push("The png image is single resolution.");
-      // feedback.push("The jpg image is double resolution.");
-    } else if ( (width*height) < (32*1024*1024/4) ) {
-      // 3-8
-      pngScaling = 100;
-      // warnings.push("The png image is single resolution, but is too large to display on first-generation iPhones.");
-      // feedback.push("The jpg image is double resolution.");
-    } else if ( (width*height) < (32*1024*1024) ) {
-      // 8-32
-      pngScaling = 100;
-      jpgScaling = 100;
-      // warnings.push("The png image is single resolution, but is too large to display on first-generation iPhones.");
-      // feedback.push("The jpg image is single resolution.");
-    } else {
-      // 32+
-      pngScaling = 100;
-      jpgScaling = 100;
-      // warnings.push("The jpg and png images are single resolution, but are too large to display on first-generation iPhones.");
-    }
-  }
+  forEach(formats, function(format) {
+    var maxJpgScale  = 776.19; // This is specified in the Illustrator Scripting Reference under ExportOptionsJPEG.
+    var abPos = getArtboardPos(ab);
+    var width = abPos.width * initialScaling;
+    var height = abPos.height * initialScaling;
+    var imageScale = 100 * initialScaling * getPixelRatio(width, height, format, doubleres);
+    var exportOptions, fileType;
 
-  for (var formatNumber = 0; formatNumber < formats.length; formatNumber++) {
-    var format = formats[formatNumber];
     if (format=="png") {
-      exportOptions = new ExportOptionsPNG8();
       fileType = ExportType.PNG8;
+      exportOptions = new ExportOptionsPNG8();
       exportOptions.colorCount       = docSettings.png_number_of_colors;
-      exportOptions.transparency     = (docSettings.png_transparent==="no") ? false : true;
-      exportOptions.artBoardClipping = true;
-      exportOptions.antiAliasing     = false;
-      exportOptions.horizontalScale  = pngScaling;
-      exportOptions.verticalScale    = pngScaling;
-      // feedback.push("exportOptions.png_number_of_colors = " + exportOptions.colorCount);
-      // feedback.push("exportOptions.transparency = " + exportOptions.transparency);
+      exportOptions.transparency     = isTrue(docSettings.png_transparent);
 
     } else if (format=="png24") {
-      exportOptions = new ExportOptionsPNG24();
       fileType = ExportType.PNG24;
-      exportOptions.transparency     = (docSettings.png_transparent==="no") ? false : true;
-      exportOptions.artBoardClipping = true;
-      exportOptions.antiAliasing     = false;
-      exportOptions.horizontalScale  = pngScaling;
-      exportOptions.verticalScale    = pngScaling;
-
-    } else if (format=="svg") {
-      fileType = ExportType.SVG;
-      exportOptions = new ExportOptionsSVG();
-      exportOptions.embedAllFonts         = false;
-      exportOptions.fontSubsetting        = SVGFontSubsetting.None;
-      exportOptions.compressed            = false;
-      exportOptions.documentEncoding      = SVGDocumentEncoding.UTF8;
-      exportOptions.embedRasterImages     = (docSettings.svg_embed_images==="yes") ? true : false;
-      // exportOptions.horizontalScale       = initialScaling;
-      // exportOptions.verticalScale         = initialScaling;
-      exportOptions.saveMultipleArtboards = false;
-      exportOptions.DTD                   = SVGDTDVersion.SVG1_1; // SVG1_0 SVGTINY1_1 <=default SVG1_1 SVGTINY1_1PLUS SVGBASIC1_1 SVGTINY1_2
-      exportOptions.cssProperties         = SVGCSSPropertyLocation.STYLEATTRIBUTES; // ENTITIES STYLEATTRIBUTES <=default PRESENTATIONATTRIBUTES STYLEELEMENTS
+      exportOptions = new ExportOptionsPNG24();
+      exportOptions.transparency     = isTrue(docSettings.png_transparent);
 
     } else if (format=="jpg") {
-      if (jpgScaling > maxJpgImageScaling) {
-        jpgScaling = maxJpgImageScaling;
-        var promoImageFileName = dest.split("/").slice(-1)[0];
-        feedback.push(promoImageFileName + ".jpg was output at a lower scaling than desired because of a limit on jpg exports in Illustrator. If the file needs to be larger, change the image format to png which does not appear to have limits.");
+      if (imageScale > maxJpgScale) {
+        imageScale = maxJpgScale;
+        warnings.push(dest.split("/").pop() + ".jpg was output at a smaller size than desired because of a limit on jpg exports in Illustrator." +
+          " If the file needs to be larger, change the image format to png which does not appear to have limits.");
       }
       fileType = ExportType.JPEG;
       exportOptions = new ExportOptionsJPEG();
-      exportOptions.artBoardClipping = true;
-      exportOptions.antiAliasing     = false;
-      exportOptions.qualitySetting   = docSettings.jpg_quality;
-      exportOptions.horizontalScale  = jpgScaling;
-      exportOptions.verticalScale    = jpgScaling;
+      exportOptions.qualitySetting = docSettings.jpg_quality;
 
     } else {
-      warnings.push("Unsupported image format: " + format);
-      continue;
+      if (format != "svg") { // svg exported separately
+        warnings.push("Unsupported image format: " + format);
+      }
+      return;
     }
+
+    exportOptions.horizontalScale  = imageScale;
+    exportOptions.verticalScale    = imageScale;
+    exportOptions.artBoardClipping = true;
+    exportOptions.antiAliasing     = false;
     app.activeDocument.exportFile(new File(dest), fileType, exportOptions);
+  });
+}
+
+function updateArtboardSize(ab, bounds) {
+  var abRect = ab.artboardRect,
+      x = abRect[0],
+      y = abRect[1],
+      w = Math.abs(bounds[2] - bounds[0]),
+      h = Math.abs(bounds[1] - bounds[3]);
+  ab.artboardRect = [x, y, x + w, y - h];
+}
+
+// Return array of layer objects, include PageItems and sublayers, in z order
+function getSortedLayerItems(lyr) {
+  var items = [], i, j, n, m;
+  for (i=0, n=lyr.pageItems.length; i<n; i++) { items.push(lyr.pageItems[i]); }
+  for (j=0, m=lyr.layers.length; j<m; j++) { items.push(lyr.layers[j]); }
+  if (i > 0 && j > 0) {
+    // only need to sort if layer contains both layers and page objects
+    items.sort(function(a, b) {
+      return b.absoluteZOrderPosition - a.absoluteZOrderPosition;
+    });
+  }
+  return items;
+}
+
+function copyArtboardForImageExport(ab, masks) {
+  var layerMasks = filter(masks, function(o) {return !!o.layer;}),
+      bounds = ab.artboardRect,
+      sourceLayers = toArray(doc.layers),
+      destLayer = doc.layers.add(),
+      destGroup = doc.groupItems.add(),
+      doc2;
+  destLayer.name = "ArtboardContent";
+  destGroup.move(destLayer, ElementPlacement.PLACEATEND);
+
+  forEach(sourceLayers, copyLayer);
+
+  doc2 = app.documents.add(DocumentColorSpace.RGB, doc.width, doc.height, 1);
+  doc2.pageOrigin = doc.pageOrigin;
+  doc2.rulerOrigin = doc.rulerOrigin;
+  // need to save group position before copying to second document. Oddly,
+  // the reported position of the original group changes after duplication
+  var posPre = destGroup.position;
+  var copy = destGroup.duplicate(doc2.layers[0], ElementPlacement.PLACEATEND);
+  copy.position = posPre;
+  destGroup.remove();
+  destLayer.remove();
+  return doc2;
+
+  function copyLayer(lyr) {
+    var mask;
+    if (lyr.hidden) return; // ignore hidden layers
+    mask = findLayerMask(lyr);
+    if (mask) {
+      copyMaskedLayerAsGroup(lyr, mask);
+    } else {
+      forEach(getSortedLayerItems(lyr), copyLayerItem);
+    }
+  }
+
+  // Item: Layer (sublayer) or PageItem
+  function copyLayerItem(item) {
+    if (item.typename == 'Layer') {
+      copyLayer(item);
+    } else {
+      copyPageItem(item);
+    }
+  }
+
+  function copyMaskedLayerAsGroup(lyr, mask) {
+    var newGroup = doc.groupItems.add();
+    var newMask;
+    newGroup.move(destGroup, ElementPlacement.PLACEATEND);
+    forEach(mask.items, function(item) {
+      copyPageItem(item, newGroup);
+    });
+    if (newGroup.pageItems.length > 0) {
+      newMask = duplicateItem(mask.mask);
+      newMask.moveToBeginning(newGroup);
+      newGroup.clipped = true;
+    } else {
+      newGroup.remove();
+    }
+  }
+
+  function findLayerMask(lyr) {
+    return find(layerMasks, function(o) {return o.layer == lyr;});
+  }
+
+  function copyPageItem(item, dest) {
+    // TODO: look into possible problems copying groups, etc
+    var excluded = item.typename == 'TextFrame' ||
+        !testBoundsIntersection(item.geometricBounds, bounds) ||
+        objectIsHidden(item) || item.clipping;
+    return excluded ? null : duplicateItem(item, dest);
+  }
+
+  function duplicateItem(item, dest) {
+    return item.duplicate(dest || destGroup, ElementPlacement.PLACEATEND);
   }
 }
 
+function findCommonParent(a, b) {
+  var p = null;
+  if (a == b) {
+    p = a;
+  }
+  if (!p && a.parent.typename == 'Layer') {
+    p = findCommonParent(a.parent, b);
+  }
+  if (!p && b.parent.typename == 'Layer') {
+    p = findCommonParent(a, b.parent);
+  }
+  return p;
+}
+
+function findParentLayer(layers) {
+  var lyrA = layers.pop();
+  var lyrB;
+  var parent = null;
+  while (layers.length > 0) {
+    lyrB = layers.pop();
+    parent = findCommonParent(lyrA, lyrB);
+    if (!parent) {
+      break;
+    }
+    lyrA = parent;
+  }
+  return parent;
+}
+
+function findCommonParentLayer(items) {
+  var layers = [],
+      lyr, item;
+  for (var i=0, n=items.length; i<n; i++) {
+    item = items[i];
+    if (item.parent.typename == 'Layer' && !contains(layers, item.parent)) {
+      layers.push(item.parent);
+    }
+  }
+  if (layers.length === 0) {
+    lyr = null;
+  } else if (layers.length === 1) {
+    lyr = layers[0];
+  } else {
+    lyr = findParentLayer(layers);
+  }
+  return lyr;
+}
+
+function findMasks() {
+  var found = [],
+      masks;
+  // assumes clipping paths have been unlocked
+  app.executeMenuCommand('Clipping Masks menu item');
+  masks = toArray(doc.selection);
+  clearSelection();
+  forEach(masks, function(mask) {mask.locked = true;});
+  forEach(masks, function(mask) {
+    var items, obj;
+    mask.locked = false;
+    // select a single mask
+    // some time ago, executeMenuCommand() was more reliable than assigning to
+    // selection... no longer, apparently
+    // app.executeMenuCommand('Clipping Masks menu item');
+    doc.selection = [mask];
+    // switch selection to all masked items
+    app.executeMenuCommand('editMask'); // Object > Clipping Mask > Edit Contents
+    items = toArray(doc.selection || []);
+    // oddly, 'deselectall' sometimes fails here
+    // app.executeMenuCommand('deselectall');
+    doc.selection = null;
+    mask.locked = true;
+    obj = {
+      mask: mask,
+      items: items
+    };
+    if (items.length === 0) {
+      message("Unable to select masked items");
+
+    } else if (mask.parent.typename == "GroupItem") {
+      obj.group = mask.parent;
+
+    } else if (mask.parent.typename == "Layer") {
+      obj.layer = findCommonParentLayer(items);
+
+    } else {
+      message("Unknown mask type in findMasks()");
+    }
+    if (obj.group || obj.layer) {
+      found.push(obj);
+    }
+  });
+  forEach(masks, function(mask) {mask.locked = false;});
+  return found;
+}
+
+function exportSVG(dest, ab, masks) {
+  var opts = new ExportOptionsSVG();
+  opts.embedAllFonts         = false;
+  opts.fontSubsetting        = SVGFontSubsetting.None;
+  opts.compressed            = false;
+  opts.documentEncoding      = SVGDocumentEncoding.UTF8;
+  opts.embedRasterImages     = (docSettings.svg_embed_images==="yes") ? true : false;
+  opts.saveMultipleArtboards = false;
+  opts.DTD                   = SVGDTDVersion.SVG1_1; // SVG1_0 SVGTINY1_1 <=default SVG1_1 SVGTINY1_1PLUS SVGBASIC1_1 SVGTINY1_2
+  opts.cssProperties         = SVGCSSPropertyLocation.STYLEATTRIBUTES; // ENTITIES STYLEATTRIBUTES <=default PRESENTATIONATTRIBUTES STYLEELEMENTS
+
+  // Illustrator's SVG output contains all objects in a document (it doesn't
+  //   clip to the current artboard), so we copy artboard objects to a temporary
+  //   document for export.
+  var exportDoc = copyArtboardForImageExport(ab, masks);
+  exportDoc.exportFile(new File(dest), ExportType.SVG, opts);
+  doc.activate();
+  exportDoc.pageItems.removeAll();
+  exportDoc.close(SaveOptions.DONOTSAVECHANGES);
+}
 
 // ===================================
 // ai2html output generation functions
@@ -2272,6 +2435,29 @@ function generateArtboardCss(ab, textClasses, settings) {
 
   css += t3 + '.g-aiPtransformed p { white-space: nowrap; }\r'; // TODO: move to page css block
   css += "\t\t</style>\r";
+  return css;
+}
+
+// Get CSS styles that are common to all generated content
+function generatePageCss(pageName, settings) {
+  var css = "\r\t<style type='text/css' media='screen,print'>\r";
+  if (settings.max_width !== "") {
+    css += "\t\t#" + nameSpace + pageName + "-box {\r";
+    css += "\t\t\tmax-width:" + settings.max_width + "px;\r";
+    css += "\t\t}\r";
+  }
+  if (settings.center_html_output) {
+    css += "\t\t." + nameSpace + "artboard {\r";
+    css += "\t\t\tmargin:0 auto;\r";
+    css += "\t\t}\r";
+  }
+  if (settings.clickable_link !== "") {
+    css += "\t\t." + nameSpace + "ai2htmlLink {\r";
+    css += "\t\t\tdisplay: block;\r";
+    css += "\t\t}\r";
+  }
+  css += "\t</style>\r";
+  css += "\r";
   return css;
 }
 
@@ -2435,29 +2621,6 @@ function addCustomContent(content, customBlocks) {
     content += "\r\t<!-- Custom JS -->\r" + customBlocks.js.join('\r') + '\r';
   }
   return content;
-}
-
-function generatePageCss(pageName, settings) {
-  var css = "\r\t<style type='text/css' media='screen,print'>\r";
-  if (settings.max_width !== "") {
-    css += "\t\t#" + nameSpace + pageName + "-box {\r";
-    css += "\t\t\tmax-width:" + settings.max_width + "px;\r";
-    css += "\t\t}\r";
-  }
-  if (settings.center_html_output) {
-    css += "\t\t." + nameSpace + "artboard {\r";
-    css += "\t\t\tmargin:0 auto;\r";
-    css += "\t\t}\r";
-  }
-  if (settings.clickable_link !== "") {
-    css += "\t\t." + nameSpace + "ai2htmlLink {\r";
-    css += "\t\t\tdisplay: block;\r";
-    css += "\t\t}\r";
-  }
-  css += "\t</style>\r";
-  css += "\r";
-
-  return css;
 }
 
 // Wrap content HTML in a <div>, add styles and resizer script, write to a file
