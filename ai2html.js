@@ -48,7 +48,7 @@ var scriptVersion     = "0.70";
 var nytBaseSettings = {
   ai2html_environment: {defaultValue: scriptEnvironment, includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
   settings_version: {defaultValue: scriptVersion, includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
-  create_promo_image: {defaultValue: "yes", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
+  create_promo_image: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
   image_format: {defaultValue: ["png"], includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "array", possibleValues: "jpg, png, png24", notes: "Images will be generated in mulitple formats if multiple formats are listed, separated by commas. The first format will be used in the html. Sometimes this is useful to compare which format will have a smaller file size."},
   write_image_files: {defaultValue: "yes", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: "Set this to \u201Cno\u201D to skip writing the image files. Generally only use this after you have run the script once with this setting set to \u201Cyes.\u201D"},
   responsiveness: {defaultValue: "fixed", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "fixed, dynamic", notes: "Dynamic responsiveness means ai graphics will scale to fill the container they are placed in."},
@@ -403,7 +403,8 @@ function main() {
   // =========================================================
 
   if (errors.length > 0 || isTrue(docSettings.show_completion_dialog_box)) {
-    var promptForPromo = previewProjectType == "ai2html" && isTrue(docSettings.write_image_files);
+    var promptForPromo = isTrue(docSettings.write_image_files) &&
+      (previewProjectType == "ai2html" || isTrue(docSettings.create_promo_image));
     var showPromo = showCompletionAlert(promptForPromo);
     if (showPromo) createPromoImage(docSettings);
   }
@@ -426,7 +427,7 @@ function render() {
   }
 
   // initialize document settings
-  // TODO: remove obsolete options: ai2html_environment, create_promo_image
+  // TODO: remove obsolete option: ai2html_environment
   for (var setting in ai2htmlBaseSettings) {
     docSettings[setting] = ai2htmlBaseSettings[setting].defaultValue;
   }
