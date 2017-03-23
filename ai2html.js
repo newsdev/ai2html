@@ -279,7 +279,7 @@ var nameSpace           = "g-";
 var cssPrecision        = 4;
 // value between 0 and 255 lower than which if all three RGB values are below
 // then force the RGB to #000 so it is a pure black
-var  rgbBlackThreshold  = 36;
+var rgbBlackThreshold  = 36;
 var showDebugMessages  = true;
 
 // ================================
@@ -362,7 +362,6 @@ function main() {
     errors.push('Convert document color mode to "RGB" before running script. (File>Document Color Mode>RGB Color)' );
 
   } else {
-
     doc = app.activeDocument;
     docPath = doc.path + "/";
     docIsSaved = doc.saved;
@@ -495,7 +494,6 @@ function render() {
   if (customBlocks.html) {feedback.push("Custom HTML blocks: " + customBlocks.html.length);}
   if (customBlocks.js)   {feedback.push("Custom JS blocks: " + customBlocks.js.length);}
 
-
   // ================================================
   // add settings text block if one does not exist
   // ================================================
@@ -584,7 +582,7 @@ function render() {
   // ================================================
 
   var artboardContent = "";
-  var masks = findMasks();
+  var masks = findMasks(); // identify all clipping masks and their contents
 
   forEachArtboard(function(activeArtboard, abNumber) {
     var textHtml = "";
@@ -1093,7 +1091,7 @@ function forEachLayer(cb, parent) {
 
 function createSettingsBlock() {
   var bounds      = getArtboardBounds();
-  var fontSize     = 15;
+  var fontSize    = 15;
   var leading     = 22;
   var extraLines  = 6;
   var width       = 400;
@@ -1579,7 +1577,8 @@ function getClippedTextFramesByArtboard(ab, masks) {
 }
 
 
-// Get array of TextFrames belonging to an artboard
+// Get array of TextFrames belonging to an artboard, excluding text that
+// overlaps the artboard but is hidden by a clipping mask
 function getTextFramesByArtboard(ab, masks) {
   var candidateFrames = findTextFramesToRender(doc.textFrames, ab.artboardRect);
   var excludedFrames = getClippedTextFramesByArtboard(ab, masks);
@@ -2103,11 +2102,11 @@ function getPixelRatio(width, height, format, doubleres) {
   return k;
 }
 
-// Exports contents of active artboard (without text, unless in test mode)
+// Exports contents of active artboard as an image (without text, unless in test mode)
 //
 // dest: full path of output file excluding the file extension
 // ab: assumed to be active artboard
-// formats: array of export format identifiers (png, png24, jpg, svg)
+// formats: array of export format identifiers (png, png24, jpg)
 // initialScaling: the proportion to scale the base image before considering whether to double res. Usually just 1.
 // doubleres: "yes", "no" or "always" ("yes" may be overridden if the image is very large)
 //
@@ -2157,21 +2156,10 @@ function exportImageFiles(dest, ab, formats, initialScaling, doubleres) {
   });
 }
 
-function updateArtboardSize(ab, bounds) {
-  var abRect = ab.artboardRect,
-      x = abRect[0],
-      y = abRect[1],
-      w = Math.abs(bounds[2] - bounds[0]),
-      h = Math.abs(bounds[1] - bounds[3]);
-  ab.artboardRect = [x, y, x + w, y - h];
-}
-
 // Return array of layer objects, include PageItems and sublayers, in z order
 function getSortedLayerItems(lyr) {
-  var items = [], i, j, n, m;
-  for (i=0, n=lyr.pageItems.length; i<n; i++) { items.push(lyr.pageItems[i]); }
-  for (j=0, m=lyr.layers.length; j<m; j++) { items.push(lyr.layers[j]); }
-  if (i > 0 && j > 0) {
+  var items = toArray(lyr.pageItems).concat(toArray(lyr.layers));
+  if (lyr.layers.length > 0 && lyr.pageItems.length > 0) {
     // only need to sort if layer contains both layers and page objects
     items.sort(function(a, b) {
       return b.absoluteZOrderPosition - a.absoluteZOrderPosition;
@@ -2245,7 +2233,6 @@ function copyArtboardForImageExport(ab, masks) {
   }
 
   function copyPageItem(item, dest) {
-    // TODO: look into possible problems copying groups, etc
     var excluded = item.typename == 'TextFrame' ||
         !testBoundsIntersection(item.geometricBounds, bounds) ||
         objectIsHidden(item) || item.clipping;
