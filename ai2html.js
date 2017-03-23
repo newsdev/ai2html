@@ -2159,11 +2159,10 @@ function copyArtboardForImageExport(ab, masks) {
       doc2;
   destLayer.name = "ArtboardContent";
   destGroup.move(destLayer, ElementPlacement.PLACEATEND);
-
   forEach(sourceLayers, copyLayer);
-
+  // Creating a document is pretty slow (~1.5s)
   doc2 = app.documents.add(DocumentColorSpace.RGB, doc.width, doc.height, 1);
-  doc2.pageOrigin = doc.pageOrigin;
+  doc2.pageOrigin = doc.pageOrigin; // not sure if needed
   doc2.rulerOrigin = doc.rulerOrigin;
   // need to save group position before copying to second document. Oddly,
   // the reported position of the original group changes after duplication
@@ -2344,7 +2343,7 @@ function exportSVG(dest, ab, masks) {
   var exportDoc = copyArtboardForImageExport(ab, masks);
   exportDoc.exportFile(new File(dest), ExportType.SVG, opts);
   doc.activate();
-  exportDoc.pageItems.removeAll();
+  //exportDoc.pageItems.removeAll();
   exportDoc.close(SaveOptions.DONOTSAVECHANGES);
 }
 
