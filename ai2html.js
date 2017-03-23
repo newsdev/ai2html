@@ -292,8 +292,7 @@ var warnings = [];
 var errors   = [];
 
 var textFramesToUnhide = [];
-var lockedObjects      = [];
-var hiddenObjects      = [];
+var objectsToRelock = [];
 
 // Global variables set by main()
 var docSettings = {};
@@ -439,15 +438,8 @@ function render() {
     clearSelection();
   }
 
-  // Unlock all objects
-  T.start();
+  // Unlock containers and clipping masks
   unlockObjects();
-  T.stop('Unlock objects');
-
-  // unhide layers that were hidden so objects inside could be locked
-  for (var i = hiddenObjects.length-1; i>=0; i--) {
-    hiddenObjects[i].visible = false;
-  }
 
   // ================================================
   // assign artboards to their corresponding breakpoints
@@ -635,7 +627,7 @@ function render() {
     // ==========================
 
     if (docSettings.write_image_files=="yes") {
-      pBar.setTitle(docArtboardName + ': Writing image...');
+      pBar.setTitle(docArtboardName + ': Capturing image...');
       T.start();
       captureArtboardImage(activeArtboard, textFrames, masks, docSettings);
       T.stop("Image generation");
@@ -662,7 +654,7 @@ function render() {
       generateHtml(addCustomContent(artboardContent, customBlocks), docArtboardName, docSettings);
       artboardContent = "";
     }
-    T.stop("Total for artboard " + abNumber);
+    T.stop("Total for artboard " + (activeArtboard.name || abNumber));
 
   }); // end artboard loop
 
@@ -960,6 +952,10 @@ function ProgressBar(opts) {
     return win.pnl.progBar.value/win.pnl.progBar.maxvalue;
   }
 
+  function update() {
+    win.update();
+  }
+
   this.step = function() {
     step = Math.min(step + 1, steps);
     this.setProgress(step / steps);
@@ -971,22 +967,15 @@ function ProgressBar(opts) {
     var pct = progress * max;
     win.pnl.progBar.value = pct;
     win.pnl.progBarLabel.text = Math.round(pct) + "%";
-    win.update();
+    update();
   };
 
   this.setTitle = function(title) {
     win.pnl.text = title;
-    win.update();
-  };
-
-  this.increment = function(amount) {
-    amount = amount || 0.01;
-    this.setProgress(getProgress() + amount);
-    win.update();
+    update();
   };
 
   this.close = function() {
-    win.update();
     win.close();
   };
 }
@@ -1043,54 +1032,47 @@ function isFalse(val) {
   return val == "false" || val == "no" || val === false;
 }
 
-// Unlock objects necessary for rendering
-// parent: a GroupItem or a Layer
-function unlockObjectsInside(parent) {
-  var i, n, obj;
-  // unlock locked clipping paths (so masked-out text can be detected later)
-  for (i=0, n=parent.pathItems.length; i<n; i++) {
-    obj = parent.pathItems[i];
-    if (obj.locked === true && obj.clipping === true) {
-      obj.locked = false;
-      lockedObjects.push(obj);
-      break;
-    }
-  }
-
-  // TODO: ask Archie why bother to unlock text objects
-  for (i=0, n=parent.textFrames.length; i<n; i++) {
-    obj = parent.textFrames[i];
-    // this line is producing the MRAP error!!!
-    if (obj.locked === true) {
-      obj.locked = false;
-      lockedObjects.push(obj);
-    }
-  }
-}
-
 function unlockObjects() {
-  forEachLayer(function(lyr) {
-    if (lyr.locked === true) {
-      lyr.locked = false;
-      lockedObjects.push(lyr);
-    }
-    // TODO: ask Archie why unhide layers
-    if (lyr.visible === false) {
-      lyr.visible = true;
-      hiddenObjects.push(lyr);
-    }
-    unlockObjectsInside(lyr);
-  });
+  forEach(doc.layers, unlockContainer);
+}
 
-  for (var i=0, n=doc.groupItems.length; i<n; i++) {
-    var group = doc.groupItems[i];
-    if (group.locked) {
-      group.locked = false;
-      lockedObjects.push(group);
+function unlockObject(obj) {
+  obj.locked = false;
+  objectsToRelock.push(obj);
+}
+
+// Unlock a layer or group if visible and locked, as well as any locked and visible
+//   clipping masks
+// o: GroupItem or Layer
+function unlockContainer(o) {
+  var type = o.typename;
+  var i, item, pathCount;
+  if (o.hidden === true || o.visible === false) return;
+  if (o.locked) {
+    unlockObject(o);
+  }
+
+  // unlock locked clipping paths (so contents can be selected later)
+  // optimization: Layers containing hundreds or thousands of paths are unlikely
+  //    to contain a clipping mask and are slow to scan -- skip these
+  pathCount = o.pathItems.length;
+  if ((type == 'Layer' && pathCount < 500) || (type == 'GroupItem' && o.clipped)) {
+    for (i=0; i<pathCount; i++) {
+      item = o.pathItems[i];
+      if (item.clipping && item.locked && !item.hidden) {
+        unlockObject(item);
+        break;
+      }
     }
-    unlockObjectsInside(group);
+  }
+
+  // recursively unlock sub-layers and groups
+  forEach(o.groupItems, unlockContainer);
+  if (o.typename == 'Layer') {
+    forEach(o.layers, unlockContainer);
   }
 }
+
 
 function forEachLayer(cb, parent) {
   var layers = parent ? parent.layers : doc.layers;
@@ -1215,25 +1197,11 @@ function showCompletionAlert(showPrompt) {
 
 function restoreDocumentState() {
   var i;
-  // Unhide stuff that was hidden during processing
-  for (i = 0; i < textFramesToUnhide.length; i++) {
-    var currentFrameToUnhide = textFramesToUnhide[i];
-    currentFrameToUnhide.hidden = false;
+  for (i = 0; i<textFramesToUnhide.length; i++) {
+    textFramesToUnhide[i].hidden = false;
   }
-
-  // Unhide layers so objects inside can be unlocked
-  for (i = hiddenObjects.length-1; i>=0; i--) {
-    hiddenObjects[i].visible = true;
-  }
-
-  // Restore locked objects
-  for (i = lockedObjects.length-1; i>=0; i--) {
-    lockedObjects[i].locked = true;
-  }
-
-  // Restore hidden layers
-  for (i = hiddenObjects.length-1; i>=0; i--) {
-    hiddenObjects[i].visible = false;
+  for (i = objectsToRelock.length-1; i>=0; i--) {
+    objectsToRelock[i].locked = true;
   }
 }
 
@@ -1255,7 +1223,6 @@ function hideTextFrame(textFrame) {
   textFramesToUnhide.push(textFrame);
   textFrame.hidden = true;
 }
-
 
 // Parse an AI CharacterAttributes object
 function getCharStyle(c) {
@@ -2185,7 +2152,7 @@ function getSortedLayerItems(lyr) {
 
 function copyArtboardForImageExport(ab, masks) {
   var layerMasks = filter(masks, function(o) {return !!o.layer;}),
-      bounds = ab.artboardRect,
+      artboardBounds = ab.artboardRect,
       sourceLayers = toArray(doc.layers),
       destLayer = doc.layers.add(),
       destGroup = doc.groupItems.add(),
@@ -2228,8 +2195,12 @@ function copyArtboardForImageExport(ab, masks) {
   }
 
   function copyMaskedLayerAsGroup(lyr, mask) {
-    var newGroup = doc.groupItems.add();
-    var newMask;
+    var maskBounds = mask.mask.geometricBounds;
+    var newMask, newGroup;
+    if (!testBoundsIntersection(artboardBounds, maskBounds)) {
+      return;
+    }
+    newGroup = doc.groupItems.add();
     newGroup.move(destGroup, ElementPlacement.PLACEATEND);
     forEach(mask.items, function(item) {
       copyPageItem(item, newGroup);
@@ -2249,7 +2220,7 @@ function copyArtboardForImageExport(ab, masks) {
 
   function copyPageItem(item, dest) {
     var excluded = item.typename == 'TextFrame' ||
-        !testBoundsIntersection(item.geometricBounds, bounds) ||
+        !testBoundsIntersection(item.geometricBounds, artboardBounds) ||
         objectIsHidden(item) || item.clipping;
     return excluded ? null : duplicateItem(item, dest);
   }
@@ -2334,10 +2305,7 @@ function findMasks() {
       mask: mask,
       items: items
     };
-    if (items.length === 0) {
-      message("Unable to select masked items");
-
-    } else if (mask.parent.typename == "GroupItem") {
+    if (mask.parent.typename == "GroupItem") {
       obj.group = mask.parent;
 
     } else if (mask.parent.typename == "Layer") {
@@ -2346,8 +2314,13 @@ function findMasks() {
     } else {
       message("Unknown mask type in findMasks()");
     }
-    if (obj.group || obj.layer) {
+
+    if (items.length > 0 && (obj.group || obj.layer)) {
       found.push(obj);
+    }
+
+    if (items.length === 0) {
+      // message("Unable to select masked items");
     }
   });
   forEach(masks, function(mask) {mask.locked = false;});
