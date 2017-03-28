@@ -359,11 +359,12 @@ var applyTemplate = function(template,atObject) {
 	var newText = template;
 	for (var atKey in atObject) {
 		var mustachePattern = new RegExp("\\{\\{\\{? *" + atKey + " *\\}\\}\\}?","g");
-		var ejsPattern      = new RegExp("\\<\\%[=]? *" + atKey + " *\\%\\>","g");
+		// var ejsPattern      = new RegExp("\\<\\%[=]? *" + atKey + " *\\%\\>","g");
 		var replacePattern  = atObject[atKey];
-		newText = newText.replace( mustachePattern , replacePattern );
-		newText = newText.replace( ejsPattern      , replacePattern );
+		newText = newText.replace( mustachePattern , function(match) { return atObject[atKey] });
+		// newText = newText.replace( ejsPattern      , replacePattern );
 	};
+   // alert("template " + template + "\rnewText " + newText)
 	return newText;
 };
 var outputHtml = function(htmlText,fileDestination) {
@@ -1976,7 +1977,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 				if (docSettings.local_preview_template!="") {
 					pBar.setTitle(docArtboardName + ': Writing HTML file...');
 
-					docSettings.ai2htmlPartial     = textForFile;
+					docSettings.ai2htmlPartial  = textForFile;
 					var localPreviewDestination = htmlFileDestinationFolder + docArtboardName + ".html";
 					var localPreviewHtml        = applyTemplate(localPreviewTemplateText,docSettings)
 					outputHtml(localPreviewHtml,localPreviewDestination);
