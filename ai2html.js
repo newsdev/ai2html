@@ -1882,7 +1882,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 				};
 			};
 
-			var imageDestinationFolder = docPath + docSettings.html_output_path + docSettings.image_output_path;
+			var imageDestinationFolder = docPath + parentFolder + docSettings.image_output_path;
 			checkForOutputFolder(imageDestinationFolder, "image_output_path");
 			var imageDestination = imageDestinationFolder + docArtboardName;
 			// alert ("imageDestination\n" +
@@ -1970,19 +1970,19 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 				textForFile  = applyTemplate(textForFile,docSettings);
 				// textForFile  = straightenCurlyQuotesInsideAngleBrackets(textForFile);
 
-				htmlFileDestinationFolder = docPath + docSettings.html_output_path;
+				htmlFileDestinationFolder = docPath + parentFolder;
 				checkForOutputFolder(htmlFileDestinationFolder, "html_output_path");
 				htmlFileDestination = htmlFileDestinationFolder + docArtboardName + docSettings.html_output_extension;
 				if (docSettings.local_preview_template!="") {
 					pBar.setTitle(docArtboardName + ': Writing HTML file...');
 
 					docSettings.ai2htmlPartial     = textForFile;
-					var localPreviewDestination = htmlFileDestinationFolder + docArtboardName + ".preview.html";
+					var localPreviewDestination = htmlFileDestinationFolder + docArtboardName + ".html";
 					var localPreviewHtml        = applyTemplate(localPreviewTemplateText,docSettings)
 					outputHtml(localPreviewHtml,localPreviewDestination);
 				};
 
-				outputHtml(textForFile,htmlFileDestination);
+				// outputHtml(textForFile,htmlFileDestination);
 				// var responsiveHtmlScoopFile = new File( htmlFileDestination );
 				// responsiveHtmlScoopFile.open( "w", "TEXT", "TEXT" );
 				// 	responsiveHtmlScoopFile.lineFeed = "Unix";
@@ -2066,7 +2066,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 		textForFile  = applyTemplate(textForFile,docSettings);
 		// textForFile  = straightenCurlyQuotesInsideAngleBrackets(textForFile);
 
-		htmlFileDestinationFolder = docPath + docSettings.html_output_path;
+		htmlFileDestinationFolder = docPath + parentFolder;
 		checkForOutputFolder(htmlFileDestinationFolder, "html_output_path");
 		if (previewProjectType=="ai2html") {
 			htmlFileDestination     = htmlFileDestinationFolder + "index" + docSettings.html_output_extension;
@@ -2078,13 +2078,13 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 				pBar.setTitle('Writing HTML file...');
 
 				docSettings.ai2htmlPartial = textForFile;
-				var localPreviewDestination = htmlFileDestinationFolder + docSettings.project_name + ".preview.html";
+				var localPreviewDestination = htmlFileDestinationFolder + docSettings.project_name + ".html";
 				var localPreviewHtml = applyTemplate(localPreviewTemplateText,docSettings)
 				outputHtml(localPreviewHtml,localPreviewDestination);
 			};
 		};
 
-		outputHtml(textForFile,htmlFileDestination);
+		// outputHtml(textForFile,htmlFileDestination);
 		// var responsiveHtmlScoopFile = new File( htmlFileDestination );
 		// responsiveHtmlScoopFile.open( "w", "TEXT", "TEXT" );
 		// 	responsiveHtmlScoopFile.lineFeed = "Unix";
