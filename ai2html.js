@@ -360,8 +360,8 @@ var applyTemplate = function(template,atObject) {
 		var mustachePattern = new RegExp("\\{\\{\\{? *" + atKey + " *\\}\\}\\}?","g");
 		var ejsPattern      = new RegExp("\\<\\%[=]? *" + atKey + " *\\%\\>","g");
 		var replacePattern  = atObject[atKey];
-		newText = newText.replace( mustachePattern , replacePattern );
-		newText = newText.replace( ejsPattern      , replacePattern );
+		newText = newText.replace( mustachePattern , function(match) { return replacePattern; });
+		newText = newText.replace( ejsPattern      , function(match) { return replacePattern; });
 	};
 	return newText;
 };
