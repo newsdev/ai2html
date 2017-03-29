@@ -570,7 +570,7 @@ function render() {
   var artboardContent = "";
   var masks = findMasks(); // identify all clipping masks and their contents
 
-  forEachArtboard(function(activeArtboard, abNumber) {
+  forEachUsableArtboard(function(activeArtboard, abNumber) {
     var docArtboardName  = getArtboardFullName(activeArtboard);
     doc.artboards.setActiveArtboardIndex(abNumber);
 
@@ -1014,7 +1014,7 @@ function ProgressBar(opts) {
 
 function calcProgressBarSteps() {
   var n = 0;
-  forEachArtboard(function() {
+  forEachUsableArtboard(function() {
     n += 2;
   });
   return n;
@@ -1899,7 +1899,7 @@ function getArtboardPos(ab) {
 // Get numerical index of an artboard in the doc.artboards array
 function getArtboardId(ab) {
   var id = 0;
-  forEachArtboard(function(ab2, i) {
+  forEachUsableArtboard(function(ab2, i) {
     if (ab === ab2) id = i;
   });
   return id;
@@ -1956,7 +1956,7 @@ function getArtboardWidthRange(ab) {
 // return array of data records about each usable artboard, sorted from narrow to wide
 function getArtboardInfo() {
   var artboards = [];
-  forEachArtboard(function(ab, i) {
+  forEachUsableArtboard(function(ab, i) {
     var pos = getArtboardPos(ab);
     var name = ab.name || "";
     // parse width from artboard name in two formats: <name>:<width> and ai2html-<width>
@@ -2019,7 +2019,7 @@ function assignBreakpointsToArtboards(breakpoints) {
   return bpArr;
 }
 
-function forEachArtboard(cb) {
+function forEachUsableArtboard(cb) {
   var ab;
   for (var i=0; i<doc.artboards.length; i++) {
     ab = doc.artboards[i];
@@ -2033,7 +2033,7 @@ function forEachArtboard(cb) {
 function findLargestArtboard() {
   var largestId = -1;
   var largestArea = 0;
-  forEachArtboard(function(ab, i) {
+  forEachUsableArtboard(function(ab, i) {
     var info = getArtboardPos(ab);
     var area = info.width * info.height;
     if (area > largestArea) {
@@ -2328,52 +2328,43 @@ function copyArtboardForImageExport(ab, masks) {
   }
 }
 
-function findCommonParent(a, b) {
+// a, b: Layer objects
+function findCommonLayer(a, b) {
   var p = null;
   if (a == b) {
     p = a;
   }
   if (!p && a.parent.typename == 'Layer') {
-    p = findCommonParent(a.parent, b);
+    p = findCommonLayer(a.parent, b);
   }
   if (!p && b.parent.typename == 'Layer') {
-    p = findCommonParent(a, b.parent);
+    p = findCommonLayer(a, b.parent);
   }
   return p;
 }
 
-function findParentLayer(layers) {
-  var lyrA = layers.pop();
-  var lyrB;
-  var parent = null;
-  while (layers.length > 0) {
-    lyrB = layers.pop();
-    parent = findCommonParent(lyrA, lyrB);
-    if (!parent) {
-      break;
-    }
-    lyrA = parent;
-  }
-  return parent;
-}
-
-function findCommonParentLayer(items) {
+function findCommonAncestorLayer(items) {
   var layers = [],
-      lyr, item;
+      ancestorLyr = null,
+      item;
   for (var i=0, n=items.length; i<n; i++) {
     item = items[i];
-    if (item.parent.typename == 'Layer' && !contains(layers, item.parent)) {
-      layers.push(item.parent);
+    if (item.parent.typename != 'Layer' || contains(layers, item.parent)) {
+      continue;
+    }
+    // remember layer, to avoid redundant searching (is this worthwhile?)
+    layers.push(item.parent);
+    if (!ancestorLyr) {
+      ancestorLyr = item.parent;
+    } else {
+      ancestorLyr = findCommonLayer(ancestorLyr, item.parent);
+      if (!ancestorLyr) {
+        // Failed to find a common ancestor
+        return null;
+      }
     }
   }
-  if (layers.length === 0) {
-    lyr = null;
-  } else if (layers.length === 1) {
-    lyr = layers[0];
-  } else {
-    lyr = findParentLayer(layers);
-  }
-  return lyr;
+  return ancestorLyr;
 }
 
 function findMasks() {
@@ -2404,10 +2395,13 @@ function findMasks() {
       items: items
     };
     if (mask.parent.typename == "GroupItem") {
+      // Group mask
       obj.group = mask.parent;
 
     } else if (mask.parent.typename == "Layer") {
-      obj.layer = findCommonParentLayer(items);
+      // Layer mask -- common ancestor layer of all masked items is assumed
+      // to be the masked layer
+      obj.layer = findCommonAncestorLayer(items);
 
     } else {
       message("Unknown mask type in findMasks()");
@@ -2730,8 +2724,8 @@ function generateHtml(pageContent, pageName, settings) {
   }
   textForFile += generatePageCss(pageName, settings);
 
-  // optional link around content
   if (linkSrc) {
+    // optional link around content
     textForFile += "\t<a class='" + nameSpace + "ai2htmlLink' href='" + linkSrc + "'>\r";
   }
 
@@ -2743,7 +2737,7 @@ function generateHtml(pageContent, pageName, settings) {
     textForFile += "\t</a>\r";
   }
 
-  // close <div>
+  // close <div> wrapper
   textForFile += "\t<!-- End ai2html" + " - " + getDateTimeStamp() + " -->\r</div>\r";
 
   textForFile = applyTemplate(textForFile, settings);
