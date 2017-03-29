@@ -1416,7 +1416,6 @@ function convertTextFrames(textFrames, ab) {
     var styleDiff = objectSubtract(cssStyle, baseCssStyle);
     return '.' + obj.classname + ' {' + formatCss(styleDiff) + '\t\t\t}\r';
   });
-  extend(baseCssStyle, {margin: 0}); // add <p> defaults
   cssBlocks.unshift('p {' + formatCss(baseCssStyle) + '\t\t\t}\r');
 
   return {
@@ -2469,33 +2468,19 @@ function generateArtboardCss(ab, textClasses, settings) {
       abId = "#" + nameSpace + getArtboardFullName(ab),
       css = "";
   css += "\t\t<style type='text/css' media='screen,print'>\r";
-  css += t3 + abId + "{\r";
+  css += t3 + abId + " {\r";
   css += t4 + "position:relative;\r";
   css += t4 + "overflow:hidden;\r";
   if (settings.responsiveness=="fixed") {
     css += t4 + "width:"  + getArtboardPos(ab).width + "px;\r";
   }
   css += t3 + "}\r";
-  css += t3 + "." + nameSpace + "aiAbs{\r";
-  css += t3 + "position:absolute;\r";
-  css += t3 + "}\r";
-  css += t3 + "." + nameSpace + "aiImg{\r";
-  css += t4 + "display:block;\r";
-  css += t4 + "width:100% !important;\r";
-  css += t3 + "}\r";
-
-  if (settings.testing_mode == "yes") {
-    css += t3 + abId + " p {\r";
-    css += t4 + "color: rgba(209, 0, 0, 0.5) !important;\r";
-    css += t3 + "}\r";
-  }
 
   // classes for paragraph and character styles
   forEach(textClasses, function(cssBlock) {
     css += t3 + abId + " " + cssBlock;
   });
 
-  css += t3 + '.g-aiPtransformed p { white-space: nowrap; }\r'; // TODO: move to page css block
   css += "\t\t</style>\r";
   return css;
 }
@@ -2503,23 +2488,42 @@ function generateArtboardCss(ab, textClasses, settings) {
 // Get CSS styles that are common to all generated content
 function generatePageCss(pageName, settings) {
   var css = "\r\t<style type='text/css' media='screen,print'>\r";
+  var t2 = '\t\t';
+  var t3 = '\t\t\t';
   if (settings.max_width !== "") {
-    css += "\t\t#" + nameSpace + pageName + "-box {\r";
-    css += "\t\t\tmax-width:" + settings.max_width + "px;\r";
-    css += "\t\t}\r";
+    css += t2 + "#" + nameSpace + pageName + "-box {\r";
+    css += t3 + "max-width:" + settings.max_width + "px;\r";
+    css += t2 + "}\r";
   }
   if (settings.center_html_output) {
-    css += "\t\t." + nameSpace + "artboard {\r";
-    css += "\t\t\tmargin:0 auto;\r";
-    css += "\t\t}\r";
+    css += t2 + "." + nameSpace + "artboard {\r";
+    css += t3 + "margin:0 auto;\r";
+    css += t2 + "}\r";
   }
   if (settings.clickable_link !== "") {
-    css += "\t\t." + nameSpace + "ai2htmlLink {\r";
-    css += "\t\t\tdisplay: block;\r";
-    css += "\t\t}\r";
+    css += t2 + "." + nameSpace + "ai2htmlLink {\r";
+    css += t3 + "display: block;\r";
+    css += t2 + "}\r";
   }
+  // default <p> styles
+  css += t2 + "." + nameSpace + "artboard p {\r";
+  css += t3 + "margin:0;\r";
+  if (settings.testing_mode == "yes") {
+    css += t3 + "color: rgba(209, 0, 0, 0.5) !important;\r";
+  }
+  css += t2 + "}\r";
+
+  css += t2 + "." + nameSpace + "aiAbs {\r";
+  css += t3 + "position:absolute;\r";
+  css += t2 + "}\r";
+
+  css += t2 + "." + nameSpace + "aiImg {\r";
+  css += t3 + "display:block;\r";
+  css += t3 + "width:100% !important;\r";
+  css += t2 + "}\r";
+
+  css += t2 + '.g-aiPtransformed p { white-space: nowrap; }\r'; // TODO: move to page css block
   css += "\t</style>\r";
-  css += "\r";
   return css;
 }
 
