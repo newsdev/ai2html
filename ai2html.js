@@ -1325,6 +1325,8 @@ function getTextStyleClass(style, classes, name) {
   return o.classname;
 }
 
+// Divide a paragraph (TextRange object) into an array of
+// JS objects describing text strings having the same style.
 function getParagraphRanges(p) {
   var segments = [];
   var currRange;
@@ -1348,6 +1350,8 @@ function getParagraphRanges(p) {
   return segments;
 }
 
+// Convert a TextFrame to an array of data records for each of the paragraphs
+//   contained in the TextFrame.
 function convertTextFrame(textFrame) {
   // The scripting API doesn't give us access to opacity of TextRange objects
   //   (including individual characters). The best we can do is get the
@@ -1418,6 +1422,7 @@ function generateTextFrameHtml(paragraphs, baseStyle, styles) {
   return html;
 }
 
+// Convert a collection of TextFrames to HTML and CSS
 function convertTextFrames(textFrames, ab) {
   var idPrefix = nameSpace + "ai" + getArtboardId(ab) + "-";
   var frameData = map(textFrames, function(frame, i) {
@@ -1449,8 +1454,9 @@ function convertTextFrames(textFrames, ab) {
   };
 }
 
-// Find the most common paragraph and character styles in a collection of parsed styles
+// Find the most common paragraph and character styles in a collection of parsed TextFrames
 // frameData: Array of data objects parsed from a collection of TextFrames
+// Returns object containing text style properties
 function analyzeTextStyles(frameData) {
   var pStyles = [];
   var cStyles = [];
@@ -1543,6 +1549,7 @@ function getCapitalizationCss(ai) {
   return "";
 }
 
+// convert an object containing parsed AI text styles to an object containing CSS style properties
 function convertTextStyle(aiStyle) {
   var cssStyle = {};
   var fontInfo, tmp;
