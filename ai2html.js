@@ -1416,7 +1416,9 @@ function convertTextFrames(textFrames, ab) {
     var styleDiff = objectSubtract(cssStyle, baseCssStyle);
     return '.' + obj.classname + ' {' + formatCss(styleDiff) + '\t\t\t}\r';
   });
-  cssBlocks.unshift('p {' + formatCss(baseCssStyle) + '\t\t\t}\r');
+  if (divs.length > 0) {
+    cssBlocks.unshift('p {' + formatCss(baseCssStyle) + '\t\t\t}\r');
+  }
 
   return {
     styles: cssBlocks,
@@ -1424,6 +1426,8 @@ function convertTextFrames(textFrames, ab) {
   };
 }
 
+// Find the most common paragraph and character styles in a collection of parsed styles
+// frameData: Array of data objects parsed from a collection of TextFrames
 function analyzeTextStyles(frameData) {
   var pStyles = [];
   var cStyles = [];
