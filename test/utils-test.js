@@ -17,6 +17,22 @@ describe('Utility function tests', function() {
     });
   });
 
+  describe('getCssColor()', function() {
+    it('format rgb channel values for CSS', function() {
+      assert.equal(lib.getCssColor(0, 0, 0), 'rgb(0,0,0)');
+      assert.equal(lib.getCssColor(200, 10, 255), 'rgb(200,10,255)');
+    });
+  });
+
+  describe('formatCss()', function() {
+    it('converts an object containing css properties and values to a CSS block', function() {
+      var obj = {
+        'line-height': '18px'
+      };
+      assert.equal(lib.formatCss(obj, '\t\t\t'), '\r\t\t\tline-height:18px;\r');
+    });
+  });
+
   describe('trim()', function() {
     it('removes whitespace from beginning and end of strings', function() {
       assert.equal(lib.trim('  \t\rfoo \n'), 'foo');

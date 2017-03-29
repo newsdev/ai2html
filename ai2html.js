@@ -315,6 +315,8 @@ if (jsEnvironment == 'node') {
     zeroPad,
     roundTo,
     folderExists,
+    formatCss,
+    getCssColor,
     readGitConfigFile,
     readYamlConfigFile
   ].forEach(function(f) {
@@ -820,6 +822,27 @@ function getDateTimeStamp() {
   var hour  = zeroPad(d.getHours(),2);
   var min   = zeroPad(d.getMinutes(),2);
   return year + "-" + month + "-" + date + " - " + hour + ":" + min;
+}
+
+// obj: JS object containing css properties and values
+// indentStr: string to use as block CSS indentation
+function formatCss(obj, indentStr) {
+  var css = '';
+  var isBlock = !!indentStr;
+  for (var key in obj) {
+    if (isBlock) {
+      css += '\r' + indentStr;
+    }
+    css += key + ':' + obj[key]+ ';';
+  }
+  if (css && isBlock) {
+    css += '\r';
+  }
+  return css;
+}
+
+function getCssColor(r, g, b) {
+  return 'rgb(' + r + ',' + g + ',' + b + ')';
 }
 
 function testSimilarBounds(a, b, maxOffs) {
@@ -1414,10 +1437,10 @@ function convertTextFrames(textFrames, ab) {
   var cssBlocks = map(classes, function(obj) {
     var cssStyle = convertTextStyle(obj.style);
     var styleDiff = objectSubtract(cssStyle, baseCssStyle);
-    return '.' + obj.classname + ' {' + formatCss(styleDiff) + '\t\t\t}\r';
+    return '.' + obj.classname + ' {' + formatCss(styleDiff, '\t\t\t\t') + '\t\t\t}\r';
   });
   if (divs.length > 0) {
-    cssBlocks.unshift('p {' + formatCss(baseCssStyle) + '\t\t\t}\r');
+    cssBlocks.unshift('p {' + formatCss(baseCssStyle, '\t\t\t\t') + '\t\t\t}\r');
   }
 
   return {
@@ -1520,13 +1543,6 @@ function getCapitalizationCss(ai) {
   return "";
 }
 
-// Convert a parsed style object into a CSS block or inline CSS
-// s: style object
-// inline: (bool) whether to generate inline CSS or a CSS block
-function generateStyleCss(s, inline) {
-  return formatCss(convertTextStyle(s), inline);
-}
-
 function convertTextStyle(aiStyle) {
   var cssStyle = {};
   var fontInfo, tmp;
@@ -1572,24 +1588,6 @@ function convertTextStyle(aiStyle) {
     cssStyle.color = aiStyle.color;
   }
   return cssStyle;
-}
-
-function formatCss(obj, inline) {
-  var css = '';
-  for (var key in obj) {
-    if (!inline) {
-      css += '\r\t\t\t\t';
-    }
-    css += key + ':' + obj[key]+ ';';
-  }
-  if (css && !inline) {
-    css += '\r';
-  }
-  return css;
-}
-
-function getCssColor(r, g, b) {
-  return 'rgb(' + r + ',' + g + ',' + b + ')';
 }
 
 function textFrameIsRenderable(frame, artboardRect) {
