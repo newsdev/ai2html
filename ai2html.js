@@ -267,20 +267,12 @@ var nyt5Breakpoints = [
   { name:"xxlarge"   , lowerLimit:1050, upperLimit:1600 }
 ];
 
-var defaultParagraphStyle = {
-  aifont: 'NYTFranklin-Medium',
-  size: 13,
-  leading: 18,
-  weight: 500,
-  color: getCssColor(0, 0, 0)
-};
-
 var nameSpace           = "g-";
 var cssPrecision        = 4;
 // value between 0 and 255 lower than which if all three RGB values are below
 // then force the RGB to #000 so it is a pure black
 var rgbBlackThreshold  = 36;
-var showDebugMessages  = true;
+var showDebugMessages  = true; // add text logged with message() function to completion alert
 
 // ================================
 // Variable declarations
@@ -401,8 +393,9 @@ function main() {
   // Show alert box, optionally prompt to generate promo image
   // =========================================================
 
-  if (errors.length > 0 || isTrue(docSettings.show_completion_dialog_box)) {
-    var promptForPromo = isTrue(docSettings.write_image_files) &&
+  if (isTrue(docSettings.show_completion_dialog_box ) || errors.length > 0) {
+    var promptForPromo = errors.length === 0 &&
+      isTrue(docSettings.write_image_files) &&
       (previewProjectType == "ai2html" || isTrue(docSettings.create_promo_image));
     var showPromo = showCompletionAlert(promptForPromo);
     if (showPromo) createPromoImage(docSettings);
@@ -576,7 +569,6 @@ function render() {
   var masks = findMasks(); // identify all clipping masks and their contents
 
   forEachArtboard(function(activeArtboard, abNumber) {
-    var textHtml = "";
     var docArtboardName  = getArtboardFullName(activeArtboard);
     doc.artboards.setActiveArtboardIndex(abNumber);
 
@@ -587,40 +579,12 @@ function render() {
     // ========================
     T.start();
     pBar.setTitle(docArtboardName + ': Generating text...');
+
     var textFrames = getTextFramesByArtboard(activeArtboard, masks);
-    var pClasses = [];
-    var charClasses = [];
-
-    forEach(textFrames, function(thisFrame, i) {
-      var textRange, textData, frameId;
-
-      // Generate a <div> element for each text frame, including CSS styles
-      if (thisFrame.name !== "") {
-        frameId = makeKeyword(thisFrame.name);
-      } else {
-        frameId = nameSpace + "ai" + abNumber + "-" + (i + 1);
-      }
-      textHtml += '\t\t<div id="' + frameId + '" ' + getTextPositionCss(thisFrame, activeArtboard) + '>\r';
-
-      // Generate a <p> tag for each paragraph or line of text
-      // The following code runs with either paragraphs or lines
-      // Using lines should prevent inconsistent word wrapping between AI and HTML
-      //
-      for (var k=0, n=thisFrame.paragraphs.length; k<n; k++) {
-        textRange = thisFrame.paragraphs[k];
-        textData = convertParagraph(textRange, pClasses, charClasses, thisFrame);
-        // Warning: after calling convertParagraph(), a paragraph object may
-        // become unusable; simply referencing thisFrame.paragraphs[k] may throw an error
-        // (unclear why. sample file: 0125 web DISTRICTmap.ai)
-        textHtml += "\t\t\t<p class='" + textData.classname + "'>" + textData.html + "</p>\r";
-
-      }
-      textHtml += "\t\t</div>\r";
-    });
+    var textData = convertTextFrames(textFrames, activeArtboard);
 
     pBar.step();
     T.stop("Text generation");
-
 
     // ==========================
     // generate artboard image(s)
@@ -635,15 +599,15 @@ function render() {
     pBar.step();
 
     //=====================================
-    // finish rendering artboard content
+    // finish generating artboard HTML and CSS
     //=====================================
 
     artboardContent +=
       "\r\t<!-- Artboard: " + getArtboardName(activeArtboard) + " -->\r" +
       generateArtboardDiv(activeArtboard, breakpoints, docSettings) +
-      generateArtboardCss(activeArtboard, pClasses.concat(charClasses), docSettings) +
+      generateArtboardCss(activeArtboard, textData.styles, docSettings) +
       generateImageHtml(activeArtboard, docSettings) +
-      textHtml +
+      textData.html +
       "\t</div>\r";
 
     //=====================================
@@ -690,6 +654,14 @@ function forEach(arr, cb) {
   }
 }
 
+function map(arr, cb) {
+  var arr2 = [];
+  for (var i=0, n=arr.length; i<n; i++) {
+    arr2.push(cb(arr[i], i));
+  }
+  return arr2;
+}
+
 function filter(arr, test) {
   var filtered = [];
   for (var i=0, n=arr.length; i<n; i++) {
@@ -718,6 +690,38 @@ function find(arr, obj) {
 
 function contains(arr, obj) {
   return indexOf(arr, obj) >= 0;
+}
+
+function extend(o) {
+  for (var i=1; i<arguments.length; i++) {
+    forEachProperty(arguments[i], add);
+  }
+  function add(v, k) {
+    o[k] = v;
+  }
+  return o;
+}
+
+function forEachProperty(o, cb) {
+  for (var k in o) {
+    if (o.hasOwnProperty(k)) {
+      cb(o[k], k);
+    }
+  }
+}
+
+// return styles that are in a but not b
+// a, b: style objects
+// properties: array of properties to consider
+function objectSubtract(a, b) {
+  var diff = null;
+  for (var k in a) {
+    if (a[k] != b[k] && a.hasOwnProperty(k)) {
+      diff = diff || {};
+      diff[k] = a[k];
+    }
+  }
+  return diff;
 }
 
 // return elements in array "a" but not in array "b"
@@ -1260,11 +1264,7 @@ function getCharStyle(c) {
 }
 
 function getParagraphStyle(p) {
-  // get character style
-  // TODO: consider using the most common character style for the characters
-  //    in this paragraph instead of p.characterAttributes
-  var s = getCharStyle(p.characterAttributes);
-  // add paragraph-related styles
+  var s = {};
   s.leading = Math.round(p.leading);
   s.spaceBefore = Math.round(p.spaceBefore);
   s.spaceAfter = Math.round(p.spaceAfter);
@@ -1285,56 +1285,206 @@ function getStyleKey(s) {
 function getTextStyleClass(style, classes, name) {
   var key = getStyleKey(style);
   var cname = nameSpace + (name || 'style');
-  var o, i;
+  var o, i, classname;
   for (i=0; i<classes.length; i++) {
     o = classes[i];
     if (o.key == key) {
       return o.classname;
     }
   }
+  classname = cname + i;
   o = {
     key: key,
     style: style,
-    classname: cname + i,
-    css: generateStyleCss(style)
+    classname: classname
   };
   classes.push(o);
   return o.classname;
 }
 
-// Divide a pg into strings of the same style; capture style data
-// for each string of characters and for the entire paragraph
-// p: a TextRange object (could be a line or a paragraph)
-// pClasses, charClasses: arrays of accumulated css class data
-// textFrame: TextFrame object containing this text
-//
-function convertParagraph(p, pClasses, charClasses, textFrame) {
-  var pStyle, uniqStyle, html, classname;
-  if (p.characters.length === 0) {
-    // Handle empty paragraphs
-    // It is hard or impossible to know the height of empty paragraphs
-    // TODO: Try to estimate the height of empty paragraph and generate
-    //    CSS to preserve this height
-    classname = "";
-    html = "&nbsp;"; // default <p> line height is applied
-  } else {
-    // TODO: consider basing the pstyle on the most common character style
-    // TODO: consider removing the default pg style, or use the most
-    //       common detected pg style as the default pg style
-    //       (this would require two passes to generate classes)
-    pStyle = getParagraphStyle(p);
-    // The scripting API doesn't give us access to opacity of TextRange objects
-    //   (including individual characters). The best we can do is get the
-    //   computed opacity of the current TextFrame
-    pStyle.opacity = getComputedOpacity(textFrame);
-    html = convertParagraphSegments(getParagraphSegments(p, pStyle, charClasses));
-    uniqStyle = getTextStyleDiff(pStyle, defaultParagraphStyle) || {};
-    classname = getTextStyleClass(uniqStyle, pClasses, 'aiPstyle');
+function getParagraphRanges(p) {
+  var segments = [];
+  var currRange;
+  var prev, curr, c;
+  for (var i=0, n=p.characters.length; i<n; i++) {
+    c = p.characters[i];
+    curr = getCharStyle(c);
+    if (!prev || objectSubtract(curr, prev)) {
+      currRange = {
+        text: "",
+        style: curr
+      };
+      segments.push(currRange);
+    }
+    if (curr.warning) {
+      currRange.warning = curr.warning;
+    }
+    currRange.text += c.contents;
+    prev = curr;
   }
+  return segments;
+}
+
+function convertTextFrame(textFrame) {
+  // The scripting API doesn't give us access to opacity of TextRange objects
+  //   (including individual characters). The best we can do is get the
+  //   computed opacity of the current TextFrame
+  var opacity = getComputedOpacity(textFrame);
+  var data = [];
+  var p, d, style;
+  for (var k=0, n=textFrame.paragraphs.length; k<n; k++) {
+    p = textFrame.paragraphs[k];
+    if (p.characters.length === 0) {
+      d = {
+        text: "",
+        style: {},
+        ranges: []
+      };
+    } else {
+      style = getParagraphStyle(p);
+      style.opacity = opacity;
+      d = {
+        text: p.contents,
+        style: style,
+        ranges: getParagraphRanges(p)
+      };
+    }
+    data.push(d);
+  }
+  return data;
+}
+
+function generateParagraphHtml(pData, baseStyle, styles) {
+  var html, diff, classname, range;
+  if (pData.text.length === 0) { // empty pg
+    // TODO: Calculate the height of empty paragraphs and generate
+    // CSS to preserve this height (not supported by Illustrator API)
+    return '<p>&nbsp;</p>';
+  }
+  diff = objectSubtract(pData.style, baseStyle);
+  if (diff) {
+    classname = getTextStyleClass(pData.style, styles, 'aiPstyle');
+    html = '<p class="' + classname + '">';
+  } else {
+    html = '<p>';
+  }
+  for (var j=0; j<pData.ranges.length; j++) {
+    range = pData.ranges[j];
+    if (range.warning) {
+      warnings.push(range.warning + " Text: \u201C" + range.text + "\u201D");
+    }
+    diff = objectSubtract(range.style, baseStyle);
+    if (diff) {
+      classname = getTextStyleClass(range.style, styles, 'aiCstyle');
+      html += '<span class="' + classname + '">';
+    }
+    html += range.text;
+    if (diff) {
+      html += '</span>';
+    }
+  }
+  html += '</p>';
+  return html;
+}
+
+function generateTextFrameHtml(paragraphs, baseStyle, styles) {
+  var html = "";
+  for (var i=0; i<paragraphs.length; i++) {
+    html += '\r\t\t\t' + generateParagraphHtml(paragraphs[i], baseStyle, styles);
+  }
+  return html;
+}
+
+function convertTextFrames(textFrames, ab) {
+  var idPrefix = nameSpace + "ai" + getArtboardId(ab) + "-";
+  var frameData = map(textFrames, function(frame, i) {
+    return {
+      id: frame.name ? makeKeyword(frame.name) : idPrefix  + (i + 1),
+      css: getTextPositionCss(frame, ab),
+      paragraphs: convertTextFrame(frame)
+    };
+  });
+  var baseAiStyle = analyzeTextStyles(frameData);
+  var classes = [];
+  var divs = map(frameData, function(obj, i) {
+    return '\t\t<div id="' + obj.id + '" ' + obj.css + '>' +
+        generateTextFrameHtml(obj.paragraphs, baseAiStyle, classes) + '\r\t\t</div>\r';
+  });
+  var baseCssStyle = convertTextStyle(baseAiStyle);
+  var cssBlocks = map(classes, function(obj) {
+    var cssStyle = convertTextStyle(obj.style);
+    var styleDiff = objectSubtract(cssStyle, baseCssStyle);
+    return '.' + obj.classname + ' {' + formatCss(styleDiff) + '\t\t\t}\r';
+  });
+  extend(baseCssStyle, {margin: 0}); // add <p> defaults
+  cssBlocks.unshift('p {' + formatCss(baseCssStyle) + '\t\t\t}\r');
+
   return {
-    classname: classname,
-    html: html
+    styles: cssBlocks,
+    html: divs.join('')
   };
+}
+
+function analyzeTextStyles(frameData) {
+  var pStyles = [];
+  var cStyles = [];
+  var baseStyle = {
+    aifont: 'NYTFranklin-Medium',
+    size: 13,
+    weight: 500,
+    color: getCssColor(0, 0, 0),
+    leading: 18
+  };
+
+  forEach(frameData, function(frame) {
+    forEach(frame.paragraphs, analyzeParagraphStyle);
+  });
+
+  // find most commn style
+  cStyles.sort(compare);
+  if (pStyles.length > 0) {
+    pStyles.sort(compare);
+    extend(baseStyle, pStyles[0].style);
+  }
+  if (cStyles.length > 0) {
+    cStyles.sort(compare);
+    extend(baseStyle, cStyles[0].style);
+  }
+
+  return baseStyle;
+
+  function compare(a, b) {
+    return b.length - a.length;
+  }
+
+  function analyzeParagraphStyle(pdata) {
+    analyzeTextStyle(pdata.style, pdata.text.length, pStyles);
+    forEach(pdata.ranges, analyzeRangeStyle);
+  }
+
+  function analyzeRangeStyle(range) {
+    analyzeTextStyle(range.style, range.text.length, cStyles);
+  }
+
+  function analyzeTextStyle(style, len, stylesArr) {
+    var key = getStyleKey(style);
+    var o;
+    if (len > 0 === false) {
+      return;
+    }
+    for (var i=0; i<stylesArr.length; i++) {
+      o = stylesArr[i];
+      if (o.key == key) {
+        o.length += len;
+        return;
+      }
+    }
+    stylesArr.push({
+      key: key,
+      style: style,
+      length: len
+    });
+  }
 }
 
 // Lookup an AI font name in the font table
@@ -1371,132 +1521,73 @@ function getCapitalizationCss(ai) {
 // s: style object
 // inline: (bool) whether to generate inline CSS or a CSS block
 function generateStyleCss(s, inline) {
-  var styles = [];
-  var fontInfo, css, tmp;
-  if (s.aifont && (fontInfo = findFontInfo(s.aifont))) {
+  return formatCss(convertTextStyle(s), inline);
+}
+
+function convertTextStyle(aiStyle) {
+  var cssStyle = {};
+  var fontInfo, tmp;
+  if (aiStyle.aifont && (fontInfo = findFontInfo(aiStyle.aifont))) {
     if (fontInfo.family) {
-      styles.push("font-family:" + fontInfo.family + ";");
+      cssStyle["font-family"] = fontInfo.family;
     }
     if (fontInfo.weight) {
-      styles.push("font-weight:" + fontInfo.weight + ";");
+      cssStyle["font-weight"] = fontInfo.weight;
     }
     if (fontInfo.style) {
-      styles.push("font-style:" + fontInfo.style + ";");
+      cssStyle["font-style"] = fontInfo.style;
     }
   }
-  if (s.size > 0) {
-    styles.push("font-size:" + s.size + "px;");
+  if (aiStyle.size > 0) {
+    cssStyle["font-size"] = aiStyle.size + "px";
   }
-  if ('leading' in s) {
-    styles.push("line-height:" + s.leading + "px;");
+  if ('leading' in aiStyle) {
+    cssStyle["line-height"] = aiStyle.leading + "px";
   }
-  if (('opacity' in s) && s.opacity < 100) {
-    styles.push("filter: alpha(opacity=" + Math.round(s.opacity) + ");");
-    styles.push("-ms-filter:'progid:DXImageTransform.Microsoft.Alpha(Opacity=" +
-        Math.round(s.opacity) + ")';");
-    styles.push("opacity:" + roundTo(s.opacity / 100, cssPrecision) + ";");
+  if (('opacity' in aiStyle) && aiStyle.opacity < 100) {
+    cssStyle.filter = "alpha(opacity=" + Math.round(aiStyle.opacity) + ")";
+    cssStyle["-ms-filter"] = "progid:DXImageTransform.Microsoft.Alpha(Opacity=" +
+        Math.round(aiStyle.opacity) + ")";
+    cssStyle.opacity = roundTo(aiStyle.opacity / 100, cssPrecision);
   }
-  if (s.spaceBefore > 0) {
-    styles.push("padding-top:" + s.spaceBefore + "px;");
+  if (aiStyle.spaceBefore > 0) {
+    cssStyle["padding-top"] = aiStyle.spaceBefore + "px";
   }
-  if (s.spaceAfter > 0) {
-    styles.push("padding-bottom:" + s.spaceAfter + "px;");
+  if (aiStyle.spaceAfter > 0) {
+    cssStyle["padding-bottom"] = aiStyle.spaceAfter + "px";
   }
-  if (('tracking' in s) && s.tracking !== 0) {
-    styles.push("letter-spacing:" + roundTo(s.tracking / 1200, cssPrecision) + "em;");
+  if (('tracking' in aiStyle) && aiStyle.tracking !== 0) {
+    cssStyle["letter-spacing"] = roundTo(aiStyle.tracking / 1200, cssPrecision) + "em";
   }
-  if (s.justification && (tmp = getJustificationCss(s.justification))) {
-    styles.push("text-align:" + tmp + ";");
+  if (aiStyle.justification && (tmp = getJustificationCss(aiStyle.justification))) {
+    cssStyle["text-align"] = tmp;
   }
-  if (s.capitalization && (tmp = getCapitalizationCss(s.capitalization))) {
-    styles.push("text-transform:" + tmp + ";");
+  if (aiStyle.capitalization && (tmp = getCapitalizationCss(aiStyle.capitalization))) {
+    cssStyle["text-transform"] = tmp;
   }
-  if (s.color) {
-    styles.push("color:" + s.color + ";");
+  if (aiStyle.color) {
+    cssStyle.color = aiStyle.color;
   }
+  return cssStyle;
+}
 
-  if (!styles.length) {
-    css = "";
-  } else if (inline) {
-    css = styles.join(' ');
-  } else {
-    css = "\r\t\t\t\t" + styles.join("\r\t\t\t\t") + "\r";
+function formatCss(obj, inline) {
+  var css = '';
+  for (var key in obj) {
+    if (!inline) {
+      css += '\r\t\t\t\t';
+    }
+    css += key + ':' + obj[key]+ ';';
+  }
+  if (css && !inline) {
+    css += '\r';
   }
   return css;
-}
-
-// Divide a paragraph into segments with the same style
-// p: AI paragraph object
-// pstyle: parsed paragraph style
-// charClasses: array of previously identified css classes
-//
-function getParagraphSegments(p, pstyle, charClasses) {
-  var html = "";
-  var segments = [];
-  var currRange;
-  var prev, curr, diff, c;
-  for (var i=0, n=p.characters.length; i<n; i++) {
-    c = p.characters[i];
-    curr = getCharStyle(c);
-    if (!prev || getTextStyleDiff(curr, prev)) {
-      diff = getTextStyleDiff(curr, pstyle);
-      currRange = {
-        text: "",
-        // style: diff,
-        classname: diff ? getTextStyleClass(diff, charClasses, 'aiCstyle') : ''
-        // this would generate inline styles instead of classes
-        // css: diff ? generateStyleCss(diff, true) : ''
-      };
-      // alert(c.characterAttributes.parent.textFrames[0].opacity);
-      segments.push(currRange);
-      if (curr.warning) {
-
-      }
-    }
-    if (curr.warning) {
-      currRange.warning = curr.warning;
-    }
-    currRange.text += c.contents;
-    prev = curr;
-  }
-  return segments;
-}
-
-function convertParagraphSegments(segments) {
-  var html = "", o, cname;
-  for (var i=0; i<segments.length; i++) {
-    o = segments[i];
-    if (o.classname) {
-      html += '<span class="' + o.classname + '">' + o.text + '</span>';
-    } else { // no css -- same style as enclosing paragraph
-      html += o.text;
-    }
-    if (o.warning) {
-      warnings.push(o.warning + " Text: \u201C" + o.text + "\u201D");
-    }
-  }
-  return html;
-}
-
-
-// return styles that are in a but not b
-// a, b: style objects
-// properties: array of properties to consider
-function getTextStyleDiff(a, b) {
-  var diff = null;
-  for (var k in a) {
-    if (a[k] != b[k] && a.hasOwnProperty(k)) {
-      diff = diff || {};
-      diff[k] = a[k];
-    }
-  }
-  return diff;
 }
 
 function getCssColor(r, g, b) {
   return 'rgb(' + r + ',' + g + ',' + b + ')';
 }
-
 
 function textFrameIsRenderable(frame, artboardRect) {
   var good = true;
@@ -2393,18 +2484,15 @@ function generateArtboardCss(ab, textClasses, settings) {
   css += t4 + "width:100% !important;\r";
   css += t3 + "}\r";
 
-  // default <p> style
-  css += t3 + abId + " p {\r";
   if (settings.testing_mode == "yes") {
+    css += t3 + abId + " p {\r";
     css += t4 + "color: rgba(209, 0, 0, 0.5) !important;\r";
+    css += t3 + "}\r";
   }
-  css += t4 + "margin:0;";
-  css += generateStyleCss(defaultParagraphStyle);
-  css += t3 + "}\r";
 
   // classes for paragraph and character styles
-  forEach(textClasses, function(classObj) {
-    css += t3 + abId + " ." + classObj.classname + " {" + classObj.css + t3 + "}\r";
+  forEach(textClasses, function(cssBlock) {
+    css += t3 + abId + " " + cssBlock;
   });
 
   css += t3 + '.g-aiPtransformed p { white-space: nowrap; }\r'; // TODO: move to page css block
