@@ -412,7 +412,6 @@ function main() {
 
 function render() {
 
-  message(applyTemplate('$1 {{price}} or $0', {price: '$4.00'}))
   // detect ai2html environment
   if (folderExists(docPath + "../public/_assets")) {
     // Use "nyt" environment if it looks like the document is in a Preview project
