@@ -813,12 +813,11 @@ function straightenCurlyQuotesInsideAngleBrackets(text) {
 
 // Not very robust -- good enough for printing a warning
 function findHtmlTag(str) {
-  var match, tagName = null;
+  var match;
   if (str.indexOf('<') > -1) { // bypass regex check
     match = /<(\w+)[^>]*>/.exec(str);
-    tagName = match ? match[1] : null;
   }
-  return tagName;
+  return match ? match[1] : null;
 }
 
 // precision: number of decimals in rounded number
