@@ -283,6 +283,7 @@ var feedback = [];
 var warnings = [];
 var errors   = [];
 var unknownFonts = [];
+var htmlTags = [];
 var textFramesToUnhide = [];
 var objectsToRelock = [];
 
@@ -320,7 +321,8 @@ if (jsEnvironment == 'node') {
     readGitConfigFile,
     readYamlConfigFile,
     applyTemplate,
-    cleanText
+    cleanText,
+    findHtmlTag
   ].forEach(function(f) {
     module.exports[f.name] = f;
   });
@@ -809,6 +811,17 @@ function straightenCurlyQuotesInsideAngleBrackets(text) {
   });
 }
 
+// Not very robust -- good enough for printing a warning
+function findHtmlTag(str) {
+  var match, tagName = null;
+  if (str.indexOf('<') > -1) { // bypass regex check
+    match = /<(\w+)[^>]*>/.exec(str);
+    tagName = match ? match[1] : null;
+  }
+  return tagName;
+}
+
+// precision: number of decimals in rounded number
 function roundTo(number, precision) {
   var d = Math.pow(10, precision || 0);
   return Math.round(number * d) / d;
@@ -1393,8 +1406,16 @@ function convertTextFrame(textFrame) {
   return data;
 }
 
+function handleHtmlTags(str) {
+  var tagName = findHtmlTag(str);
+  if (tagName && !contains(htmlTags, tagName)) {
+    warnings.push("Found a <" + tagName + "> tag. Try using Illustrator formatting instead.");
+    htmlTags.push(tagName);
+  }
+}
+
 function generateParagraphHtml(pData, baseStyle, styles) {
-  var html, diff, classname, range;
+  var html, diff, classname, range, text;
   if (pData.text.length === 0) { // empty pg
     // TODO: Calculate the height of empty paragraphs and generate
     // CSS to preserve this height (not supported by Illustrator API)
@@ -1412,6 +1433,7 @@ function generateParagraphHtml(pData, baseStyle, styles) {
     if (range.warning) {
       warnings.push(range.warning + " Text: \u201C" + range.text + "\u201D");
     }
+    handleHtmlTags(range.text);
     diff = objectSubtract(range.style, baseStyle);
     if (diff) {
       classname = getTextStyleClass(range.style, styles, 'aiCstyle');

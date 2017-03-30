@@ -24,6 +24,12 @@ describe('Utility function tests', function() {
     });
   });
 
+  describe('findHtmlTag()', function() {
+    it('finds name of HTML tag in a string', function() {
+      assert.equal(lib.findHtmlTag('<a href="#">link text'), 'a');
+    });
+  });
+
   describe('formatCss()', function() {
     it('converts an object containing css properties and values to a CSS block', function() {
       var obj = {
