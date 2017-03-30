@@ -282,7 +282,7 @@ var showDebugMessages  = true; // add text logged with message() function to com
 var feedback = [];
 var warnings = [];
 var errors   = [];
-
+var unknownFonts = [];
 var textFramesToUnhide = [];
 var objectsToRelock = [];
 
@@ -1550,12 +1550,31 @@ function analyzeTextStyles(frameData) {
 
 // Lookup an AI font name in the font table
 function findFontInfo(aifont) {
+  var info = null;
   for (var k=0; k<fonts.length; k++) {
     if (aifont == fonts[k].aifont) {
-      return fonts[k];
+      info = fonts[k];
+      break;
     }
   }
-  return null;
+  if (!info && !contains(unknownFonts, aifont)) {
+    // TODO: add affected text to this warning
+    unknownFonts.push(aifont);
+    warnings.push("Missing a rule for converting font: " + aifont);
+  }
+  if (!info) {
+    // font not found... parse the AI font name to give it a weight and style
+    info = {};
+    if (aifont.indexOf('Italic') > -1) {
+      info.style = 'italic';
+    }
+    if (aifont.indexOf('Bold') > -1) {
+      info.weight = 700;
+    } else {
+      info.weight = 500;
+    }
+  }
+  return info;
 }
 
 // ai: AI justification value
@@ -1582,7 +1601,8 @@ function getCapitalizationCss(ai) {
 function convertTextStyle(aiStyle) {
   var cssStyle = {};
   var fontInfo, tmp;
-  if (aiStyle.aifont && (fontInfo = findFontInfo(aiStyle.aifont))) {
+  if (aiStyle.aifont) {
+    fontInfo = findFontInfo(aiStyle.aifont);
     if (fontInfo.family) {
       cssStyle["font-family"] = fontInfo.family;
     }
