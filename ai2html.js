@@ -2696,7 +2696,7 @@ function outputLocalPreviewPage(textForFile, localPreviewDestination, settings) 
 function addCustomContent(content, customBlocks) {
   if (customBlocks.css) {
     content = "\r\t<style type='text/css' media='screen,print'>\r" +
-      "\t\t/* Custom CSS */\r\t\t" + customBlocks.join('\r\t\t') +
+      "\t\t/* Custom CSS */\r\t\t" + customBlocks.css.join('\r\t\t') +
       "\t</style>\r" + content;
   }
   if (customBlocks.html) {
