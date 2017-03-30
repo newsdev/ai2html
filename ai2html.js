@@ -293,7 +293,7 @@ var previewProjectType, scriptEnvironment;
 var doc, docPath, docName, docIsSaved;
 var pBar, T;
 
-// include JSON for debugging objects
+// include JSON
 // @include "lib/json2.js"
 
 // ===========================================================
@@ -411,7 +411,6 @@ function main() {
 // =================================
 
 function render() {
-
   // detect ai2html environment
   if (folderExists(docPath + "../public/_assets")) {
     // Use "nyt" environment if it looks like the document is in a Preview project
@@ -889,7 +888,7 @@ function readYamlConfigFile(path) {
         k = trim(parts.shift());
         v = trim(parts.join(':'));
         if (dqRxp.test(v)) {
-          v = JSON.parse(v);
+          v = JSON.parse(v); // use JSON library to parse quoted strings
         }
         o[k] = v;
       }
