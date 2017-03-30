@@ -318,7 +318,9 @@ if (jsEnvironment == 'node') {
     formatCss,
     getCssColor,
     readGitConfigFile,
-    readYamlConfigFile
+    readYamlConfigFile,
+    applyTemplate,
+    cleanText
   ].forEach(function(f) {
     module.exports[f.name] = f;
   });
@@ -410,6 +412,7 @@ function main() {
 
 function render() {
 
+  message(applyTemplate('$1 {{price}} or $0', {price: '$4.00'}))
   // detect ai2html environment
   if (folderExists(docPath + "../public/_assets")) {
     // Use "nyt" environment if it looks like the document is in a Preview project
@@ -617,7 +620,7 @@ function render() {
     //=====================================
 
     if (docSettings.output=="multiple-files") {
-      generateHtml(addCustomContent(artboardContent, customBlocks), docArtboardName, docSettings);
+      generateOutputHtml(addCustomContent(artboardContent, customBlocks), docArtboardName, docSettings);
       artboardContent = "";
     }
     T.stop("Total for artboard " + (activeArtboard.name || abNumber));
@@ -629,7 +632,7 @@ function render() {
   //=====================================
 
   if (docSettings.output=="one-file") {
-    generateHtml(addCustomContent(artboardContent, customBlocks), docName, docSettings);
+    generateOutputHtml(addCustomContent(artboardContent, customBlocks), docName, docSettings);
   }
 
   //=====================================
@@ -851,6 +854,17 @@ function testSimilarBounds(a, b, maxOffs) {
     if (Math.abs(a[i] - b[i]) > maxOffs) return false;
   }
   return true;
+}
+
+// Apply very basic string substitution to a template
+function applyTemplate(template, atObject) {
+  var keyExp = '([_a-zA-Z]\\w*)';
+  var mustachePattern = new RegExp("\\{\\{\\{? *" + keyExp + " *\\}\\}\\}?","g");
+  var ejsPattern = new RegExp("<%=? *" + keyExp + " *%>","g");
+  var replace = function(match, key) {
+    return (key in atObject) ? atObject[key] : match;
+  };
+  return template.replace(mustachePattern, replace).replace(ejsPattern, replace);
 }
 
 // =====================================
@@ -2556,18 +2570,6 @@ function generateYmlFileContent(breakpoints, settings) {
   return lines.join('\n') + '\n';
 }
 
-function applyTemplate(template, atObject) {
-  var newText = template;
-  for (var atKey in atObject) {
-    var mustachePattern = new RegExp("\\{\\{\\{? *" + atKey + " *\\}\\}\\}?","g");
-    var ejsPattern      = new RegExp("\\<\\%[=]? *" + atKey + " *\\%\\>","g");
-    var replacePattern  = atObject[atKey];
-    newText = newText.replace( mustachePattern , replacePattern );
-    newText = newText.replace( ejsPattern      , replacePattern );
-  }
-  return newText;
-}
-
 function checkForOutputFolder(folderPath, nickname) {
   var outputFolder = new Folder( folderPath );
   if (!outputFolder.exists) {
@@ -2693,7 +2695,7 @@ function addCustomContent(content, customBlocks) {
 }
 
 // Wrap content HTML in a <div>, add styles and resizer script, write to a file
-function generateHtml(pageContent, pageName, settings) {
+function generateOutputHtml(pageContent, pageName, settings) {
   var linkSrc = settings.clickable_link || "";
   var textForFile = "";
   var responsiveCss = "";

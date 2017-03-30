@@ -92,4 +92,26 @@ describe('Utility function tests', function() {
     })
   });
 
+  describe('applyTemplate()', function() {
+    it('Supports ejs-style annotations, with or without =', function() {
+      var template = '<%=headline  %><% note %>';
+      var output = lib.applyTemplate(template, {headline: 'Fu', note: "bar"});
+      assert.equal(output, 'Fubar');
+    })
+
+    it('Handles "$" inside replacement text', function() {
+      var template = '{{{ price1}}} or {{price2 }}';
+      var output = lib.applyTemplate(template, {price1: '$1.00', price2: "$0"});
+      assert.equal(output, '$1.00 or $0');
+    });
+  });
+
+  describe('cleanText()', function() {
+    it('Replaces apostrophe with &rsquo;', function() {
+      assert.equal(lib.cleanText('1980\u2019s'), '1980&rsquo;s');
+    });
+  });
+
+
+
 });
