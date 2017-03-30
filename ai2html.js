@@ -1141,7 +1141,7 @@ function forEachLayer(cb, parent) {
 // ===========================
 
 function createSettingsBlock() {
-  var bounds      = getArtboardBounds();
+  var bounds      = getAllArtboardBounds();
   var fontSize    = 15;
   var leading     = 22;
   var extraLines  = 6;
@@ -1988,8 +1988,8 @@ function getArtboardFullName(ab) {
   return docName + "-" + getArtboardName(ab);
 }
 
-// return rect of bounding box of all artboards
-function getArtboardBounds() {
+// return coordinates of bounding box of all artboards
+function getAllArtboardBounds() {
   var rect, bounds;
   for (var i=0, n=doc.artboards.length; i<n; i++) {
     rect = doc.artboards[i].artboardRect;
@@ -2322,6 +2322,8 @@ function getSortedLayerItems(lyr) {
   return items;
 }
 
+// Copy contents of an artboard to a temporary document, excluding objects
+// that are hidden by masks
 function copyArtboardForImageExport(ab, masks) {
   var layerMasks = filter(masks, function(o) {return !!o.layer;}),
       artboardBounds = ab.artboardRect,
