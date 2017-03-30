@@ -858,6 +858,9 @@ function getCssColor(r, g, b) {
   return 'rgb(' + r + ',' + g + ',' + b + ')';
 }
 
+// Test if two rectangles are the same, to within a given tolerance
+// a, b: two arrays containing AI rectangle coordinates
+// maxOffs: maximum pixel deviation on any side
 function testSimilarBounds(a, b, maxOffs) {
   if (maxOffs >= 0 === false) maxOffs = 1;
   for (var i=0; i<4; i++) {
