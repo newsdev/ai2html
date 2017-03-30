@@ -234,7 +234,7 @@ var caps = [
 ];
 
 var align = [
-  {"ai":"Justification.LEFT","html":""},
+  {"ai":"Justification.LEFT","html":"left"},
   {"ai":"Justification.RIGHT","html":"right"},
   {"ai":"Justification.CENTER","html":"center"},
   {"ai":"Justification.FULLJUSTIFY","html":"justify"},
@@ -1454,7 +1454,14 @@ function convertTextFrames(textFrames, ab) {
   var cssBlocks = map(classes, function(obj) {
     var cssStyle = convertTextStyle(obj.style);
     var styleDiff = objectSubtract(cssStyle, baseCssStyle);
-    return '.' + obj.classname + ' {' + formatCss(styleDiff, '\t\t\t\t') + '\t\t\t}\r';
+    var cssBlock = styleDiff ? formatCss(styleDiff, '\t\t\t\t') : '\r';
+    if (!styleDiff) {
+      // A class was created for a paragraph or text range with
+      // the same CSS properties as the base style. This should not occur
+      // and should be investigated.
+      warnings.push('CSS class ' + obj.classname + ' is empty');
+    }
+    return '.' + obj.classname + ' {' + cssBlock + '\t\t\t}\r';
   });
   if (divs.length > 0) {
     cssBlocks.unshift('p {' + formatCss(baseCssStyle, '\t\t\t\t') + '\t\t\t}\r');
@@ -1479,6 +1486,14 @@ function analyzeTextStyles(frameData) {
     color: getCssColor(0, 0, 0),
     leading: 18
   };
+  // override detected settings with these style properties
+  // (to prevent errors when diffing css styles)
+  var constantStyle = {
+    capitalization: '',
+    spaceBefore: 0,
+    spaceAfter: 0,
+    opacity: 100
+  };
 
   forEach(frameData, function(frame) {
     forEach(frame.paragraphs, analyzeParagraphStyle);
@@ -1494,6 +1509,8 @@ function analyzeTextStyles(frameData) {
     cStyles.sort(compare);
     extend(baseStyle, cStyles[0].style);
   }
+  // override detected styles with constant styles
+  extend(baseStyle, constantStyle);
 
   return baseStyle;
 
@@ -1594,7 +1611,7 @@ function convertTextStyle(aiStyle) {
   if (aiStyle.spaceAfter > 0) {
     cssStyle["padding-bottom"] = aiStyle.spaceAfter + "px";
   }
-  if (('tracking' in aiStyle) && aiStyle.tracking !== 0) {
+  if ('tracking' in aiStyle) {
     cssStyle["letter-spacing"] = roundTo(aiStyle.tracking / 1200, cssPrecision) + "em";
   }
   if (aiStyle.justification && (tmp = getJustificationCss(aiStyle.justification))) {
