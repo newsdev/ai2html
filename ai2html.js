@@ -1417,7 +1417,7 @@ function generateParagraphHtml(pData, baseStyle, styles) {
       classname = getTextStyleClass(range.style, styles, 'aiCstyle');
       html += '<span class="' + classname + '">';
     }
-    html += range.text;
+    html += cleanText(range.text);
     if (diff) {
       html += '</span>';
     }
