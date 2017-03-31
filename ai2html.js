@@ -1424,6 +1424,7 @@ function generateParagraphHtml(pData, baseStyle, styles) {
     return '<p>&nbsp;</p>';
   }
   diff = objectSubtract(pData.style, baseStyle);
+  // Give the pg a class, if it has a different style than the base pg class
   if (diff) {
     classname = getTextStyleClass(pData.style, styles, 'aiPstyle');
     html = '<p class="' + classname + '">';
@@ -2498,6 +2499,10 @@ function findMasks() {
 }
 
 function exportSVG(dest, ab, masks) {
+  // Illustrator's SVG output contains all objects in a document (it doesn't
+  //   clip to the current artboard), so we copy artboard objects to a temporary
+  //   document for export.
+  var exportDoc = copyArtboardForImageExport(ab, masks);
   var opts = new ExportOptionsSVG();
   opts.embedAllFonts         = false;
   opts.fontSubsetting        = SVGFontSubsetting.None;
@@ -2508,10 +2513,6 @@ function exportSVG(dest, ab, masks) {
   opts.DTD                   = SVGDTDVersion.SVG1_1; // SVG1_0 SVGTINY1_1 <=default SVG1_1 SVGTINY1_1PLUS SVGBASIC1_1 SVGTINY1_2
   opts.cssProperties         = SVGCSSPropertyLocation.STYLEATTRIBUTES; // ENTITIES STYLEATTRIBUTES <=default PRESENTATIONATTRIBUTES STYLEELEMENTS
 
-  // Illustrator's SVG output contains all objects in a document (it doesn't
-  //   clip to the current artboard), so we copy artboard objects to a temporary
-  //   document for export.
-  var exportDoc = copyArtboardForImageExport(ab, masks);
   exportDoc.exportFile(new File(dest), ExportType.SVG, opts);
   doc.activate();
   //exportDoc.pageItems.removeAll();
