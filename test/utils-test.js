@@ -110,6 +110,13 @@ describe('Utility function tests', function() {
       var output = lib.applyTemplate(template, {price1: '$1.00', price2: "$0"});
       assert.equal(output, '$1.00 or $0');
     });
+
+    it('variable names can be uppercast and contain hyphens', function() {
+      var template = '{{ G-TITLE }}';
+      var output = lib.applyTemplate(template, {'g-title': 'Title'});
+      assert.equal(output, 'Title');
+    });
+
   });
 
   describe('cleanText()', function() {

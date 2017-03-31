@@ -1,5 +1,5 @@
 // ai2html.js
-var scriptVersion     = "0.70";
+var scriptVersion = "0.70";
 
 // ai2html is a script for Adobe Illustrator that converts your Illustrator document into html and css.
 // Copyright (c) 2011-2015 The New York Times Company
@@ -267,6 +267,7 @@ var nyt5Breakpoints = [
   { name:"xxlarge"   , lowerLimit:1050, upperLimit:1600 }
 ];
 
+// TODO: add these to settings
 var nameSpace           = "g-";
 var cssPrecision        = 4;
 // value between 0 and 255 lower than which if all three RGB values are below
@@ -292,10 +293,7 @@ var docSettings = {};
 var ai2htmlBaseSettings;
 var previewProjectType, scriptEnvironment;
 var doc, docPath, docName, docIsSaved;
-var pBar, T;
-
-// include JSON
-// @include "lib/json2.js"
+var pBar;
 
 // ===========================================================
 // In AI context: run script. In Node: export functions for testing
@@ -334,17 +332,7 @@ if (jsEnvironment == 'node') {
 // =================================
 
 function main() {
-
-  // Performance timing using T.start() and T.stop("message")
-  T = {
-    stack: [],
-    start: function() {
-      T.stack.push(+new Date());
-    },
-    stop: function(note) {
-      message((+new Date() - T.stack.pop()) + 'ms - ' + note);
-    }
-  };
+  initScriptEnvironment();
 
   T.start();
 
@@ -386,14 +374,12 @@ function main() {
     var saveOptions = new IllustratorSaveOptions();
     saveOptions.pdfCompatible = false;
     pBar.setTitle('Saving Illustrator document...');
-    T.start();
     doc.saveAs(new File(docPath + doc.name), saveOptions);
-    T.stop("Saved document " + doc.name);
     feedback.push("Your Illustrator file was saved.");
   }
 
   if (pBar) pBar.close();
-  T.stop("Total time");
+  message("Script ran in", (T.stop() / 1000).toFixed(1), "seconds");
 
   // =========================================================
   // Show alert box, optionally prompt to generate promo image
@@ -452,31 +438,27 @@ function render() {
   // ================================================
   var documentHasSettingsBlock = false;
   var customBlocks = {};
+  var customRxp = /^ai2html-(css|js|html|settings|text)/;
 
   forEach(doc.textFrames, function(thisFrame) {
-    var firstLine = thisFrame.lines.length > 1 ? thisFrame.lines[0].contents : '';
-    var match = /^ai2html-(css|js|html|settings|text)$/.exec(firstLine);
-    var type = match ? match[1] : null;
-    var content = "";
-    if (type) {
-      hideTextFrame(thisFrame);
-      if (type == 'settings') {
-        documentHasSettingsBlock = true;
-        parseSettingsTextBlock(thisFrame, docSettings);
-      } else if (type == 'text') {
-        parseSettingsTextBlock(thisFrame, docSettings);
-      } else { // custom js, css and html
-        for (var i=1, n=thisFrame.paragraphs.length; i<n; i++) {
-          try {
-            content += "\t\t" + cleanText(thisFrame.paragraphs[i].contents) + "\r";
-          } catch(e) {}
-        }
-        if (!customBlocks[type]) {
-          customBlocks[type] = [];
-        }
-        customBlocks[type].push(content);
+    var contents = thisFrame.contents;
+    var type, entries;
+    if (!customRxp.test(contents)) return; // not a settings block
+    type = customRxp.exec(contents)[1];
+    entries = contents.split(/[\r\n]+/);
+    entries.shift(); // remove header
+    if (type == 'settings') {
+      documentHasSettingsBlock = true;
+      parseSettingsEntries(entries, docSettings);
+    } else if (type == 'text') {
+      parseSettingsEntries(entries, docSettings);
+    } else { // custom js, css and html
+      if (!customBlocks[type]) {
+        customBlocks[type] = [];
       }
+      customBlocks[type].push("\t\t" + cleanText(entries.join("\r\t\t")) + "\r");
     }
+    hideTextFrame(thisFrame);
   });
 
   if (customBlocks.css)  {feedback.push("Custom CSS blocks: " + customBlocks.css.length);}
@@ -577,19 +559,14 @@ function render() {
     var docArtboardName  = getArtboardFullName(activeArtboard);
     doc.artboards.setActiveArtboardIndex(abNumber);
 
-    T.start();
-
     // ========================
     // Convert text objects
     // ========================
-    T.start();
-    pBar.setTitle(docArtboardName + ': Generating text...');
 
+    pBar.setTitle(docArtboardName + ': Generating text...');
     var textFrames = getTextFramesByArtboard(activeArtboard, masks);
     var textData = convertTextFrames(textFrames, activeArtboard);
-
     pBar.step();
-    T.stop("Text generation");
 
     // ==========================
     // generate artboard image(s)
@@ -597,9 +574,7 @@ function render() {
 
     if (docSettings.write_image_files=="yes") {
       pBar.setTitle(docArtboardName + ': Capturing image...');
-      T.start();
       captureArtboardImage(activeArtboard, textFrames, masks, docSettings);
-      T.stop("Image generation");
     }
     pBar.step();
 
@@ -623,7 +598,6 @@ function render() {
       generateOutputHtml(addCustomContent(artboardContent, customBlocks), docArtboardName, docSettings);
       artboardContent = "";
     }
-    T.stop("Total for artboard " + (activeArtboard.name || abNumber));
 
   }); // end artboard loop
 
@@ -870,12 +844,15 @@ function testSimilarBounds(a, b, maxOffs) {
 }
 
 // Apply very basic string substitution to a template
-function applyTemplate(template, atObject) {
-  var keyExp = '([_a-zA-Z]\\w*)';
+function applyTemplate(template, replacements) {
+  var keyExp = '([_a-zA-Z][\\w-]*)';
   var mustachePattern = new RegExp("\\{\\{\\{? *" + keyExp + " *\\}\\}\\}?","g");
   var ejsPattern = new RegExp("<%=? *" + keyExp + " *%>","g");
-  var replace = function(match, key) {
-    return (key in atObject) ? atObject[key] : match;
+  var replace = function(match, name) {
+    var lcname = name.toLowerCase();
+    if (name in replacements) return replacements[name];
+    if (lcname in replacements) return replacements[lcname];
+    return match;
   };
   return template.replace(mustachePattern, replace).replace(ejsPattern, replace);
 }
@@ -1175,40 +1152,39 @@ function createSettingsBlock() {
 }
 
 
-// Add ai2html settings contained in a text frame to the document settings object
-function parseSettingsTextBlock(frame, docSettings) {
-  try {
-    for (var p=1; p<frame.paragraphs.length; p++) {
-      var thisParagraph    = frame.paragraphs[p].contents;
-      var hashKey          = thisParagraph.replace( /^[ \t]*([^ \t:]*)[ \t]*:(.*)$/ , "$1" );
-      var hashValue        = thisParagraph.replace( /^[ \t]*([^ \t:]*)[ \t]*:(.*)$/ , "$2" );
-      hashKey              = trim(hashKey);
-      hashValue            = trim(hashValue);
-      hashValue            = straightenCurlyQuotesInsideAngleBrackets(hashValue);
-
-      // replace values from old versions of script with current values
-      if (hashKey=="output" && hashValue=="one-file-for-all-artboards") { hashValue="one-file"; }
-      if (hashKey=="output" && hashValue=="one-file-per-artboard")      { hashValue="multiple-files"; }
-      if (hashKey=="output" && hashValue=="preview-one-file")           { hashValue="one-file"; }
-      if (hashKey=="output" && hashValue=="preview-multiple-files")     { hashValue="multiple-files"; }
-      // handle stuff that goes in config file and other exceptions, like array values
-      if ((hashKey in ai2htmlBaseSettings) && ai2htmlBaseSettings[hashKey].includeInConfigFile) {
-        hashValue = (hashValue.replace( /(["])/g , '\\$1' )); // add stuff to ["] for chars that need to be esc in yml file
-      } else {
-        if ((hashKey in ai2htmlBaseSettings) && ai2htmlBaseSettings[hashKey].inputType=="array") {
-          hashValue = hashValue.replace( /[\s,]+/g , ',' );
-          if (hashValue.length === 0) {
-            hashValue = []; // have to do this because .split always returns an array of length at least 1 even if it's splitting an empty string
-          } else {
-            hashValue = hashValue.split(",");
-          }
+// Add ai2html settings from a text block to the document settings object
+function parseSettingsEntries(entries, docSettings) {
+  var entryRxp = /^([\w-]+)\s*:\s*(.*)$/;
+  forEach(entries, function(str) {
+    var match, hashKey, hashValue;
+    str = trim(str);
+    match = entryRxp.exec(str);
+    if (!match) {
+      if (str) warnings.push("Malformed setting, skipping: " + str);
+      return;
+    }
+    hashKey   = match[1];
+    hashValue = straightenCurlyQuotesInsideAngleBrackets(match[2]);
+    // replace values from old versions of script with current values
+    if (hashKey=="output" && hashValue=="one-file-for-all-artboards") { hashValue="one-file"; }
+    if (hashKey=="output" && hashValue=="one-file-per-artboard")      { hashValue="multiple-files"; }
+    if (hashKey=="output" && hashValue=="preview-one-file")           { hashValue="one-file"; }
+    if (hashKey=="output" && hashValue=="preview-multiple-files")     { hashValue="multiple-files"; }
+    // handle stuff that goes in config file and other exceptions, like array values
+    if ((hashKey in ai2htmlBaseSettings) && ai2htmlBaseSettings[hashKey].includeInConfigFile) {
+      hashValue = (hashValue.replace( /(["])/g , '\\$1' )); // add stuff to ["] for chars that need to be esc in yml file
+    } else {
+      if ((hashKey in ai2htmlBaseSettings) && ai2htmlBaseSettings[hashKey].inputType=="array") {
+        hashValue = hashValue.replace( /[\s,]+/g , ',' );
+        if (hashValue.length === 0) {
+          hashValue = []; // have to do this because .split always returns an array of length at least 1 even if it's splitting an empty string
+        } else {
+          hashValue = hashValue.split(",");
         }
       }
-      docSettings[hashKey] = hashValue;
     }
-  } catch(e) {
-    warnings.push("Error parsing settings block: " + e.message);
-  }
+    docSettings[hashKey] = hashValue;
+  });
 }
 
 // Show alert or prompt; return true if promo image should be generated
@@ -1384,11 +1360,15 @@ function convertTextFrame(textFrame) {
   //   (including individual characters). The best we can do is get the
   //   computed opacity of the current TextFrame
   var opacity = getComputedOpacity(textFrame);
+  var charsLeft = textFrame.characters.length;
   var data = [];
-  var p, d, style;
-  for (var k=0, n=textFrame.paragraphs.length; k<n; k++) {
+  var p, plen, d, style;
+  for (var k=0, n=textFrame.paragraphs.length; k<n && charsLeft > 0; k++) {
+    // trailing newline in a text block causes an error on the following line
+    // ... charsLeft test is a fix for this.
     p = textFrame.paragraphs[k];
-    if (p.characters.length === 0) {
+    plen = p.characters.length;
+    if (plen === 0) {
       d = {
         text: "",
         style: {},
@@ -1404,6 +1384,7 @@ function convertTextFrame(textFrame) {
       };
     }
     data.push(d);
+    charsLeft -= (plen + 1); // char count + newline
   }
   return data;
 }
@@ -2825,4 +2806,25 @@ function generateOutputHtml(pageContent, pageName, settings) {
     var previewFileDestination = htmlFileDestinationFolder + pageName + ".preview.html";
     outputLocalPreviewPage(textForFile, previewFileDestination, settings);
   }
+}
+
+
+function initScriptEnvironment() {
+  // Performance timing using T.start() and T.stop("message")
+  T = {
+    stack: [],
+    start: function() {
+      T.stack.push(+new Date());
+    },
+    stop: function(note) {
+      var ms = +new Date() - T.stack.pop();
+      if (note) message(ms + 'ms - ' + note);
+      return ms;
+    }
+  };
+
+  // Minified json2.js from https://github.com/douglascrockford/JSON-js
+  // This code is in the public domain.
+  if(typeof JSON!=="object"){JSON={}}(function(){"use strict";var rx_one=/^[\],:{}\s]*$/;var rx_two=/\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g;var rx_three=/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g;var rx_four=/(?:^|:|,)(?:\s*\[)+/g;var rx_escapable=/[\\"\u0000-\u001f\u007f-\u009f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;var rx_dangerous=/[\u0000\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;function f(n){return n<10?"0"+n:n}function this_value(){return this.valueOf()}if(typeof Date.prototype.toJSON!=="function"){Date.prototype.toJSON=function(){return isFinite(this.valueOf())?this.getUTCFullYear()+"-"+f(this.getUTCMonth()+1)+"-"+f(this.getUTCDate())+"T"+f(this.getUTCHours())+":"+f(this.getUTCMinutes())+":"+f(this.getUTCSeconds())+"Z":null};Boolean.prototype.toJSON=this_value;Number.prototype.toJSON=this_value;String.prototype.toJSON=this_value}var gap;var indent;var meta;var rep;function quote(string){rx_escapable.lastIndex=0;return rx_escapable.test(string)?'"'+string.replace(rx_escapable,function(a){var c=meta[a];return typeof c==="string"?c:"\\u"+("0000"+a.charCodeAt(0).toString(16)).slice(-4)})+'"':'"'+string+'"'}function str(key,holder){var i;var k;var v;var length;var mind=gap;var partial;var value=holder[key];if(value&&typeof value==="object"&&typeof value.toJSON==="function"){value=value.toJSON(key)}if(typeof rep==="function"){value=rep.call(holder,key,value)}switch(typeof value){case"string":return quote(value);case"number":return isFinite(value)?String(value):"null";case"boolean":case"null":return String(value);case"object":if(!value){return"null"}gap+=indent;partial=[];if(Object.prototype.toString.apply(value)==="[object Array]"){length=value.length;for(i=0;i<length;i+=1){partial[i]=str(i,value)||"null"}v=partial.length===0?"[]":gap?"[\n"+gap+partial.join(",\n"+gap)+"\n"+mind+"]":"["+partial.join(",")+"]";gap=mind;return v}if(rep&&typeof rep==="object"){length=rep.length;for(i=0;i<length;i+=1){if(typeof rep[i]==="string"){k=rep[i];v=str(k,value);if(v){partial.push(quote(k)+(gap?": ":":")+v)}}}}else{for(k in value){if(Object.prototype.hasOwnProperty.call(value,k)){v=str(k,value);if(v){partial.push(quote(k)+(gap?": ":":")+v)}}}}v=partial.length===0?"{}":gap?"{\n"+gap+partial.join(",\n"+gap)+"\n"+mind+"}":"{"+partial.join(",")+"}";gap=mind;return v}}if(typeof JSON.stringify!=="function"){meta={"\b":"\\b","\t":"\\t","\n":"\\n","\f":"\\f","\r":"\\r",'"':'\\"',"\\":"\\\\"};JSON.stringify=function(value,replacer,space){var i;gap="";indent="";if(typeof space==="number"){for(i=0;i<space;i+=1){indent+=" "}}else if(typeof space==="string"){indent=space}rep=replacer;if(replacer&&typeof replacer!=="function"&&(typeof replacer!=="object"||typeof replacer.length!=="number")){throw new Error("JSON.stringify")}return str("",{"":value})}}if(typeof JSON.parse!=="function"){JSON.parse=function(text,reviver){var j;function walk(holder,key){var k;var v;var value=holder[key];if(value&&typeof value==="object"){for(k in value){if(Object.prototype.hasOwnProperty.call(value,k)){v=walk(value,k);if(v!==undefined){value[k]=v}else{delete value[k]}}}}return reviver.call(holder,key,value)}text=String(text);rx_dangerous.lastIndex=0;if(rx_dangerous.test(text)){text=text.replace(rx_dangerous,function(a){return"\\u"+("0000"+a.charCodeAt(0).toString(16)).slice(-4)})}if(rx_one.test(text.replace(rx_two,"@").replace(rx_three,"]").replace(rx_four,""))){j=eval("("+text+")");return typeof reviver==="function"?walk({"":j},""):j}throw new SyntaxError("JSON.parse")}}})();
+
 }
