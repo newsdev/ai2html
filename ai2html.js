@@ -2324,25 +2324,28 @@ function getSortedLayerItems(lyr) {
 
 // Copy contents of an artboard to a temporary document, excluding objects
 // that are hidden by masks
+// TODO: grouped text is copied (but hidden). Avoid copying text in groups, for
+//   smaller SVG output.
 function copyArtboardForImageExport(ab, masks) {
   var layerMasks = filter(masks, function(o) {return !!o.layer;}),
       artboardBounds = ab.artboardRect,
       sourceLayers = toArray(doc.layers),
       destLayer = doc.layers.add(),
       destGroup = doc.groupItems.add(),
-      doc2;
+      groupPos, group2, doc2;
   destLayer.name = "ArtboardContent";
   destGroup.move(destLayer, ElementPlacement.PLACEATEND);
   forEach(sourceLayers, copyLayer);
-  // Creating a document is pretty slow (~1.5s)
+  // need to save group position before copying to second document. Oddly,
+  // the reported position of the original group changes after duplication
+  groupPos = destGroup.position;
+  // create temp document (pretty slow -- ~1.5s)
   doc2 = app.documents.add(DocumentColorSpace.RGB, doc.width, doc.height, 1);
   doc2.pageOrigin = doc.pageOrigin; // not sure if needed
   doc2.rulerOrigin = doc.rulerOrigin;
-  // need to save group position before copying to second document. Oddly,
-  // the reported position of the original group changes after duplication
-  var posPre = destGroup.position;
-  var copy = destGroup.duplicate(doc2.layers[0], ElementPlacement.PLACEATEND);
-  copy.position = posPre;
+  doc2.artboards[0].artboardRect = artboardBounds;
+  group2 = destGroup.duplicate(doc2.layers[0], ElementPlacement.PLACEATEND);
+  group2.position = groupPos;
   destGroup.remove();
   destLayer.remove();
   return doc2;
