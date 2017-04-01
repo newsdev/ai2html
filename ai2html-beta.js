@@ -304,8 +304,7 @@ if (jsEnvironment == 'ai') {
   main();
 }
 if (jsEnvironment == 'node') {
-  // export functions for testing
-  // TODO: write more tests
+  // export some functions so they can be tested in Node
   [ testBoundsIntersection,
     trim,
     contains,
@@ -335,6 +334,10 @@ function main() {
   initScriptEnvironment();
 
   T.start();
+
+  if (!isTestedIllustratorVersion(app.version)) {
+    warnings.push("Ai2html has not been tested on this version of Illustrator.");
+  }
 
   if (!app.documents.length) {
     errors.push("No documents are open");
@@ -2781,6 +2784,10 @@ function generateOutputHtml(pageContent, pageName, settings) {
   }
 }
 
+function isTestedIllustratorVersion(version) {
+  var majorNum = parseInt(version);
+  return majorNum >= 18 && majorNum <= 21; // Illustrator CC 2014 through 2017
+}
 
 function initScriptEnvironment() {
   // Performance timing using T.start() and T.stop("message")
