@@ -9,6 +9,20 @@
 - Improved display of runtime errors, including number of the source code line where an error occured.
 - Refactored source code.
 
+### v0.63
+- Fixed a bug that sometimes caused a graphic to disappear if the browser reported a fractional container width. This bug was discovered using Chrome 56 with the browser window zoomed.
+
+### v0.62
+- Changed the default value of `use_lazy_loader` to "no".
+- Force double res if value of `use_2x_images_if_possible` is "always".
+- Added additional variants of the NYTCheltenham typeface.
+
+### v0.61
+
+
+### v0.60
+
+
 ### v0.59
 - Added "summary" setting.
 
