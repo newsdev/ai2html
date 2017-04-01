@@ -386,8 +386,7 @@ function main() {
   // =========================================================
 
   if (isTrue(docSettings.show_completion_dialog_box ) || errors.length > 0) {
-    var promptForPromo = errors.length === 0 &&
-      isTrue(docSettings.write_image_files) &&
+    var promptForPromo = errors.length === 0 && isTrue(docSettings.write_image_files) &&
       (previewProjectType == "ai2html" || isTrue(docSettings.create_promo_image));
     var showPromo = showCompletionAlert(promptForPromo);
     if (showPromo) createPromoImage(docSettings);
@@ -479,7 +478,6 @@ function render() {
     }
   }
 
-
   // ================================================
   // initialization for NYT environment
   // ================================================
@@ -531,7 +529,6 @@ function render() {
     }
   }
 
-
   // ================================================
   // initialization for all environments
   // ================================================
@@ -545,8 +542,10 @@ function render() {
 
   if (docSettings.image_format.length === 0) {
     warnings.push("No images were created because no image formats were specified.");
+  } else if (documentContainsRasterImages() && !contains(docSettings.image_format, "jpg")) {
+    warnings.push("This document contains raster images -- consider exporting to jpg instead of " +
+        docSettings.image_format[0] + ".");
   }
-
 
   // ================================================
   // Generate HTML, CSS and images for each artboard
@@ -620,6 +619,8 @@ function render() {
     checkForOutputFolder(yamlPath.replace(/[^\/]+$/, ""), "configFileFolder");
     saveTextFile(yamlPath, yamlStr);
   }
+
+
 } // end render()
 
 
@@ -2102,6 +2103,12 @@ function clearSelection() {
 // =================================
 // ai2html image functions
 // =================================
+
+function documentContainsRasterImages() {
+  // TODO: verify that placed items are rasters
+  // TODO: only count visible items that overlap an artboard
+  return doc.placedItems.length + doc.rasterItems.length > 0;
+}
 
 // ab: artboard (assumed to be the active artboard)
 // textFrames:  text frames belonging to the active artboard
