@@ -689,9 +689,9 @@ function forEachProperty(o, cb) {
   }
 }
 
-// return styles that are in a but not b
-// a, b: style objects
-// properties: array of properties to consider
+// Return new object containing properties that are in a but not b
+// Return null if output object would be empty
+// a, b: JS objects
 function objectSubtract(a, b) {
   var diff = null;
   for (var k in a) {
@@ -800,7 +800,6 @@ function roundTo(number, precision) {
   return Math.round(number * d) / d;
 }
 
-// TODO: value could change during program execution -- does this matter?
 function getDateTimeStamp() {
   var d     = new Date();
   var year  = d.getFullYear();
@@ -1104,14 +1103,6 @@ function unlockContainer(o) {
   }
 }
 
-
-function forEachLayer(cb, parent) {
-  var layers = parent ? parent.layers : doc.layers;
-  for (var i=0, n=layers.length; i<n; i++) {
-    cb(layers[i]);
-    forEachLayer(cb, layers[i]);
-  }
-}
 
 // ===========================
 // ai2html program state and settings
@@ -2098,31 +2089,6 @@ function findLargestArtboard() {
   });
   return largestId;
 }
-
-function hideElementsOutsideArtboard(ab) {
-  var artboardRect = ab.artboardRect;
-  var hidden = [];
-  forEachLayer(function(layer) {
-    if (layer.visible) { // only deal with visible layers
-      forEach(layer.pathItems, hideIfOutside);
-      forEach(layer.symbolItems, hideIfOutside);
-      forEach(layer.compoundPathItems, hideIfOutside);
-      forEach(layer.groupItems, hideOutsideGroup);
-    }
-  });
-  function hideIfOutside(item) {
-    if (!testBoundsIntersection(item.visibleBounds, artboardRect)) {
-      item.hidden = true;
-      hidden.push(item);
-    }
-  }
-  function hideOutsideGroup(group) {
-    hideIfOutside(group);
-    forEach(group.groupItems, hideOutsideGroup);
-  }
-  return hidden;
-}
-
 
 function clearSelection() {
   // setting selection to null doesn't always work:
