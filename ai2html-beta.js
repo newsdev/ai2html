@@ -243,17 +243,20 @@ var align = [
   {"ai":"Justification.FULLJUSTIFYLASTLINERIGHT","html":"justify"}
 ];
 
-var textStyleKeys = [
-  "aifont",
-  "size",
-  "capitalization",
-  "color",
-  "tracking",
-  "leading",
-  "spaceBefore",
-  "spaceAfter",
-  "justification",
-  "opacity"
+// list of CSS properties used for translating AI text styles
+var cssTextStyleProperties = [
+  'font-family',
+  'font-size',
+  'font-weight',
+  'font-style',
+  'color',
+  'line-height',
+  'opacity',
+  'padding-top',
+  'padding-bottom',
+  'tracking',
+  'text-align',
+  'text-transform'
 ];
 
 var nyt5Breakpoints = [
@@ -267,7 +270,7 @@ var nyt5Breakpoints = [
   { name:"xxlarge"   , lowerLimit:1050, upperLimit:1600 }
 ];
 
-// TODO: add these to settings
+// TODO: add these to settings spreadsheet
 var nameSpace           = "g-";
 var cssPrecision        = 4;
 // value between 0 and 255 lower than which if all three RGB values are below
@@ -763,6 +766,14 @@ function trim(s) {
 function zeroPad(val, digits) {
   var str = String(val);
   while (str.length < digits) str = '0' + str;
+  return str;
+}
+
+function truncateString(str, maxlen) {
+  // TODO: add ellipsis, truncate at word boundary
+  if (str.length > maxlen) {
+    str = str.substr(0, maxlen);
+  }
   return str;
 }
 
@@ -1275,30 +1286,32 @@ function getCharStyle(c) {
     g = 255;
     r = b = 0;
     // warnings are processed later, after ranges of same-style chars are identified
-    o.warning = "Some text has no fill. Please fill it with an RGB color. It has been filled with green.";
+    o.warning = "The text \"%s\" has no fill. Please fill it with an RGB color. It has been filled with green.";
   } else {
     r = g = b = 0;
-    o.warning = "Some text has " + filltype + " fill. Please fill it with an RGB color.";
+    o.warning = "The text \"%s\" has " + filltype + " fill. Please fill it with an RGB color.";
   }
   o.color = getCssColor(r, g, b);
   return o;
 }
 
-function getParagraphStyle(p) {
+// p: an AI paragraph (appears to be a TextRange object with mixed-in ParagraphAttributes)
+// opacity: Computed opacity (0-100) of TextFrame containing this pg
+function getParagraphStyle(p, opacity) {
   var s = {};
   s.leading = Math.round(p.leading);
   s.spaceBefore = Math.round(p.spaceBefore);
   s.spaceAfter = Math.round(p.spaceAfter);
-  s.justification = String(p.justification);
-  return s;
+  s.justification = String(p.justification); // coerce from object
+  s.opacity = opacity;
+  return convertAiTextStyle(s);
 }
 
-// s: style object
+// s: object containing CSS text properties
 function getStyleKey(s) {
-  // TODO: improve
   var key = '';
-  for (var i=0, n=textStyleKeys.length; i<n; i++) {
-    key += '~' + (s[textStyleKeys[i]] || '');
+  for (var i=0, n=cssTextStyleProperties.length; i<n; i++) {
+    key += '~' + (s[cssTextStyleProperties[i]] || '');
   }
   return key;
 }
@@ -1324,7 +1337,7 @@ function getTextStyleClass(style, classes, name) {
 }
 
 // Divide a paragraph (TextRange object) into an array of
-// JS objects describing text strings having the same style.
+// data objects describing text strings having the same style.
 function getParagraphRanges(p) {
   var segments = [];
   var currRange;
@@ -1345,7 +1358,26 @@ function getParagraphRanges(p) {
     currRange.text += c.contents;
     prev = curr;
   }
-  return segments;
+  return map(segments, convertParagraphRange);
+}
+
+function convertParagraphRange(rangeData) {
+  var aiStyle = rangeData.style;
+  var cssStyle = convertAiTextStyle(aiStyle);
+  if (rangeData.warning) {
+    warnings.push(rangeData.warning.replace("%s", truncateString(rangeData.text, 35)));
+  }
+  if (aiStyle.aifont && !cssStyle['font-family']) {
+    if (!contains(unknownFonts, aiStyle.aifont)) {
+      unknownFonts.push(aiStyle.aifont);
+      warnings.push("Missing a rule for converting font: " + aiStyle.aifont +
+          ". Sample text: " + truncateString(rangeData.text, 35));
+    }
+  }
+  return {
+    text: rangeData.text,
+    style: cssStyle
+  };
 }
 
 // Convert a TextFrame to an array of data records for each of the paragraphs
@@ -1370,8 +1402,7 @@ function convertTextFrame(textFrame) {
         ranges: []
       };
     } else {
-      style = getParagraphStyle(p);
-      style.opacity = opacity;
+      style = getParagraphStyle(p, opacity);
       d = {
         text: p.contents,
         style: style,
@@ -1384,7 +1415,7 @@ function convertTextFrame(textFrame) {
   return data;
 }
 
-function handleHtmlTags(str) {
+function warnAboutHtmlTags(str) {
   var tagName = findHtmlTag(str);
   if (tagName && !contains(htmlTags, tagName)) {
     warnings.push("Found a <" + tagName + "> tag. Try using Illustrator formatting instead.");
@@ -1409,10 +1440,7 @@ function generateParagraphHtml(pData, baseStyle, styles) {
   }
   for (var j=0; j<pData.ranges.length; j++) {
     range = pData.ranges[j];
-    if (range.warning) {
-      warnings.push(range.warning + " Text: \u201C" + range.text + "\u201D");
-    }
-    handleHtmlTags(range.text);
+    warnAboutHtmlTags(range.text);
     diff = objectSubtract(range.style, baseStyle);
     if (diff) {
       classname = getTextStyleClass(range.style, styles, 'aiCstyle');
@@ -1445,16 +1473,14 @@ function convertTextFrames(textFrames, ab) {
       paragraphs: convertTextFrame(frame)
     };
   });
-  var baseAiStyle = analyzeTextStyles(frameData);
+  var baseStyle = deriveBaseTextStyle(frameData);
   var classes = [];
   var divs = map(frameData, function(obj, i) {
     return '\t\t<div id="' + obj.id + '" ' + obj.css + '>' +
-        generateTextFrameHtml(obj.paragraphs, baseAiStyle, classes) + '\r\t\t</div>\r';
+        generateTextFrameHtml(obj.paragraphs, baseStyle, classes) + '\r\t\t</div>\r';
   });
-  var baseCssStyle = convertTextStyle(baseAiStyle);
   var cssBlocks = map(classes, function(obj) {
-    var cssStyle = convertTextStyle(obj.style);
-    var styleDiff = objectSubtract(cssStyle, baseCssStyle);
+    var styleDiff = objectSubtract(obj.style, baseStyle);
     var cssBlock = styleDiff ? formatCss(styleDiff, '\t\t\t\t') : '\r';
     if (!styleDiff) {
       // A class was created for a paragraph or text range with
@@ -1465,7 +1491,7 @@ function convertTextFrames(textFrames, ab) {
     return '.' + obj.classname + ' {' + cssBlock + '\t\t\t}\r';
   });
   if (divs.length > 0) {
-    cssBlocks.unshift('p {' + formatCss(baseCssStyle, '\t\t\t\t') + '\t\t\t}\r');
+    cssBlocks.unshift('p {' + formatCss(baseStyle, '\t\t\t\t') + '\t\t\t}\r');
   }
 
   return {
@@ -1474,26 +1500,21 @@ function convertTextFrames(textFrames, ab) {
   };
 }
 
-// Find the most common paragraph and character styles in a collection of parsed TextFrames
+// Compute the base paragraph style by analyzing the most common style in an artboard
 // frameData: Array of data objects parsed from a collection of TextFrames
-// Returns object containing text style properties
-function analyzeTextStyles(frameData) {
+// Returns object containing css text style properties
+function deriveBaseTextStyle(frameData) {
   var pStyles = [];
   var cStyles = [];
-  var baseStyle = {
-    aifont: 'NYTFranklin-Medium',
-    size: 13,
-    weight: 500,
-    color: getCssColor(0, 0, 0),
-    leading: 18
-  };
+  var baseStyle = {};
   // override detected settings with these style properties
   // (to prevent errors when diffing css styles)
-  var constantStyle = {
-    capitalization: '',
-    spaceBefore: 0,
-    spaceAfter: 0,
-    opacity: 100
+  var defaultStyle = {
+    'text-align': 'left',
+    'text-transform': 'none',
+    'padding-bottom': 0,
+    'padding-top': 0,
+    'opacity': 1
   };
 
   forEach(frameData, function(frame) {
@@ -1510,9 +1531,7 @@ function analyzeTextStyles(frameData) {
     cStyles.sort(compare);
     extend(baseStyle, cStyles[0].style);
   }
-  // override detected styles with constant styles
-  extend(baseStyle, constantStyle);
-
+  extend(baseStyle, defaultStyle);
   return baseStyle;
 
   function compare(a, b) {
@@ -1558,11 +1577,6 @@ function findFontInfo(aifont) {
       break;
     }
   }
-  if (!info && !contains(unknownFonts, aifont)) {
-    // TODO: add affected text to this warning
-    unknownFonts.push(aifont);
-    warnings.push("Missing a rule for converting font: " + aifont);
-  }
   if (!info) {
     // font not found... parse the AI font name to give it a weight and style
     info = {};
@@ -1599,7 +1613,7 @@ function getCapitalizationCss(ai) {
 }
 
 // convert an object containing parsed AI text styles to an object containing CSS style properties
-function convertTextStyle(aiStyle) {
+function convertAiTextStyle(aiStyle) {
   var cssStyle = {};
   var fontInfo, tmp;
   if (aiStyle.aifont) {
@@ -2806,5 +2820,4 @@ function initScriptEnvironment() {
   // Minified json2.js from https://github.com/douglascrockford/JSON-js
   // This code is in the public domain.
   if(typeof JSON!=="object"){JSON={}}(function(){"use strict";var rx_one=/^[\],:{}\s]*$/;var rx_two=/\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g;var rx_three=/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g;var rx_four=/(?:^|:|,)(?:\s*\[)+/g;var rx_escapable=/[\\"\u0000-\u001f\u007f-\u009f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;var rx_dangerous=/[\u0000\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;function f(n){return n<10?"0"+n:n}function this_value(){return this.valueOf()}if(typeof Date.prototype.toJSON!=="function"){Date.prototype.toJSON=function(){return isFinite(this.valueOf())?this.getUTCFullYear()+"-"+f(this.getUTCMonth()+1)+"-"+f(this.getUTCDate())+"T"+f(this.getUTCHours())+":"+f(this.getUTCMinutes())+":"+f(this.getUTCSeconds())+"Z":null};Boolean.prototype.toJSON=this_value;Number.prototype.toJSON=this_value;String.prototype.toJSON=this_value}var gap;var indent;var meta;var rep;function quote(string){rx_escapable.lastIndex=0;return rx_escapable.test(string)?'"'+string.replace(rx_escapable,function(a){var c=meta[a];return typeof c==="string"?c:"\\u"+("0000"+a.charCodeAt(0).toString(16)).slice(-4)})+'"':'"'+string+'"'}function str(key,holder){var i;var k;var v;var length;var mind=gap;var partial;var value=holder[key];if(value&&typeof value==="object"&&typeof value.toJSON==="function"){value=value.toJSON(key)}if(typeof rep==="function"){value=rep.call(holder,key,value)}switch(typeof value){case"string":return quote(value);case"number":return isFinite(value)?String(value):"null";case"boolean":case"null":return String(value);case"object":if(!value){return"null"}gap+=indent;partial=[];if(Object.prototype.toString.apply(value)==="[object Array]"){length=value.length;for(i=0;i<length;i+=1){partial[i]=str(i,value)||"null"}v=partial.length===0?"[]":gap?"[\n"+gap+partial.join(",\n"+gap)+"\n"+mind+"]":"["+partial.join(",")+"]";gap=mind;return v}if(rep&&typeof rep==="object"){length=rep.length;for(i=0;i<length;i+=1){if(typeof rep[i]==="string"){k=rep[i];v=str(k,value);if(v){partial.push(quote(k)+(gap?": ":":")+v)}}}}else{for(k in value){if(Object.prototype.hasOwnProperty.call(value,k)){v=str(k,value);if(v){partial.push(quote(k)+(gap?": ":":")+v)}}}}v=partial.length===0?"{}":gap?"{\n"+gap+partial.join(",\n"+gap)+"\n"+mind+"}":"{"+partial.join(",")+"}";gap=mind;return v}}if(typeof JSON.stringify!=="function"){meta={"\b":"\\b","\t":"\\t","\n":"\\n","\f":"\\f","\r":"\\r",'"':'\\"',"\\":"\\\\"};JSON.stringify=function(value,replacer,space){var i;gap="";indent="";if(typeof space==="number"){for(i=0;i<space;i+=1){indent+=" "}}else if(typeof space==="string"){indent=space}rep=replacer;if(replacer&&typeof replacer!=="function"&&(typeof replacer!=="object"||typeof replacer.length!=="number")){throw new Error("JSON.stringify")}return str("",{"":value})}}if(typeof JSON.parse!=="function"){JSON.parse=function(text,reviver){var j;function walk(holder,key){var k;var v;var value=holder[key];if(value&&typeof value==="object"){for(k in value){if(Object.prototype.hasOwnProperty.call(value,k)){v=walk(value,k);if(v!==undefined){value[k]=v}else{delete value[k]}}}}return reviver.call(holder,key,value)}text=String(text);rx_dangerous.lastIndex=0;if(rx_dangerous.test(text)){text=text.replace(rx_dangerous,function(a){return"\\u"+("0000"+a.charCodeAt(0).toString(16)).slice(-4)})}if(rx_one.test(text.replace(rx_two,"@").replace(rx_three,"]").replace(rx_four,""))){j=eval("("+text+")");return typeof reviver==="function"?walk({"":j},""):j}throw new SyntaxError("JSON.parse")}}})();
-
 }
