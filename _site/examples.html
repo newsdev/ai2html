@@ -139,7 +139,7 @@
 
 <p>We’ve included some examples that demonstrate how different settings in ai2html work. You can download all the <a href="https://github.com/newsdev/ai2html/tree/gh-pages/_ai">Illustrator files from Github</a>. </p>
 
-<p>For more, check out <a href="https://delicious.com/archietse/ai2html,nyt">examples for how we’ve used ai2html</a> at The New York Times and <a href="https://delicious.com/archietse/ai2html,others">examples of how others have used it</a>.</p>
+<p>For more, check out <a href="https://del.icio.us/archietse/ai2html+nyt">examples for how we’ve used ai2html</a> at The New York Times and <a href="https://del.icio.us/archietse/ai2html+others">examples of how others have used it</a>.</p>
 
 <h2 id="multiple-artboards-for-responsive-web-pages">Multiple artboards for responsive web pages</h2>
 
@@ -1005,8 +1005,6 @@
 
 <p><a href="images/svg-720.svg">Here’s the SVG artboard</a> in case you want to check it out.</p>
 
-<p>Note that the SVG export created by Illustrator includes the markup of all elements that were hidden by ai2html before the export. To fix this we wrote a little <a href="https://gist.github.com/gka/c97465e7a25d943e1191#file-clean-ai2html-svg-artboard-js">Node.js script</a> that removes these hidden elements.</p>
-
 <h2 id="custom-css">Custom CSS</h2>
 
 <p>Use the <code>ai2html-css</code> text field to add custom CSS styles to the HTML text labels. You can target different labels by using the name of the parent layer in the CSS selector.</p>
@@ -1154,6 +1152,13 @@
             try {
                 if (window.parent && window.parent.$) {
                     window.parent.$("body").trigger("resizedcontent", [window]);
+                }
+                if (window.require) {
+                    require(['foundation/main'], function() {
+                        require(['shared/interactive/instances/app-communicator'], function(AppCommunicator) {
+                            AppCommunicator.triggerResize();
+                        });
+                    });
                 }
             } catch(e) { console.log(e); }
         }

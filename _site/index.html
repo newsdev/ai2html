@@ -123,7 +123,7 @@
       
       
      
-      <li class="sidebar-nav-item sidebar-nav-page"><a href="https://github.com/newsdev/ai2html/blob/master/HISTORY.md">Changelog</a></li>
+      <li class="sidebar-nav-item sidebar-nav-page"><a href="https://github.com/newsdev/ai2html/blob/master/CHANGELOG.md">Changelog</a></li>
       
     </ul>
   </div>
@@ -198,7 +198,7 @@
 <p>ai2html is an open-source script for Adobe Illustrator that converts your Illustrator documents into html and css.</p>
 </blockquote>
 
-<p>Here are <a href="https://delicious.com/archietse/ai2html,nyt">examples of how we’ve used the script</a> at The New York Times and <a href="https://delicious.com/archietse/ai2html,others">examples of how others</a> have used it. Share your ai2html projects on Twitter, Delicious, etc. using <a href="https://twitter.com/search?q=%23ai2html&amp;src=typd" target="_blank">#ai2html</a>.</p>
+<p>Here are <a href="https://del.icio.us/archietse/ai2html+nyt">examples of how we’ve used the script</a> at The New York Times and <a href="https://del.icio.us/archietse/ai2html+others">examples of how others</a> have used it. Share your ai2html projects on Twitter, Delicious, etc. using <a href="https://twitter.com/search?q=%23ai2html&amp;src=typd" target="_blank">#ai2html</a>.</p>
 
 <h2 id="table-of-contents">Table of contents</h2>
 
@@ -219,9 +219,9 @@
 
 <p>Download the <a href="https://github.com/newsdev/ai2html/raw/master/ai2html.js">latest version of the script here</a> by clicking the link and saving the file to your computer.</p>
 
-<p>Move the <code>ai2html.js</code> file into the Illustrator folder where scripts are located. For example, on Mac OS&nbsp;X running Adobe Illustrator CC 2014, the path would be:
+<p>Move the <code>ai2html.js</code> file into the Illustrator folder where scripts are located. For example, on a Mac running Adobe Illustrator CC 2015, the path would be:
 <code>
-Applications/Adobe Illustrator CC 2014/Presets/en_US/Scripts/ai2html.jsx
+/Applications/Adobe Illustrator CC 2015/Presets/en_US/Scripts/ai2html.js
 </code></p>
 
 <h2 id="how-to-use-ai2html">How to use ai2html</h2>
@@ -245,7 +245,7 @@ Applications/Adobe Illustrator CC 2014/Presets/en_US/Scripts/ai2html.jsx
 <li><strong>Why not just export my Illustrator file as an image or an SVG?</strong>
 
 <ul>
-<li>Text in images and SVGs scale as you scale the image — so your text becomes unreadable pretty quickly as the artwork scales down, or looks hilariously large as it scales up. By rendering the text as html, we can scale the “graphic” up and down, but keep the text readable at the same font-size and line-height. This is important because we are trying to reduce the number of versions of the artwork that we have to create in order to accommodate viewports that range from mobile phones up to giant desktop monitors. An example of this is here: <a href="http://nyti.ms/1CQdkwq">http://nyti.ms/1CQdkwq</a> Change your window size when you view the page and you&#39;ll see the artwork scale but the text stays the same size. More examples here: <a href="https://delicious.com/archietse/ai2html,responsive">https://delicious.com/archietse/ai2html,responsive</a></li>
+<li>Text in images and SVGs scale as you scale the image — so your text becomes unreadable pretty quickly as the artwork scales down, or looks hilariously large as it scales up. By rendering the text as html, we can scale the “graphic” up and down, but keep the text readable at the same font-size and line-height. This is important because we are trying to reduce the number of versions of the artwork that we have to create in order to accommodate viewports that range from mobile phones up to giant desktop monitors. An example of this is here: <a href="http://nyti.ms/1CQdkwq">http://nyti.ms/1CQdkwq</a> Change your window size when you view the page and you&#39;ll see the artwork scale but the text stays the same size. More examples here: <a href="https://del.icio.us/archietse/ai2html+responsive">https://del.icio.us/archietse/ai2html+responsive</a></li>
 <li>When Illustrator saves an SVG, every line of text is broken into separate SVG elements which makes editing the text very difficult. By having the text rendered in HTML, it is much easier for editors to go into the CMS and make edits without having to wade through a tangle of SVG code.</li>
 </ul></li>
 </ul>
@@ -524,8 +524,7 @@ Applications/Adobe Illustrator CC 2014/Presets/en_US/Scripts/ai2html.jsx
 <ul>
 <li>Position</li>
 <li>Opacity</li>
-<li>Only opacity applied directly to the text object is applied.</li>
-<li><em>Future versions of the script may traverse parent groups and layers to calculate cumulative opacity applied to the text object.</em></li>
+<li>Only opacity applied to a text object and its parents will be applied. Opacity applied to text selections will be ignored.</li>
 <li>Width</li>
 <li>The width is specified in the html output if it is an area-text object. Point-text objects are given no width.</li>
 </ul></li>
@@ -560,11 +559,9 @@ Applications/Adobe Illustrator CC 2014/Presets/en_US/Scripts/ai2html.jsx
 <ul>
 <li>Because numbers get rounded to whole pixels by the web page when formatting text and positioning elements, the html version of a graphic will not line up exactly with its Illustrator version. Rounding differences are particularly compounded if you have blocks of text that span many lines and have fractional leading in Illustrator.</li>
 <li>Very large text that is set to valign:bottom doesn’t position correctly. We’re hoping to figure out how to fix this. </li>
-<li>The script currently only sets one style per paragraph, so custom styled words or characters within a paragraph are ignored. Each paragraph’s style is determined by the middle character in the paragraph.</li>
 <li>The script assumes that text always goes above the art.</li>
 <li>Artboards should have unique names.</li>
 <li>Paragraphs with full justification will just be “justified” in html.</li>
-<li>If text is not hidden using the hide command, but rather is hidden because it is behind a mask, it will show up if it is within the artboard.</li>
 <li>Labels in graph objects will be rendered as part of the image. (Something changed in newer versions of CC in the way text objects inside the graph object are handled.) If you want your chart labels to be shown as html, you will need to ungroup the chart.</li>
 <li>In area text blocks, text that is hidden because it is overflowing the box will appear in the html output.</li>
 </ul>
@@ -606,7 +603,7 @@ font-style: italic;
 
 <h2 id="thanks">Thanks</h2>
 
-<p>Many thanks to <a href="https://twitter.com/driven_by_data">Gregor Aisch</a>, <a href="https://twitter.com/dwtkns">Derek Watkins</a>, <a href="https://twitter.com/jshkatz">Josh Katz</a>, <a href="https://twitter.com/kkrebeccalai">K.K. Rebecca Lai</a>, <a href="https://twitter.com/giratikanon">Tom Giratikanon</a>, <a href="https://twitter.com/mericson">Matt Ericson</a>, <a href="https://twitter.com/jashkenas">Jeremy Ashkenas</a> and <a href="https://twitter.com/alanmclean">Alan McLean</a> for their incredible contributions to this project, as well as to my colleagues in The New York Times <a href="https://twitter.com/nytgraphics">Graphics Department</a> for their patient guidance.</p>
+<p>Many thanks to <a href="https://twitter.com/driven_by_data">Gregor Aisch</a>, <a href="https://github.com/mbloch">Matthew Bloch</a>, <a href="https://twitter.com/dwtkns">Derek Watkins</a>, <a href="https://twitter.com/jshkatz">Josh Katz</a>, <a href="https://twitter.com/kkrebeccalai">K.K. Rebecca Lai</a>, <a href="https://twitter.com/giratikanon">Tom Giratikanon</a>, <a href="https://twitter.com/mericson">Matt Ericson</a>, <a href="https://twitter.com/jashkenas">Jeremy Ashkenas</a> and <a href="https://twitter.com/alanmclean">Alan McLean</a> for their incredible contributions to this project, as well as to my colleagues in The New York Times <a href="https://twitter.com/nytgraphics">Graphics Department</a> for their patient guidance.</p>
 
 <p>If you’re learning to write Javascript for Adobe Illustrator, <a href="http://www.wundes.com/JS4AI/">John Wundes</a>, has many wonderful scripts. <a href="http://www.wundes.com/JS4AI/explore.js">explore.js</a> is particularly helpful for understanding what attributes are attached to Illustrator objects.</p>
 
@@ -614,7 +611,7 @@ font-style: italic;
 
 <p style="font-size:.8em;opacity:0.5;">Created by <a href="https://twitter.com/archietse">Archie Tse</a> / <a href="https://github.com/newsdev">The New York Times</a></p>
 
-<p style="font-size:.8em;opacity:0.7;">Copyright (c) 2011-2015 The New York Times Company</p>
+<p style="font-size:.8em;opacity:0.7;">Copyright (c) 2011-2017 The New York Times Company</p>
 
 
 </div>

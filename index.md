@@ -6,7 +6,7 @@ sidebar_menu:
   '#how-does-ai2html-work': How does it work
   '#table-of-contents': Full table of contents
   examples.html: Examples
-  https://github.com/newsdev/ai2html/blob/master/HISTORY.md: Changelog
+  https://github.com/newsdev/ai2html/blob/master/CHANGELOG.md: Changelog
 ---
 
 
@@ -34,9 +34,9 @@ Here are [examples of how we’ve used the script](https://del.icio.us/archietse
 
 Download the [latest version of the script here](https://github.com/newsdev/ai2html/raw/master/ai2html.js) by clicking the link and saving the file to your computer.
 
-Move the `ai2html.js` file into the Illustrator folder where scripts are located. For example, on Mac OS&nbsp;X running Adobe Illustrator CC 2014, the path would be:
+Move the `ai2html.js` file into the Illustrator folder where scripts are located. For example, on a Mac running Adobe Illustrator CC 2015, the path would be:
 ```
-Applications/Adobe Illustrator CC 2014/Presets/en_US/Scripts/ai2html.jsx
+/Applications/Adobe Illustrator CC 2015/Presets/en_US/Scripts/ai2html.js
 ```
 
 ## How to use ai2html
@@ -233,8 +233,7 @@ The script processes each text object in your Illustrator file and translates th
 - **Added to inline styles on the `<div>`**
   - Position
   - Opacity
-    - Only opacity applied directly to the text object is applied.
-    - *Future versions of the script may traverse parent groups and layers to calculate cumulative opacity applied to the text object.*
+    - Only opacity applied to a text object and its parents will be applied. Opacity applied to text selections will be ignored.
   - Width
     - The width is specified in the html output if it is an area-text object. Point-text objects are given no width.
 
@@ -266,11 +265,9 @@ Paragraphs are styled using css classes that are consolidated across each artboa
 
 - Because numbers get rounded to whole pixels by the web page when formatting text and positioning elements, the html version of a graphic will not line up exactly with its Illustrator version. Rounding differences are particularly compounded if you have blocks of text that span many lines and have fractional leading in Illustrator.
 - Very large text that is set to valign:bottom doesn’t position correctly. We’re hoping to figure out how to fix this. 
-- The script currently only sets one style per paragraph, so custom styled words or characters within a paragraph are ignored. Each paragraph’s style is determined by the middle character in the paragraph.
 - The script assumes that text always goes above the art.
 - Artboards should have unique names.
 - Paragraphs with full justification will just be “justified” in html.
-- If text is not hidden using the hide command, but rather is hidden because it is behind a mask, it will show up if it is within the artboard.
 - Labels in graph objects will be rendered as part of the image. (Something changed in newer versions of CC in the way text objects inside the graph object are handled.) If you want your chart labels to be shown as html, you will need to ungroup the chart.
 - In area text blocks, text that is hidden because it is overflowing the box will appear in the html output.
 
@@ -308,7 +305,7 @@ The Github repository for this site is available at [newsdev/ai2html](https://gi
 
 ## Thanks
 
-Many thanks to [Gregor Aisch](https://twitter.com/driven_by_data), [Derek Watkins](https://twitter.com/dwtkns), [Josh Katz](https://twitter.com/jshkatz), [K.K. Rebecca Lai](https://twitter.com/kkrebeccalai), [Tom Giratikanon](https://twitter.com/giratikanon), [Matt Ericson](https://twitter.com/mericson), [Jeremy Ashkenas](https://twitter.com/jashkenas) and [Alan McLean](https://twitter.com/alanmclean) for their incredible contributions to this project, as well as to my colleagues in The New York Times [Graphics Department](https://twitter.com/nytgraphics) for their patient guidance.
+Many thanks to [Gregor Aisch](https://twitter.com/driven_by_data), [Matthew Bloch](https://github.com/mbloch), [Derek Watkins](https://twitter.com/dwtkns), [Josh Katz](https://twitter.com/jshkatz), [K.K. Rebecca Lai](https://twitter.com/kkrebeccalai), [Tom Giratikanon](https://twitter.com/giratikanon), [Matt Ericson](https://twitter.com/mericson), [Jeremy Ashkenas](https://twitter.com/jashkenas) and [Alan McLean](https://twitter.com/alanmclean) for their incredible contributions to this project, as well as to my colleagues in The New York Times [Graphics Department](https://twitter.com/nytgraphics) for their patient guidance.
 
 If you’re learning to write Javascript for Adobe Illustrator, [John Wundes](http://www.wundes.com/JS4AI/), has many wonderful scripts. [explore.js](http://www.wundes.com/JS4AI/explore.js) is particularly helpful for understanding what attributes are attached to Illustrator objects.
 
@@ -316,7 +313,7 @@ If you’re learning to write Javascript for Adobe Illustrator, [John Wundes](ht
 
 <p style="font-size:.8em;opacity:0.5;">Created by <a href="https://twitter.com/archietse">Archie Tse</a> / <a href="https://github.com/newsdev">The New York Times</a></p>
 
-<p style="font-size:.8em;opacity:0.7;">Copyright (c) 2011-2015 The New York Times Company</p>
+<p style="font-size:.8em;opacity:0.7;">Copyright (c) 2011-2017 The New York Times Company</p>
 
 
 
