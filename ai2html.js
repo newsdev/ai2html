@@ -1,5 +1,5 @@
 ﻿// ai2html.js
-var scriptVersion     = "1.0"; // based on NYT's 0.61
+var scriptVersion     = "1.01"; // based on NYT's 0.63
 var scriptEnvironment = "dvz";
 
 // ai2html is a script for Adobe Illustrator that converts your Illustrator document into html and css.
@@ -2304,7 +2304,7 @@ function getResizerScript() {
 	resizerScript += "\n" + "                widthById = {};";
 	resizerScript += "\n" + "            elements.forEach(function(el) {";
 	resizerScript += "\n" + "                var parent = el.parentNode,";
-	resizerScript += "\n" + "                    width = widthById[parent.id] || parent.getBoundingClientRect().width,";
+	resizerScript += "\n" + "                    width = Math.round(widthById[parent.id]) || Math.round(parent.getBoundingClientRect().width),";
 	resizerScript += "\n" + "                    minwidth = el.getAttribute(\"data-min-width\"),";
 	resizerScript += "\n" + "                    maxwidth = el.getAttribute(\"data-max-width\");";
 	resizerScript += "\n" + "                widthById[parent.id] = width;";
