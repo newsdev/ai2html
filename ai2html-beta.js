@@ -349,7 +349,7 @@ function main() {
     errors.push('You need to save your Illustrator file before running this script');
 
   } else if (app.activeDocument.documentColorSpace!="DocumentColorSpace.RGB") {
-    errors.push('Convert document color mode to "RGB" before running script. (File>Document Color Mode>RGB Color)' );
+    errors.push('You should change the document color mode to "RGB" before running ai2html (File>Document Color Mode>RGB Color).' );
 
   } else {
     doc = app.activeDocument;
@@ -398,6 +398,8 @@ function main() {
     if (showPromo) createPromoImage(docSettings);
   }
 } // end main()
+
+
 
 // =================================
 // ai2html render function
@@ -626,8 +628,8 @@ function render() {
     saveTextFile(yamlPath, yamlStr);
   }
 
-
 } // end render()
+
 
 
 // =================================
@@ -871,9 +873,16 @@ function applyTemplate(template, replacements) {
   return template.replace(mustachePattern, replace).replace(ejsPattern, replace);
 }
 
-// =====================================
+
+
+// ======================================
 // Illustrator specific utility functions
-// =====================================
+// ======================================
+
+// a, b: coordinate arrays, as from <PathItem>.geometricBounds
+function testBoundsIntersection(a, b) {
+  return a[2] >= b[0] && b[2] >= a[0] && a[3] <= b[1] && b[3] <= a[1];
+}
 
 function folderExists(path) {
   return new Folder(path).exists;
@@ -924,14 +933,6 @@ function readGitConfigFile(path) {
   return o;
 }
 
-function getRGBColor(r,g,b) {
-  var col = new RGBColor();
-  col.red = r || 0;
-  col.green = g || 0;
-  col.blue = b || 0;
-  return col;
-}
-
 function readTextFile(path) {
   var outputText = "";
   var file = new File(path);
@@ -956,74 +957,18 @@ function saveTextFile(dest, contents) {
   fd.close();
 }
 
-// a, b: coordinate arrays, as from <PathItem>.geometricBounds
-function testBoundsIntersection(a, b) {
-  return a[2] >= b[0] && b[2] >= a[0] && a[3] <= b[1] && b[3] <= a[1];
-}
-
-function objectIsHidden(obj) {
-  var hidden = false;
-  while (!hidden && obj && obj.typename != "Document"){
-    if (obj.typename == "Layer") {
-      hidden = !obj.visible;
+function checkForOutputFolder(folderPath, nickname) {
+  var outputFolder = new Folder( folderPath );
+  if (!outputFolder.exists) {
+    var outputFolderCreated = outputFolder.create();
+    if (outputFolderCreated) {
+      feedback.push("The " + nickname + " folder did not exist, so the folder was created.");
     } else {
-      hidden = obj.hidden;
+      warnings.push("The " + nickname + " folder did not exist and could not be created.");
     }
-    obj = obj.parent;
   }
-  return hidden;
 }
 
-function getComputedOpacity(obj) {
-  var opacity = 1;
-  while (obj && obj.typename != "Document") {
-    opacity *= obj.opacity / 100;
-    obj = obj.parent;
-  }
-  return opacity * 100;
-}
-
-function ProgressBar(opts) {
-  opts = opts || {};
-  var steps = opts.steps || 0;
-  var step = 0;
-  var win = new Window("palette", opts.name || "Progress", [150, 150, 600, 260]);
-  win.pnl = win.add("panel", [10, 10, 440, 100], "Progress");
-  win.pnl.progBar      = win.pnl.add("progressbar", [20, 35, 410, 60], 0, 100);
-  win.pnl.progBarLabel = win.pnl.add("statictext", [20, 20, 320, 35], "0%");
-  win.show();
-
-  function getProgress() {
-    return win.pnl.progBar.value/win.pnl.progBar.maxvalue;
-  }
-
-  function update() {
-    win.update();
-  }
-
-  this.step = function() {
-    step = Math.min(step + 1, steps);
-    this.setProgress(step / steps);
-  };
-
-  this.setProgress = function(progress) {
-    var max = win.pnl.progBar.maxvalue;
-    // progress is always 0.0 to 1.0
-    var pct = progress * max;
-    win.pnl.progBar.value = pct;
-    win.pnl.progBarLabel.text = Math.round(pct) + "%";
-    update();
-  };
-
-  this.setTitle = function(title) {
-    win.pnl.text = title;
-    update();
-  };
-
-  this.close = function() {
-    win.close();
-  };
-}
 
 
 // =====================================
@@ -1119,9 +1064,34 @@ function unlockContainer(o) {
 }
 
 
-// ===========================
+
+// ==================================
 // ai2html program state and settings
-// ===========================
+// ==================================
+
+function isTestedIllustratorVersion(version) {
+  var majorNum = parseInt(version);
+  return majorNum >= 18 && majorNum <= 21; // Illustrator CC 2014 through 2017
+}
+
+function initScriptEnvironment() {
+  // Performance timing using T.start() and T.stop("message")
+  T = {
+    stack: [],
+    start: function() {
+      T.stack.push(+new Date());
+    },
+    stop: function(note) {
+      var ms = +new Date() - T.stack.pop();
+      if (note) message(ms + 'ms - ' + note);
+      return ms;
+    }
+  };
+
+  // Minified json2.js from https://github.com/douglascrockford/JSON-js
+  // This code is in the public domain.
+  if(typeof JSON!=="object"){JSON={}}(function(){"use strict";var rx_one=/^[\],:{}\s]*$/;var rx_two=/\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g;var rx_three=/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g;var rx_four=/(?:^|:|,)(?:\s*\[)+/g;var rx_escapable=/[\\"\u0000-\u001f\u007f-\u009f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;var rx_dangerous=/[\u0000\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;function f(n){return n<10?"0"+n:n}function this_value(){return this.valueOf()}if(typeof Date.prototype.toJSON!=="function"){Date.prototype.toJSON=function(){return isFinite(this.valueOf())?this.getUTCFullYear()+"-"+f(this.getUTCMonth()+1)+"-"+f(this.getUTCDate())+"T"+f(this.getUTCHours())+":"+f(this.getUTCMinutes())+":"+f(this.getUTCSeconds())+"Z":null};Boolean.prototype.toJSON=this_value;Number.prototype.toJSON=this_value;String.prototype.toJSON=this_value}var gap;var indent;var meta;var rep;function quote(string){rx_escapable.lastIndex=0;return rx_escapable.test(string)?'"'+string.replace(rx_escapable,function(a){var c=meta[a];return typeof c==="string"?c:"\\u"+("0000"+a.charCodeAt(0).toString(16)).slice(-4)})+'"':'"'+string+'"'}function str(key,holder){var i;var k;var v;var length;var mind=gap;var partial;var value=holder[key];if(value&&typeof value==="object"&&typeof value.toJSON==="function"){value=value.toJSON(key)}if(typeof rep==="function"){value=rep.call(holder,key,value)}switch(typeof value){case"string":return quote(value);case"number":return isFinite(value)?String(value):"null";case"boolean":case"null":return String(value);case"object":if(!value){return"null"}gap+=indent;partial=[];if(Object.prototype.toString.apply(value)==="[object Array]"){length=value.length;for(i=0;i<length;i+=1){partial[i]=str(i,value)||"null"}v=partial.length===0?"[]":gap?"[\n"+gap+partial.join(",\n"+gap)+"\n"+mind+"]":"["+partial.join(",")+"]";gap=mind;return v}if(rep&&typeof rep==="object"){length=rep.length;for(i=0;i<length;i+=1){if(typeof rep[i]==="string"){k=rep[i];v=str(k,value);if(v){partial.push(quote(k)+(gap?": ":":")+v)}}}}else{for(k in value){if(Object.prototype.hasOwnProperty.call(value,k)){v=str(k,value);if(v){partial.push(quote(k)+(gap?": ":":")+v)}}}}v=partial.length===0?"{}":gap?"{\n"+gap+partial.join(",\n"+gap)+"\n"+mind+"}":"{"+partial.join(",")+"}";gap=mind;return v}}if(typeof JSON.stringify!=="function"){meta={"\b":"\\b","\t":"\\t","\n":"\\n","\f":"\\f","\r":"\\r",'"':'\\"',"\\":"\\\\"};JSON.stringify=function(value,replacer,space){var i;gap="";indent="";if(typeof space==="number"){for(i=0;i<space;i+=1){indent+=" "}}else if(typeof space==="string"){indent=space}rep=replacer;if(replacer&&typeof replacer!=="function"&&(typeof replacer!=="object"||typeof replacer.length!=="number")){throw new Error("JSON.stringify")}return str("",{"":value})}}if(typeof JSON.parse!=="function"){JSON.parse=function(text,reviver){var j;function walk(holder,key){var k;var v;var value=holder[key];if(value&&typeof value==="object"){for(k in value){if(Object.prototype.hasOwnProperty.call(value,k)){v=walk(value,k);if(v!==undefined){value[k]=v}else{delete value[k]}}}}return reviver.call(holder,key,value)}text=String(text);rx_dangerous.lastIndex=0;if(rx_dangerous.test(text)){text=text.replace(rx_dangerous,function(a){return"\\u"+("0000"+a.charCodeAt(0).toString(16)).slice(-4)})}if(rx_one.test(text.replace(rx_two,"@").replace(rx_three,"]").replace(rx_four,""))){j=eval("("+text+")");return typeof reviver==="function"?walk({"":j},""):j}throw new SyntaxError("JSON.parse")}}})(); // jshint ignore:line
+}
 
 function createSettingsBlock() {
   var bounds      = getAllArtboardBounds();
@@ -1240,6 +1210,346 @@ function restoreDocumentState() {
     objectsToRelock[i].locked = true;
   }
 }
+
+function ProgressBar(opts) {
+  opts = opts || {};
+  var steps = opts.steps || 0;
+  var step = 0;
+  var win = new Window("palette", opts.name || "Progress", [150, 150, 600, 260]);
+  win.pnl = win.add("panel", [10, 10, 440, 100], "Progress");
+  win.pnl.progBar      = win.pnl.add("progressbar", [20, 35, 410, 60], 0, 100);
+  win.pnl.progBarLabel = win.pnl.add("statictext", [20, 20, 320, 35], "0%");
+  win.show();
+
+  function getProgress() {
+    return win.pnl.progBar.value/win.pnl.progBar.maxvalue;
+  }
+
+  function update() {
+    win.update();
+  }
+
+  this.step = function() {
+    step = Math.min(step + 1, steps);
+    this.setProgress(step / steps);
+  };
+
+  this.setProgress = function(progress) {
+    var max = win.pnl.progBar.maxvalue;
+    // progress is always 0.0 to 1.0
+    var pct = progress * max;
+    win.pnl.progBar.value = pct;
+    win.pnl.progBarLabel.text = Math.round(pct) + "%";
+    update();
+  };
+
+  this.setTitle = function(title) {
+    win.pnl.text = title;
+    update();
+  };
+
+  this.close = function() {
+    win.close();
+  };
+}
+
+
+
+// ======================================
+// ai2html AI document reading functions
+// ======================================
+
+function getArtboardPos(ab) {
+  var rect = ab.artboardRect,
+      x = rect[0],
+      y = -rect[1],
+      w = Math.round(rect[2] - x),
+      h = -rect[3] - y;
+  return {
+    x: x,
+    y: y,
+    width: w,
+    height: h
+  };
+}
+
+// Get numerical index of an artboard in the doc.artboards array
+function getArtboardId(ab) {
+  var id = 0;
+  forEachUsableArtboard(function(ab2, i) {
+    if (ab === ab2) id = i;
+  });
+  return id;
+}
+
+// TODO: prevent duplicate names? or treat duplicate names an an error condition?
+// (artboard name is assumed to be unique in several places)
+function getArtboardName(ab) {
+  return makeKeyword(ab.name.replace( /^(.+):\d+$/, "$1"));
+}
+
+function getArtboardFullName(ab) {
+  return docName + "-" + getArtboardName(ab);
+}
+
+// return coordinates of bounding box of all artboards
+function getAllArtboardBounds() {
+  var rect, bounds;
+  for (var i=0, n=doc.artboards.length; i<n; i++) {
+    rect = doc.artboards[i].artboardRect;
+    if (i === 0) {
+      bounds = rect;
+    } else {
+      bounds = [
+        Math.min(rect[0], bounds[0]), Math.max(rect[1], bounds[1]),
+        Math.max(rect[2], bounds[2]), Math.min(rect[3], bounds[3])];
+    }
+  }
+  return bounds;
+}
+
+// return responsive artboard widths as an array [minw, maxw]
+function getArtboardWidthRange(ab) {
+  var id = getArtboardId(ab);
+  var infoArr = getArtboardInfo();
+  var minw, maxw;
+  // find min width, which is the artboard's own effective width
+  forEach(infoArr, function(info) {
+    if (info.id == id) {
+      minw = info.effectiveWidth;
+    }
+  });
+  // find max width, which is the effective width of the next widest
+  // artboard (if any), minus one pixel
+  forEach(infoArr, function(info) {
+    var w = info.effectiveWidth;
+    if (w > minw && (!maxw || w < maxw)) {
+      maxw = w;
+    }
+  });
+  return [minw, maxw ? maxw - 1 : Infinity];
+}
+
+// return array of data records about each usable artboard, sorted from narrow to wide
+function getArtboardInfo() {
+  var artboards = [];
+  forEachUsableArtboard(function(ab, i) {
+    var pos = getArtboardPos(ab);
+    var name = ab.name || "";
+    // parse width from artboard name in two formats: <name>:<width> and ai2html-<width>
+    var widthFromName = (/^(?:.*:|ai2html-)(\d+)$/.exec(name) || [])[1];
+    artboards.push({
+      name: ab.name || "",
+      width: pos.width,
+      effectiveWidth: widthFromName ? +widthFromName : pos.width,
+      id: i
+    });
+  });
+  artboards.sort(function(a, b) {return a.effectiveWidth - b.effectiveWidth;});
+  return artboards;
+}
+
+// Get array of data records for breakpoints that have artboards assigned to them
+// (sorted from narrow to wide)
+// breakpoints: Array of data about all possible breakpoints
+function assignBreakpointsToArtboards(breakpoints) {
+  var abArr = getArtboardInfo(); // get data records for each artboard
+  var bpArr = [];
+  forEach(breakpoints, function(breakpoint) {
+    var bpPrev = bpArr[bpArr.length - 1],
+        bpInfo = {
+          name: breakpoint.name,
+          lowerLimit: breakpoint.lowerLimit,
+          upperLimit: breakpoint.upperLimit,
+          artboards: []
+        },
+        abInfo;
+    for (var i=0; i<abArr.length; i++) {
+      abInfo = abArr[i];
+      if (abInfo.effectiveWidth <= breakpoint.upperLimit &&
+          abInfo.effectiveWidth > breakpoint.lowerLimit) {
+        bpInfo.artboards.push(abInfo.id);
+      }
+    }
+    if (bpInfo.artboards.length > 1 && scriptEnvironment=="nyt") {
+      warnings.push('The ' + breakpoint.upperLimit + "px breakpoint has " + bpInfo.artboards.length +
+          " artboards. You probably want only one artboard per breakpoint.");
+    }
+    if (bpInfo.artboards.length === 0 && bpPrev) {
+      bpInfo.artboards = bpPrev.artboards.concat();
+    }
+    if (bpInfo.artboards.length > 0) {
+      bpArr.push(bpInfo);
+    }
+  });
+  return bpArr;
+}
+
+function forEachUsableArtboard(cb) {
+  var ab;
+  for (var i=0; i<doc.artboards.length; i++) {
+    ab = doc.artboards[i];
+    if (!/^-/.test(ab.name)) { // exclude artboards with names starting w/ "-"
+      cb(ab, i);
+    }
+  }
+}
+
+// Returns id of artboard with largest area
+function findLargestArtboard() {
+  var largestId = -1;
+  var largestArea = 0;
+  forEachUsableArtboard(function(ab, i) {
+    var info = getArtboardPos(ab);
+    var area = info.width * info.height;
+    if (area > largestArea) {
+      largestId = i;
+      largestArea = area;
+    }
+  });
+  return largestId;
+}
+
+function clearSelection() {
+  // setting selection to null doesn't always work:
+  // it doesn't deselect text range selection and also seems to interfere with
+  // subsequent mask operations using executeMenuCommand().
+  // doc.selection = null;
+  // the following seems to work reliably.
+  app.executeMenuCommand('deselectall');
+}
+
+function documentContainsRasterImages() {
+  // TODO: verify that placed items are rasters
+  // TODO: only count visible items that overlap an artboard
+  return doc.placedItems.length + doc.rasterItems.length > 0;
+}
+
+function objectIsHidden(obj) {
+  var hidden = false;
+  while (!hidden && obj && obj.typename != "Document"){
+    if (obj.typename == "Layer") {
+      hidden = !obj.visible;
+    } else {
+      hidden = obj.hidden;
+    }
+    obj = obj.parent;
+  }
+  return hidden;
+}
+
+function getComputedOpacity(obj) {
+  var opacity = 1;
+  while (obj && obj.typename != "Document") {
+    opacity *= obj.opacity / 100;
+    obj = obj.parent;
+  }
+  return opacity * 100;
+}
+
+// Return array of layer objects, include PageItems and sublayers, in z order
+function getSortedLayerItems(lyr) {
+  var items = toArray(lyr.pageItems).concat(toArray(lyr.layers));
+  if (lyr.layers.length > 0 && lyr.pageItems.length > 0) {
+    // only need to sort if layer contains both layers and page objects
+    items.sort(function(a, b) {
+      return b.absoluteZOrderPosition - a.absoluteZOrderPosition;
+    });
+  }
+  return items;
+}
+
+// a, b: Layer objects
+function findCommonLayer(a, b) {
+  var p = null;
+  if (a == b) {
+    p = a;
+  }
+  if (!p && a.parent.typename == 'Layer') {
+    p = findCommonLayer(a.parent, b);
+  }
+  if (!p && b.parent.typename == 'Layer') {
+    p = findCommonLayer(a, b.parent);
+  }
+  return p;
+}
+
+function findCommonAncestorLayer(items) {
+  var layers = [],
+      ancestorLyr = null,
+      item;
+  for (var i=0, n=items.length; i<n; i++) {
+    item = items[i];
+    if (item.parent.typename != 'Layer' || contains(layers, item.parent)) {
+      continue;
+    }
+    // remember layer, to avoid redundant searching (is this worthwhile?)
+    layers.push(item.parent);
+    if (!ancestorLyr) {
+      ancestorLyr = item.parent;
+    } else {
+      ancestorLyr = findCommonLayer(ancestorLyr, item.parent);
+      if (!ancestorLyr) {
+        // Failed to find a common ancestor
+        return null;
+      }
+    }
+  }
+  return ancestorLyr;
+}
+
+function findMasks() {
+  var found = [],
+      masks;
+  // assumes clipping paths have been unlocked
+  app.executeMenuCommand('Clipping Masks menu item');
+  masks = toArray(doc.selection);
+  clearSelection();
+  forEach(masks, function(mask) {mask.locked = true;});
+  forEach(masks, function(mask) {
+    var items, obj;
+    mask.locked = false;
+    // select a single mask
+    // some time ago, executeMenuCommand() was more reliable than assigning to
+    // selection... no longer, apparently
+    // app.executeMenuCommand('Clipping Masks menu item');
+    doc.selection = [mask];
+    // switch selection to all masked items
+    app.executeMenuCommand('editMask'); // Object > Clipping Mask > Edit Contents
+    items = toArray(doc.selection || []);
+    // oddly, 'deselectall' sometimes fails here
+    // app.executeMenuCommand('deselectall');
+    doc.selection = null;
+    mask.locked = true;
+    obj = {
+      mask: mask,
+      items: items
+    };
+    if (mask.parent.typename == "GroupItem") {
+      // Group mask
+      obj.group = mask.parent;
+
+    } else if (mask.parent.typename == "Layer") {
+      // Layer mask -- common ancestor layer of all masked items is assumed
+      // to be the masked layer
+      obj.layer = findCommonAncestorLayer(items);
+
+    } else {
+      message("Unknown mask type in findMasks()");
+    }
+
+    if (items.length > 0 && (obj.group || obj.layer)) {
+      found.push(obj);
+    }
+
+    if (items.length === 0) {
+      // message("Unable to select masked items");
+    }
+  });
+  forEach(masks, function(mask) {mask.locked = false;});
+  return found;
+}
+
 
 
 // ==============================
@@ -1721,7 +2031,6 @@ function getClippedTextFramesByArtboard(ab, masks) {
   return frames;
 }
 
-
 // Get array of TextFrames belonging to an artboard, excluding text that
 // overlaps the artboard but is hidden by a clipping mask
 function getTextFramesByArtboard(ab, masks) {
@@ -1746,8 +2055,10 @@ function findTextFramesToRender(frames, artboardRect) {
   return selected;
 }
 
+
+// Read in attribute variables from notes field of a text frame
+// TODO: try to remove this kludge (used by getTextPositionCss() for storing valign property)
 function parseTextFrameNote(note) {
-  // Read in attribute variables from notes field of a text frame
   var thisFrameAttributes = {};
   var rawNotes = note.split("\r");
   for (var rNo = 0; rNo < rawNotes.length; rNo++) {
@@ -1942,190 +2253,11 @@ function getUntransformedTextBounds(textFrame) {
   return bnds;
 }
 
-// ==============================
-// ai2html artboard functions
-// ==============================
 
-function getArtboardPos(ab) {
-  var rect = ab.artboardRect,
-      x = rect[0],
-      y = -rect[1],
-      w = Math.round(rect[2] - x),
-      h = -rect[3] - y;
-  return {
-    x: x,
-    y: y,
-    width: w,
-    height: h
-  };
-}
-
-// Get numerical index of an artboard in the doc.artboards array
-function getArtboardId(ab) {
-  var id = 0;
-  forEachUsableArtboard(function(ab2, i) {
-    if (ab === ab2) id = i;
-  });
-  return id;
-}
-
-// TODO: prevent duplicate names? or treat duplicate names an an error condition?
-// (artboard name is assumed to be unique in several places)
-function getArtboardName(ab) {
-  return makeKeyword(ab.name.replace( /^(.+):\d+$/, "$1"));
-}
-
-function getArtboardFullName(ab) {
-  return docName + "-" + getArtboardName(ab);
-}
-
-// return coordinates of bounding box of all artboards
-function getAllArtboardBounds() {
-  var rect, bounds;
-  for (var i=0, n=doc.artboards.length; i<n; i++) {
-    rect = doc.artboards[i].artboardRect;
-    if (i === 0) {
-      bounds = rect;
-    } else {
-      bounds = [
-        Math.min(rect[0], bounds[0]), Math.max(rect[1], bounds[1]),
-        Math.max(rect[2], bounds[2]), Math.min(rect[3], bounds[3])];
-    }
-  }
-  return bounds;
-}
-
-// return responsive artboard widths as an array [minw, maxw]
-function getArtboardWidthRange(ab) {
-  var id = getArtboardId(ab);
-  var infoArr = getArtboardInfo();
-  var minw, maxw;
-  // find min width, which is the artboard's own effective width
-  forEach(infoArr, function(info) {
-    if (info.id == id) {
-      minw = info.effectiveWidth;
-    }
-  });
-  // find max width, which is the effective width of the next widest
-  // artboard (if any), minus one pixel
-  forEach(infoArr, function(info) {
-    var w = info.effectiveWidth;
-    if (w > minw && (!maxw || w < maxw)) {
-      maxw = w;
-    }
-  });
-  return [minw, maxw ? maxw - 1 : Infinity];
-}
-
-// return array of data records about each usable artboard, sorted from narrow to wide
-function getArtboardInfo() {
-  var artboards = [];
-  forEachUsableArtboard(function(ab, i) {
-    var pos = getArtboardPos(ab);
-    var name = ab.name || "";
-    // parse width from artboard name in two formats: <name>:<width> and ai2html-<width>
-    var widthFromName = (/^(?:.*:|ai2html-)(\d+)$/.exec(name) || [])[1];
-    artboards.push({
-      name: ab.name || "",
-      width: pos.width,
-      effectiveWidth: widthFromName ? +widthFromName : pos.width,
-      id: i
-    });
-  });
-  artboards.sort(function(a, b) {return a.effectiveWidth - b.effectiveWidth;});
-  return artboards;
-}
-
-function findShowClassesForArtboard(ab, breakpoints) {
-  var classes = [];
-  var id = getArtboardId(ab);
-  forEach(breakpoints, function(bp) {
-    if (contains(bp.artboards, id)) {
-      classes.push('g-show-' + bp.name);
-    }
-  });
-  return classes.join(' ');
-}
-
-// Get array of data records for breakpoints that have artboards assigned to them
-// (sorted from narrow to wide)
-// breakpoints: Array of data about all possible breakpoints
-function assignBreakpointsToArtboards(breakpoints) {
-  var abArr = getArtboardInfo(); // get data records for each artboard
-  var bpArr = [];
-  forEach(breakpoints, function(breakpoint) {
-    var bpPrev = bpArr[bpArr.length - 1],
-        bpInfo = {
-          name: breakpoint.name,
-          lowerLimit: breakpoint.lowerLimit,
-          upperLimit: breakpoint.upperLimit,
-          artboards: []
-        },
-        abInfo;
-    for (var i=0; i<abArr.length; i++) {
-      abInfo = abArr[i];
-      if (abInfo.effectiveWidth <= breakpoint.upperLimit &&
-          abInfo.effectiveWidth > breakpoint.lowerLimit) {
-        bpInfo.artboards.push(abInfo.id);
-      }
-    }
-    if (bpInfo.artboards.length > 1 && scriptEnvironment=="nyt") {
-      warnings.push('The ' + breakpoint.upperLimit + "px breakpoint has " + bpInfo.artboards.length +
-          " artboards. You probably want only one artboard per breakpoint.");
-    }
-    if (bpInfo.artboards.length === 0 && bpPrev) {
-      bpInfo.artboards = bpPrev.artboards.concat();
-    }
-    if (bpInfo.artboards.length > 0) {
-      bpArr.push(bpInfo);
-    }
-  });
-  return bpArr;
-}
-
-function forEachUsableArtboard(cb) {
-  var ab;
-  for (var i=0; i<doc.artboards.length; i++) {
-    ab = doc.artboards[i];
-    if (!/^-/.test(ab.name)) { // exclude artboards with names starting w/ "-"
-      cb(ab, i);
-    }
-  }
-}
-
-// Returns id of artboard with largest area
-function findLargestArtboard() {
-  var largestId = -1;
-  var largestArea = 0;
-  forEachUsableArtboard(function(ab, i) {
-    var info = getArtboardPos(ab);
-    var area = info.width * info.height;
-    if (area > largestArea) {
-      largestId = i;
-      largestArea = area;
-    }
-  });
-  return largestId;
-}
-
-function clearSelection() {
-  // setting selection to null doesn't always work:
-  // it doesn't deselect text range selection and also seems to interfere with
-  // subsequent mask operations using executeMenuCommand().
-  // doc.selection = null;
-  // the following seems to work reliably.
-  app.executeMenuCommand('deselectall');
-}
 
 // =================================
 // ai2html image functions
 // =================================
-
-function documentContainsRasterImages() {
-  // TODO: verify that placed items are rasters
-  // TODO: only count visible items that overlap an artboard
-  return doc.placedItems.length + doc.rasterItems.length > 0;
-}
 
 // ab: artboard (assumed to be the active artboard)
 // textFrames:  text frames belonging to the active artboard
@@ -2282,17 +2414,6 @@ function exportImageFiles(dest, ab, formats, initialScaling, doubleres) {
   });
 }
 
-// Return array of layer objects, include PageItems and sublayers, in z order
-function getSortedLayerItems(lyr) {
-  var items = toArray(lyr.pageItems).concat(toArray(lyr.layers));
-  if (lyr.layers.length > 0 && lyr.pageItems.length > 0) {
-    // only need to sort if layer contains both layers and page objects
-    items.sort(function(a, b) {
-      return b.absoluteZOrderPosition - a.absoluteZOrderPosition;
-    });
-  }
-  return items;
-}
 
 // Copy contents of an artboard to a temporary document, excluding objects
 // that are hidden by masks
@@ -2378,97 +2499,6 @@ function copyArtboardForImageExport(ab, masks) {
   }
 }
 
-// a, b: Layer objects
-function findCommonLayer(a, b) {
-  var p = null;
-  if (a == b) {
-    p = a;
-  }
-  if (!p && a.parent.typename == 'Layer') {
-    p = findCommonLayer(a.parent, b);
-  }
-  if (!p && b.parent.typename == 'Layer') {
-    p = findCommonLayer(a, b.parent);
-  }
-  return p;
-}
-
-function findCommonAncestorLayer(items) {
-  var layers = [],
-      ancestorLyr = null,
-      item;
-  for (var i=0, n=items.length; i<n; i++) {
-    item = items[i];
-    if (item.parent.typename != 'Layer' || contains(layers, item.parent)) {
-      continue;
-    }
-    // remember layer, to avoid redundant searching (is this worthwhile?)
-    layers.push(item.parent);
-    if (!ancestorLyr) {
-      ancestorLyr = item.parent;
-    } else {
-      ancestorLyr = findCommonLayer(ancestorLyr, item.parent);
-      if (!ancestorLyr) {
-        // Failed to find a common ancestor
-        return null;
-      }
-    }
-  }
-  return ancestorLyr;
-}
-
-function findMasks() {
-  var found = [],
-      masks;
-  // assumes clipping paths have been unlocked
-  app.executeMenuCommand('Clipping Masks menu item');
-  masks = toArray(doc.selection);
-  clearSelection();
-  forEach(masks, function(mask) {mask.locked = true;});
-  forEach(masks, function(mask) {
-    var items, obj;
-    mask.locked = false;
-    // select a single mask
-    // some time ago, executeMenuCommand() was more reliable than assigning to
-    // selection... no longer, apparently
-    // app.executeMenuCommand('Clipping Masks menu item');
-    doc.selection = [mask];
-    // switch selection to all masked items
-    app.executeMenuCommand('editMask'); // Object > Clipping Mask > Edit Contents
-    items = toArray(doc.selection || []);
-    // oddly, 'deselectall' sometimes fails here
-    // app.executeMenuCommand('deselectall');
-    doc.selection = null;
-    mask.locked = true;
-    obj = {
-      mask: mask,
-      items: items
-    };
-    if (mask.parent.typename == "GroupItem") {
-      // Group mask
-      obj.group = mask.parent;
-
-    } else if (mask.parent.typename == "Layer") {
-      // Layer mask -- common ancestor layer of all masked items is assumed
-      // to be the masked layer
-      obj.layer = findCommonAncestorLayer(items);
-
-    } else {
-      message("Unknown mask type in findMasks()");
-    }
-
-    if (items.length > 0 && (obj.group || obj.layer)) {
-      found.push(obj);
-    }
-
-    if (items.length === 0) {
-      // message("Unable to select masked items");
-    }
-  });
-  forEach(masks, function(mask) {mask.locked = false;});
-  return found;
-}
-
 function exportSVG(dest, ab, masks) {
   // Illustrator's SVG output contains all objects in a document (it doesn't
   //   clip to the current artboard), so we copy artboard objects to a temporary
@@ -2489,6 +2519,8 @@ function exportSVG(dest, ab, masks) {
   //exportDoc.pageItems.removeAll();
   exportDoc.close(SaveOptions.DONOTSAVECHANGES);
 }
+
+
 
 // ===================================
 // ai2html output generation functions
@@ -2513,6 +2545,17 @@ function generateArtboardDiv(ab, breakpoints, settings) {
   }
   html += ">\r";
   return html;
+}
+
+function findShowClassesForArtboard(ab, breakpoints) {
+  var classes = [];
+  var id = getArtboardId(ab);
+  forEach(breakpoints, function(bp) {
+    if (contains(bp.artboards, id)) {
+      classes.push('g-show-' + bp.name);
+    }
+  });
+  return classes.join(' ');
 }
 
 function generateArtboardCss(ab, textClasses, settings) {
@@ -2604,18 +2647,6 @@ function generateYmlFileContent(breakpoints, settings) {
     }
   }
   return lines.join('\n') + '\n';
-}
-
-function checkForOutputFolder(folderPath, nickname) {
-  var outputFolder = new Folder( folderPath );
-  if (!outputFolder.exists) {
-    var outputFolderCreated = outputFolder.create();
-    if (outputFolderCreated) {
-      feedback.push("The " + nickname + " folder did not exist, so the folder was created.");
-    } else {
-      warnings.push("The " + nickname + " folder did not exist and could not be created.");
-    }
-  }
 }
 
 function getResizerScript() {
@@ -2796,28 +2827,4 @@ function generateOutputHtml(pageContent, pageName, settings) {
     var previewFileDestination = htmlFileDestinationFolder + pageName + ".preview.html";
     outputLocalPreviewPage(textForFile, previewFileDestination, settings);
   }
-}
-
-function isTestedIllustratorVersion(version) {
-  var majorNum = parseInt(version);
-  return majorNum >= 18 && majorNum <= 21; // Illustrator CC 2014 through 2017
-}
-
-function initScriptEnvironment() {
-  // Performance timing using T.start() and T.stop("message")
-  T = {
-    stack: [],
-    start: function() {
-      T.stack.push(+new Date());
-    },
-    stop: function(note) {
-      var ms = +new Date() - T.stack.pop();
-      if (note) message(ms + 'ms - ' + note);
-      return ms;
-    }
-  };
-
-  // Minified json2.js from https://github.com/douglascrockford/JSON-js
-  // This code is in the public domain.
-  if(typeof JSON!=="object"){JSON={}}(function(){"use strict";var rx_one=/^[\],:{}\s]*$/;var rx_two=/\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g;var rx_three=/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g;var rx_four=/(?:^|:|,)(?:\s*\[)+/g;var rx_escapable=/[\\"\u0000-\u001f\u007f-\u009f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;var rx_dangerous=/[\u0000\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;function f(n){return n<10?"0"+n:n}function this_value(){return this.valueOf()}if(typeof Date.prototype.toJSON!=="function"){Date.prototype.toJSON=function(){return isFinite(this.valueOf())?this.getUTCFullYear()+"-"+f(this.getUTCMonth()+1)+"-"+f(this.getUTCDate())+"T"+f(this.getUTCHours())+":"+f(this.getUTCMinutes())+":"+f(this.getUTCSeconds())+"Z":null};Boolean.prototype.toJSON=this_value;Number.prototype.toJSON=this_value;String.prototype.toJSON=this_value}var gap;var indent;var meta;var rep;function quote(string){rx_escapable.lastIndex=0;return rx_escapable.test(string)?'"'+string.replace(rx_escapable,function(a){var c=meta[a];return typeof c==="string"?c:"\\u"+("0000"+a.charCodeAt(0).toString(16)).slice(-4)})+'"':'"'+string+'"'}function str(key,holder){var i;var k;var v;var length;var mind=gap;var partial;var value=holder[key];if(value&&typeof value==="object"&&typeof value.toJSON==="function"){value=value.toJSON(key)}if(typeof rep==="function"){value=rep.call(holder,key,value)}switch(typeof value){case"string":return quote(value);case"number":return isFinite(value)?String(value):"null";case"boolean":case"null":return String(value);case"object":if(!value){return"null"}gap+=indent;partial=[];if(Object.prototype.toString.apply(value)==="[object Array]"){length=value.length;for(i=0;i<length;i+=1){partial[i]=str(i,value)||"null"}v=partial.length===0?"[]":gap?"[\n"+gap+partial.join(",\n"+gap)+"\n"+mind+"]":"["+partial.join(",")+"]";gap=mind;return v}if(rep&&typeof rep==="object"){length=rep.length;for(i=0;i<length;i+=1){if(typeof rep[i]==="string"){k=rep[i];v=str(k,value);if(v){partial.push(quote(k)+(gap?": ":":")+v)}}}}else{for(k in value){if(Object.prototype.hasOwnProperty.call(value,k)){v=str(k,value);if(v){partial.push(quote(k)+(gap?": ":":")+v)}}}}v=partial.length===0?"{}":gap?"{\n"+gap+partial.join(",\n"+gap)+"\n"+mind+"}":"{"+partial.join(",")+"}";gap=mind;return v}}if(typeof JSON.stringify!=="function"){meta={"\b":"\\b","\t":"\\t","\n":"\\n","\f":"\\f","\r":"\\r",'"':'\\"',"\\":"\\\\"};JSON.stringify=function(value,replacer,space){var i;gap="";indent="";if(typeof space==="number"){for(i=0;i<space;i+=1){indent+=" "}}else if(typeof space==="string"){indent=space}rep=replacer;if(replacer&&typeof replacer!=="function"&&(typeof replacer!=="object"||typeof replacer.length!=="number")){throw new Error("JSON.stringify")}return str("",{"":value})}}if(typeof JSON.parse!=="function"){JSON.parse=function(text,reviver){var j;function walk(holder,key){var k;var v;var value=holder[key];if(value&&typeof value==="object"){for(k in value){if(Object.prototype.hasOwnProperty.call(value,k)){v=walk(value,k);if(v!==undefined){value[k]=v}else{delete value[k]}}}}return reviver.call(holder,key,value)}text=String(text);rx_dangerous.lastIndex=0;if(rx_dangerous.test(text)){text=text.replace(rx_dangerous,function(a){return"\\u"+("0000"+a.charCodeAt(0).toString(16)).slice(-4)})}if(rx_one.test(text.replace(rx_two,"@").replace(rx_three,"]").replace(rx_four,""))){j=eval("("+text+")");return typeof reviver==="function"?walk({"":j},""):j}throw new SyntaxError("JSON.parse")}}})(); // jshint ignore:line
 }
