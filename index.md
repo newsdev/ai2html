@@ -6,7 +6,7 @@ sidebar_menu:
   '#how-does-ai2html-work': How does it work
   '#table-of-contents': Full table of contents
   examples.html: Examples
-  https://github.com/newsdev/ai2html/blob/master/HISTORY.md: Changelog
+  https://github.com/newsdev/ai2html/blob/master/CHANGELOG.md: Changelog
 ---
 
 
