@@ -1,7 +1,7 @@
 {
   "name": "ai2html",
-  "version": "0.61.0",
-  "description": "A script for Adobe Illustrator that converts your Illustrator artwork into an html page.",
+  "version": "0.63.0",
+  "description": "A script for Adobe Illustrator that converts your Illustrator artwork into an html page. (This is the BBG-configured version. Original from newsdev/NYT)",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
