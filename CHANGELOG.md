@@ -1,5 +1,5 @@
 
-### Unreleased
+### Unreleased (ai2html-beta.js)
 - Character styles applied to text inside a paragraph are now preserved (e.g. a bolded phrase).
 - Users are prompted to generate promo images when relevant (previously, promo images were automatically generated).
 - Promo images are smaller tham before, for performance (1024px instead of >3000px wide).
@@ -8,6 +8,8 @@
 - Improved SVG export (only visible objects that intersect the current artboard are included in the output file).
 - Automatic detection of NYT Preview context (by checking for public/_assets directory).
 - Fixed template rendering bug (issue #43).
+- Fixed "can't paste type" error (issue #50).
+- Fixed Isolation Mode runtime error (issue #35).
 - Adding warnings for a range of potential problems.
 - Improved display of runtime errors, including number of the source code line where an error occured.
 - Added unit testing using Node.js and Mocha.

@@ -346,10 +346,13 @@ function main() {
     errors.push("No documents are open");
 
   } else if (!String(app.activeDocument.path)) {
-    errors.push('You need to save your Illustrator file before running this script');
+    errors.push("You need to save your Illustrator file before running this script");
 
   } else if (app.activeDocument.documentColorSpace!="DocumentColorSpace.RGB") {
-    errors.push('You should change the document color mode to "RGB" before running ai2html (File>Document Color Mode>RGB Color).' );
+    errors.push("You should change the document color mode to \"RGB\" before running ai2html (File>Document Color Mode>RGB Color).");
+
+  } else if (app.activeDocument.activeLayer.name == "Isolation Mode") {
+    errors.push("Ai2html is unable to run because the document is in Isolation Mode.");
 
   } else {
     doc = app.activeDocument;
