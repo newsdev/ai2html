@@ -4,9 +4,13 @@
 - Users are prompted to generate promo images when relevant (previously, promo images were automatically generated).
 - Promo images are smaller tham before, for performance (1024px instead of >3000px wide).
 - Text fields hidden behind rectangular masks are no longer rendered.
+- Opacity of text blocks is now calculated by combining the opacity of all parent groups and layers.
 - Improved SVG export (only visible objects that intersect the current artboard are included in the output file).
 - Automatic detection of NYT Preview context (by checking for public/_assets directory).
+- Fixed template rendering bug (issue #43).
+- Adding warnings for a range of potential problems.
 - Improved display of runtime errors, including number of the source code line where an error occured.
+- Added unit testing using Node.js and Mocha.
 - Refactored source code.
 
 ### v0.63
@@ -15,13 +19,13 @@
 ### v0.62
 - Changed the default value of `use_lazy_loader` to "no".
 - Force double res if value of `use_2x_images_if_possible` is "always".
-- Added additional variants of the NYTCheltenham typeface.
+- Added additional variants of the NYTCheltenham typeface to the font table.
 
 ### v0.61
-
+- Fixed: Clickable promo bug (issue #36).
 
 ### v0.60
-
+- Added new NYT resizer script (p.r. #32).
 
 ### v0.59
 - Added "summary" setting.
