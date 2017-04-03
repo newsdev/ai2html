@@ -1,5 +1,5 @@
 ﻿// ai2html.js
-var scriptVersion     = "0.61";
+var scriptVersion     = "1.0"; // based on NYT's 0.61
 var scriptEnvironment = "dvz";
 
 // ai2html is a script for Adobe Illustrator that converts your Illustrator document into html and css.
@@ -126,7 +126,7 @@ var exportImageFiles = function(dest,width,height,formats,initialScaling,doubler
 	// options, dest contains the full path including the file name
 	// doubleres is "yes" or "no" whether you want to allow images to be double res
 	// if you want to force ai2html to use doubleres, use "always"
-	
+
 	if (doubleres=="yes" || doubleres=="always") {
 		// if image is too big to use double-res, then just output single-res.
 		var pngImageScaling = 200 * initialScaling;
@@ -480,8 +480,8 @@ if (scriptEnvironment == "dvz") {
         image_format: {defaultValue: ["png"], includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "array", possibleValues: "jpg, png, png24", notes: "Images will be generated in mulitple formats if multiple formats are listed, separated by commas. The first format will be used in the html. Sometimes this is useful to compare which format will have a smaller file size."},
         write_image_files: {defaultValue: "yes", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: "Set this to “no” to skip writing the image files. Generally only use this after you have run the script once with this setting set to “yes.”"},
         responsiveness: {defaultValue: "dynamic", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "fixed, dynamic", notes: "Dynamic responsiveness means ai graphics will scale to fill the container they are placed in."},
-        max_width: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "integer", possibleValues: "", notes: "Blank or any positive number in pixels, but do not write “px” - blank means artboards will set max size, the max width is not included in the html stub, instead it is written to the config file so that the max width can be applied to the template’s container."},
-        output: {defaultValue: "one-file", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "one-file, multiple-files", notes: "One html file containing all the artboards or a separate html file for each artboard."},
+        max_width: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "integer", possibleValues: "", notes: "Blank or any positive number in pixels, but do not write “px” - blank means artboards will set max size, the max width is not included in the html stub, instead it is written to the config file so that the max width can be applied to the template’s container."},
+        output: {defaultValue: "one-file", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "one-file, multiple-files", notes: "One html file containing all the artboards or a separate html file for each artboard."},
         project_name: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: "Use this to set a custom project name. The project name is being used in output filenames, class names, etc."},
         html_output_path: {defaultValue: "../src/html/_ai2html/", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "folderPath", possibleValues: "", notes: "Allows user to change folder to write html files, path should be written relative to ai file location. This is ignored if the project_type in the yml is ai2html."},
         html_output_extension: {defaultValue: ".ai2html.html", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "fileExtension", possibleValues: "", notes: "This is ignored if the project_type in the yml is ai2html."},
@@ -490,12 +490,12 @@ if (scriptEnvironment == "dvz") {
         create_config_file: {defaultValue: "false", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "trueFalse", possibleValues: "", notes: "This is ignored in env=nyt."},
         config_file_path: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "filePath", possibleValues: "", notes: "This only gets used to write the config file. It’s not used in the nyt mode to read the config.yml. Path should written relative to the ai file location."},
         local_preview_template: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "filePath", possibleValues: "", notes: ""},
-        png_transparent: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
+        png_transparent: {defaultValue: "yes", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
         png_number_of_colors: {defaultValue: 128, includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "integer", possibleValues: "2 to 256", notes: ""},
         jpg_quality: {defaultValue: 60, includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "integer", possibleValues: "0 to 100", notes: ""},
         center_html_output: {defaultValue: "true", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: "Adds “margin:0 auto;” to the div containing the ai2html output."},
         use_2x_images_if_possible: {defaultValue: "always", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
-        use_lazy_loader: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
+        use_lazy_loader: {defaultValue: "yes", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
         include_resizer_css_js: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
         include_resizer_classes: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
         include_resizer_widths: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: "If set to “yes”, ai2html adds data-min-width and data-max-width attributes to each artboard"},
@@ -505,12 +505,12 @@ if (scriptEnvironment == "dvz") {
         clickable_link: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: "If you put a url in this field, an <a> tag will be added, wrapping around the output and pointing to that url."},
         testing_mode: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
         last_updated_text: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: ""},
-        headline: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: ""},
-        leadin: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: ""},
+        headline: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: true, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: ""},
+        leadin: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: true, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: ""},
         summary: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: true, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: "Summary field for Scoop assets"},
-        notes: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: ""},
-        sources: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: ""},
-        credit: {defaultValue: "By Bloomberg", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: ""},
+        notes: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: true, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: ""},
+        sources: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: true, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: ""},
+        credit: {defaultValue: "By Bloomberg", includeInSettingsBlock: false, includeInConfigFile: true, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: ""},
         page_template: {defaultValue: "graphics", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
         publish_system: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
         environment: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
@@ -637,7 +637,25 @@ var fonts = [
         {"aifont":"BWDrukXXCond-Super","family":"BWDrukXXCond-Super","weight":"","style":""},
         {"aifont":"BWDrukXXXCond-Super","family":"BWDrukXXXCond-Super","weight":"","style":""},
         {"aifont":"BWDrukXXXXCond-Super","family":"BWDrukXXXXCond-Super","weight":"","style":""},
-        {"aifont":"BWHaasText","family":"BWHaasText-55Roman,HaasText,helvetica,arial,sans-serif","weight":"","style":""}
+        {"aifont":"BWHaasText","family":"BWHaasText-55Roman,HaasText,helvetica,arial,sans-serif","weight":"","style":""},
+        {"aifont":"BWHaasTextMonoA-55Roman","family":"BWHaasTextMonoA-55Roman,HaasText,helvetica,arial,sans-serif","weight":"","style":""},
+        {"aifont":"BWHaasTextMonoA-56Italic","family":"BWHaasTextMonoA-56Italic,HaasText,helvetica,arial,sans-serif","weight":"","style":""},
+        {"aifont":"BWHaasTextMonoA-65Medium","family":"BWHaasTextMonoA-65Medium,HaasText,helvetica,arial,sans-serif","weight":"","style":""},
+        {"aifont":"BWHaasTextMonoA-66MediumItalic","family":"BWHaasTextMonoA-66MediumItalic,HaasText,helvetica,arial,sans-serif","weight":"","style":"italic"},
+        {"aifont":"BWHaasTextMonoA-75Bold","family":"BWHaasTextMonoA-75Bold,HaasText,helvetica,arial,sans-serif","weight":"","style":""},
+        {"aifont":"BWHaasTextMonoA-76BoldItalic","family":"BWHaasTextMonoA-76BoldItalic,HaasText,helvetica,arial,sans-serif","weight":"","style":"italic"},
+        {"aifont":"BWHaasTextMonoB-55Roman","family":"BWHaasTextMonoB-55Roman,HaasText,helvetica,arial,sans-serif","weight":"","style":""},
+        {"aifont":"BWHaasTextMonoB-56Italic","family":"BWHaasTextMonoB-56Italic,HaasText,helvetica,arial,sans-serif","weight":"","style":""},
+        {"aifont":"BWHaasTextMonoB-65Medium","family":"BWHaasTextMonoB-65Medium,HaasText,helvetica,arial,sans-serif","weight":"","style":""},
+        {"aifont":"BWHaasTextMonoB-66MediumItalic","family":"BWHaasTextMonoB-66MediumItalic,HaasText,helvetica,arial,sans-serif","weight":"","style":"italic"},
+        {"aifont":"BWHaasTextMonoB-75Bold","family":"BWHaasTextMonoB-75Bold,HaasText,helvetica,arial,sans-serif","weight":"","style":""},
+        {"aifont":"BWHaasTextMonoB-76BoldItalic","family":"BWHaasTextMonoB-76BoldItalic,HaasText,helvetica,arial,sans-serif","weight":"","style":"italic"},
+        {"aifont":"BWHaasTextMonoC-55Roman","family":"BWHaasTextMonoC-55Roman,HaasText,helvetica,arial,sans-serif","weight":"","style":""},
+        {"aifont":"BWHaasTextMonoC-56Italic","family":"BWHaasTextMonoC-56Italic,HaasText,helvetica,arial,sans-serif","weight":"","style":""},
+        {"aifont":"BWHaasTextMonoC-65Medium","family":"BWHaasTextMonoC-65Medium,HaasText,helvetica,arial,sans-serif","weight":"","style":""},
+        {"aifont":"BWHaasTextMonoC-66MediumItalic","family":"BWHaasTextMonoC-66MediumItalic,HaasText,helvetica,arial,sans-serif","weight":"","style":"italic"},
+        {"aifont":"BWHaasTextMonoC-75Bold","family":"BWHaasTextMonoC-75Bold,HaasText,helvetica,arial,sans-serif","weight":"","style":""},
+        {"aifont":"BWHaasTextMonoC-76BoldItalic","family":"BWHaasTextMonoC-76BoldItalic,HaasText,helvetica,arial,sans-serif","weight":"","style":"italic"}
 ];
 
 var caps = [
@@ -726,7 +744,7 @@ var alertText              = "";
 if (scriptEnvironment=="nyt") {
 	var alertHed               = "Actually, that’s not half bad.";
 } else if (scriptEnvironment=="dvz") {
-	var alertHed               = "Good job, you're the best.";
+	var alertHed               = "ai2html script complete";
         defaultFamily              = "BWHaasText-55Roman,helvetica,sans-serif";
         nameSpace                  = "dvz-";
 } else {
@@ -2196,6 +2214,19 @@ for (var i = hiddenObjects.length-1; i>=0; i--) {
 	hiddenObjects[i].visible = false;
 };
 
+function resolveOutPath (outPath) {
+	var parts = outPath.split('/')
+	while (parts.indexOf('..') > -1) {
+		var index = parts.indexOf('..')
+		parts[index] = null
+		var i = 1
+		while (parts[index - i] === null) {
+			i++
+		}
+		parts[index - i] = null
+	}
+	return parts.join('/').replace(/\/+/g, '/')
+}
 
 pBar.setTitle('Saving Illustrator document...');
 pBar.setProgress(1.0);
@@ -2205,6 +2236,9 @@ if (parentFolder !== null) {
 	saveOptions.pdfCompatible = false;
 	// if (!doc.saved) { doc.save() };
 	if (!doc.saved) { doc.saveAs( origFile , saveOptions ) };
+
+	feedback.push("Your HTML file was saved to `" + resolveOutPath(htmlFileDestination) + "`")
+	feedback.push("Your images were saved to `" + resolveOutPath(imageDestinationFolder) + "`")
 	feedback.push("Your Illustrator file was saved.")
 }
 
@@ -2230,7 +2264,7 @@ if (errors.length == 1) {
 };
 if (errors.length > 0) {
 	for (var e = 0; e < errors.length; e++) {
-		alertText += "• " + errors[e] + "\r";
+		alertText += "* " + errors[e] + "\r";
 	};
 };
 if (warnings.length == 1) {
@@ -2240,20 +2274,20 @@ if (warnings.length == 1) {
 };
 if (warnings.length > 0) {
 	for (var w = 0; w < warnings.length; w++) {
-		alertText += "• " + warnings[w] + "\r";
+		alertText += "* " + warnings[w] + "\r";
 	};
 };
 if (feedback.length > 0) {
 	alertText += "\rInformation\r================\r";
 	for (var f = 0; f < feedback.length; f++) {
-		alertText += "• " + feedback[f] + "\r";
+		alertText += "* " + feedback[f] + "\r";
 	};
 };
 
 pBar.close();
 
 if (docSettings.show_completion_dialog_box=="true") {
-        alert(alertHed + "\n" + alertText + "\n\n\n================\nai2html-nyt5-bbg v"+scriptVersion);
+        alert(alertHed + "\n" + alertText + "\n\n\n================\nai2html-nyt5-dvz v"+scriptVersion);
 };
 
 function getResizerScript() {
