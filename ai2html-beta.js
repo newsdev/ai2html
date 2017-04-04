@@ -1736,7 +1736,7 @@ function warnAboutHtmlTags(str) {
   }
 }
 
-function generateParagraphHtml(pData, baseStyle, styles) {
+function generateParagraphHtml(pData, baseStyle, pStyles, cStyles) {
   var html, diff, classname, range, text;
   if (pData.text.length === 0) { // empty pg
     // TODO: Calculate the height of empty paragraphs and generate
@@ -1746,7 +1746,7 @@ function generateParagraphHtml(pData, baseStyle, styles) {
   diff = objectSubtract(pData.style, baseStyle);
   // Give the pg a class, if it has a different style than the base pg class
   if (diff) {
-    classname = getTextStyleClass(pData.style, styles, 'aiPstyle');
+    classname = getTextStyleClass(diff, pStyles, 'pstyle');
     html = '<p class="' + classname + '">';
   } else {
     html = '<p>';
@@ -1754,9 +1754,9 @@ function generateParagraphHtml(pData, baseStyle, styles) {
   for (var j=0; j<pData.ranges.length; j++) {
     range = pData.ranges[j];
     warnAboutHtmlTags(range.text);
-    diff = objectSubtract(range.style, baseStyle);
+    diff = objectSubtract(range.style, pData.style);
     if (diff) {
-      classname = getTextStyleClass(range.style, styles, 'aiCstyle');
+      classname = getTextStyleClass(diff, cStyles, 'cstyle');
       html += '<span class="' + classname + '">';
     }
     html += cleanText(range.text);
@@ -1768,10 +1768,10 @@ function generateParagraphHtml(pData, baseStyle, styles) {
   return html;
 }
 
-function generateTextFrameHtml(paragraphs, baseStyle, styles) {
+function generateTextFrameHtml(paragraphs, baseStyle, pStyles, cStyles) {
   var html = "";
   for (var i=0; i<paragraphs.length; i++) {
-    html += '\r\t\t\t' + generateParagraphHtml(paragraphs[i], baseStyle, styles);
+    html += '\r\t\t\t' + generateParagraphHtml(paragraphs[i], baseStyle, pStyles, cStyles);
   }
   return html;
 }
@@ -1787,21 +1787,15 @@ function convertTextFrames(textFrames, ab) {
     };
   });
   var baseStyle = deriveBaseTextStyle(frameData);
-  var classes = [];
+  var pgStyles = [];
+  var charStyles = [];
   var divs = map(frameData, function(obj, i) {
     return '\t\t<div id="' + obj.id + '" ' + obj.css + '>' +
-        generateTextFrameHtml(obj.paragraphs, baseStyle, classes) + '\r\t\t</div>\r';
+        generateTextFrameHtml(obj.paragraphs, baseStyle, pgStyles, charStyles) + '\r\t\t</div>\r';
   });
-  var cssBlocks = map(classes, function(obj) {
-    var styleDiff = objectSubtract(obj.style, baseStyle);
-    var cssBlock = styleDiff ? formatCss(styleDiff, '\t\t\t\t') : '\r';
-    if (!styleDiff) {
-      // A class was created for a paragraph or text range with
-      // the same CSS properties as the base style. This should not occur
-      // and should be investigated.
-      warnings.push('CSS class ' + obj.classname + ' is empty');
-    }
-    return '.' + obj.classname + ' {' + cssBlock + '\t\t\t}\r';
+  var allStyles = pgStyles.concat(charStyles);
+  var cssBlocks = map(allStyles, function(obj) {
+    return '.' + obj.classname + ' {' + formatCss(obj.style, '\t\t\t\t') + '\t\t\t}\r';
   });
   if (divs.length > 0) {
     cssBlocks.unshift('p {' + formatCss(baseStyle, '\t\t\t\t') + '\t\t\t}\r');
@@ -1818,31 +1812,24 @@ function convertTextFrames(textFrames, ab) {
 // Returns object containing css text style properties
 function deriveBaseTextStyle(frameData) {
   var pStyles = [];
-  var cStyles = [];
   var baseStyle = {};
   // override detected settings with these style properties
-  // (to prevent errors when diffing css styles)
   var defaultStyle = {
     'text-align': 'left',
     'text-transform': 'none',
     'padding-bottom': 0,
-    'padding-top': 0,
-    'opacity': 1
+    'padding-top': 0
   };
+  var cStyles;
 
   forEach(frameData, function(frame) {
     forEach(frame.paragraphs, analyzeParagraphStyle);
   });
 
-  // find most commn style
-  cStyles.sort(compare);
+  // find the most common pg style and override certain properties
   if (pStyles.length > 0) {
     pStyles.sort(compare);
     extend(baseStyle, pStyles[0].style);
-  }
-  if (cStyles.length > 0) {
-    cStyles.sort(compare);
-    extend(baseStyle, cStyles[0].style);
   }
   extend(baseStyle, defaultStyle);
   return baseStyle;
@@ -1852,8 +1839,15 @@ function deriveBaseTextStyle(frameData) {
   }
 
   function analyzeParagraphStyle(pdata) {
-    analyzeTextStyle(pdata.style, pdata.text.length, pStyles);
+    cStyles = [];
     forEach(pdata.ranges, analyzeRangeStyle);
+    if (cStyles.length > 0) {
+      // add most common char style to the pg style, to avoid applying
+      // <span> tags to all the text in the paragraph
+      cStyles.sort(compare);
+      extend(pdata.style, cStyles[0].style);
+    }
+    analyzeTextStyle(pdata.style, pdata.text.length, pStyles);
   }
 
   function analyzeRangeStyle(range) {

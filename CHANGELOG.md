@@ -2,7 +2,7 @@
 ### Unreleased (ai2html-beta.js)
 - Character styles applied to text inside a paragraph are now preserved (e.g. a bolded phrase).
 - Users are prompted to generate promo images when relevant (previously, promo images were automatically generated).
-- Promo images are smaller tham before, for performance (1024px instead of >3000px wide).
+- Promo images are smaller than before, for performance (1024px instead of >3000px wide).
 - Text fields hidden behind rectangular masks are no longer rendered.
 - Opacity of text blocks is now calculated by combining the opacity of all parent groups and layers.
 - Improved SVG export (only visible objects that intersect the current artboard are included in the output file).
