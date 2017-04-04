@@ -1150,7 +1150,6 @@ function parseSettingsEntries(entries, docSettings) {
     if (hashKey in docSettings === false) {
       // assumes docSettings has been initialized with default settings
       warnings.push("Settings block contains an unsupported parameter: " + hashKey);
-      return;
     }
     // replace values from old versions of script with current values
     if (hashKey=="output" && hashValue=="one-file-for-all-artboards") { hashValue="one-file"; }
