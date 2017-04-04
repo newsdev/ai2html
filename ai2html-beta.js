@@ -797,6 +797,9 @@ function cleanText(text) {
 }
 
 function straightenCurlyQuotesInsideAngleBrackets(text) {
+  // This function's purpose is to fix quoted properties in HTML tags that were
+  // typed into text blocks (Illustrator tends to automatically change single
+  // and double quotes to curly quotes).
   // thanks to jashkenas
   var tagFinder = /<[^\n]+?>/g;
   var quoteFinder = /[\u201C‘’\u201D]([^\n]*?)[\u201C‘’\u201D]/g;
@@ -1144,6 +1147,11 @@ function parseSettingsEntries(entries, docSettings) {
     }
     hashKey   = match[1];
     hashValue = straightenCurlyQuotesInsideAngleBrackets(match[2]);
+    if (hashKey in docSettings === false) {
+      // assumes docSettings has been initialized with default settings
+      warnings.push("Settings block contains an unsupported parameter: " + hashKey);
+      return;
+    }
     // replace values from old versions of script with current values
     if (hashKey=="output" && hashValue=="one-file-for-all-artboards") { hashValue="one-file"; }
     if (hashKey=="output" && hashValue=="one-file-per-artboard")      { hashValue="multiple-files"; }
