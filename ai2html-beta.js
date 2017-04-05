@@ -251,6 +251,7 @@ var cssTextStyleProperties = [
   'font-style',
   'color',
   'line-height',
+  'letter-spacing',
   'opacity',
   'padding-top',
   'padding-bottom',
@@ -451,11 +452,15 @@ function render() {
   var customRxp = /^ai2html-(css|js|html|settings|text)/;
 
   forEach(doc.textFrames, function(thisFrame) {
-    var contents = thisFrame.contents;
-    var type, entries;
-    if (!customRxp.test(contents)) return; // not a settings block
-    type = customRxp.exec(contents)[1];
-    entries = contents.split(/[\r\n]+/);
+    // var contents = thisFrame.contents; // caused MRAP error in AI 2017
+    var type = null;
+    var match, entries;
+    if (thisFrame.lines.length > 1) {
+      match = customRxp.exec(thisFrame.lines[0].contents);
+      type = match ? match[1] : null;
+    }
+    if (!type) return; // not a settings block
+    entries = thisFrame.contents.split(/[\r\n]+/);
     entries.shift(); // remove header
     if (type == 'settings') {
       documentHasSettingsBlock = true;
@@ -1055,7 +1060,7 @@ function unlockContainer(o) {
   if ((type == 'Layer' && pathCount < 500) || (type == 'GroupItem' && o.clipped)) {
     for (i=0; i<pathCount; i++) {
       item = o.pathItems[i];
-      if (item.clipping && item.locked && !item.hidden) {
+      if (!item.hidden && item.clipping && item.locked) {
         unlockObject(item);
         break;
       }
@@ -1264,20 +1269,19 @@ function ProgressBar(opts) {
 }
 
 
-
 // ======================================
 // ai2html AI document reading functions
 // ======================================
 
-function getArtboardPos(ab) {
-  var rect = ab.artboardRect,
-      x = rect[0],
+// Convert bounds coordinates (e.g. artboardRect, geometricBounds) to CSS-style coords
+function convertAiBounds(rect) {
+  var x = rect[0],
       y = -rect[1],
       w = Math.round(rect[2] - x),
       h = -rect[3] - y;
   return {
-    x: x,
-    y: y,
+    left: x,
+    top: y,
     width: w,
     height: h
   };
@@ -1344,7 +1348,7 @@ function getArtboardWidthRange(ab) {
 function getArtboardInfo() {
   var artboards = [];
   forEachUsableArtboard(function(ab, i) {
-    var pos = getArtboardPos(ab);
+    var pos = convertAiBounds(ab.artboardRect);
     var name = ab.name || "";
     // parse width from artboard name in two formats: <name>:<width> and ai2html-<width>
     var widthFromName = (/^(?:.*:|ai2html-)(\d+)$/.exec(name) || [])[1];
@@ -1410,7 +1414,7 @@ function findLargestArtboard() {
   var largestId = -1;
   var largestArea = 0;
   forEachUsableArtboard(function(ab, i) {
-    var info = getArtboardPos(ab);
+    var info = convertAiBounds(ab.artboardRect);
     var area = info.width * info.height;
     if (area > largestArea) {
       largestId = i;
@@ -1457,7 +1461,7 @@ function getComputedOpacity(obj) {
   return opacity * 100;
 }
 
-// Return array of layer objects, include PageItems and sublayers, in z order
+// Return array of layer objects, including both PageItems and sublayers, in z order
 function getSortedLayerItems(lyr) {
   var items = toArray(lyr.pageItems).concat(toArray(lyr.layers));
   if (lyr.layers.length > 0 && lyr.pageItems.length > 0) {
@@ -1618,13 +1622,13 @@ function getCharStyle(c) {
 // p: an AI paragraph (appears to be a TextRange object with mixed-in ParagraphAttributes)
 // opacity: Computed opacity (0-100) of TextFrame containing this pg
 function getParagraphStyle(p, opacity) {
-  var s = {};
-  s.leading = Math.round(p.leading);
-  s.spaceBefore = Math.round(p.spaceBefore);
-  s.spaceAfter = Math.round(p.spaceAfter);
-  s.justification = String(p.justification); // coerce from object
-  s.opacity = opacity;
-  return convertAiTextStyle(s);
+  return {
+    leading: Math.round(p.leading),
+    spaceBefore: Math.round(p.spaceBefore),
+    spaceAfter: Math.round(p.spaceAfter),
+    justification: String(p.justification), // coerce from object
+    opacity: opacity
+  };
 }
 
 // s: object containing CSS text properties
@@ -1639,18 +1643,17 @@ function getStyleKey(s) {
 function getTextStyleClass(style, classes, name) {
   var key = getStyleKey(style);
   var cname = nameSpace + (name || 'style');
-  var o, i, classname;
+  var o, i;
   for (i=0; i<classes.length; i++) {
     o = classes[i];
     if (o.key == key) {
       return o.classname;
     }
   }
-  classname = cname + i;
   o = {
     key: key,
     style: style,
-    classname: classname
+    classname: cname + i
   };
   classes.push(o);
   return o.classname;
@@ -1668,7 +1671,7 @@ function getParagraphRanges(p) {
     if (!prev || objectSubtract(curr, prev)) {
       currRange = {
         text: "",
-        style: curr
+        aiStyle: curr
       };
       segments.push(currRange);
     }
@@ -1678,11 +1681,11 @@ function getParagraphRanges(p) {
     currRange.text += c.contents;
     prev = curr;
   }
-  return map(segments, convertParagraphRange);
+  return segments;
 }
 
 function convertParagraphRange(rangeData) {
-  var aiStyle = rangeData.style;
+  var aiStyle = rangeData.aiStyle;
   var cssStyle = convertAiTextStyle(aiStyle);
   if (rangeData.warning) {
     warnings.push(rangeData.warning.replace("%s", truncateString(rangeData.text, 35)));
@@ -1702,30 +1705,29 @@ function convertParagraphRange(rangeData) {
 
 // Convert a TextFrame to an array of data records for each of the paragraphs
 //   contained in the TextFrame.
-function convertTextFrame(textFrame) {
+function importTextFrameParagraphs(textFrame) {
   // The scripting API doesn't give us access to opacity of TextRange objects
   //   (including individual characters). The best we can do is get the
   //   computed opacity of the current TextFrame
   var opacity = getComputedOpacity(textFrame);
   var charsLeft = textFrame.characters.length;
   var data = [];
-  var p, plen, d, style;
+  var p, plen, d;
   for (var k=0, n=textFrame.paragraphs.length; k<n && charsLeft > 0; k++) {
-    // trailing newline in a text block causes an error on the following line
-    // ... charsLeft test is a fix for this.
+    // trailing newline in a text block adds one to paragraphs.length, but
+    // an error is thrown when such a pg is accessed. charsLeft test is a workaround.
     p = textFrame.paragraphs[k];
     plen = p.characters.length;
     if (plen === 0) {
       d = {
         text: "",
-        style: {},
+        aiStyle: {},
         ranges: []
       };
     } else {
-      style = getParagraphStyle(p, opacity);
       d = {
         text: p.contents,
-        style: style,
+        aiStyle: getParagraphStyle(p, opacity),
         ranges: getParagraphRanges(p)
       };
     }
@@ -1750,7 +1752,7 @@ function generateParagraphHtml(pData, baseStyle, pStyles, cStyles) {
     // CSS to preserve this height (not supported by Illustrator API)
     return '<p>&nbsp;</p>';
   }
-  diff = objectSubtract(pData.style, baseStyle);
+  diff = objectSubtract(pData.cssStyle, baseStyle);
   // Give the pg a class, if it has a different style than the base pg class
   if (diff) {
     classname = getTextStyleClass(diff, pStyles, 'pstyle');
@@ -1761,7 +1763,7 @@ function generateParagraphHtml(pData, baseStyle, pStyles, cStyles) {
   for (var j=0; j<pData.ranges.length; j++) {
     range = pData.ranges[j];
     warnAboutHtmlTags(range.text);
-    diff = objectSubtract(range.style, pData.style);
+    diff = objectSubtract(range.cssStyle, pData.cssStyle);
     if (diff) {
       classname = getTextStyleClass(diff, cStyles, 'cstyle');
       html += '<span class="' + classname + '">';
@@ -1785,21 +1787,24 @@ function generateTextFrameHtml(paragraphs, baseStyle, pStyles, cStyles) {
 
 // Convert a collection of TextFrames to HTML and CSS
 function convertTextFrames(textFrames, ab) {
-  var idPrefix = nameSpace + "ai" + getArtboardId(ab) + "-";
   var frameData = map(textFrames, function(frame, i) {
     return {
-      id: frame.name ? makeKeyword(frame.name) : idPrefix  + (i + 1),
-      css: getTextPositionCss(frame, ab),
-      paragraphs: convertTextFrame(frame)
+      paragraphs: importTextFrameParagraphs(frame)
     };
   });
-  var baseStyle = deriveBaseTextStyle(frameData);
   var pgStyles = [];
   var charStyles = [];
+  var baseStyle = deriveCssStyles(frameData);
+  var idPrefix = nameSpace + "ai" + getArtboardId(ab) + "-";
+  var abBox = convertAiBounds(ab.artboardRect);
   var divs = map(frameData, function(obj, i) {
-    return '\t\t<div id="' + obj.id + '" ' + obj.css + '>' +
+    var frame = textFrames[i];
+    var divId = frame.name ? makeKeyword(frame.name) : idPrefix  + (i + 1);
+    var positionCss = getTextPositionCss(frame, abBox, obj.paragraphs);
+    return '\t\t<div id="' + divId + '" ' + positionCss + '>' +
         generateTextFrameHtml(obj.paragraphs, baseStyle, pgStyles, charStyles) + '\r\t\t</div>\r';
   });
+
   var allStyles = pgStyles.concat(charStyles);
   var cssBlocks = map(allStyles, function(obj) {
     return '.' + obj.classname + ' {' + formatCss(obj.style, '\t\t\t\t') + '\t\t\t}\r';
@@ -1814,11 +1819,12 @@ function convertTextFrames(textFrames, ab) {
   };
 }
 
-// Compute the base paragraph style by analyzing the most common style in an artboard
+// Compute the base paragraph style by finding the most common style in frameData
+// Side effect: adds cssStyle object alongside each aiStyle object
 // frameData: Array of data objects parsed from a collection of TextFrames
-// Returns object containing css text style properties
-function deriveBaseTextStyle(frameData) {
-  var pStyles = [];
+// Returns object containing css text style properties of base pg style
+function deriveCssStyles(frameData) {
+  var pgStyles = [];
   var baseStyle = {};
   // override detected settings with these style properties
   var defaultStyle = {
@@ -1827,60 +1833,67 @@ function deriveBaseTextStyle(frameData) {
     'padding-bottom': 0,
     'padding-top': 0
   };
-  var cStyles;
+  var currCharStyles;
 
   forEach(frameData, function(frame) {
     forEach(frame.paragraphs, analyzeParagraphStyle);
   });
 
   // find the most common pg style and override certain properties
-  if (pStyles.length > 0) {
-    pStyles.sort(compare);
-    extend(baseStyle, pStyles[0].style);
+  if (pgStyles.length > 0) {
+    pgStyles.sort(compareCharCount);
+    extend(baseStyle, pgStyles[0].cssStyle);
   }
   extend(baseStyle, defaultStyle);
   return baseStyle;
 
-  function compare(a, b) {
-    return b.length - a.length;
+  function compareCharCount(a, b) {
+    return b.charCount - a.charCount;
   }
 
   function analyzeParagraphStyle(pdata) {
-    cStyles = [];
-    forEach(pdata.ranges, analyzeRangeStyle);
-    if (cStyles.length > 0) {
+    currCharStyles = [];
+    forEach(pdata.ranges, convertRangeStyle);
+    if (currCharStyles.length > 0) {
       // add most common char style to the pg style, to avoid applying
       // <span> tags to all the text in the paragraph
-      cStyles.sort(compare);
-      extend(pdata.style, cStyles[0].style);
+      currCharStyles.sort(compareCharCount);
+      extend(pdata.aiStyle, currCharStyles[0].aiStyle);
     }
-    analyzeTextStyle(pdata.style, pdata.text.length, pStyles);
+    pdata.cssStyle = analyzeTextStyle(pdata.aiStyle, pdata.text, pgStyles);
   }
 
-  function analyzeRangeStyle(range) {
-    analyzeTextStyle(range.style, range.text.length, cStyles);
+  function convertRangeStyle(range) {
+    range.cssStyle = analyzeTextStyle(range.aiStyle, range.text, currCharStyles);
   }
 
-  function analyzeTextStyle(style, len, stylesArr) {
-    var key = getStyleKey(style);
+  function analyzeTextStyle(aiStyle, text, stylesArr) {
+    var cssStyle = convertAiTextStyle(aiStyle);
+    var key = getStyleKey(cssStyle);
     var o;
-    if (len > 0 === false) {
-      return;
+    if (text.length === 0) {
+      return {};
     }
     for (var i=0; i<stylesArr.length; i++) {
-      o = stylesArr[i];
-      if (o.key == key) {
-        o.length += len;
-        return;
+      if (stylesArr[i].key == key) {
+        o = stylesArr[i];
+        break;
       }
     }
-    stylesArr.push({
-      key: key,
-      style: style,
-      length: len
-    });
+    if (!o) {
+      o = {
+        key: key,
+        aiStyle: aiStyle,
+        cssStyle: cssStyle,
+        charCount: 0
+      };
+      stylesArr.push(o);
+    }
+    o.charCount += text.length;
+    return cssStyle;
   }
 }
+
 
 // Lookup an AI font name in the font table
 function findFontInfo(aifont) {
@@ -1961,7 +1974,7 @@ function convertAiTextStyle(aiStyle) {
     cssStyle["padding-bottom"] = aiStyle.spaceAfter + "px";
   }
   if ('tracking' in aiStyle) {
-    cssStyle["letter-spacing"] = roundTo(aiStyle.tracking / 1200, cssPrecision) + "em";
+    cssStyle["letter-spacing"] = roundTo(aiStyle.tracking / 1000, cssPrecision) + "em";
   }
   if (aiStyle.justification && (tmp = getJustificationCss(aiStyle.justification))) {
     cssStyle["text-align"] = tmp;
@@ -2077,141 +2090,134 @@ function parseTextFrameNote(note) {
 }
 
 // Create class="" and style="" CSS for positioning a text div
-function getTextPositionCss(thisFrame, ab) {
-  var style = "";
-  var vFactor = 0.5; // This is an adjustment to correct for vertical placement.
-  var kind, htmlY, htmlT, htmlB, htmlTM, htmlH, htmlL, htmlR, htmlW, htmlLM, alignment, extraWidthPct;
+function getTextPositionCss(thisFrame, abBox, pgData) {
   var thisFrameAttributes = parseTextFrameNote(thisFrame.note);
-  var abPos = getArtboardPos(ab);
+  // Using AI style of first paragraph in TextFrame to get information about
+  // tracking, justification and top padding
+  // TODO: consider positioning paragraphs separately, for better fidelity
+  var pgStyle = pgData[0].aiStyle;
+  var textBox = convertAiBounds(thisFrame.geometricBounds);
+  // yOffs accounts for differences in AI and CSS vertical positioning of text blocks
+  var yOffs = -(pgStyle.leading - pgStyle.size) / 2 - pgStyle.spaceBefore;
+  var trackingPx = pgStyle.size * pgStyle.tracking / 1000;
+  var style, kind, htmlY, htmlT, htmlB, htmlH, htmlL, htmlR, htmlW, htmlLM, alignment, v_align;
 
-  if (thisFrame.kind=="TextType.POINTTEXT") {
-    kind = "point";
-    // /this line throws an error if the first paragraph of the frame is empty.
-    // var htmlY = Math.round(-thisFrame.position[1] - (((thisFrame.paragraphs[0].characters[0].leading - thisFrame.paragraphs[0].characters[0].size)*vFactor) + thisFrame.paragraphs[0].spaceBefore)-abY);
-    htmlY = Math.round(-thisFrame.position[1] - (((thisFrame.characters[0].leading - thisFrame.characters[0].size)*vFactor) + thisFrame.characters[0].spaceBefore) - abPos.y);
-  } else if (thisFrame.kind=="TextType.AREATEXT") {
-    kind = "area";
-    // var htmlY = Math.round(-thisFrame.position[1] - (((thisFrame.paragraphs[0].characters[0].leading - thisFrame.paragraphs[0].characters[0].size)*vFactor) + thisFrame.paragraphs[0].spaceBefore)-abY);
-    htmlY = Math.round(-thisFrame.position[1] - (((thisFrame.characters[0].leading - thisFrame.characters[0].size)*vFactor) + thisFrame.characters[0].spaceBefore) - abPos.y);
-  } else {
-    kind = "other";
-  }
-  htmlH = Math.round(thisFrame.height);
-  if (thisFrameAttributes.valign === "bottom") {
-    htmlB = htmlY + thisFrame.height;
-  // } else if (thisFrameAttributes.valign==="center") {
-  //  htmlT  = htmlY+(thisFrame.height/2);
-  //  htmlTM = thisFrame.height*(1/2*-1);
-  } else {
-    htmlT = htmlY;
+  kind = thisFrame.kind == TextType.AREATEXT ? "area" : "point"; // assuming no path text
+  htmlL = textBox.left - abBox.left;
+  htmlY = Math.round((textBox.top - abBox.top) + yOffs);
+  htmlH = Math.round(textBox.height);
+  htmlW = textBox.width;
+  if (kind == "point") {
+    // additional width for box to allow for slight variations in font widths
+    // (area text used to be 3 percent)
+    htmlW *= 2;
   }
 
-  // additional width for box to allow for slight variations in font widths
-  if (kind=="area") {
-    extraWidthPct = 0; // was 3 percent -- but need to account for when it hits the edge of the box since we are now overflow hidden
-  } else {
-    extraWidthPct = 100;
-  }
-  htmlW = thisFrame.width*(1+(extraWidthPct/100));
-  if (thisFrame.characters[0].justification=="Justification.LEFT") {
+  v_align = thisFrameAttributes.valign || 'top';
+  if (pgStyle.justification == "Justification.LEFT") {
     alignment = "left";
-    htmlL = thisFrame.left - abPos.x;
-    htmlR = abPos.width - (thisFrame.left + htmlW - abPos.x);
-  } else if (thisFrame.characters[0].justification=="Justification.RIGHT") {
+  } else if (pgStyle.justification == "Justification.RIGHT") {
     alignment = "right";
-    htmlL = thisFrame.left - (thisFrame.width * (1 + (extraWidthPct / 100))) - abPos.x;
-    htmlR = abPos.width - (thisFrame.left + thisFrame.width - abPos.x);
-  } else if (thisFrame.characters[0].justification=="Justification.CENTER") {
+  } else if (pgStyle.justification == "Justification.CENTER") {
     alignment = "center";
-    htmlL  = thisFrame.left - abPos.x +  (thisFrame.width / 2); // thanks jeremy!
-    htmlLM = thisFrame.width * (1 + (extraWidthPct/100)) / 2 * -1;
   } else {
     alignment = "other";
-    // htmlX = Math.round(thisFrame.left-abX);
   }
 
-  // check if text is transformed
   if (textIsTransformed(thisFrame)) {
-    // find transformed anchor point pre-transformation
-    var t_bounds = thisFrame.geometricBounds,
-      u_bounds = getUntransformedTextBounds(thisFrame),
-      u_width = u_bounds[2] - u_bounds[0],
-      t_width = t_bounds[2] - t_bounds[0],
-      u_height = u_bounds[3] - u_bounds[1],
-      t_height = t_bounds[3] - t_bounds[1],
-      v_align = thisFrameAttributes.valign || 'top',
-      t_scale_x = thisFrame.textRange.characterAttributes.horizontalScale / 100,
-      t_scale_y = thisFrame.textRange.characterAttributes.verticalScale / 100,
-      t_anchor = getAnchorPoint(u_bounds, thisFrame.matrix, alignment, v_align, t_scale_x, t_scale_y),
-      t_trans_x = 0,
-      t_trans_y = 0;
-
-    // position div on transformed anchor point
-    style += "left:" + roundTo((t_anchor[0] - abPos.x) / abPos.width * 100, cssPrecision) + "%;";
-    style += "top:" + roundTo((-t_anchor[1]- abPos.y) / abPos.height * 100, cssPrecision) + "%;";
-
-    // move "back" to left or top to center or right align text
-    if (alignment == 'center') t_trans_x -= u_width * 0.5;
-    else if (alignment == 'right') t_trans_x -= u_width;
-    if (v_align == 'center' || v_align == 'middle') t_trans_y -= u_height * 0.5;
-    else if (v_align == 'bottom') t_trans_y -= u_height;
-
-    var mat = thisFrame.matrix;
-
-    mat = app.concatenateMatrix(app.getTranslationMatrix(t_trans_x, t_trans_y),
-        app.concatenateTranslationMatrix(mat, -mat.mValueTX, -mat.mValueTY));
-
-    // var mat, mat0 = thisFrame.matrix;
-    // mat0 = app.concatenateTranslationMatrix(mat0, -mat0.mValueTX, -mat0.mValueTY);
-    // mat = app.concatenateMatrix(app.getTranslationMatrix(t_trans_x, t_trans_y), mat0);
-
-    var transform = "matrix(" +
-        roundTo(mat.mValueA, cssPrecision) + ',' +
-        roundTo(-1*mat.mValueB, cssPrecision) + ',' +
-        roundTo(-1*mat.mValueC, cssPrecision) + ',' +
-        roundTo(mat.mValueD, cssPrecision) + ',' +
-        roundTo(t_trans_x, cssPrecision) + ',' +
-        roundTo(-t_trans_y, cssPrecision) + ') ' +
-        "scaleX("+roundTo(t_scale_x, cssPrecision) + ") " +
-        "scaleY("+roundTo(t_scale_y, cssPrecision) + ")";
-
-    var transformOrigin = alignment + ' '+(v_align == 'middle' ? 'center' : v_align);
-
-    style += "transform: " + transform + ";";
-    style += "transform-origin: " + transformOrigin + ";";
-    style += "-webkit-transform: " + transform + ";";
-    style += "-webkit-transform-origin: " + transformOrigin + ";";
-    style += "-ms-transform: " + transform + ";";
-    style += "-ms-transform-origin: " + transformOrigin + ";";
-
-    if (kind == 'area') style += "width: " + (u_width * (1 + (extraWidthPct/100))) + "px;";
+    style = getTransformedTextCss(thisFrame, abBox, alignment, v_align);
 
   } else {
-    if (thisFrameAttributes.valign==="bottom") {
-      style += "bottom:" + roundTo(100 - (htmlB / abPos.height * 100), cssPrecision) + "%;";
+    style = "";
+    if (v_align == "bottom") {
+      htmlB = htmlY + htmlH;
+      style += "bottom:" + roundTo(100 - (htmlB / abBox.height * 100), cssPrecision) + "%;";
     } else {
-      style += "top:" + roundTo(htmlT / abPos.height * 100, cssPrecision) + "%;";
+      htmlT = htmlY;
+      style += "top:" + roundTo(htmlT / abBox.height * 100, cssPrecision) + "%;";
     }
-    if (alignment=="right") {
-      style += "right:" + roundTo(htmlR / abPos.width * 100, cssPrecision) + "%;";
+    if (alignment == "right") {
+      // note: CSS adds letter-spacing to right side of each char; trackingPx
+      //   adjustment compensates for this.
+      htmlR = abBox.width - (htmlL + textBox.width) - trackingPx;
+      style += "right:" + roundTo(htmlR / abBox.width * 100, cssPrecision) + "%;";
       if (kind=="area") {
-        style += "width:" + roundTo(htmlW / abPos.width * 100, cssPrecision) + "%;";
+        style += "width:" + roundTo(htmlW / abBox.width * 100, cssPrecision) + "%;";
       }
-    } else if (alignment=="center") {
-      style += "left:" + roundTo(htmlL / abPos.width * 100, cssPrecision) + "%;";
-      style += "width:" + roundTo(htmlW / abPos.width * 100, cssPrecision) + "%;";
-      style += "margin-left:" + roundTo(htmlLM / abPos.width * 100, cssPrecision) + "%;";
+    } else if (alignment == "center") {
+      htmlL  = htmlL + (textBox.width + trackingPx)/ 2; // thanks jeremy!
+      htmlLM = -htmlW / 2;
+      style += "left:" + roundTo(htmlL / abBox.width * 100, cssPrecision) + "%;";
+      style += "width:" + roundTo(htmlW / abBox.width * 100, cssPrecision) + "%;";
+      style += "margin-left:" + roundTo(htmlLM / abBox.width * 100, cssPrecision) + "%;";
     } else {
-      style += "left:" + roundTo(htmlL / abPos.width * 100, cssPrecision) + "%;";
+      style += "left:" + roundTo(htmlL / abBox.width * 100, cssPrecision) + "%;";
       if (kind=="area") {
-        style += "width:" + roundTo(htmlW / abPos.width * 100, cssPrecision) + "%;";
+        style += "width:" + roundTo(htmlW / abBox.width * 100, cssPrecision) + "%;";
       }
     }
   }
-  var frameLayer = makeKeyword(thisFrame.layer.name);
-  return 'class="' + nameSpace + frameLayer + " " + nameSpace + "aiAbs" +
+
+  return 'class="' + nameSpace + makeKeyword(thisFrame.layer.name) + " " + nameSpace + "aiAbs" +
     (textIsTransformed(thisFrame) && kind == "point" ? ' g-aiPtransformed' : '') +
     '" style="' + style + '"';
+}
+
+function getTransformedTextCss(thisFrame, abBox, alignment, v_align) {
+  var style = "";
+  // find transformed anchor point pre-transformation
+  var t_bounds = thisFrame.geometricBounds,
+    u_bounds = getUntransformedTextBounds(thisFrame),
+    u_width = u_bounds[2] - u_bounds[0],
+    t_width = t_bounds[2] - t_bounds[0],
+    u_height = u_bounds[3] - u_bounds[1],
+    t_height = t_bounds[3] - t_bounds[1],
+    t_scale_x = thisFrame.textRange.characterAttributes.horizontalScale / 100,
+    t_scale_y = thisFrame.textRange.characterAttributes.verticalScale / 100,
+    t_anchor = getAnchorPoint(u_bounds, thisFrame.matrix, alignment, v_align, t_scale_x, t_scale_y),
+    t_trans_x = 0,
+    t_trans_y = 0;
+
+  // position div on transformed anchor point
+  style += "left:" + roundTo((t_anchor[0] - abBox.left) / abBox.width * 100, cssPrecision) + "%;";
+  style += "top:" + roundTo((-t_anchor[1] - abBox.top) / abBox.height * 100, cssPrecision) + "%;";
+
+  // move "back" to left or top to center or right align text
+  if (alignment == 'center') {
+    t_trans_x -= u_width * 0.5;
+  } else if (alignment == 'right') {
+    t_trans_x -= u_width;
+  }
+  if (v_align == 'center' || v_align == 'middle') {
+    t_trans_y -= u_height * 0.5;
+  } else if (v_align == 'bottom') {
+    t_trans_y -= u_height;
+  }
+
+  var mat = thisFrame.matrix;
+  mat = app.concatenateMatrix(app.getTranslationMatrix(t_trans_x, t_trans_y),
+      app.concatenateTranslationMatrix(mat, -mat.mValueTX, -mat.mValueTY));
+
+  var transform = "matrix(" +
+      roundTo(mat.mValueA, cssPrecision) + ',' +
+      roundTo(-1*mat.mValueB, cssPrecision) + ',' +
+      roundTo(-1*mat.mValueC, cssPrecision) + ',' +
+      roundTo(mat.mValueD, cssPrecision) + ',' +
+      roundTo(t_trans_x, cssPrecision) + ',' +
+      roundTo(-t_trans_y, cssPrecision) + ') ' +
+      "scaleX("+roundTo(t_scale_x, cssPrecision) + ") " +
+      "scaleY("+roundTo(t_scale_y, cssPrecision) + ")";
+  var transformOrigin = alignment + ' ' + (v_align == 'middle' ? 'center' : v_align);
+  style += "transform: " + transform + ";";
+  style += "transform-origin: " + transformOrigin + ";";
+  style += "-webkit-transform: " + transform + ";";
+  style += "-webkit-transform-origin: " + transformOrigin + ";";
+  style += "-ms-transform: " + transform + ";";
+  style += "-ms-transform-origin: " + transformOrigin + ";";
+  if (thisFrame.kind == TextType.AREATEXT) {
+    style += "width: " + u_width + "px;";
+  }
+  return style;
 }
 
 function getAnchorPoint(untransformedBounds, matrix, hAlign, vAlign, sx, sy) {
@@ -2293,7 +2299,7 @@ function captureArtboardImage(ab, textFrames, masks, settings) {
 // Create an <img> tag for the artboard image
 function generateImageHtml(ab, settings) {
   var abName = getArtboardFullName(ab),
-      abPos = getArtboardPos(ab),
+      abPos = convertAiBounds(ab.artboardRect),
       imgId = nameSpace + "ai" + getArtboardId(ab) + "-0",
       extension = (settings.image_format[0] || "png").substring(0,3),
       src = settings.image_source_path + abName + "." + extension,
@@ -2317,7 +2323,7 @@ function createPromoImage(settings) {
   if (abNumber == -1) return; // TODO: show error
 
   var artboard         =  doc.artboards[abNumber],
-      abPos            =  getArtboardPos(artboard),
+      abPos            =  convertAiBounds(artboard.artboardRect),
       promoScale       =  PROMO_WIDTH / abPos.width,
       promoW           =  abPos.width * promoScale,
       promoH           =  abPos.height * promoScale,
@@ -2376,7 +2382,7 @@ function exportImageFiles(dest, ab, formats, initialScaling, doubleres) {
 
   forEach(formats, function(format) {
     var maxJpgScale  = 776.19; // This is specified in the Illustrator Scripting Reference under ExportOptionsJPEG.
-    var abPos = getArtboardPos(ab);
+    var abPos = convertAiBounds(ab.artboardRect);
     var width = abPos.width * initialScaling;
     var height = abPos.height * initialScaling;
     var imageScale = 100 * initialScaling * getPixelRatio(width, height, format, doubleres);
@@ -2572,7 +2578,7 @@ function generateArtboardCss(ab, textClasses, settings) {
   css += t4 + "position:relative;\r";
   css += t4 + "overflow:hidden;\r";
   if (settings.responsiveness=="fixed") {
-    css += t4 + "width:"  + getArtboardPos(ab).width + "px;\r";
+    css += t4 + "width:"  + convertAiBounds(ab.artboardRect).width + "px;\r";
   }
   css += t3 + "}\r";
 
