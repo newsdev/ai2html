@@ -296,7 +296,7 @@ var docSettings = {};
 var ai2htmlBaseSettings;
 var previewProjectType, scriptEnvironment;
 var doc, docPath, docName, docIsSaved;
-var pBar;
+var pBar, T;
 
 // ===========================================================
 // In AI context: run script. In Node: export functions for testing
@@ -320,7 +320,9 @@ if (!runningInNode()) {
     readYamlConfigFile,
     applyTemplate,
     cleanText,
-    findHtmlTag
+    findHtmlTag,
+    convertSettingsToYaml,
+    initScriptEnvironment
   ].forEach(function(f) {
     module.exports[f.name] = f;
   });
@@ -332,9 +334,6 @@ if (!runningInNode()) {
 // =================================
 
 function main() {
-  initScriptEnvironment();
-
-  T.start();
 
   if (!isTestedIllustratorVersion(app.version)) {
     warnings.push("Ai2html has not been tested on this version of Illustrator.");
@@ -356,7 +355,16 @@ function main() {
     doc = app.activeDocument;
     docPath = doc.path + "/";
     docIsSaved = doc.saved;
+    // Use "nyt" environment if it looks like the document is in a Preview project
+    initScriptEnvironment(folderExists(docPath + "../public/_assets") ? 'nyt' : '');
+
+    // initialize document settings
+    for (var setting in ai2htmlBaseSettings) {
+      docSettings[setting] = ai2htmlBaseSettings[setting].defaultValue;
+    }
+
     pBar = new ProgressBar({name: "Ai2html progress", steps: calcProgressBarSteps()});
+    T.start();
 
     try {
       render();
@@ -386,7 +394,7 @@ function main() {
   }
 
   if (pBar) pBar.close();
-  message("Script ran in", (T.stop() / 1000).toFixed(1), "seconds");
+  if (T) message("Script ran in", (T.stop() / 1000).toFixed(1), "seconds");
 
   // =========================================================
   // Show alert box, optionally prompt to generate promo image
@@ -407,22 +415,6 @@ function main() {
 // =================================
 
 function render() {
-  // detect ai2html environment
-  if (folderExists(docPath + "../public/_assets")) {
-    // Use "nyt" environment if it looks like the document is in a Preview project
-    ai2htmlBaseSettings = nytBaseSettings;
-    scriptEnvironment = "nyt";
-  } else {
-    ai2htmlBaseSettings = defaultBaseSettings;
-    scriptEnvironment = "";
-  }
-
-  // initialize document settings
-  // TODO: remove obsolete option: ai2html_environment
-  for (var setting in ai2htmlBaseSettings) {
-    docSettings[setting] = ai2htmlBaseSettings[setting].defaultValue;
-  }
-
   // Fix for issue #50
   // If a text range is selected when the script runs, it interferes
   // with script-driven selection. The fix is to clear this kind of selection.
@@ -628,7 +620,7 @@ function render() {
   if ((scriptEnvironment=="nyt" && previewProjectType=="ai2html") ||
       (scriptEnvironment!="nyt" && isTrue(docSettings.create_config_file))) {
     var yamlPath = docPath + docSettings.config_file_path,
-        yamlStr = generateYmlFileContent(breakpoints, docSettings);
+        yamlStr = generateYamlFileContent(breakpoints, docSettings);
     checkForOutputFolder(yamlPath.replace(/[^\/]+$/, ""), "configFileFolder");
     saveTextFile(yamlPath, yamlStr);
   }
@@ -1086,8 +1078,11 @@ function isTestedIllustratorVersion(version) {
   return majorNum >= 18 && majorNum <= 21; // Illustrator CC 2014 through 2017
 }
 
-function initScriptEnvironment() {
-  // Performance timing using T.start() and T.stop("message")
+function initScriptEnvironment(env) {
+  scriptEnvironment = env;
+  ai2htmlBaseSettings = env == 'nyt' ? nytBaseSettings : defaultBaseSettings;
+
+  // Enable timing using T.start() and T.stop("message")
   T = {
     stack: [],
     start: function() {
@@ -1598,7 +1593,7 @@ function getCharStyle(c) {
   var r, g, b;
 
   if (fill.typename == 'SpotColor') {
-    fill = fill.spot.color;
+    fill = fill.spot.color; // expecting AI to return an RGBColor because doc is in RGB mode.
   }
   if (fill.typename == 'RGBColor') {
     r = fill.red;
@@ -2596,7 +2591,7 @@ function generatePageCss(pageName, settings) {
     css += t3 + "max-width:" + settings.max_width + "px;\r";
     css += t2 + "}\r";
   }
-  if (settings.center_html_output) {
+  if (isTrue(settings.center_html_output)) {
     css += t2 + "." + nameSpace + "artboard {\r";
     css += t3 + "margin:0 auto;\r";
     css += t2 + "}\r";
@@ -2628,7 +2623,7 @@ function generatePageCss(pageName, settings) {
   return css;
 }
 
-function generateYmlFileContent(breakpoints, settings) {
+function generateYamlFileContent(breakpoints, settings) {
   var lines = [];
   lines.push("ai2html_version: " + scriptVersion);
   lines.push("project_type: " + previewProjectType);
@@ -2636,22 +2631,38 @@ function generateYmlFileContent(breakpoints, settings) {
   lines.push("min_width: " + breakpoints[0].upperLimit); // TODO: ask why upperLimit
   if (settings.max_width !== "") {
     lines.push("max_width: " + settings.max_width);
-  } else if (settings.responsiveness != "fixed" && settings.ai2html_environment == "nyt") {
+  } else if (settings.responsiveness != "fixed" && scriptEnvironment == "nyt") {
     lines.push("max_width: " + breakpoints[breakpoints.length-1].upperLimit);
-  } else if (settings.responsiveness != "fixed" && settings.ai2html_environment != "nyt") {
+  } else if (settings.responsiveness != "fixed" && scriptEnvironment != "nyt") {
     // don't write a max_width setting as there should be no max width in this case
   } else {
     // this is the case of fixed responsiveness
     lines.push("max_width: " + getArtboardInfo().pop().effectiveWidth);
   }
-  // write out remaining values for config file
+  return lines.join('\n') + '\n' + convertSettingsToYaml(settings) + '\n';
+}
+
+function convertSettingsToYaml(settings) {
+  var lines = [];
+  var value, useQuotes;
   for (var setting in settings) {
-    if (setting in ai2htmlBaseSettings && ai2htmlBaseSettings[setting].includeInConfigFile) {
-      var quoteMark = ai2htmlBaseSettings[setting].useQuoteMarksInConfigFile ? '"': '';
-      lines.push(setting + ': ' + quoteMark + settings[setting] + quoteMark);
+    if ((setting in ai2htmlBaseSettings) && ai2htmlBaseSettings[setting].includeInConfigFile) {
+      value = trim(String(settings[setting]));
+      useQuotes = value === "" || /\s/.test(value);
+      if (setting == "show_in_compatible_apps") {
+        // special case: this setting takes quoted "yes" or "no"
+        useQuotes = true; // assuming value is 'yes' or 'no';
+      }
+      if (useQuotes) {
+        value = JSON.stringify(value); // wrap in quotes and escape internal quotes
+      } else if (isTrue(value) || isFalse(value)) {
+        // use standard values for boolean settings
+        value = isTrue(value) ? "true" : "false";
+      }
+      lines.push(setting + ': ' + value);
     }
   }
-  return lines.join('\n') + '\n';
+  return lines.join('\n');
 }
 
 function getResizerScript() {
@@ -2776,7 +2787,7 @@ function generateOutputHtml(pageContent, pageName, settings) {
 
   pBar.setTitle('Writing HTML output...');
 
-  if (settings.ai2html_environment == "nyt" && settings.include_resizer_css_js != "no") {
+  if (scriptEnvironment == "nyt" && settings.include_resizer_css_js != "no") {
     responsiveJs = '\t<script src="_assets/resizerScript.js"></script>' + "\n";
     if (previewProjectType == "ai2html") {
       responsiveCss = '\t<link rel="stylesheet" href="_assets/resizerStyle.css">' + "\n";
@@ -2792,7 +2803,7 @@ function generateOutputHtml(pageContent, pageName, settings) {
 
   textForFile += "\t<!-- Generated by ai2html v" + scriptVersion + " - " + getDateTimeStamp() + " -->\r";
   textForFile += "\t<!-- ai file: " + doc.name + " -->\r";
-  if (settings.ai2html_environment == "nyt") {
+  if (scriptEnvironment == "nyt") {
     textForFile += "\t<!-- preview: " + settings.preview_slug + " -->\r";
     textForFile += "\t<!-- scoop  : " + settings.scoop_slug_from_config_yml + " -->\r";
   }
