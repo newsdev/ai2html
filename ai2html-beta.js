@@ -2081,21 +2081,26 @@ function parseTextFrameNote(note) {
 
 // Create class="" and style="" CSS for positioning a text div
 function getTextPositionCss(thisFrame, abBox, pgData) {
+  var textBox = convertAiBounds(thisFrame.geometricBounds);
   var thisFrameAttributes = parseTextFrameNote(thisFrame.note);
   // Using AI style of first paragraph in TextFrame to get information about
   // tracking, justification and top padding
   // TODO: consider positioning paragraphs separately, for better fidelity
-  var pgStyle = pgData[0].aiStyle;
-  var textBox = convertAiBounds(thisFrame.geometricBounds);
+  var firstPgStyle = pgData[0].aiStyle;
+  var lastPgStyle = pgData[pgData.length - 1].aiStyle;
+  // extra space between letters, in pixels
+  var trackingPx = firstPgStyle.size * firstPgStyle.tracking / 1000;
+  // estimated space between top of HTML container and character glyphs
+  var marginTopPx = (firstPgStyle.leading - firstPgStyle.size) / 2;
+  // estimated space between bottom of HTML container and character glyphs
+  var marginBottomPx = (lastPgStyle.leading - lastPgStyle.size) / 2;
   // yOffs accounts for differences in AI and CSS vertical positioning of text blocks
-  var yOffs = -(pgStyle.leading - pgStyle.size) / 2 - pgStyle.spaceBefore;
-  var trackingPx = pgStyle.size * pgStyle.tracking / 1000;
+  var yOffs = -(marginTopPx + firstPgStyle.spaceBefore);
   var style, kind, htmlY, htmlT, htmlB, htmlH, htmlL, htmlR, htmlW, htmlLM, alignment, v_align;
 
   kind = thisFrame.kind == TextType.AREATEXT ? "area" : "point"; // assuming no path text
   htmlL = textBox.left - abBox.left;
   htmlY = Math.round((textBox.top - abBox.top) + yOffs);
-  htmlH = Math.round(textBox.height);
   htmlW = textBox.width;
   if (kind == "point") {
     // additional width for box to allow for slight variations in font widths
@@ -2104,11 +2109,11 @@ function getTextPositionCss(thisFrame, abBox, pgData) {
   }
 
   v_align = thisFrameAttributes.valign || 'top';
-  if (pgStyle.justification == "Justification.LEFT") {
+  if (firstPgStyle.justification == "Justification.LEFT") {
     alignment = "left";
-  } else if (pgStyle.justification == "Justification.RIGHT") {
+  } else if (firstPgStyle.justification == "Justification.RIGHT") {
     alignment = "right";
-  } else if (pgStyle.justification == "Justification.CENTER") {
+  } else if (firstPgStyle.justification == "Justification.CENTER") {
     alignment = "center";
   } else {
     alignment = "other";
@@ -2120,8 +2125,9 @@ function getTextPositionCss(thisFrame, abBox, pgData) {
   } else {
     style = "";
     if (v_align == "bottom") {
+      htmlH = Math.round(textBox.height + marginTopPx + marginBottomPx);
       htmlB = htmlY + htmlH;
-      style += "bottom:" + roundTo(100 - (htmlB / abBox.height * 100), cssPrecision) + "%;";
+      style += "bottom:" + roundTo(100 * (1 - htmlB / abBox.height), cssPrecision) + "%;";
     } else {
       htmlT = htmlY;
       style += "top:" + roundTo(htmlT / abBox.height * 100, cssPrecision) + "%;";
