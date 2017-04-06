@@ -255,7 +255,6 @@ var cssTextStyleProperties = [
   'opacity',
   'padding-top',
   'padding-bottom',
-  'tracking',
   'text-align',
   'text-transform'
 ];
@@ -303,12 +302,10 @@ var pBar;
 // In AI context: run script. In Node: export functions for testing
 // ===========================================================
 
-var jsEnvironment = typeof module === "object" && module.exports ? "node" : "ai";
-if (jsEnvironment == 'ai') {
+if (!runningInNode()) {
   main();
-}
-if (jsEnvironment == 'node') {
-  // export some functions so they can be tested in Node
+
+} else {
   [ testBoundsIntersection,
     trim,
     contains,
@@ -349,7 +346,7 @@ function main() {
   } else if (!String(app.activeDocument.path)) {
     errors.push("You need to save your Illustrator file before running this script");
 
-  } else if (app.activeDocument.documentColorSpace!="DocumentColorSpace.RGB") {
+  } else if (app.activeDocument.documentColorSpace != DocumentColorSpace.RGB) {
     errors.push("You should change the document color mode to \"RGB\" before running ai2html (File>Document Color Mode>RGB Color).");
 
   } else if (app.activeDocument.activeLayer.name == "Isolation Mode") {
@@ -1080,6 +1077,10 @@ function unlockContainer(o) {
 // ai2html program state and settings
 // ==================================
 
+function runningInNode() {
+  return (typeof module != "undefined") && !!module.exports;
+}
+
 function isTestedIllustratorVersion(version) {
   var majorNum = parseInt(version);
   return majorNum >= 18 && majorNum <= 21; // Illustrator CC 2014 through 2017
@@ -1587,7 +1588,6 @@ function hideTextFrame(textFrame) {
 // Parse an AI CharacterAttributes object
 function getCharStyle(c) {
   var fill = c.fillColor;
-  var filltype = fill.typename;
   var caps = String(c.capitalization);
   var o = {
     aifont: c.textFont.name,
@@ -1597,23 +1597,26 @@ function getCharStyle(c) {
   };
   var r, g, b;
 
-  if (filltype == 'RGBColor') {
+  if (fill.typename == 'SpotColor') {
+    fill = fill.spot.color;
+  }
+  if (fill.typename == 'RGBColor') {
     r = fill.red;
     g = fill.green;
     b = fill.blue;
     if (r < rgbBlackThreshold && g < rgbBlackThreshold && b < rgbBlackThreshold) {
       r = g = b = 0;
     }
-  } else if (filltype == 'GrayColor') {
+  } else if (fill.typename == 'GrayColor') {
     r = g = b = Math.round((100 - fill.gray) / 100 * 255);
-  } else if (filltype == 'NoColor') {
+  } else if (fill.typename == 'NoColor') {
     g = 255;
     r = b = 0;
     // warnings are processed later, after ranges of same-style chars are identified
     o.warning = "The text \"%s\" has no fill. Please fill it with an RGB color. It has been filled with green.";
   } else {
     r = g = b = 0;
-    o.warning = "The text \"%s\" has " + filltype + " fill. Please fill it with an RGB color.";
+    o.warning = "The text \"%s\" has " + fill.typename + " fill. Please fill it with an RGB color.";
   }
   o.color = getCssColor(r, g, b);
   return o;
@@ -1684,24 +1687,6 @@ function getParagraphRanges(p) {
   return segments;
 }
 
-function convertParagraphRange(rangeData) {
-  var aiStyle = rangeData.aiStyle;
-  var cssStyle = convertAiTextStyle(aiStyle);
-  if (rangeData.warning) {
-    warnings.push(rangeData.warning.replace("%s", truncateString(rangeData.text, 35)));
-  }
-  if (aiStyle.aifont && !cssStyle['font-family']) {
-    if (!contains(unknownFonts, aiStyle.aifont)) {
-      unknownFonts.push(aiStyle.aifont);
-      warnings.push("Missing a rule for converting font: " + aiStyle.aifont +
-          ". Sample text: " + truncateString(rangeData.text, 35));
-    }
-  }
-  return {
-    text: rangeData.text,
-    style: cssStyle
-  };
-}
 
 // Convert a TextFrame to an array of data records for each of the paragraphs
 //   contained in the TextFrame.
@@ -1865,6 +1850,16 @@ function deriveCssStyles(frameData) {
 
   function convertRangeStyle(range) {
     range.cssStyle = analyzeTextStyle(range.aiStyle, range.text, currCharStyles);
+    if (range.warning) {
+      warnings.push(range.warning.replace("%s", truncateString(range.text, 35)));
+    }
+    if (range.aiStyle.aifont && !range.cssStyle['font-family']) {
+      if (!contains(unknownFonts, range.aiStyle.aifont)) {
+        unknownFonts.push(range.aiStyle.aifont);
+        warnings.push("Missing a rule for converting font: " + range.aiStyle.aifont +
+            ". Sample text: " + truncateString(range.text, 35));
+      }
+    }
   }
 
   function analyzeTextStyle(aiStyle, text, stylesArr) {
