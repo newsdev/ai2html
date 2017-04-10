@@ -884,6 +884,14 @@ function testBoundsIntersection(a, b) {
   return a[2] >= b[0] && b[2] >= a[0] && a[3] <= b[1] && b[3] <= a[1];
 }
 
+function shiftBounds(bnds, dx, dy) {
+  return [bnds[0] + dx, bnds[1] + dy, bnds[2] + dx, bnds[3] + dy];
+}
+
+function clearMatrixShift(m) {
+  return app.concatenateTranslationMatrix(m, -m.mValueTX, -m.mValueTY);
+}
+
 function folderExists(path) {
   return new Folder(path).exists;
 }
@@ -1567,12 +1575,8 @@ function findMasks() {
 // ==============================
 
 function textIsTransformed(textFrame) {
-  return !(textFrame.matrix.mValueA == 1 &&
-    textFrame.matrix.mValueB === 0 &&
-    textFrame.matrix.mValueC === 0 &&
-    textFrame.matrix.mValueD === 1);
-    // || textFrame.textRange.characterAttributes.horizontalScale != 100
-    // || textFrame.textRange.characterAttributes.verticalScale != 100;
+  var m = textFrame.matrix;
+  return !(m.mValueA == 1 && m.mValueB === 0 && m.mValueC === 0 && m.mValueD == 1);
 }
 
 function hideTextFrame(textFrame) {
@@ -2062,9 +2066,8 @@ function findTextFramesToRender(frames, artboardRect) {
   return selected;
 }
 
-
 // Read in attribute variables from notes field of a text frame
-// TODO: try to remove this kludge (used by getTextPositionCss() for storing valign property)
+// (used by getTextPositionCss() to get valign property)
 function parseTextFrameNote(note) {
   var thisFrameAttributes = {};
   var rawNotes = note.split("\r");
@@ -2079,36 +2082,59 @@ function parseTextFrameNote(note) {
   return thisFrameAttributes;
 }
 
+function formatCssPct(part, whole) {
+  return roundTo(part / whole * 100, cssPrecision) + "%;";
+}
+
+function getUntransformedTextBounds(textFrame) {
+  var copy = textFrame.duplicate(textFrame.parent, ElementPlacement.PLACEATEND);
+  copy.transform(clearMatrixShift(app.invertMatrix(textFrame.matrix)));
+  var bnds = copy.geometricBounds;
+  copy.remove();
+  return bnds;
+}
+
+function getTransformationCss(matrix, vertAnchorPct) {
+  var transformOrigin = '50% ' + vertAnchorPct + '%;';
+  var transform = "matrix(" +
+      roundTo(matrix.mValueA, cssPrecision) + ',' +
+      roundTo(-matrix.mValueB, cssPrecision) + ',' +
+      roundTo(-matrix.mValueC, cssPrecision) + ',' +
+      roundTo(matrix.mValueD, cssPrecision) + ',0,0);';
+  return "transform: " + transform +  "transform-origin: " + transformOrigin +
+    "-webkit-transform: " + transform + "-webkit-transform-origin: " + transformOrigin +
+    "-ms-transform: " + transform + "-ms-transform-origin: " + transformOrigin;
+}
+
 // Create class="" and style="" CSS for positioning a text div
 function getTextPositionCss(thisFrame, abBox, pgData) {
-  var textBox = convertAiBounds(thisFrame.geometricBounds);
+  var styles = "";
+  var classes = "";
+  var isTransformed = textIsTransformed(thisFrame);
+  var aiBounds = isTransformed ? getUntransformedTextBounds(thisFrame) : thisFrame.geometricBounds;
+  var htmlBox = convertAiBounds(shiftBounds(aiBounds, -abBox.left, abBox.top));
   var thisFrameAttributes = parseTextFrameNote(thisFrame.note);
   // Using AI style of first paragraph in TextFrame to get information about
   // tracking, justification and top padding
-  // TODO: consider positioning paragraphs separately, for better fidelity
+  // TODO: consider positioning paragraphs separately, to handle pgs with different
+  //   justification in the same text block
   var firstPgStyle = pgData[0].aiStyle;
   var lastPgStyle = pgData[pgData.length - 1].aiStyle;
-  // extra space between letters, in pixels
-  var trackingPx = firstPgStyle.size * firstPgStyle.tracking / 1000;
   // estimated space between top of HTML container and character glyphs
-  var marginTopPx = (firstPgStyle.leading - firstPgStyle.size) / 2;
+  // (related to differences in AI and CSS vertical positioning of text blocks)
+  var marginTopPx = (firstPgStyle.leading - firstPgStyle.size) / 2 + firstPgStyle.spaceBefore;
   // estimated space between bottom of HTML container and character glyphs
-  var marginBottomPx = (lastPgStyle.leading - lastPgStyle.size) / 2;
-  // yOffs accounts for differences in AI and CSS vertical positioning of text blocks
-  var yOffs = -(marginTopPx + firstPgStyle.spaceBefore);
-  var style, kind, htmlT, htmlB, htmlH, htmlL, htmlR, htmlW, htmlLM, alignment, v_align;
+  var marginBottomPx = (lastPgStyle.leading - lastPgStyle.size) / 2 + lastPgStyle.spaceAfter;
+  var trackingPx = firstPgStyle.size * firstPgStyle.tracking / 1000;
+  var htmlL = htmlBox.left;
+  var htmlT = Math.round(htmlBox.top - marginTopPx);
+  var htmlW = htmlBox.width;
+  var htmlH = Math.round(htmlBox.height + marginTopPx + marginBottomPx);
+  var alignment, v_align, vertAnchorPct;
 
-  kind = thisFrame.kind == TextType.AREATEXT ? "area" : "point"; // assuming no path text
-  htmlL = textBox.left - abBox.left;
-  htmlT = Math.round((textBox.top - abBox.top) + yOffs);
-  htmlW = textBox.width;
-  htmlH = Math.round(textBox.height + marginTopPx + marginBottomPx);
-  htmlB = htmlT + htmlH;
-
-  if (kind == "point") {
-    // additional width for box to allow for slight variations in font widths
-    // (area text used to be 3 percent)
-    htmlW *= 2;
+  if (thisFrame.textRange.characterAttributes.horizontalScale != 100 ||
+      thisFrame.textRange.characterAttributes.verticalScale != 100) {
+    warnings.push("Vertical or horizontal text scaling will be lost. Affected text: " + truncateString(thisFrame.contents, 35));
   }
 
   v_align = thisFrameAttributes.valign || "top";
@@ -2122,147 +2148,34 @@ function getTextPositionCss(thisFrame, abBox, pgData) {
     alignment = "right";
   } else if (firstPgStyle.justification == "Justification.CENTER") {
     alignment = "center";
+  }
+
+  if (isTransformed) {
+    vertAnchorPct = (marginTopPx + htmlBox.height * 0.5) / htmlH * 100;
+    styles += getTransformationCss(thisFrame.matrix, vertAnchorPct);
+  }
+
+  if (v_align == "bottom") {
+    styles += "bottom:" + formatCssPct(1 - (htmlT + htmlH), abBox.height);
   } else {
-    alignment = "other";
+    styles += "top:" + formatCssPct(htmlT, abBox.height);
   }
-
-  if (textIsTransformed(thisFrame)) {
-    style = getTransformedTextCss(thisFrame, abBox, alignment, v_align);
-
+  if (alignment == "right") {
+    styles += "right:" + formatCssPct(abBox.width - (htmlL + htmlBox.width), abBox.width);
+  } else if (alignment == "center") {
+    styles += "left:" + formatCssPct(htmlL + htmlBox.width/ 2, abBox.width);
+    styles += "margin-left:" + formatCssPct(-htmlW / 2, abBox.width);
   } else {
-    style = "";
-    if (v_align == "bottom") {
-      style += "bottom:" + roundTo(100 * (1 - htmlB / abBox.height), cssPrecision) + "%;";
-    } else {
-      style += "top:" + roundTo(htmlT / abBox.height * 100, cssPrecision) + "%;";
-    }
-    if (alignment == "right") {
-      // note: CSS adds letter-spacing to right side of each char; trackingPx
-      //   adjustment compensates for this.
-      htmlR = abBox.width - (htmlL + textBox.width) - trackingPx;
-      style += "right:" + roundTo(htmlR / abBox.width * 100, cssPrecision) + "%;";
-      if (kind=="area") {
-        style += "width:" + roundTo(htmlW / abBox.width * 100, cssPrecision) + "%;";
-      }
-    } else if (alignment == "center") {
-      htmlL  = htmlL + (textBox.width + trackingPx)/ 2; // thanks jeremy!
-      htmlLM = -htmlW / 2;
-      style += "left:" + roundTo(htmlL / abBox.width * 100, cssPrecision) + "%;";
-      style += "width:" + roundTo(htmlW / abBox.width * 100, cssPrecision) + "%;";
-      style += "margin-left:" + roundTo(htmlLM / abBox.width * 100, cssPrecision) + "%;";
-    } else {
-      style += "left:" + roundTo(htmlL / abBox.width * 100, cssPrecision) + "%;";
-      if (kind=="area") {
-        style += "width:" + roundTo(htmlW / abBox.width * 100, cssPrecision) + "%;";
-      }
-    }
+    styles += "left:" + formatCssPct(htmlL, abBox.width);
   }
+  styles += "width:" + formatCssPct(htmlW, abBox.width);
 
-  return 'class="' + nameSpace + makeKeyword(thisFrame.layer.name) + " " + nameSpace + "aiAbs" +
-    (textIsTransformed(thisFrame) && kind == "point" ? ' g-aiPtransformed' : '') +
-    '" style="' + style + '"';
+  classes = nameSpace + makeKeyword(thisFrame.layer.name) + " " + nameSpace + "aiAbs";
+  if (thisFrame.kind == TextType.POINTTEXT) {
+    classes += ' g-aiPointText';
+  }
+  return 'class="' + classes + '" style="' + styles + '"';
 }
-
-function getTransformedTextCss(thisFrame, abBox, alignment, v_align) {
-  var style = "";
-  // find transformed anchor point pre-transformation
-  var t_bounds = thisFrame.geometricBounds,
-    u_bounds = getUntransformedTextBounds(thisFrame),
-    u_width = u_bounds[2] - u_bounds[0],
-    t_width = t_bounds[2] - t_bounds[0],
-    u_height = u_bounds[3] - u_bounds[1],
-    t_height = t_bounds[3] - t_bounds[1],
-    t_scale_x = thisFrame.textRange.characterAttributes.horizontalScale / 100,
-    t_scale_y = thisFrame.textRange.characterAttributes.verticalScale / 100,
-    t_anchor = getAnchorPoint(u_bounds, thisFrame.matrix, alignment, v_align, t_scale_x, t_scale_y),
-    t_trans_x = 0,
-    t_trans_y = 0;
-
-  // position div on transformed anchor point
-  style += "left:" + roundTo((t_anchor[0] - abBox.left) / abBox.width * 100, cssPrecision) + "%;";
-  style += "top:" + roundTo((-t_anchor[1] - abBox.top) / abBox.height * 100, cssPrecision) + "%;";
-
-  // move "back" to left or top to center or right align text
-  if (alignment == 'center') {
-    t_trans_x -= u_width * 0.5;
-  } else if (alignment == 'right') {
-    t_trans_x -= u_width;
-  }
-  if ( v_align == 'middle') {
-    t_trans_y -= u_height * 0.5;
-  } else if (v_align == 'bottom') {
-    t_trans_y -= u_height;
-  }
-
-  var mat = thisFrame.matrix;
-  mat = app.concatenateMatrix(app.getTranslationMatrix(t_trans_x, t_trans_y),
-      app.concatenateTranslationMatrix(mat, -mat.mValueTX, -mat.mValueTY));
-
-  var transform = "matrix(" +
-      roundTo(mat.mValueA, cssPrecision) + ',' +
-      roundTo(-1*mat.mValueB, cssPrecision) + ',' +
-      roundTo(-1*mat.mValueC, cssPrecision) + ',' +
-      roundTo(mat.mValueD, cssPrecision) + ',' +
-      roundTo(t_trans_x, cssPrecision) + ',' +
-      roundTo(-t_trans_y, cssPrecision) + ') ' +
-      "scaleX("+roundTo(t_scale_x, cssPrecision) + ") " +
-      "scaleY("+roundTo(t_scale_y, cssPrecision) + ")";
-  var transformOrigin = alignment + ' ' + (v_align == 'middle' ? 'center' : v_align);
-  style += "transform: " + transform + ";";
-  style += "transform-origin: " + transformOrigin + ";";
-  style += "-webkit-transform: " + transform + ";";
-  style += "-webkit-transform-origin: " + transformOrigin + ";";
-  style += "-ms-transform: " + transform + ";";
-  style += "-ms-transform-origin: " + transformOrigin + ";";
-  if (thisFrame.kind == TextType.AREATEXT) {
-    style += "width: " + u_width + "px;";
-  }
-  return style;
-}
-
-function getAnchorPoint(untransformedBounds, matrix, hAlign, vAlign, sx, sy) {
-  var center_x = (untransformedBounds[0] + untransformedBounds[2]) * 0.5,
-    center_y = (untransformedBounds[1] + untransformedBounds[3]) * 0.5,
-    anchor_x = (hAlign == 'left' ? untransformedBounds[0] :
-      (hAlign == 'center' ? center_x : untransformedBounds[2])),
-    anchor_y = (vAlign == 'top' ? untransformedBounds[1] :
-      (vAlign == 'bottom' ? untransformedBounds[3] : center_y)),
-    anchor_dx = (anchor_x - center_x),
-    anchor_dy = (anchor_y - center_y);
-
-  var mat = app.concatenateMatrix(app.getScaleMatrix(sx*100, sy*100), matrix);
-
-  var t_anchor_x = center_x + mat.mValueA * anchor_dx + mat.mValueC * anchor_dy,
-    t_anchor_y = center_y + mat.mValueB * anchor_dx + mat.mValueD * anchor_dy;
-
-  return [t_anchor_x, t_anchor_y];
-}
-
-function getUntransformedTextBounds(textFrame) {
-  var textFrameCopy = textFrame.duplicate(textFrame.parent, ElementPlacement.PLACEATEND);
-  var bnds = textFrameCopy.geometricBounds;
-  var old_center_x = (bnds[0] + bnds[2]) * 0.5,
-    old_center_y = (bnds[1] + bnds[3]) * 0.5;
-  var new_center_x, new_center_y;
-  var iter = 4;
-
-  // inverse transformation of copied text frame
-  textFrameCopy.transform(app.invertMatrix(textFrame.matrix));
-  // remove scale
-  textFrameCopy.textRange.characterAttributes.horizontalScale = 100;
-  textFrameCopy.textRange.characterAttributes.verticalScale = 100;
-  // move transformed text frame back to old center point
-  while (--iter >= 0) {
-    bnds = textFrameCopy.geometricBounds;
-    new_center_x = (bnds[0] + bnds[2]) * 0.5;
-    new_center_y = (bnds[1] + bnds[3]) * 0.5;
-    textFrameCopy.translate(old_center_x - new_center_x, old_center_y - new_center_y);
-  }
-  bnds = textFrameCopy.geometricBounds;
-  textFrameCopy.remove();
-  return bnds;
-}
-
 
 
 // =================================
@@ -2352,7 +2265,7 @@ function createPromoImage(settings) {
 // Returns 1 or 2 (corresponding to standard pixel scale and "retina" pixel scale)
 // format: png, png24 or jpg
 // doubleres: yes, always or no (no is default)
-function getPixelRatio(width, height, format, doubleres) {
+function getOutputImagePixelRatio(width, height, format, doubleres) {
   // Maximum pixel sizes are based on mobile Safari limits
   // TODO: check to see if these numbers are still relevant
   var maxPngSize = 3*1024*1024;
@@ -2385,7 +2298,7 @@ function exportImageFiles(dest, ab, formats, initialScaling, doubleres) {
     var abPos = convertAiBounds(ab.artboardRect);
     var width = abPos.width * initialScaling;
     var height = abPos.height * initialScaling;
-    var imageScale = 100 * initialScaling * getPixelRatio(width, height, format, doubleres);
+    var imageScale = 100 * initialScaling * getOutputImagePixelRatio(width, height, format, doubleres);
     var exportOptions, fileType;
 
     if (format=="png") {
@@ -2629,7 +2542,7 @@ function generatePageCss(containerId, settings) {
   css += t3 + "width:100% !important;\r";
   css += t2 + "}\r";
 
-  css += t2 + '.g-aiPtransformed p { white-space: nowrap; }\r'; // TODO: move to page css block
+  css += t2 + '.g-aiPointText p { white-space: nowrap; }\r'; // TODO: move to page css block
   css += "\t</style>\r";
   return css;
 }
