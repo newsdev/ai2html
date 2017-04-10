@@ -576,7 +576,7 @@ function render() {
     // generate artboard image(s)
     // ==========================
 
-    if (docSettings.write_image_files=="yes") {
+    if (isTrue(docSettings.write_image_files)) {
       pBar.setTitle(docArtboardName + ': Capturing image...');
       captureArtboardImage(activeArtboard, textFrames, masks, docSettings);
     }
@@ -1026,6 +1026,7 @@ function isTrue(val) {
   return val == "true" || val == "yes" || val === true;
 }
 
+// accept inconsistent false/no setting value
 function isFalse(val) {
   return val == "false" || val == "no" || val === false;
 }
@@ -2191,7 +2192,7 @@ function captureArtboardImage(ab, textFrames, masks, settings) {
   var i;
   checkForOutputFolder(imageDestinationFolder, "image_output_path");
 
-  if (settings.testing_mode != "yes") {
+  if (!isTrue(settings.testing_mode)) {
     for (i=0; i<textFrames.length; i++) {
       textFrames[i].hidden = true;
     }
@@ -2202,7 +2203,7 @@ function captureArtboardImage(ab, textFrames, masks, settings) {
     exportSVG(imageDestination, ab, masks);
   }
 
-  if (settings.testing_mode != "yes") {
+  if (!isTrue(settings.testing_mode)) {
     for (i=0; i<textFrames.length; i++) {
       textFrames[i].hidden = false;
     }
@@ -2432,7 +2433,7 @@ function exportSVG(dest, ab, masks) {
   opts.fontSubsetting        = SVGFontSubsetting.None;
   opts.compressed            = false;
   opts.documentEncoding      = SVGDocumentEncoding.UTF8;
-  opts.embedRasterImages     = (docSettings.svg_embed_images==="yes") ? true : false;
+  opts.embedRasterImages     = isTrue(docSettings.svg_embed_images);
   opts.saveMultipleArtboards = false;
   opts.DTD                   = SVGDTDVersion.SVG1_1; // SVG1_0 SVGTINY1_1 <=default SVG1_1 SVGTINY1_1PLUS SVGBASIC1_1 SVGTINY1_2
   opts.cssProperties         = SVGCSSPropertyLocation.STYLEATTRIBUTES; // ENTITIES STYLEATTRIBUTES <=default PRESENTATIONATTRIBUTES STYLEELEMENTS
@@ -2454,11 +2455,11 @@ function generateArtboardDiv(ab, breakpoints, settings) {
   var classnames = nameSpace + "artboard " + nameSpace + "artboard-v3";
   var widthRange = getArtboardWidthRange(ab);
   var html = "";
-  if (settings.include_resizer_classes != "no") {
+  if (!isFalse(settings.include_resizer_classes)) {
     classnames += " " + findShowClassesForArtboard(ab, breakpoints);
   }
   html += '\t<div id="' + divId + '" class="' + classnames + '"';
-  if (settings.include_resizer_widths == "yes") {
+  if (isTrue(settings.include_resizer_widths)) {
     // add data-min/max-width attributes
     // TODO: see if we can use breakpoint data to set min and max widths
     html += " data-min-width='" + widthRange[0] + "'";
@@ -2528,7 +2529,7 @@ function generatePageCss(containerId, settings) {
   // default <p> styles
   css += t2 + "#" + containerId + " ." + nameSpace + "artboard p {\r";
   css += t3 + "margin:0;\r";
-  if (settings.testing_mode == "yes") {
+  if (isTrue(settings.testing_mode)) {
     css += t3 + "color: rgba(209, 0, 0, 0.5) !important;\r";
   }
   css += t2 + "}\r";
@@ -2712,13 +2713,13 @@ function generateOutputHtml(pageContent, pageName, settings) {
 
   pBar.setTitle('Writing HTML output...');
 
-  if (scriptEnvironment == "nyt" && settings.include_resizer_css_js != "no") {
+  if (scriptEnvironment == "nyt" && !isFalse(settings.include_resizer_css_js)) {
     responsiveJs = '\t<script src="_assets/resizerScript.js"></script>' + "\n";
     if (previewProjectType == "ai2html") {
       responsiveCss = '\t<link rel="stylesheet" href="_assets/resizerStyle.css">' + "\n";
     }
   }
-  if (settings.include_resizer_script=="yes") {
+  if (isTrue(settings.include_resizer_script)) {
     responsiveJs  = '\t' + getResizerScript() + '\n';
     responsiveCss = "";
   }
