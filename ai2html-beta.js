@@ -2095,13 +2095,27 @@ function getUntransformedTextBounds(textFrame) {
   return bnds;
 }
 
-function getTransformationCss(matrix, vertAnchorPct) {
-  var transformOrigin = '50% ' + vertAnchorPct + '%;';
+function getTransformationCss(textFrame, vertAnchorPct) {
+  var matrix = clearMatrixShift(textFrame.matrix);
+  var horizAnchorPct = 50;
+  var transformOrigin = horizAnchorPct + '% ' + vertAnchorPct + '%;';
   var transform = "matrix(" +
       roundTo(matrix.mValueA, cssPrecision) + ',' +
       roundTo(-matrix.mValueB, cssPrecision) + ',' +
       roundTo(-matrix.mValueC, cssPrecision) + ',' +
-      roundTo(matrix.mValueD, cssPrecision) + ',0,0);';
+      roundTo(matrix.mValueD, cssPrecision) + ',' +
+      roundTo(matrix.mValueTX, cssPrecision) + ',' +
+      roundTo(matrix.mValueTY, cssPrecision) + ');';
+
+  // TODO: handle character scaling.
+  // One option: add separate CSS transform to paragraphs inside a TextFrame
+  var charStyle = textFrame.textRange.characterAttributes;
+  var scaleX = charStyle.horizontalScale;
+  var scaleY = charStyle.verticalScale;
+  if (scaleX != 100 || scaleY != 100) {
+    warnings.push("Vertical or horizontal text scaling will be lost. Affected text: " + truncateString(thisFrame.contents, 35));
+  }
+
   return "transform: " + transform +  "transform-origin: " + transformOrigin +
     "-webkit-transform: " + transform + "-webkit-transform-origin: " + transformOrigin +
     "-ms-transform: " + transform + "-ms-transform-origin: " + transformOrigin;
@@ -2130,13 +2144,8 @@ function getTextPositionCss(thisFrame, abBox, pgData) {
   var htmlL = htmlBox.left;
   var htmlT = Math.round(htmlBox.top - marginTopPx);
   var htmlW = htmlBox.width;
-  var htmlH = Math.round(htmlBox.height + marginTopPx + marginBottomPx);
+  var htmlH = htmlBox.height + marginTopPx + marginBottomPx;
   var alignment, v_align, vertAnchorPct;
-
-  if (thisFrame.textRange.characterAttributes.horizontalScale != 100 ||
-      thisFrame.textRange.characterAttributes.verticalScale != 100) {
-    warnings.push("Vertical or horizontal text scaling will be lost. Affected text: " + truncateString(thisFrame.contents, 35));
-  }
 
   v_align = thisFrameAttributes.valign || "top";
   if (v_align == "center") {
@@ -2152,13 +2161,15 @@ function getTextPositionCss(thisFrame, abBox, pgData) {
   }
 
   if (isTransformed) {
-    vertAnchorPct = (marginTopPx + htmlBox.height * 0.5) / htmlH * 100;
-    styles += getTransformationCss(thisFrame.matrix, vertAnchorPct);
+    vertAnchorPct = (marginTopPx + htmlBox.height * 0.5 + 1) / (htmlH) * 100; // TODO: de-kludge
+    styles += getTransformationCss(thisFrame, vertAnchorPct);
   }
 
   if (v_align == "bottom") {
-    styles += "bottom:" + formatCssPct(1 - (htmlT + htmlH), abBox.height);
-  } else {
+    var bottomPx = abBox.height - (htmlBox.top + htmlBox.height + marginBottomPx);
+    styles += "bottom:" + formatCssPct(bottomPx, abBox.height);
+
+} else {
     styles += "top:" + formatCssPct(htmlT, abBox.height);
   }
   if (alignment == "right") {
