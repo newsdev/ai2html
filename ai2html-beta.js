@@ -243,6 +243,10 @@ var align = [
   {"ai":"Justification.FULLJUSTIFYLASTLINERIGHT","html":"justify"}
 ];
 
+var blendModes = [
+  {ai: BlendModes.MULTIPLY, html: "multiply"}
+];
+
 // list of CSS properties used for translating AI text styles
 var cssTextStyleProperties = [
   'font-family',
@@ -256,7 +260,8 @@ var cssTextStyleProperties = [
   'padding-top',
   'padding-bottom',
   'text-align',
-  'text-transform'
+  'text-transform',
+  'mix-blend-mode'
 ];
 
 var nyt5Breakpoints = [
@@ -273,8 +278,7 @@ var nyt5Breakpoints = [
 // TODO: add these to settings spreadsheet
 var nameSpace           = "g-";
 var cssPrecision        = 4;
-// value between 0 and 255 lower than which if all three RGB values are below
-// then force the RGB to #000 so it is a pure black
+// If all three RBG channels (0-255) are below this value, convert text fill to pure black.
 var rgbBlackThreshold  = 36;
 var showDebugMessages  = true; // add text logged with message() function to completion alert
 
@@ -286,8 +290,7 @@ var showDebugMessages  = true; // add text logged with message() function to com
 var feedback = [];
 var warnings = [];
 var errors   = [];
-var unknownFonts = [];
-var htmlTags = [];
+var oneTimeWarnings = [];
 var textFramesToUnhide = [];
 var objectsToRelock = [];
 
@@ -998,6 +1001,13 @@ function formatError(e) {
   return msg;
 }
 
+function warnOnce(message, item) {
+  if (!contains(oneTimeWarnings, item)) {
+    warnings.push(message);
+    oneTimeWarnings.push(item);
+  }
+}
+
 // display debugging message in completion alert box
 // (in debug mode)
 function message() {
@@ -1466,6 +1476,7 @@ function getComputedOpacity(obj) {
   return opacity * 100;
 }
 
+
 // Return array of layer objects, including both PageItems and sublayers, in z order
 function getSortedLayerItems(lyr) {
   var items = toArray(lyr.pageItems).concat(toArray(lyr.layers));
@@ -1624,13 +1635,12 @@ function getCharStyle(c) {
 
 // p: an AI paragraph (appears to be a TextRange object with mixed-in ParagraphAttributes)
 // opacity: Computed opacity (0-100) of TextFrame containing this pg
-function getParagraphStyle(p, opacity) {
+function getParagraphStyle(p) {
   return {
     leading: Math.round(p.leading),
     spaceBefore: Math.round(p.spaceBefore),
     spaceAfter: Math.round(p.spaceAfter),
-    justification: String(p.justification), // coerce from object
-    opacity: opacity
+    justification: String(p.justification) // coerce from object
   };
 }
 
@@ -1695,6 +1705,7 @@ function importTextFrameParagraphs(textFrame) {
   //   (including individual characters). The best we can do is get the
   //   computed opacity of the current TextFrame
   var opacity = getComputedOpacity(textFrame);
+  var blendMode = getBlendMode(textFrame);
   var charsLeft = textFrame.characters.length;
   var data = [];
   var p, plen, d;
@@ -1715,6 +1726,8 @@ function importTextFrameParagraphs(textFrame) {
         aiStyle: getParagraphStyle(p, opacity),
         ranges: getParagraphRanges(p)
       };
+      d.aiStyle.opacity = opacity;
+      d.aiStyle.blendMode = blendMode;
     }
     data.push(d);
     charsLeft -= (plen + 1); // char count + newline
@@ -1724,13 +1737,9 @@ function importTextFrameParagraphs(textFrame) {
 
 function warnAboutHtmlTags(str) {
   var tagName = findHtmlTag(str);
-  if (tagName && !contains(htmlTags, tagName)) {
-    // only warn for some tags
-    tagName = tagName.toLowerCase();
-    if (contains('i,span,b,strong,em'.split(','), tagName)) {
-      warnings.push("Found a <" + tagName + "> tag. Try using Illustrator formatting instead.");
-      htmlTags.push(tagName);
-    }
+  // only warn for certain tags
+  if (tagName && contains('i,span,b,strong,em'.split(','), tagName.toLowerCase())) {
+    warnOnce("Found a <" + tagName + "> tag. Try using Illustrator formatting instead.", tagName);
   }
 }
 
@@ -1820,7 +1829,8 @@ function deriveCssStyles(frameData) {
     'text-align': 'left',
     'text-transform': 'none',
     'padding-bottom': 0,
-    'padding-top': 0
+    'padding-top': 0,
+    'mix-blend-mode': 'normal'
   };
   var currCharStyles;
 
@@ -1850,6 +1860,9 @@ function deriveCssStyles(frameData) {
       extend(pdata.aiStyle, currCharStyles[0].aiStyle);
     }
     pdata.cssStyle = analyzeTextStyle(pdata.aiStyle, pdata.text, pgStyles);
+    if (pdata.aiStyle.blendMode && !pdata.cssStyle['mix-blend-mode']) {
+      warnOnce("Missing a rule for converting Illustrator blend mode " + pdata.aiStyle.blendMode + " to CSS", pdata.aiStyle.blendMode);
+    }
   }
 
   function convertRangeStyle(range) {
@@ -1858,11 +1871,8 @@ function deriveCssStyles(frameData) {
       warnings.push(range.warning.replace("%s", truncateString(range.text, 35)));
     }
     if (range.aiStyle.aifont && !range.cssStyle['font-family']) {
-      if (!contains(unknownFonts, range.aiStyle.aifont)) {
-        unknownFonts.push(range.aiStyle.aifont);
-        warnings.push("Missing a rule for converting font: " + range.aiStyle.aifont +
-            ". Sample text: " + truncateString(range.text, 35));
-      }
+      warnOnce("Missing a rule for converting font: " + range.aiStyle.aifont +
+        ". Sample text: " + truncateString(range.text, 35), range.aiStyle.aifont);
     }
   }
 
@@ -1930,12 +1940,33 @@ function getJustificationCss(ai) {
 
 // ai: AI capitalization value
 function getCapitalizationCss(ai) {
-  for (k=0; k<caps.length; k++) {
+  for (var k=0; k<caps.length; k++) {
     if (ai == caps[k].ai) {
       return caps[k].html;
     }
   }
   return "";
+}
+
+function getBlendModeCss(ai) {
+  for (var k=0; k<blendModes.length; k++) {
+    if (ai == blendModes[k].ai) {
+      return blendModes[k].html;
+    }
+  }
+  return "";
+}
+
+function getBlendMode(obj) {
+  // Limitation: returns first found blending mode, ignores any others that
+  //   might be applied a parent object
+  while (obj && obj.typename != "Document") {
+    if (obj.blendingMode && obj.blendingMode != BlendModes.NORMAL) {
+      return obj.blendingMode;
+    }
+    obj = obj.parent;
+  }
+  return null;
 }
 
 // convert an object containing parsed AI text styles to an object containing CSS style properties
@@ -1965,6 +1996,9 @@ function convertAiTextStyle(aiStyle) {
     cssStyle["-ms-filter"] = "progid:DXImageTransform.Microsoft.Alpha(Opacity=" +
         Math.round(aiStyle.opacity) + ")";
     cssStyle.opacity = roundTo(aiStyle.opacity / 100, cssPrecision);
+  }
+  if (aiStyle.blendMode && (tmp = getBlendModeCss(aiStyle.blendMode))) {
+    cssStyle['mix-blend-mode'] = tmp;
   }
   if (aiStyle.spaceBefore > 0) {
     cssStyle["padding-top"] = aiStyle.spaceBefore + "px";
