@@ -1725,8 +1725,12 @@ function importTextFrameParagraphs(textFrame) {
 function warnAboutHtmlTags(str) {
   var tagName = findHtmlTag(str);
   if (tagName && !contains(htmlTags, tagName)) {
-    warnings.push("Found a <" + tagName + "> tag. Try using Illustrator formatting instead.");
-    htmlTags.push(tagName);
+    // only warn for some tags
+    tagName = tagName.toLowerCase();
+    if (contains('i,span,b,strong,em'.split(','), tagName)) {
+      warnings.push("Found a <" + tagName + "> tag. Try using Illustrator formatting instead.");
+      htmlTags.push(tagName);
+    }
   }
 }
 
@@ -2097,14 +2101,14 @@ function getUntransformedTextBounds(textFrame) {
     // TODO: de-kludge
     // this would be much simpler if <TextFrameItem>.convertAreaObjectToPointObject()
     // worked correctly (throws MRAP error when trying to remove a converted object)
-    var trueWidth = (bnds[2] - bnds[0]);
+    var textWidth = (bnds[2] - bnds[0]);
     copy.transform(matrix);
     // Transforming outlines avoids the offcenter problem, but width of bounding
-    // box needs to be set to width of transformed TextFrame for correct wrapping
+    // box needs to be set to width of transformed TextFrame for correct output
     copy = copy.createOutline();
     copy.transform(app.invertMatrix(matrix));
     bnds = copy.geometricBounds;
-    var dx = Math.ceil(trueWidth - (bnds[2] - bnds[0])) / 2;
+    var dx = Math.ceil(textWidth - (bnds[2] - bnds[0])) / 2;
     bnds[0] -= dx;
     bnds[2] += dx;
   }
