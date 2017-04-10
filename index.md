@@ -149,6 +149,9 @@ Most of the script’s options are set in the settings text block. When you run 
   - <span style="font-variant: small-caps">Possible values</span>: `yes` `no`
   - <span style="font-variant: small-caps">Default</span>: `yes`
   - Specifying `yes` on this setting tells the script to output images at double the resolution if possible. The script uses limits specified in this [document](http://apple.co/1M1dvES) to determine if the size of the image is too large to make it double resolution.
+- **clickable_link**
+  - <span style="font-variant: small-caps">Default</span>: `<blank>`
+  - Use this to wrap the entire graphic in an `<a>` tag pointing to the given URL.
 - **testing_mode**
   - <span style="font-variant: small-caps">Possible values</span>: `yes` `no`
   - <span style="font-variant: small-caps">Default</span>: `no`
