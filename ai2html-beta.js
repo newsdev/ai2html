@@ -342,6 +342,7 @@ function main() {
     warnings.push("Ai2html has not been tested on this version of Illustrator.");
   }
 
+
   if (!app.documents.length) {
     errors.push("No documents are open");
 
@@ -360,6 +361,7 @@ function main() {
     docIsSaved = doc.saved;
     // Use "nyt" environment if it looks like the document is in a Preview project
     initScriptEnvironment(folderExists(docPath + "../public/_assets") ? 'nyt' : '');
+    validateArtboardNames();
 
     // initialize document settings
     for (var setting in ai2htmlBaseSettings) {
@@ -1001,9 +1003,9 @@ function formatError(e) {
   return msg;
 }
 
-function warnOnce(message, item) {
+function warnOnce(msg, item) {
   if (!contains(oneTimeWarnings, item)) {
-    warnings.push(message);
+    warnings.push(msg);
     oneTimeWarnings.push(item);
   }
 }
@@ -1095,6 +1097,17 @@ function runningInNode() {
 function isTestedIllustratorVersion(version) {
   var majorNum = parseInt(version);
   return majorNum >= 18 && majorNum <= 21; // Illustrator CC 2014 through 2017
+}
+
+function validateArtboardNames() {
+  var names = [];
+  forEachUsableArtboard(function(ab) {
+    var name = getArtboardName(ab);
+    if (!contains(names, name)) {
+      warnOnce("Artboards should have unique names. \"" + name + "\" is duplicated.", name);
+      names.push(name);
+    }
+  });
 }
 
 function initScriptEnvironment(env) {
@@ -1861,7 +1874,7 @@ function deriveCssStyles(frameData) {
     }
     pdata.cssStyle = analyzeTextStyle(pdata.aiStyle, pdata.text, pgStyles);
     if (pdata.aiStyle.blendMode && !pdata.cssStyle['mix-blend-mode']) {
-      warnOnce("Missing a rule for converting Illustrator blend mode " + pdata.aiStyle.blendMode + " to CSS", pdata.aiStyle.blendMode);
+      warnOnce("Missing a rule for converting " + pdata.aiStyle.blendMode + " to CSS.", pdata.aiStyle.blendMode);
     }
   }
 
@@ -1999,6 +2012,7 @@ function convertAiTextStyle(aiStyle) {
   }
   if (aiStyle.blendMode && (tmp = getBlendModeCss(aiStyle.blendMode))) {
     cssStyle['mix-blend-mode'] = tmp;
+    // TODO: consider opacity fallback for IE
   }
   if (aiStyle.spaceBefore > 0) {
     cssStyle["padding-top"] = aiStyle.spaceBefore + "px";
