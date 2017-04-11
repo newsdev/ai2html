@@ -200,7 +200,7 @@ Note that you can pass mustache or erb/ejs notation untouched to your html parti
 #### Artboards palette
 
 - **Artboard names**
-  - Artboard names become part of the `id` of the `div` corresponding to that artboard. It is not necessary to rename the artboards from the Illustrator defaults, though take care not to begin the name with a numeral since html id’s are not recognized if they begin with a number. 
+  - Artboard names become part of the `id` of the `div` corresponding to that artboard. They should have unique names.
 
 - **Specifying artboards to ignore**
   - Add a dash, ie. `-`, as the first character of an artboard name to tell the script that you don’t want it to be included in the output.
