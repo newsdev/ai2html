@@ -5,6 +5,19 @@ var assert = require('assert');
 
 describe('Ai2html-specific functions', function () {
 
+
+  describe('parseArtboardName()', function () {
+    it('extract width and other settings', function () {
+      var settings = lib.parseArtboardName("Artboard 1:600,image_only");
+      assert.deepEqual(settings, {width: 600, image_only: true});
+    })
+
+    it('parse old-style width declarations', function() {
+      var settings = lib.parseArtboardName("ai2html-700");
+      assert.deepEqual(settings, {width: 700});
+    })
+  })
+
   describe('convertSettingsToYaml()', function () {
     it('ignores settings that are not explicitly included in default environment', function() {
       lib.initScriptEnvironment('');

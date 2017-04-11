@@ -244,7 +244,7 @@ var align = [
 ];
 
 var blendModes = [
-  {ai: BlendModes.MULTIPLY, html: "multiply"}
+  {ai: "BlendModes.MULTIPLY", html: "multiply"}
 ];
 
 // list of CSS properties used for translating AI text styles
@@ -325,6 +325,7 @@ if (!runningInNode()) {
     cleanText,
     findHtmlTag,
     convertSettingsToYaml,
+    parseArtboardName,
     initScriptEnvironment
   ].forEach(function(f) {
     module.exports[f.name] = f;
@@ -341,7 +342,6 @@ function main() {
   if (!isTestedIllustratorVersion(app.version)) {
     warnings.push("Ai2html has not been tested on this version of Illustrator.");
   }
-
 
   if (!app.documents.length) {
     errors.push("No documents are open");
@@ -565,16 +565,23 @@ function render() {
   var masks = findMasks(); // identify all clipping masks and their contents
 
   forEachUsableArtboard(function(activeArtboard, abNumber) {
+    var abSettings = getArtboardSettings(activeArtboard);
     var docArtboardName  = getArtboardFullName(activeArtboard);
+    var textFrames, textData;
     doc.artboards.setActiveArtboardIndex(abNumber);
 
     // ========================
     // Convert text objects
     // ========================
 
-    pBar.setTitle(docArtboardName + ': Generating text...');
-    var textFrames = getTextFramesByArtboard(activeArtboard, masks);
-    var textData = convertTextFrames(textFrames, activeArtboard);
+    if (abSettings.image_only) {
+      textFrames = [];
+      textData = {html: "", styles: []};
+    } else {
+      pBar.setTitle(docArtboardName + ': Generating text...');
+      textFrames = getTextFramesByArtboard(activeArtboard, masks);
+      textData = convertTextFrames(textFrames, activeArtboard);
+    }
     pBar.step();
 
     // ==========================
@@ -631,7 +638,6 @@ function render() {
   }
 
 } // end render()
-
 
 
 // =================================
@@ -901,29 +907,33 @@ function folderExists(path) {
   return new Folder(path).exists;
 }
 
-// Very simple Yaml parsing. Does not implement nested properties and other features
+function fileExists(path) {
+  return new File(path).exists;
+}
+
 function readYamlConfigFile(path) {
-  var file = new File(path);
+  return fileExists(path) ? parseYaml(readTextFile(path)) : null;
+}
+
+// Very simple Yaml parsing. Does not implement nested properties and other features
+function parseYaml(str) {
   var dqRxp = /^"(?:[^"\\]|\\.)*"$/;
-  var o = null;
-  var parts, k, v;
-  if (file.exists) {
-    o = {};
-    file.open("r");
-    while(!file.eof) {
-      parts = file.readln().split(':');
-      if (parts.length > 1) {
-        k = trim(parts.shift());
-        v = trim(parts.join(':'));
-        if (dqRxp.test(v)) {
-          v = JSON.parse(v); // use JSON library to parse quoted strings
-        }
-        o[k] = v;
-      }
-    }
-    file.close();
-  }
+  var o = {};
+  forEach(str.split('\n'), parseLine);
   return o;
+
+  function parseLine(str) {
+    var parts = str.split(':');
+    var k, v;
+    if (parts.length > 1) {
+      k = trim(parts.shift());
+      v = trim(parts.join(':'));
+      if (dqRxp.test(v)) {
+        v = JSON.parse(v); // use JSON library to parse quoted strings
+      }
+      o[k] = v;
+    }
+  }
 }
 
 // TODO: improve
@@ -1103,10 +1113,10 @@ function validateArtboardNames() {
   var names = [];
   forEachUsableArtboard(function(ab) {
     var name = getArtboardName(ab);
-    if (!contains(names, name)) {
+    if (contains(names, name)) {
       warnOnce("Artboards should have unique names. \"" + name + "\" is duplicated.", name);
-      names.push(name);
     }
+    names.push(name);
   });
 }
 
@@ -1327,7 +1337,7 @@ function getArtboardId(ab) {
 // TODO: prevent duplicate names? or treat duplicate names an an error condition?
 // (artboard name is assumed to be unique in several places)
 function getArtboardName(ab) {
-  return makeKeyword(ab.name.replace( /^(.+):\d+$/, "$1"));
+  return makeKeyword(ab.name.replace( /^(.+):.*$/, "$1"));
 }
 
 function getArtboardFullName(ab) {
@@ -1372,18 +1382,42 @@ function getArtboardWidthRange(ab) {
   return [minw, maxw ? maxw - 1 : Infinity];
 }
 
+// Parse artboard-specific settings from artboard name
+function parseArtboardName(name) {
+  // parse old-style width declaration
+  var widthStr = (/^ai2html-(\d+)/.exec(name) || [])[1];
+  // capture portion of name after colon
+  var settingsStr = (/:(.*)/.exec(name) || [])[1] || "";
+  var settings = {};
+  forEach(settingsStr.split(','), function(part) {
+    if (/^\d+$/.test(part)) {
+      widthStr = part;
+    } else if (part) {
+      // assuming setting is a flag
+      settings[part] = true;
+    }
+  });
+  if (widthStr) {
+    settings.width = parseFloat(widthStr);
+  }
+  return settings;
+}
+
+function getArtboardSettings(ab) {
+  // currently, artboard-specific settings are all stashed in the artboard name
+  return parseArtboardName(ab.name);
+}
+
 // return array of data records about each usable artboard, sorted from narrow to wide
 function getArtboardInfo() {
   var artboards = [];
   forEachUsableArtboard(function(ab, i) {
     var pos = convertAiBounds(ab.artboardRect);
-    var name = ab.name || "";
-    // parse width from artboard name in two formats: <name>:<width> and ai2html-<width>
-    var widthFromName = (/^(?:.*:|ai2html-)(\d+)$/.exec(name) || [])[1];
+    var abSettings = getArtboardSettings(ab);
     artboards.push({
       name: ab.name || "",
       width: pos.width,
-      effectiveWidth: widthFromName ? +widthFromName : pos.width,
+      effectiveWidth: abSettings.width || pos.width,
       id: i
     });
   });
