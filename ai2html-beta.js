@@ -2216,7 +2216,7 @@ function getTransformationCss(textFrame, vertAnchorPct) {
   var scaleX = charStyle.horizontalScale;
   var scaleY = charStyle.verticalScale;
   if (scaleX != 100 || scaleY != 100) {
-    warnings.push("Vertical or horizontal text scaling will be lost. Affected text: " + truncateString(thisFrame.contents, 35));
+    warnings.push("Vertical or horizontal text scaling will be lost. Affected text: " + truncateString(textFrame.contents, 35));
   }
 
   return "transform: " + transform +  "transform-origin: " + transformOrigin +
@@ -2526,10 +2526,13 @@ function copyArtboardForImageExport(ab, masks) {
   }
 
   function copyPageItem(item, dest) {
-    var excluded = item.typename == 'TextFrame' ||
+    var excluded =
+        // item.typename == 'TextFrame' || // text objects should be copied if visible
         !testBoundsIntersection(item.geometricBounds, artboardBounds) ||
         objectIsHidden(item) || item.clipping;
-    return excluded ? null : duplicateItem(item, dest);
+    if (!excluded) {
+      duplicateItem(item, dest);
+    }
   }
 
   function duplicateItem(item, dest) {
@@ -2548,9 +2551,8 @@ function exportSVG(dest, ab, masks) {
   opts.compressed            = false;
   opts.documentEncoding      = SVGDocumentEncoding.UTF8;
   opts.embedRasterImages     = isTrue(docSettings.svg_embed_images);
-  opts.saveMultipleArtboards = false;
-  opts.DTD                   = SVGDTDVersion.SVG1_1; // SVG1_0 SVGTINY1_1 <=default SVG1_1 SVGTINY1_1PLUS SVGBASIC1_1 SVGTINY1_2
-  opts.cssProperties         = SVGCSSPropertyLocation.STYLEATTRIBUTES; // ENTITIES STYLEATTRIBUTES <=default PRESENTATIONATTRIBUTES STYLEELEMENTS
+  opts.DTD                   = SVGDTDVersion.SVG1_1;
+  opts.cssProperties         = SVGCSSPropertyLocation.STYLEATTRIBUTES;
 
   exportDoc.exportFile(new File(dest), ExportType.SVG, opts);
   doc.activate();
