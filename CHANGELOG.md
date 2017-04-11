@@ -5,11 +5,13 @@
 - Promo images are smaller than before, for performance (1024px instead of >3000px wide).
 - Text fields hidden behind rectangular masks are no longer rendered.
 - Opacity of text blocks is now calculated by combining the opacity of all parent groups and layers.
+- "Multiply" blending mode is supported for text using CSS (works in current browsers, except IE).
 - Improved SVG export (only visible objects that intersect the current artboard are included in the output file).
 - Automatic detection of NYT Preview context (by checking for public/_assets directory).
 - Fixed template rendering bug (issue #43).
 - Fixed "can't paste type" error (issue #50).
 - Fixed Isolation Mode runtime error (issue #35).
+- Fixed inaccurate placement of rotated text with large leading (issue #58).
 - Adding warnings for a range of potential problems.
 - Improved display of runtime errors, including number of the source code line where an error occured.
 - Added unit testing using Node.js and Mocha.
