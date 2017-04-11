@@ -8,6 +8,7 @@
 - "Multiply" blending mode is supported for text using CSS (works in current browsers, except IE).
 - Improved SVG export (only visible objects that intersect the current artboard are included in the output file).
 - Automatic detection of NYT Preview context (by checking for public/_assets directory).
+- Added the ability to render text in the artboard image by appending `:image_only` to the artboard's name in Illustrator's Artboards panel.
 - Fixed template rendering bug (issue #43).
 - Fixed "can't paste type" error (issue #50).
 - Fixed Isolation Mode runtime error (issue #35).
