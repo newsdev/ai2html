@@ -443,7 +443,7 @@ function render() {
   // ================================================
   var documentHasSettingsBlock = false;
   var customBlocks = {};
-  var customRxp = /^ai2html-(css|js|html|settings|text)/;
+  var customRxp = /^ai2html-(css|js|html|settings|text)\s*$/;
 
   forEach(doc.textFrames, function(thisFrame) {
     // var contents = thisFrame.contents; // caused MRAP error in AI 2017
@@ -1153,7 +1153,7 @@ function initScriptEnvironment(env) {
 function createSettingsBlock() {
   var bounds      = getAllArtboardBounds();
   var fontSize    = 15;
-  var leading     = 22;
+  var leading     = 19;
   var extraLines  = 6;
   var width       = 400;
   var left        = bounds[0] - width - 50;
