@@ -467,7 +467,9 @@ function render() {
       }
       customBlocks[type].push("\t\t" + cleanText(entries.join("\r\t\t")) + "\r");
     }
-    hideTextFrame(thisFrame);
+    if (objectOverlapsAnArtboard(thisFrame)) {
+      hideTextFrame(thisFrame);
+    }
   });
 
   if (customBlocks.css)  {feedback.push("Custom CSS blocks: " + customBlocks.css.length);}
@@ -552,8 +554,8 @@ function render() {
 
   if (docSettings.image_format.length === 0) {
     warnings.push("No images were created because no image formats were specified.");
-  } else if (documentContainsRasterImages() && !contains(docSettings.image_format, "jpg")) {
-    warnings.push("This document contains raster images -- consider exporting to jpg instead of " +
+  } else if (documentContainsVisibleRasterImages() && !contains(docSettings.image_format, "jpg")) {
+    warnings.push("An artboard contains a raster image -- consider exporting to jpg instead of " +
         docSettings.image_format[0] + ".");
   }
 
@@ -1503,10 +1505,20 @@ function clearSelection() {
   app.executeMenuCommand('deselectall');
 }
 
-function documentContainsRasterImages() {
+function documentContainsVisibleRasterImages() {
   // TODO: verify that placed items are rasters
-  // TODO: only count visible items that overlap an artboard
-  return doc.placedItems.length + doc.rasterItems.length > 0;
+  function isVisible(obj) {
+    return !objectIsHidden(obj) && objectOverlapsAnArtboard(obj);
+  }
+  return contains(doc.placedItems, isVisible) || contains(doc.rasterItems, isVisible);
+}
+
+function objectOverlapsAnArtboard(obj) {
+  var hit = false;
+  forEachUsableArtboard(function(ab) {
+    hit = hit || testBoundsIntersection(ab.artboardRect, obj.geometricBounds);
+  });
+  return hit;
 }
 
 function objectIsHidden(obj) {
@@ -1858,7 +1870,7 @@ function convertTextFrames(textFrames, ab) {
   var divs = map(frameData, function(obj, i) {
     var frame = textFrames[i];
     var divId = frame.name ? makeKeyword(frame.name) : idPrefix  + (i + 1);
-    var positionCss = getTextPositionCss(frame, abBox, obj.paragraphs);
+    var positionCss = getTextFrameCss(frame, abBox, obj.paragraphs);
     return '\t\t<div id="' + divId + '" ' + positionCss + '>' +
         generateTextFrameHtml(obj.paragraphs, baseStyle, pgStyles, charStyles) + '\r\t\t</div>\r';
   });
@@ -2167,7 +2179,7 @@ function findTextFramesToRender(frames, artboardRect) {
 }
 
 // Read in attribute variables from notes field of a text frame
-// (used by getTextPositionCss() to get valign property)
+// (used by getTextFrameCss() to get valign property)
 function parseTextFrameNote(note) {
   var thisFrameAttributes = {};
   var rawNotes = note.split("\r");
@@ -2238,7 +2250,7 @@ function getTransformationCss(textFrame, vertAnchorPct) {
 }
 
 // Create class="" and style="" CSS for positioning a text div
-function getTextPositionCss(thisFrame, abBox, pgData) {
+function getTextFrameCss(thisFrame, abBox, pgData) {
   var styles = "";
   var classes = "";
   var isTransformed = textIsTransformed(thisFrame);
@@ -2282,8 +2294,9 @@ function getTextPositionCss(thisFrame, abBox, pgData) {
   }
 
   if (thisFrame.kind == TextType.AREATEXT) {
+    // EXPERIMENTAL feature
     // Put a box around the text, if the text frame's textPath is styled
-    styles += parseAreaTextPath(thisFrame);
+    styles += convertAreaTextPath(thisFrame);
   }
 
   if (v_align == "bottom") {
@@ -2310,7 +2323,7 @@ function getTextPositionCss(thisFrame, abBox, pgData) {
 }
 
 
-function parseAreaTextPath(frame) {
+function convertAreaTextPath(frame) {
   var style = "";
   var path = frame.textPath;
   var obj;
