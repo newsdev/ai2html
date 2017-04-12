@@ -855,8 +855,15 @@ function formatCss(obj, indentStr) {
   return css;
 }
 
-function getCssColor(r, g, b) {
-  return 'rgb(' + r + ',' + g + ',' + b + ')';
+function getCssColor(r, g, b, opacity) {
+  var col, o;
+  if (opacity > 0 && opacity < 100) {
+    o = roundTo(opacity / 100, 2);
+    col = 'rgba(' + r + ',' + g + ',' + b + ',' + o + ')';
+  } else {
+    col = 'rgb(' + r + ',' + g + ',' + b + ')';
+  }
+  return col;
 }
 
 // Test if two rectangles are the same, to within a given tolerance
@@ -917,6 +924,7 @@ function readYamlConfigFile(path) {
 
 // Very simple Yaml parsing. Does not implement nested properties and other features
 function parseYaml(str) {
+  var comment = /\s*/
   var dqRxp = /^"(?:[^"\\]|\\.)*"$/;
   var o = {};
   forEach(str.split('\n'), parseLine);
@@ -1643,40 +1651,45 @@ function hideTextFrame(textFrame) {
   textFrame.hidden = true;
 }
 
-// Parse an AI CharacterAttributes object
-function getCharStyle(c) {
-  var fill = c.fillColor;
-  var caps = String(c.capitalization);
-  var o = {
-    aifont: c.textFont.name,
-    size: Math.round(c.size),
-    capitalization: caps == 'FontCapsOption.NORMALCAPS' ? '' : caps,
-    tracking: c.tracking
-  };
+// color: a color object, e.g. RGBColor
+// opacity (optional): opacity [0-100]
+function convertAiColor(color, opacity) {
+  var o = {};
   var r, g, b;
-
-  if (fill.typename == 'SpotColor') {
-    fill = fill.spot.color; // expecting AI to return an RGBColor because doc is in RGB mode.
+  if (color.typename == 'SpotColor') {
+    color = color.spot.color; // expecting AI to return an RGBColor because doc is in RGB mode.
   }
-  if (fill.typename == 'RGBColor') {
-    r = fill.red;
-    g = fill.green;
-    b = fill.blue;
+  if (color.typename == 'RGBColor') {
+    r = color.red;
+    g = color.green;
+    b = color.blue;
     if (r < rgbBlackThreshold && g < rgbBlackThreshold && b < rgbBlackThreshold) {
       r = g = b = 0;
     }
-  } else if (fill.typename == 'GrayColor') {
-    r = g = b = Math.round((100 - fill.gray) / 100 * 255);
-  } else if (fill.typename == 'NoColor') {
+  } else if (color.typename == 'GrayColor') {
+    r = g = b = Math.round((100 - color.gray) / 100 * 255);
+  } else if (color.typename == 'NoColor') {
     g = 255;
     r = b = 0;
     // warnings are processed later, after ranges of same-style chars are identified
+    // TODO: add text-fill-specific warnings elsewhere
     o.warning = "The text \"%s\" has no fill. Please fill it with an RGB color. It has been filled with green.";
   } else {
     r = g = b = 0;
-    o.warning = "The text \"%s\" has " + fill.typename + " fill. Please fill it with an RGB color.";
+    o.warning = "The text \"%s\" has " + color.typename + " fill. Please fill it with an RGB color.";
   }
-  o.color = getCssColor(r, g, b);
+  o.color = getCssColor(r, g, b, opacity);
+  return o;
+}
+
+// Parse an AI CharacterAttributes object
+function getCharStyle(c) {
+  var o = convertAiColor(c.fillColor);
+  var caps = String(c.capitalization);
+  o.aifont = c.textFont.name;
+  o.size = Math.round(c.size);
+  o.capitalization = caps == 'FontCapsOption.NORMALCAPS' ? '' : caps;
+  o.tracking = c.tracking
   return o;
 }
 
@@ -2073,7 +2086,7 @@ function textFrameIsRenderable(frame, artboardRect) {
   var good = true;
   if (!testBoundsIntersection(frame.visibleBounds, artboardRect)) {
     good = false;
-  } else if (frame.kind != "TextType.AREATEXT" && frame.kind != "TextType.POINTTEXT") {
+  } else if (frame.kind != TextType.AREATEXT && frame.kind != TextType.POINTTEXT) {
     good = false;
   } else if (objectIsHidden(frame)) {
     good = false;
@@ -2268,11 +2281,15 @@ function getTextPositionCss(thisFrame, abBox, pgData) {
     styles += getTransformationCss(thisFrame, vertAnchorPct);
   }
 
+  if (thisFrame.kind == TextType.AREATEXT) {
+    // Put a box around the text, if the text frame's textPath is styled
+    styles += parseAreaTextPath(thisFrame);
+  }
+
   if (v_align == "bottom") {
     var bottomPx = abBox.height - (htmlBox.top + htmlBox.height + marginBottomPx);
     styles += "bottom:" + formatCssPct(bottomPx, abBox.height);
-
-} else {
+  } else {
     styles += "top:" + formatCssPct(htmlT, abBox.height);
   }
   if (alignment == "right") {
@@ -2290,6 +2307,25 @@ function getTextPositionCss(thisFrame, abBox, pgData) {
     classes += ' g-aiPointText';
   }
   return 'class="' + classes + '" style="' + styles + '"';
+}
+
+
+function parseAreaTextPath(frame) {
+  var style = "";
+  var path = frame.textPath;
+  var obj;
+  if (path.stroked || path.filled) {
+    style += "padding: 6px 6px 6px 7px;";
+    if (path.filled) {
+      obj = convertAiColor(path.fillColor, path.opacity);
+      style += "background-color: " + obj.color + ";";
+    }
+    if (path.stroked) {
+      obj = convertAiColor(path.strokeColor, path.opacity);
+      style += "border: 1px solid " + obj.color + ";";
+    }
+  }
+  return style;
 }
 
 
