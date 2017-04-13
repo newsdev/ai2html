@@ -368,9 +368,7 @@ function main() {
       docSettings[setting] = ai2htmlBaseSettings[setting].defaultValue;
     }
 
-    pBar = new ProgressBar({name: "Ai2html progress", steps: calcProgressBarSteps()});
     T.start();
-
     try {
       render();
     } catch(e) {
@@ -393,7 +391,6 @@ function main() {
     // Auto-save the document if no errors occurred
     var saveOptions = new IllustratorSaveOptions();
     saveOptions.pdfCompatible = false;
-    pBar.setTitle('Saving Illustrator document...');
     doc.saveAs(new File(docPath + doc.name), saveOptions);
     feedback.push("Your Illustrator file was saved.");
   }
@@ -426,17 +423,6 @@ function render() {
   if (doc.selection && doc.selection.typename) {
     clearSelection();
   }
-
-  // Unlock containers and clipping masks
-  unlockObjects();
-
-  // ================================================
-  // assign artboards to their corresponding breakpoints
-  // ================================================
-  // (can have more than one artboard per breakpoint.)
-
-  // TODO: seems to assume NYT5 environment -- check that it works outside NYT
-  var breakpoints = assignBreakpointsToArtboards(nyt5Breakpoints);
 
   // ================================================
   // grab custom settings, html, css, js and text blocks
@@ -489,6 +475,13 @@ function render() {
       feedback.push("A settings text block was created to the left of all your artboards. You can use it to customize your output.");
     }
   }
+
+
+  // ================================================
+  // assign artboards to their corresponding breakpoints
+  // ================================================
+  // (can have more than one artboard per breakpoint.)
+  var breakpoints = assignBreakpointsToArtboards(nyt5Breakpoints);
 
   // ================================================
   // initialization for NYT environment
@@ -562,9 +555,10 @@ function render() {
   // ================================================
   // Generate HTML, CSS and images for each artboard
   // ================================================
-
-  var artboardContent = "";
+  pBar = new ProgressBar({name: "Ai2html progress", steps: calcProgressBarSteps()});
+  unlockObjects(); // Unlock containers and clipping masks
   var masks = findMasks(); // identify all clipping masks and their contents
+  var artboardContent = "";
 
   forEachUsableArtboard(function(activeArtboard, abNumber) {
     var abSettings = getArtboardSettings(activeArtboard);
