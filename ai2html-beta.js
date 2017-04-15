@@ -1,4 +1,11 @@
 // ai2html.js
+
+function main() {
+// Enclosing scripts in a named function (and not an anonymous, self-executing
+// function) has been recommended as a way to prevent certain runtime errors.
+// See (for example) https://forums.adobe.com/thread/1810764 and
+// http://wwwimages.adobe.com/content/dam/Adobe/en/devnet/pdf/illustrator/scripting/Readme.txt
+
 var scriptVersion = "0.64";
 
 // ai2html is a script for Adobe Illustrator that converts your Illustrator document into html and css.
@@ -302,13 +309,9 @@ var doc, docPath, docName, docIsSaved;
 var pBar, T;
 
 // ===========================================================
-// In AI context: run script. In Node: export functions for testing
+// If running in Node.js: export functions for testing and exit
 // ===========================================================
-
-if (!runningInNode()) {
-  main();
-
-} else {
+if (runningInNode()) {
   [ testBoundsIntersection,
     trim,
     contains,
@@ -330,86 +333,80 @@ if (!runningInNode()) {
   ].forEach(function(f) {
     module.exports[f.name] = f;
   });
+  return;
+}
+
+if (!isTestedIllustratorVersion(app.version)) {
+  warnings.push("Ai2html has not been tested on this version of Illustrator.");
+}
+
+if (!app.documents.length) {
+  errors.push("No documents are open");
+
+} else if (!String(app.activeDocument.path)) {
+  errors.push("You need to save your Illustrator file before running this script");
+
+} else if (app.activeDocument.documentColorSpace != DocumentColorSpace.RGB) {
+  errors.push("You should change the document color mode to \"RGB\" before running ai2html (File>Document Color Mode>RGB Color).");
+
+} else if (app.activeDocument.activeLayer.name == "Isolation Mode") {
+  errors.push("Ai2html is unable to run because the document is in Isolation Mode.");
+
+} else {
+  doc = app.activeDocument;
+  docPath = doc.path + "/";
+  docIsSaved = doc.saved;
+  // Use "nyt" environment if it looks like the document is in a Preview project
+  initScriptEnvironment(folderExists(docPath + "../public/_assets") ? 'nyt' : '');
+  validateArtboardNames();
+
+  //message($.list());
+
+  // initialize document settings
+  for (var setting in ai2htmlBaseSettings) {
+    docSettings[setting] = ai2htmlBaseSettings[setting].defaultValue;
+  }
+
+  T.start();
+  try {
+    render();
+  } catch(e) {
+    errors.push(formatError(e));
+  }
+  restoreDocumentState();
 }
 
 
-// =================================
-// Main function
-// =================================
+// ==========================================
+// Save the AI document (if needed)
+// ==========================================
 
-function main() {
+if (docIsSaved) {
+  // If document was originally in a saved state, reset the document's
+  // saved flag (the document goes to unsaved state during the script,
+  // because of unlocking / relocking of objects
+  doc.saved = true;
+} else if (errors.length === 0) {
+  // Auto-save the document if no errors occurred
+  var saveOptions = new IllustratorSaveOptions();
+  saveOptions.pdfCompatible = false;
+  doc.saveAs(new File(docPath + doc.name), saveOptions);
+  feedback.push("Your Illustrator file was saved.");
+}
 
-  if (!isTestedIllustratorVersion(app.version)) {
-    warnings.push("Ai2html has not been tested on this version of Illustrator.");
-  }
+if (pBar) pBar.close();
+if (T) message("Script ran in", (T.stop() / 1000).toFixed(1), "seconds");
 
-  if (!app.documents.length) {
-    errors.push("No documents are open");
+// =========================================================
+// Show alert box, optionally prompt to generate promo image
+// =========================================================
 
-  } else if (!String(app.activeDocument.path)) {
-    errors.push("You need to save your Illustrator file before running this script");
-
-  } else if (app.activeDocument.documentColorSpace != DocumentColorSpace.RGB) {
-    errors.push("You should change the document color mode to \"RGB\" before running ai2html (File>Document Color Mode>RGB Color).");
-
-  } else if (app.activeDocument.activeLayer.name == "Isolation Mode") {
-    errors.push("Ai2html is unable to run because the document is in Isolation Mode.");
-
-  } else {
-    doc = app.activeDocument;
-    docPath = doc.path + "/";
-    docIsSaved = doc.saved;
-    // Use "nyt" environment if it looks like the document is in a Preview project
-    initScriptEnvironment(folderExists(docPath + "../public/_assets") ? 'nyt' : '');
-    validateArtboardNames();
-
-    // initialize document settings
-    for (var setting in ai2htmlBaseSettings) {
-      docSettings[setting] = ai2htmlBaseSettings[setting].defaultValue;
-    }
-
-    T.start();
-    try {
-      render();
-    } catch(e) {
-      errors.push(formatError(e));
-    }
-    restoreDocumentState();
-  }
-
-
-  // ==========================================
-  // Save the AI document (if needed)
-  // ==========================================
-
-  if (docIsSaved) {
-    // If document was originally in a saved state, reset the document's
-    // saved flag (the document goes to unsaved state during the script,
-    // because of unlocking / relocking of objects
-    doc.saved = true;
-  } else if (errors.length === 0) {
-    // Auto-save the document if no errors occurred
-    var saveOptions = new IllustratorSaveOptions();
-    saveOptions.pdfCompatible = false;
-    doc.saveAs(new File(docPath + doc.name), saveOptions);
-    feedback.push("Your Illustrator file was saved.");
-  }
-
-  if (pBar) pBar.close();
-  if (T) message("Script ran in", (T.stop() / 1000).toFixed(1), "seconds");
-
-  // =========================================================
-  // Show alert box, optionally prompt to generate promo image
-  // =========================================================
-
-  if (isTrue(docSettings.show_completion_dialog_box ) || errors.length > 0) {
-    var promptForPromo = errors.length === 0 && isTrue(docSettings.write_image_files) &&
-      (previewProjectType == "ai2html" || isTrue(docSettings.create_promo_image));
-    var showPromo = showCompletionAlert(promptForPromo);
-    if (showPromo) createPromoImage(docSettings);
-  }
-} // end main()
-
+if (isTrue(docSettings.show_completion_dialog_box ) || errors.length > 0) {
+  var promptForPromo = errors.length === 0 && isTrue(docSettings.write_image_files) &&
+    (previewProjectType == "ai2html" || isTrue(docSettings.create_promo_image));
+  var showPromo = showCompletionAlert(promptForPromo);
+  if (showPromo) createPromoImage(docSettings);
+}
 
 
 // =================================
@@ -1122,6 +1119,20 @@ function validateArtboardNames() {
     }
     names.push(name);
   });
+}
+
+function showEngineInfo() {
+  var lines = map($.summary().split('\n'), function(line) {
+    var parts = trim(line).split(/[\s]+/);
+    if (parts.length == 2) {
+      line = parts[1] + ' ' + parts[0];
+    }
+    return line;
+  }).sort();
+  var msg = lines.join('  ');
+  // msg = $.list().split('\n').length;
+  // msg = truncateString($.listLO(), 300);
+  alert('Info:\n' + msg);
 }
 
 function initScriptEnvironment(env) {
@@ -2126,7 +2137,6 @@ function selectMaskedItems(items, clipRect, abRect) {
   return found;
 }
 
-
 // Find clipped TextFrames that are inside an artboard but outside their
 // clipping path (using bounding box of clipping path to approximate clip area)
 function getClippedTextFramesByArtboard(ab, masks) {
@@ -2535,6 +2545,16 @@ function copyArtboardForImageExport(ab, masks) {
     }
   }
 
+  function removeHiddenItems(group) {
+    // only remove text frames, for performance
+    // TODO: consider checking all item types
+    forEach(group.textFrames, removeItemIfHidden);
+  }
+
+  function removeItemIfHidden(item) {
+    if (item.hidden) item.remove();
+  }
+
   // Item: Layer (sublayer) or PageItem
   function copyLayerItem(item) {
     if (item.typename == 'Layer') {
@@ -2544,6 +2564,9 @@ function copyArtboardForImageExport(ab, masks) {
     }
   }
 
+  // TODO: locked objects in masked layer may not be included in mask.items array
+  //   consider traversing layer in this function ...
+  //   make sure doubly masked objects aren't copied twice
   function copyMaskedLayerAsGroup(lyr, mask) {
     var maskBounds = mask.mask.geometricBounds;
     var newMask, newGroup;
@@ -2573,8 +2596,12 @@ function copyArtboardForImageExport(ab, masks) {
         // item.typename == 'TextFrame' || // text objects should be copied if visible
         !testBoundsIntersection(item.geometricBounds, artboardBounds) ||
         objectIsHidden(item) || item.clipping;
+    var copy;
     if (!excluded) {
-      duplicateItem(item, dest);
+      copy = duplicateItem(item, dest);
+      if (copy.typename == 'GroupItem') {
+        removeHiddenItems(copy);
+      }
     }
   }
 
@@ -2929,3 +2956,5 @@ function generateOutputHtml(pageContent, pageName, settings) {
     outputLocalPreviewPage(textForFile, previewFileDestination, settings);
   }
 }
+} // end main() function definition
+main();
