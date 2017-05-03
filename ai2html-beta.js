@@ -2,7 +2,8 @@
 
 function main() {
 // Enclosing scripts in a named function (and not an anonymous, self-executing
-// function) has been recommended as a way to prevent certain runtime errors.
+// function) has been recommended as a way to minimise intermittent "MRAP" errors.
+// (This advice may be superstitious, need more evidence to decide.)
 // See (for example) https://forums.adobe.com/thread/1810764 and
 // http://wwwimages.adobe.com/content/dam/Adobe/en/devnet/pdf/illustrator/scripting/Readme.txt
 
@@ -2548,6 +2549,7 @@ function copyArtboardForImageExport(ab, masks) {
   function removeHiddenItems(group) {
     // only remove text frames, for performance
     // TODO: consider checking all item types
+    // TODO: consider checking subgroups (recursively)
     forEach(group.textFrames, removeItemIfHidden);
   }
 
@@ -2579,7 +2581,9 @@ function copyArtboardForImageExport(ab, masks) {
       copyPageItem(item, newGroup);
     });
     if (newGroup.pageItems.length > 0) {
-      newMask = duplicateItem(mask.mask);
+      // newMask = duplicateItem(mask.mask, destGroup);
+      // TODO: refactor
+      newMask = mask.mask.duplicate(destGroup, ElementPlacement.PLACEATEND);
       newMask.moveToBeginning(newGroup);
       newGroup.clipped = true;
     } else {
@@ -2598,15 +2602,11 @@ function copyArtboardForImageExport(ab, masks) {
         objectIsHidden(item) || item.clipping;
     var copy;
     if (!excluded) {
-      copy = duplicateItem(item, dest);
+      copy = item.duplicate(dest, ElementPlacement.PLACEATEND); //  duplicateItem(item, dest);
       if (copy.typename == 'GroupItem') {
         removeHiddenItems(copy);
       }
     }
-  }
-
-  function duplicateItem(item, dest) {
-    return item.duplicate(dest || destGroup, ElementPlacement.PLACEATEND);
   }
 }
 
