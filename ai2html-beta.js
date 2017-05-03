@@ -235,12 +235,14 @@ var fonts = [
   {"aifont":"NYTMagSans-Bold","family":"'nyt-mag-sans',arial,helvetica,sans-serif","weight":"700","style":""}
 ];
 
+// CSS text-transform equivalents
 var caps = [
-  {"ai":"FontCapsOption.NORMALCAPS","html":""},
+  {"ai":"FontCapsOption.NORMALCAPS","html":"none"},
   {"ai":"FontCapsOption.ALLCAPS","html":"uppercase"},
   {"ai":"FontCapsOption.SMALLCAPS","html":"uppercase"}
 ];
 
+// CSS text-align equivalents
 var align = [
   {"ai":"Justification.LEFT","html":"left"},
   {"ai":"Justification.RIGHT","html":"right"},
@@ -1903,12 +1905,16 @@ function deriveCssStyles(frameData) {
   var pgStyles = [];
   var baseStyle = {};
   // override detected settings with these style properties
-  var defaultStyle = {
+  var defaultCssStyle = {
     'text-align': 'left',
     'text-transform': 'none',
     'padding-bottom': 0,
     'padding-top': 0,
-    'mix-blend-mode': 'normal'
+    'mix-blend-mode': 'normal',
+    'font-style': 'normal'
+  };
+  var defaultAiStyle = {
+    opacity: 100 // given as AI style because opacity is converted to several CSS properties
   };
   var currCharStyles;
 
@@ -1921,11 +1927,11 @@ function deriveCssStyles(frameData) {
     pgStyles.sort(compareCharCount);
     extend(baseStyle, pgStyles[0].cssStyle);
   }
-  extend(baseStyle, defaultStyle);
+  extend(baseStyle, defaultCssStyle, convertAiTextStyle(defaultAiStyle));
   return baseStyle;
 
   function compareCharCount(a, b) {
-    return b.charCount - a.charCount;
+    return b.count - a.count;
   }
 
   function analyzeParagraphStyle(pdata) {
@@ -1972,11 +1978,12 @@ function deriveCssStyles(frameData) {
         key: key,
         aiStyle: aiStyle,
         cssStyle: cssStyle,
-        charCount: 0
+        count: 0
       };
       stylesArr.push(o);
     }
-    o.charCount += text.length;
+    // o.count += text.length;
+    o.count++; // each occurence counts equally
     return cssStyle;
   }
 }
@@ -2069,7 +2076,8 @@ function convertAiTextStyle(aiStyle) {
   if ('leading' in aiStyle) {
     cssStyle["line-height"] = aiStyle.leading + "px";
   }
-  if (('opacity' in aiStyle) && aiStyle.opacity < 100) {
+  // if (('opacity' in aiStyle) && aiStyle.opacity < 100) {
+  if ('opacity' in aiStyle) {
     cssStyle.filter = "alpha(opacity=" + Math.round(aiStyle.opacity) + ")";
     cssStyle["-ms-filter"] = "progid:DXImageTransform.Microsoft.Alpha(Opacity=" +
         Math.round(aiStyle.opacity) + ")";
