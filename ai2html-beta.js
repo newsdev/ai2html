@@ -461,7 +461,7 @@ function render() {
       type = match ? match[1] : null;
     }
     if (!type) return; // not a settings block
-    entries = thisFrame.contents.split(/[\r\n]+/);
+    entries = thisFrame.contents.replace(new RegExp("\x03",'g'), "\r").split(/[\r\n]+/);
     entries.shift(); // remove header
     if (type == 'settings') {
       documentHasSettingsBlock = true;
