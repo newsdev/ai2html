@@ -1,0 +1,8 @@
+project_type: ai2html
+min_width: 300
+max_width: 600
+headline: "Elementary: Schools in District 3"
+leadin: ""
+credit: "By The New York \"Times\""
+show_in_compatible_apps: "yes"
+constrain_width_to_text_column: true
