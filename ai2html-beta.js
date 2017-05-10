@@ -648,7 +648,6 @@ function render() {
 
   // feedback for image destination folder
   var imageDestinationFolder = docPath + docSettings.html_output_path + docSettings.image_output_path;
-    alert(imageDestinationFolder)
   feedback.push("Your images were saved to `" + resolveOutPath(imageDestinationFolder) + "`")
 
   //=====================================
