@@ -367,6 +367,10 @@ if (!app.documents.length) {
 } else if (app.activeDocument.activeLayer.name == "Isolation Mode") {
   errors.push("Ai2html is unable to run because the document is in Isolation Mode.");
 
+} else if (app.activeDocument.activeLayer.name == "<Opacity Mask>" && app.activeDocument.layers.length == 1) {
+  // TODO: find a better way to detect this condition (mask can be renamed)
+  errors.push("Ai2html is unable to run because you are editing an Opacity Mask.");
+
 } else {
   doc = app.activeDocument;
   docPath = doc.path + "/";
