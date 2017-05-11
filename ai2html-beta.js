@@ -328,6 +328,7 @@ var pBar, T;
 if (runningInNode()) {
   [ testBoundsIntersection,
     trim,
+    stringToLines,
     contains,
     arraySubtract,
     firstBy,
@@ -451,7 +452,7 @@ function render() {
       type = match ? match[1] : null;
     }
     if (!type) return; // not a settings block
-    entries = thisFrame.contents.split(/[\r\n]+/);
+    entries = stringToLines(thisFrame.contents);
     entries.shift(); // remove header
     if (type == 'settings') {
       documentHasSettingsBlock = true;
@@ -777,7 +778,15 @@ function keys(obj) {
 
 // Remove whitespace from beginning and end of a string
 function trim(s) {
-  return s.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
+  return s.replace(/^[\s\uFEFF\xA0\x03]+|[\s\uFEFF\xA0\x03]+$/g, '');
+}
+
+// splits a string into non-empty lines
+function stringToLines(str) {
+  var empty = /^\s*$/;
+  return filter(str.split(/[\r\n\x03]+/), function(line) {
+    return !empty.test(line);
+  });
 }
 
 function zeroPad(val, digits) {
@@ -929,26 +938,24 @@ function readYamlConfigFile(path) {
   return fileExists(path) ? parseYaml(readTextFile(path)) : null;
 }
 
+function parseKeyValueString(str, o) {
+  var dqRxp = /^"(?:[^"\\]|\\.)*"$/;
+  var parts = str.split(':');
+  var k, v;
+  if (parts.length > 1) {
+    k = trim(parts.shift());
+    v = trim(parts.join(':'));
+    if (dqRxp.test(v)) {
+      v = JSON.parse(v); // use JSON library to parse quoted strings
+    }
+    o[k] = v;
+  }
+}
+
 // Very simple Yaml parsing. Does not implement nested properties and other features
 function parseYaml(str) {
-  var comment = /\s*/
-  var dqRxp = /^"(?:[^"\\]|\\.)*"$/;
-  var o = {};
-  forEach(str.split('\n'), parseLine);
-  return o;
-
-  function parseLine(str) {
-    var parts = str.split(':');
-    var k, v;
-    if (parts.length > 1) {
-      k = trim(parts.shift());
-      v = trim(parts.join(':'));
-      if (dqRxp.test(v)) {
-        v = JSON.parse(v); // use JSON library to parse quoted strings
-      }
-      o[k] = v;
-    }
-  }
+  // TODO: strip comments // var comment = /\s*/
+  return parseKeyValuePairs(str);
 }
 
 // TODO: improve
@@ -2202,20 +2209,17 @@ function findTextFramesToRender(frames, artboardRect) {
   return selected;
 }
 
-// Read in attribute variables from notes field of a text frame
-// (used by getTextFrameCss() to get valign property)
-function parseTextFrameNote(note) {
-  var thisFrameAttributes = {};
-  var rawNotes = note.split("\r");
-  for (var rNo = 0; rNo < rawNotes.length; rNo++) {
-    var rn = rawNotes[rNo];
-    var rnKey   = rn.replace( /^[ \t]*([^ \t:]*)[ \t]*:(.*)$/ , "$1" );
-    var rnValue = rn.replace( /^[ \t]*([^ \t:]*)[ \t]*:(.*)$/ , "$2" );
-    rnKey       = rnKey.replace( /^\s+/ , "" ).replace( /\s+$/ , "" );
-    rnValue     = rnValue.replace( /^\s+/ , "" ).replace( /\s+$/ , "" );
-    thisFrameAttributes[rnKey] = rnValue;
+// Extract key: value pairs from lines of a string
+function parseKeyValuePairs(note) {
+  var o = {};
+  var lines;
+  if (note) {
+    lines = stringToLines(note);
+    for (var i = 0; i < lines.length; i++) {
+      parseKeyValueString(lines[i], o);
+    }
   }
-  return thisFrameAttributes;
+  return o;
 }
 
 function formatCssPct(part, whole) {
@@ -2280,7 +2284,7 @@ function getTextFrameCss(thisFrame, abBox, pgData) {
   var isTransformed = textIsTransformed(thisFrame);
   var aiBounds = isTransformed ? getUntransformedTextBounds(thisFrame) : thisFrame.geometricBounds;
   var htmlBox = convertAiBounds(shiftBounds(aiBounds, -abBox.left, abBox.top));
-  var thisFrameAttributes = parseTextFrameNote(thisFrame.note);
+  var thisFrameAttributes = parseKeyValuePairs(thisFrame.note);
   // Using AI style of first paragraph in TextFrame to get information about
   // tracking, justification and top padding
   // TODO: consider positioning paragraphs separately, to handle pgs with different
@@ -2537,6 +2541,7 @@ function copyArtboardForImageExport(ab, masks) {
       destLayer = doc.layers.add(),
       destGroup = doc.groupItems.add(),
       groupPos, group2, doc2;
+
   destLayer.name = "ArtboardContent";
   destGroup.move(destLayer, ElementPlacement.PLACEATEND);
   forEach(sourceLayers, copyLayer);
@@ -2581,7 +2586,7 @@ function copyArtboardForImageExport(ab, masks) {
     if (item.typename == 'Layer') {
       copyLayer(item);
     } else {
-      copyPageItem(item);
+      copyPageItem(item, destGroup);
     }
   }
 

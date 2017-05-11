@@ -45,6 +45,21 @@ describe('Utility function tests', function() {
     });
   });
 
+  describe('stringToLines()', function() {
+    it('removes empty lines', function() {
+      assert.deepEqual(lib.stringToLines('\n'), []);
+      assert.deepEqual(lib.stringToLines('\n\nb\n '), ['b']);
+    })
+
+    it('splits by \x03 character (end of text)', function() {
+      assert.deepEqual(lib.stringToLines('a\x03b\x03'), ['a', 'b']);
+    });
+
+    it('handles inconsistent newlines', function() {
+      assert.deepEqual(lib.stringToLines('\na\r\n\n\rb\r'), ['a', 'b']);
+    });
+  });
+
   describe('zeroPad()', function() {
     it('left-pads numbers or strings with zeros', function() {
       assert.equal(lib.zeroPad(1, 2), '01');
