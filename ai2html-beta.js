@@ -2345,11 +2345,16 @@ function getTextFrameCss(thisFrame, abBox, pgData) {
   } else {
     styles += "left:" + formatCssPct(htmlL, abBox.width);
   }
-  styles += "width:" + formatCssPct(htmlW, abBox.width);
 
   classes = nameSpace + makeKeyword(thisFrame.layer.name) + " " + nameSpace + "aiAbs";
   if (thisFrame.kind == TextType.POINTTEXT) {
     classes += ' g-aiPointText';
+    // using pixel width with point text, because pct width causes alignment problems -- see issue #63
+    styles += "width:" + roundTo(htmlW, cssPrecision) + 'px;';
+  } else {
+    // area text uses pct width, so width of text boxes will scale
+    // TODO: consider only using pct width with wider text boxes that contain paragraphs of text
+    styles += "width:" + formatCssPct(htmlW, abBox.width);
   }
   return 'class="' + classes + '" style="' + styles + '"';
 }
