@@ -2583,7 +2583,8 @@ function copyArtboardForImageExport(ab, masks) {
     // only remove text frames, for performance
     // TODO: consider checking all item types
     // TODO: consider checking subgroups (recursively)
-    forEach(group.textFrames, removeItemIfHidden);
+    // PROBLEM: causes runtime error "Runtime error on line 662: No such element"
+    // forEach(group.textFrames, removeItemIfHidden);
   }
 
   function removeItemIfHidden(item) {
