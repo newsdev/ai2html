@@ -30,6 +30,12 @@ describe('Utility function tests', function() {
     });
   });
 
+  describe('cleanHtmlTags()', function() {
+    it('converts smart quotes to double quotes', function() {
+      assert.equal(lib.cleanHtmlTags('<a href=”#”>link text</a>'), '<a href="#">link text</a>');
+    });
+  });
+
   describe('formatCss()', function() {
     it('converts an object containing css properties and values to a CSS block', function() {
       var obj = {

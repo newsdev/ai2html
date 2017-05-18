@@ -342,6 +342,7 @@ if (runningInNode()) {
     applyTemplate,
     cleanText,
     findHtmlTag,
+    cleanHtmlTags,
     convertSettingsToYaml,
     parseArtboardName,
     initScriptEnvironment
@@ -1837,12 +1838,13 @@ function importTextFrameParagraphs(textFrame) {
   return data;
 }
 
-function warnAboutHtmlTags(str) {
+function cleanHtmlTags(str) {
   var tagName = findHtmlTag(str);
   // only warn for certain tags
   if (tagName && contains('i,span,b,strong,em'.split(','), tagName.toLowerCase())) {
     warnOnce("Found a <" + tagName + "> tag. Try using Illustrator formatting instead.", tagName);
   }
+  return tagName ? straightenCurlyQuotesInsideAngleBrackets(str) : str;
 }
 
 function generateParagraphHtml(pData, baseStyle, pStyles, cStyles) {
@@ -1862,7 +1864,7 @@ function generateParagraphHtml(pData, baseStyle, pStyles, cStyles) {
   }
   for (var j=0; j<pData.ranges.length; j++) {
     range = pData.ranges[j];
-    warnAboutHtmlTags(range.text);
+    range.text = cleanHtmlTags(range.text);
     diff = objectSubtract(range.cssStyle, pData.cssStyle);
     if (diff) {
       classname = getTextStyleClass(diff, cStyles, 'cstyle');
