@@ -2006,8 +2006,8 @@ function deriveCssStyles(frameData) {
       };
       stylesArr.push(o);
     }
-    // o.count += text.length;
-    o.count++; // each occurence counts equally
+    o.count += text.length;
+    // o.count++; // each occurence counts equally
     return cssStyle;
   }
 }
@@ -2352,7 +2352,8 @@ function getTextFrameCss(thisFrame, abBox, pgData) {
   if (thisFrame.kind == TextType.POINTTEXT) {
     classes += ' g-aiPointText';
     // using pixel width with point text, because pct width causes alignment problems -- see issue #63
-    styles += "width:" + roundTo(htmlW, cssPrecision) + 'px;';
+    // adding extra pixels in case HTML width is slightly less than AI width (affects alignment of right-aligned text)
+    styles += "width:" + roundTo(htmlW + 2, cssPrecision) + 'px;';
   } else {
     // area text uses pct width, so width of text boxes will scale
     // TODO: consider only using pct width with wider text boxes that contain paragraphs of text
