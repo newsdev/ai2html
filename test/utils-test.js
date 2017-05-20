@@ -30,6 +30,12 @@ describe('Utility function tests', function() {
     });
   });
 
+  describe('cleanHtmlTags()', function() {
+    it('converts smart quotes to double quotes', function() {
+      assert.equal(lib.cleanHtmlTags('<a href=”#”>link text</a>'), '<a href="#">link text</a>');
+    });
+  });
+
   describe('formatCss()', function() {
     it('converts an object containing css properties and values to a CSS block', function() {
       var obj = {
@@ -42,6 +48,21 @@ describe('Utility function tests', function() {
   describe('trim()', function() {
     it('removes whitespace from beginning and end of strings', function() {
       assert.equal(lib.trim('  \t\rfoo \n'), 'foo');
+    });
+  });
+
+  describe('stringToLines()', function() {
+    it('removes empty lines', function() {
+      assert.deepEqual(lib.stringToLines('\n'), []);
+      assert.deepEqual(lib.stringToLines('\n\nb\n '), ['b']);
+    })
+
+    it('splits by \x03 character (end of text)', function() {
+      assert.deepEqual(lib.stringToLines('a\x03b\x03'), ['a', 'b']);
+    });
+
+    it('handles inconsistent newlines', function() {
+      assert.deepEqual(lib.stringToLines('\na\r\n\n\rb\r'), ['a', 'b']);
     });
   });
 

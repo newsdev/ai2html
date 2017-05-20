@@ -325,6 +325,7 @@ var pBar, T;
 if (runningInNode()) {
   [ testBoundsIntersection,
     trim,
+    stringToLines,
     contains,
     arraySubtract,
     firstBy,
@@ -338,6 +339,7 @@ if (runningInNode()) {
     applyTemplate,
     cleanText,
     findHtmlTag,
+    cleanHtmlTags,
     convertSettingsToYaml,
     parseArtboardName,
     initScriptEnvironment
@@ -362,6 +364,10 @@ if (!app.documents.length) {
 
 } else if (app.activeDocument.activeLayer.name == "Isolation Mode") {
   errors.push("Ai2html is unable to run because the document is in Isolation Mode.");
+
+} else if (app.activeDocument.activeLayer.name == "<Opacity Mask>" && app.activeDocument.layers.length == 1) {
+  // TODO: find a better way to detect this condition (mask can be renamed)
+  errors.push("Ai2html is unable to run because you are editing an Opacity Mask.");
 
 } else {
   doc = app.activeDocument;
@@ -461,7 +467,7 @@ function render() {
       type = match ? match[1] : null;
     }
     if (!type) return; // not a settings block
-    entries = thisFrame.contents.replace(new RegExp("\x03",'g'), "\r").split(/[\r\n]+/);
+    entries = stringToLines(thisFrame.contents);
     entries.shift(); // remove header
     if (type == 'settings') {
       documentHasSettingsBlock = true;
@@ -795,7 +801,15 @@ function keys(obj) {
 
 // Remove whitespace from beginning and end of a string
 function trim(s) {
-  return s.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
+  return s.replace(/^[\s\uFEFF\xA0\x03]+|[\s\uFEFF\xA0\x03]+$/g, '');
+}
+
+// splits a string into non-empty lines
+function stringToLines(str) {
+  var empty = /^\s*$/;
+  return filter(str.split(/[\r\n\x03]+/), function(line) {
+    return !empty.test(line);
+  });
 }
 
 function zeroPad(val, digits) {
@@ -947,26 +961,24 @@ function readYamlConfigFile(path) {
   return fileExists(path) ? parseYaml(readTextFile(path)) : null;
 }
 
+function parseKeyValueString(str, o) {
+  var dqRxp = /^"(?:[^"\\]|\\.)*"$/;
+  var parts = str.split(':');
+  var k, v;
+  if (parts.length > 1) {
+    k = trim(parts.shift());
+    v = trim(parts.join(':'));
+    if (dqRxp.test(v)) {
+      v = JSON.parse(v); // use JSON library to parse quoted strings
+    }
+    o[k] = v;
+  }
+}
+
 // Very simple Yaml parsing. Does not implement nested properties and other features
 function parseYaml(str) {
-  var comment = /\s*/
-  var dqRxp = /^"(?:[^"\\]|\\.)*"$/;
-  var o = {};
-  forEach(str.split('\n'), parseLine);
-  return o;
-
-  function parseLine(str) {
-    var parts = str.split(':');
-    var k, v;
-    if (parts.length > 1) {
-      k = trim(parts.shift());
-      v = trim(parts.join(':'));
-      if (dqRxp.test(v)) {
-        v = JSON.parse(v); // use JSON library to parse quoted strings
-      }
-      o[k] = v;
-    }
-  }
+  // TODO: strip comments // var comment = /\s*/
+  return parseKeyValuePairs(str);
 }
 
 // TODO: improve
@@ -1846,12 +1858,13 @@ function importTextFrameParagraphs(textFrame) {
   return data;
 }
 
-function warnAboutHtmlTags(str) {
+function cleanHtmlTags(str) {
   var tagName = findHtmlTag(str);
   // only warn for certain tags
   if (tagName && contains('i,span,b,strong,em'.split(','), tagName.toLowerCase())) {
     warnOnce("Found a <" + tagName + "> tag. Try using Illustrator formatting instead.", tagName);
   }
+  return tagName ? straightenCurlyQuotesInsideAngleBrackets(str) : str;
 }
 
 function generateParagraphHtml(pData, baseStyle, pStyles, cStyles) {
@@ -1871,7 +1884,7 @@ function generateParagraphHtml(pData, baseStyle, pStyles, cStyles) {
   }
   for (var j=0; j<pData.ranges.length; j++) {
     range = pData.ranges[j];
-    warnAboutHtmlTags(range.text);
+    range.text = cleanHtmlTags(range.text);
     diff = objectSubtract(range.cssStyle, pData.cssStyle);
     if (diff) {
       classname = getTextStyleClass(diff, cStyles, 'cstyle');
@@ -2013,8 +2026,8 @@ function deriveCssStyles(frameData) {
       };
       stylesArr.push(o);
     }
-    // o.count += text.length;
-    o.count++; // each occurence counts equally
+    o.count += text.length;
+    // o.count++; // each occurence counts equally
     return cssStyle;
   }
 }
@@ -2222,20 +2235,17 @@ function findTextFramesToRender(frames, artboardRect) {
   return selected;
 }
 
-// Read in attribute variables from notes field of a text frame
-// (used by getTextFrameCss() to get valign property)
-function parseTextFrameNote(note) {
-  var thisFrameAttributes = {};
-  var rawNotes = note.split("\r");
-  for (var rNo = 0; rNo < rawNotes.length; rNo++) {
-    var rn = rawNotes[rNo];
-    var rnKey   = rn.replace( /^[ \t]*([^ \t:]*)[ \t]*:(.*)$/ , "$1" );
-    var rnValue = rn.replace( /^[ \t]*([^ \t:]*)[ \t]*:(.*)$/ , "$2" );
-    rnKey       = rnKey.replace( /^\s+/ , "" ).replace( /\s+$/ , "" );
-    rnValue     = rnValue.replace( /^\s+/ , "" ).replace( /\s+$/ , "" );
-    thisFrameAttributes[rnKey] = rnValue;
+// Extract key: value pairs from lines of a string
+function parseKeyValuePairs(note) {
+  var o = {};
+  var lines;
+  if (note) {
+    lines = stringToLines(note);
+    for (var i = 0; i < lines.length; i++) {
+      parseKeyValueString(lines[i], o);
+    }
   }
-  return thisFrameAttributes;
+  return o;
 }
 
 function formatCssPct(part, whole) {
@@ -2300,7 +2310,7 @@ function getTextFrameCss(thisFrame, abBox, pgData) {
   var isTransformed = textIsTransformed(thisFrame);
   var aiBounds = isTransformed ? getUntransformedTextBounds(thisFrame) : thisFrame.geometricBounds;
   var htmlBox = convertAiBounds(shiftBounds(aiBounds, -abBox.left, abBox.top));
-  var thisFrameAttributes = parseTextFrameNote(thisFrame.note);
+  var thisFrameAttributes = parseKeyValuePairs(thisFrame.note);
   // Using AI style of first paragraph in TextFrame to get information about
   // tracking, justification and top padding
   // TODO: consider positioning paragraphs separately, to handle pgs with different
@@ -2357,11 +2367,17 @@ function getTextFrameCss(thisFrame, abBox, pgData) {
   } else {
     styles += "left:" + formatCssPct(htmlL, abBox.width);
   }
-  styles += "width:" + formatCssPct(htmlW, abBox.width);
 
   classes = nameSpace + makeKeyword(thisFrame.layer.name) + " " + nameSpace + "aiAbs";
   if (thisFrame.kind == TextType.POINTTEXT) {
     classes += ' g-aiPointText';
+    // using pixel width with point text, because pct width causes alignment problems -- see issue #63
+    // adding extra pixels in case HTML width is slightly less than AI width (affects alignment of right-aligned text)
+    styles += "width:" + roundTo(htmlW + 2, cssPrecision) + 'px;';
+  } else {
+    // area text uses pct width, so width of text boxes will scale
+    // TODO: consider only using pct width with wider text boxes that contain paragraphs of text
+    styles += "width:" + formatCssPct(htmlW, abBox.width);
   }
   return 'class="' + classes + '" style="' + styles + '"';
 }
@@ -2557,6 +2573,7 @@ function copyArtboardForImageExport(ab, masks) {
       destLayer = doc.layers.add(),
       destGroup = doc.groupItems.add(),
       groupPos, group2, doc2;
+
   destLayer.name = "ArtboardContent";
   destGroup.move(destLayer, ElementPlacement.PLACEATEND);
   forEach(sourceLayers, copyLayer);
@@ -2589,7 +2606,8 @@ function copyArtboardForImageExport(ab, masks) {
     // only remove text frames, for performance
     // TODO: consider checking all item types
     // TODO: consider checking subgroups (recursively)
-    forEach(group.textFrames, removeItemIfHidden);
+    // FIX: convert group.textFrames to array to avoid runtime error "No such element" in forEach()
+    forEach(toArray(group.textFrames), removeItemIfHidden);
   }
 
   function removeItemIfHidden(item) {
@@ -2601,7 +2619,7 @@ function copyArtboardForImageExport(ab, masks) {
     if (item.typename == 'Layer') {
       copyLayer(item);
     } else {
-      copyPageItem(item);
+      copyPageItem(item, destGroup);
     }
   }
 
