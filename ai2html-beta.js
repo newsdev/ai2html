@@ -644,6 +644,7 @@ function render() {
 
   if ((scriptEnvironment=="nyt" && previewProjectType=="ai2html") ||
       (scriptEnvironment!="nyt" && isTrue(docSettings.create_config_file))) {
+    // TODO: switch to this?  (scriptEnvironment!="nyt" && docSettings.config_file_path)) {
     var yamlPath = docPath + docSettings.config_file_path,
         yamlStr = generateYamlFileContent(breakpoints, docSettings);
     checkForOutputFolder(yamlPath.replace(/[^\/]+$/, ""), "configFileFolder");
@@ -1240,17 +1241,12 @@ function parseSettingsEntries(entries, docSettings) {
     if (hashKey=="output" && hashValue=="one-file-per-artboard")      { hashValue="multiple-files"; }
     if (hashKey=="output" && hashValue=="preview-one-file")           { hashValue="one-file"; }
     if (hashKey=="output" && hashValue=="preview-multiple-files")     { hashValue="multiple-files"; }
-    // handle stuff that goes in config file and other exceptions, like array values
-    if ((hashKey in ai2htmlBaseSettings) && ai2htmlBaseSettings[hashKey].includeInConfigFile) {
-      hashValue = (hashValue.replace( /(["])/g , '\\$1' )); // add stuff to ["] for chars that need to be esc in yml file
-    } else {
-      if ((hashKey in ai2htmlBaseSettings) && ai2htmlBaseSettings[hashKey].inputType=="array") {
-        hashValue = hashValue.replace( /[\s,]+/g , ',' );
-        if (hashValue.length === 0) {
-          hashValue = []; // have to do this because .split always returns an array of length at least 1 even if it's splitting an empty string
-        } else {
-          hashValue = hashValue.split(",");
-        }
+    if ((hashKey in ai2htmlBaseSettings) && ai2htmlBaseSettings[hashKey].inputType=="array") {
+      hashValue = hashValue.replace( /[\s,]+/g , ',' );
+      if (hashValue.length === 0) {
+        hashValue = []; // have to do this because .split always returns an array of length at least 1 even if it's splitting an empty string
+      } else {
+        hashValue = hashValue.split(",");
       }
     }
     docSettings[hashKey] = hashValue;
@@ -2734,7 +2730,7 @@ function generatePageCss(containerId, settings) {
   var t2 = '\t\t';
   var t3 = '\t\t\t';
 
-  if (settings.max_width !== "") {
+  if (!!settings.max_width) {
     css += t2 + "#" + containerId + " {\r";
     css += t3 + "max-width:" + settings.max_width + "px;\r";
     css += t2 + "}\r";
@@ -2777,7 +2773,7 @@ function generateYamlFileContent(breakpoints, settings) {
   lines.push("project_type: " + previewProjectType);
   lines.push("tags: ai2html");
   lines.push("min_width: " + breakpoints[0].upperLimit); // TODO: ask why upperLimit
-  if (settings.max_width !== "") {
+  if (!!settings.max_width) {
     lines.push("max_width: " + settings.max_width);
   } else if (settings.responsiveness != "fixed" && scriptEnvironment == "nyt") {
     lines.push("max_width: " + breakpoints[breakpoints.length-1].upperLimit);
