@@ -1,5 +1,5 @@
 // ai2html.js
-var scriptVersion     = "0.64";
+var scriptVersion     = "0.61";
 // var scriptEnvironment = "nyt";
 var scriptEnvironment = "";
 
@@ -496,7 +496,7 @@ if (scriptEnvironment=="nyt") {
         jpg_quality: {defaultValue: 60, includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "integer", possibleValues: "0 to 100", notes: ""},
         center_html_output: {defaultValue: "true", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: "Adds “margin:0 auto;” to the div containing the ai2html output."},
         use_2x_images_if_possible: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
-        use_lazy_loader: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
+        use_lazy_loader: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
         include_resizer_css_js: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
         include_resizer_classes: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
         include_resizer_widths: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
@@ -577,60 +577,6 @@ if (scriptEnvironment=="nyt") {
         scoop_slug: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
         scoop_external_edit_key: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""}
 	};
-
-	/*----------  NGM START  ----------*/
-	var ai2htmlBaseSettings = {
-        ai2html_environment: {defaultValue: scriptEnvironment, includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
-        settings_version: {defaultValue: scriptVersion, includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
-        create_promo_image: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
-        image_format: {defaultValue: ["png"], includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "array", possibleValues: "jpg, png, png24", notes: "Images will be generated in mulitple formats if multiple formats are listed, separated by commas. The first format will be used in the html. Sometimes this is useful to compare which format will have a smaller file size."},
-        write_image_files: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: "Set this to “no” to skip writing the image files. Generally only use this after you have run the script once with this setting set to “yes.”"},
-        responsiveness: {defaultValue: "fixed", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "fixed, dynamic", notes: "Dynamic responsiveness means ai graphics will scale to fill the container they are placed in."},
-        max_width: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "integer", possibleValues: "", notes: "Blank or any positive number in pixels, but do not write “px” - blank means artboards will set max size, the max width is not included in the html stub, instead it is written to the config file so that the max width can be applied to the template’s container."},
-        output: {defaultValue: "one-file", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "one-file, multiple-files", notes: "One html file containing all the artboards or a separate html file for each artboard."},
-        project_name: {defaultValue: "graphic", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: "Use this to set a custom project name. The project name is being used in output filenames, class names, etc."},
-        html_output_path: {defaultValue: "/ai2html-output/", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "folderPath", possibleValues: "", notes: "Allows user to change folder to write html files, path should be written relative to ai file location. This is ignored if the project_type in the yml is ai2html."},
-        html_output_extension: {defaultValue: ".html", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "fileExtension", possibleValues: "", notes: "This is ignored if the project_type in the yml is ai2html."},
-        image_output_path: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "folderPath", possibleValues: "", notes: "This is where the image files get written to locally and should be written as if the html_output is the starting point."},
-        image_source_path: {defaultValue: null, includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "folderPath", possibleValues: "", notes: "Use this setting to specify from where the images are being loaded from the HTML file. Defaults to image_output_path"},
-        create_config_file: {defaultValue: "false", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "trueFalse", possibleValues: "", notes: "This is ignored in env=nyt."},
-        config_file_path: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "filePath", possibleValues: "", notes: "This only gets used to write the config file. It’s not used in the nyt mode to read the config.yml. Path should written relative to the ai file location."},
-        local_preview_template: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "filePath", possibleValues: "", notes: ""},
-        png_transparent: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
-        png_number_of_colors: {defaultValue: 256, includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "integer", possibleValues: "2 to 256", notes: ""},
-        jpg_quality: {defaultValue: 80, includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "integer", possibleValues: "0 to 100", notes: ""},
-        center_html_output: {defaultValue: "true", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: "Adds “margin:0 auto;” to the div containing the ai2html output."},
-        use_2x_images_if_possible: {defaultValue: "always", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
-        use_lazy_loader: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
-        include_resizer_css_js: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
-        include_resizer_classes: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
-        include_resizer_widths: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: "If set to “yes”, ai2html adds data-min-width and data-max-width attributes to each artboard"},
-        include_resizer_script: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
-        svg_embed_images: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
-        render_rotated_skewed_text_as: {defaultValue: "html", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "image, html", notes: ""},
-        show_completion_dialog_box: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: "Set this to “no” if you don't want to see the dialog box confirming completion of the script."},
-        clickable_link: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: "If you put a url in this field, an <a> tag will be added, wrapping around the output and pointing to that url."},
-        testing_mode: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
-        last_updated_text: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: ""},
-        headline: {defaultValue: "Ai Graphic Headline", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: ""},
-        leadin: {defaultValue: "Introductory text here.", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: ""},
-        summary: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: true, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: "Summary field for Scoop assets"},
-        notes: {defaultValue: "Notes: Text goes here.", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: ""},
-        sources: {defaultValue: "Source: Name goes here.", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: ""},
-        credit: {defaultValue: "NG STAFF", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: ""},
-        page_template: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
-        publish_system: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
-        environment: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
-        show_in_compatible_apps: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: true, inputType: "yesNo", possibleValues: "", notes: ""},
-        display_for_promotion_only: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "trueFalse", possibleValues: "", notes: ""},
-        constrain_width_to_text_column: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "trueFalse", possibleValues: "", notes: ""},
-        scoop_publish_fields: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "trueFalse", possibleValues: "", notes: ""},
-        scoop_asset_id: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
-        scoop_username: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
-        scoop_slug: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
-        scoop_external_edit_key: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""}
-	};
-	/*----------  NGM END  ----------*/
 };
 // End of ai2htmlBaseSettings block copied from Google Spreadsheet.
 
@@ -656,22 +602,17 @@ var fonts = [
 	{"aifont":"NYTFranklin-Light","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"300","style":""},
 	{"aifont":"NYTFranklin-Medium","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"500","style":""},
 	{"aifont":"NYTFranklin-SemiBold","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"600","style":""},
-	{"aifont":"NYTFranklin-Semibold","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"600","style":""},
 	{"aifont":"NYTFranklinSemiBold-Regular","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"600","style":""},
-	{"aifont":"NYTFranklin-SemiboldItalic","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"600","style":"italic"},
 	{"aifont":"NYTFranklin-Bold","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"700","style":""},
 	{"aifont":"NYTFranklin-LightItalic","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"300","style":"italic"},
 	{"aifont":"NYTFranklin-MediumItalic","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"500","style":"italic"},
 	{"aifont":"NYTFranklin-BoldItalic","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"700","style":"italic"},
-	{"aifont":"NYTFranklin-ExtraBold","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"800","style":""},
-	{"aifont":"NYTFranklin-ExtraBoldItalic","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"800","style":"italic"},
 	{"aifont":"NYTFranklin-Headline","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"bold","style":""},
 	{"aifont":"NYTFranklin-HeadlineItalic","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"bold","style":"italic"},
 	{"aifont":"NYTCheltenham-ExtraLight","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"200","style":""},
 	{"aifont":"NYTCheltenhamExtLt-Regular","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"200","style":""},
 	{"aifont":"NYTCheltenham-Light","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"300","style":""},
 	{"aifont":"NYTCheltenhamLt-Regular","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"300","style":""},
-	{"aifont":"NYTCheltenham-LightSC","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"300","style":""},
 	{"aifont":"NYTCheltenham-Book","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"400","style":""},
 	{"aifont":"NYTCheltenhamBook-Regular","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"400","style":""},
 	{"aifont":"NYTCheltenham-Wide","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"","style":""},
@@ -690,12 +631,6 @@ var fonts = [
 	{"aifont":"NYTCheltenham-BoldItalic","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"700","style":"italic"},
 	{"aifont":"NYTCheltenham-ExtraBoldItal","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"bold","style":"italic"},
 	{"aifont":"NYTCheltenham-ExtraBoldItalic","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"bold","style":"italic"},
-	{"aifont":"NYTCheltenhamSH-Regular","family":"nyt-cheltenham-sh,nyt-cheltenham,georgia,'times new roman',times,serif","weight":"400","style":""},
-	{"aifont":"NYTCheltenhamSH-Italic","family":"nyt-cheltenham-sh,nyt-cheltenham,georgia,'times new roman',times,serif","weight":"400","style":"italic"},
-	{"aifont":"NYTCheltenhamSH-Bold","family":"nyt-cheltenham-sh,nyt-cheltenham,georgia,'times new roman',times,serif","weight":"700","style":""},
-	{"aifont":"NYTCheltenhamSH-BoldItalic","family":"nyt-cheltenham-sh,nyt-cheltenham,georgia,'times new roman',times,serif","weight":"700","style":"italic"},
-	{"aifont":"NYTCheltenhamWide-Regular","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"500","style":""},
-	{"aifont":"NYTCheltenhamWide-Italic","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"500","style":"italic"},
 	{"aifont":"NYTKarnakText-Regular","family":"nyt-karnak-display-130124,georgia,'times new roman',times,serif","weight":"400","style":""},
 	{"aifont":"NYTKarnakDisplay-Regular","family":"nyt-karnak-display-130124,georgia,'times new roman',times,serif","weight":"400","style":""},
 	{"aifont":"NYTStymieLight-Regular","family":"nyt-stymie,arial,helvetica,sans-serif","weight":"300","style":""},
@@ -717,256 +652,6 @@ var fonts = [
 	{"aifont":"NYTMagSans-Regular","family":"'nyt-mag-sans',arial,helvetica,sans-serif","weight":"500","style":""},
 	{"aifont":"NYTMagSans-Bold","family":"'nyt-mag-sans',arial,helvetica,sans-serif","weight":"700","style":""}
 ];
-
-/*----------  NGM START  ----------*/
-var fonts = [
-	// Legacy defaults
-	// {"aifont":"Arial","family":"'Pragmatica-web',helvetica,arial,sans-serif","weight":"","style":""},
-	// {"aifont":"Arial-BoldMT","family":"'Pragmatica-web',helvetica,arial,sans-serif","weight":"bold","style":""},
-	// {"aifont":"Arial-ItalicMT","family":"'Pragmatica-web',helvetica,arial,sans-serif","weight":"","style":"italic"},
-	// {"aifont":"Arial-BoldItalicMT","family":"'Pragmatica-web',helvetica,arial,sans-serif","weight":"bold","style":"italic"},
-	// {"aifont":"Georgia","family":"Georgia,serif","weight":"","style":""},
-	// {"aifont":"Georgia-Bold","family":"Georgia,serif","weight":"bold","style":""},
-	// {"aifont":"Georgia-Italic","family":"Georgia,serif","weight":"","style":"italic"},
-	// {"aifont":"Georgia-BoldItalic","family":"Georgia,serif","weight":"bold","style":"italic"},
-	{"aifont":"ArialMT","family":"arial,helvetica,sans-serif","weight":"","style":""},
-	{"aifont":"Arial-BoldMT","family":"arial,helvetica,sans-serif","weight":"bold","style":""},
-	{"aifont":"Arial-ItalicMT","family":"arial,helvetica,sans-serif","weight":"","style":"italic"},
-	{"aifont":"Arial-BoldItalicMT","family":"arial,helvetica,sans-serif","weight":"bold","style":"italic"},
-	{"aifont":"Georgia","family":"georgia,'times new roman',times,serif","weight":"","style":""},
-	{"aifont":"Georgia-Bold","family":"georgia,'times new roman',times,serif","weight":"bold","style":""},
-	{"aifont":"Georgia-Italic","family":"georgia,'times new roman',times,serif","weight":"","style":"italic"},
-	{"aifont":"Georgia-BoldItalic","family":"georgia,'times new roman',times,serif","weight":"bold","style":"italic"},
-	
-	// site fonts
-	{"aifont":"NHaasGroteskDSPro-55Rg","family":"'Haas', 'Franklin Gothic Medium', 'Franklin Gothic', 'ITC Franklin Gothic', Arial, sans-serif;","weight":"400","style":""},
-	{"aifont":"NHaasGroteskDSPro-56It","family":"'Haas', 'Franklin Gothic Medium', 'Franklin Gothic', 'ITC Franklin Gothic', Arial, sans-serif;","weight":"400","style":"italic"},
-	{"aifont":"NHaasGroteskDSPro-65Md","family":"'Haas', 'Franklin Gothic Medium', 'Franklin Gothic', 'ITC Franklin Gothic', Arial, sans-serif;","weight":"600","style":""},
-	{"aifont":"NHaasGroteskDSPro-66MdIt","family":"'Haas', 'Franklin Gothic Medium', 'Franklin Gothic', 'ITC Franklin Gothic', Arial, sans-serif;","weight":"600","style":"italic"},
-	{"aifont":"Verlag-Book","family":"'HCo Verlag', 'CenturyGothic', AppleGothic, Gill Sans, Gill Sans MT, sans-serif;","weight":"400","style":""},
-	{"aifont":"Verlag-Bold","family":"'HCo Verlag', 'CenturyGothic', AppleGothic, Gill Sans, Gill Sans MT, sans-serif;","weight":"700","style":""},
-
-	// map fonts
-	{"aifont":"NatGeoBumstead","family":"'Bumstead',Georgia,serif","weight":"","style":"", "face": 
-		"\n\t\t@font-face {" + 
-		"\n\t\t\tfont-family: 'Bumstead';" + 
-		"\n\t\t\tsrc: url('http://fonts.ngeo.com/maps/1-0-0/bumstead.woff2') format('woff2')," +
-		"\n\t\t\turl('http://fonts.ngeo.com/maps/1-0-0/bumstead.woff') format('woff');" +
-		"\n\t\t}"
-	},
-	{"aifont":"NatGeoBumstead-Heavy","family":"'BumsteadHeavy',Georgia,serif","weight":"","style":"", "face":
-		"\n\t\t@font-face {" + 
-		"\n\t\t\tfont-family: 'BumsteadHeavy';" + 
-		"\n\t\t\tsrc: url('http://fonts.ngeo.com/maps/1-0-0/bumstead-heavy.woff2') format('woff2')," +
-		"\n\t\t\turl('http://fonts.ngeo.com/maps/1-0-0/bumstead-heavy.woff') format('woff');" +
-		"\n\t\t}"
-	},
-	{"aifont":"NatGeoCaption","family":"'Caption',Georgia,serif","weight":"","style":"", "face":
-		"\n\t\t@font-face {" + 
-		"\n\t\t\tfont-family: 'Caption';" + 
-		"\n\t\t\tsrc: url('http://fonts.ngeo.com/maps/1-0-0/caption.woff2') format('woff2')," +
-		"\n\t\t\turl('http://fonts.ngeo.com/maps/1-0-0/caption.woff') format('woff');" +
-		"\n\t\t}"
-	},
-	{"aifont":"NatGeoCaption-Heavy","family":"'CaptionHeavy',Georgia,serif","weight":"","style":"", "face":
-		"\n\t\t@font-face {" + 
-		"\n\t\t\tfont-family: 'CaptionHeavy';" + 
-		"\n\t\t\tsrc: url('http://fonts.ngeo.com/maps/1-0-0/caption-heavy.woff2') format('woff2')," +
-		"\n\t\t\turl('http://fonts.ngeo.com/maps/1-0-0/caption-heavy.woff') format('woff');" +
-		"\n\t\t}"
-	},
-	{"aifont":"NatGeoChamberlin","family":"'Chamberlin',Georgia,serif","weight":"","style":"", "face":
-		"\n\t\t@font-face {" + 
-		"\n\t\t\tfont-family: 'Chamberlin';" + 
-		"\n\t\t\tsrc: url('http://fonts.ngeo.com/maps/1-0-0/chamberlin.woff2') format('woff2')," +
-		"\n\t\t\turl('http://fonts.ngeo.com/maps/1-0-0/chamberlin.woff') format('woff');" +
-		"\n\t\t}"
-	},
-	{"aifont":"NatGeoDarley-Heavy","family":"'DarleyHeavy',Georgia,serif","weight":"","style":"", "face":
-		"\n\t\t@font-face {" + 
-		"\n\t\t\tfont-family: 'DarleyHeavy';" + 
-		"\n\t\t\tsrc: url('http://fonts.ngeo.com/maps/1-0-0/darley-heavy.woff2') format('woff2')," +
-		"\n\t\t\turl('http://fonts.ngeo.com/maps/1-0-0/darley-heavy.woff') format('woff');" +
-		"\n\t\t}"
-	},
-	{"aifont":"NatGeoDarley-Light","family":"'DarleyLight',Georgia,serif","weight":"","style":"", "face":
-		"\n\t\t@font-face {" + 
-		"\n\t\t\tfont-family: 'DarleyLight';" + 
-		"\n\t\t\tsrc: url('http://fonts.ngeo.com/maps/1-0-0/darley-light.woff2') format('woff2')," +
-		"\n\t\t\turl('http://fonts.ngeo.com/maps/1-0-0/darley-light.woff') format('woff');" +
-		"\n\t\t}"
-	},
-	{"aifont":"NatGeoDarley","family":"'Darley',Georgia,serif","weight":"","style":"", "face":
-		"\n\t\t@font-face {" + 
-		"\n\t\t\tfont-family: 'Darley';" + 
-		"\n\t\t\tsrc: url('http://fonts.ngeo.com/maps/1-0-0/darley.woff2') format('woff2')," +
-		"\n\t\t\turl('http://fonts.ngeo.com/maps/1-0-0/darley.woff') format('woff');" +
-		"\n\t\t}"
-	},
-	{"aifont":"NatGeoGrazzini","family":"'Grazzini',Georgia,serif","weight":"","style":"", "face":
-		"\n\t\t@font-face {" + 
-		"\n\t\t\tfont-family: 'Grazzini';" + 
-		"\n\t\t\tsrc: url('http://fonts.ngeo.com/maps/1-0-0/grazzini.woff2') format('woff2')," +
-		"\n\t\t\turl('http://fonts.ngeo.com/maps/1-0-0/grazzini.woff') format('woff');" +
-		"\n\t\t}"
-	},
-	{"aifont":"NatGeoHart","family":"'Hart',Georgia,serif","weight":"","style":"", "face":
-		"\n\t\t@font-face {" + 
-		"\n\t\t\tfont-family: 'Hart';" + 
-		"\n\t\t\tsrc: url('http://fonts.ngeo.com/maps/1-0-0/hart.woff2') format('woff2')," +
-		"\n\t\t\turl('http://fonts.ngeo.com/maps/1-0-0/hart.woff') format('woff');" +
-		"\n\t\t}"
-	},
-	{"aifont":"NatGeoHoldstock","family":"'Holdstock',Georgia,serif","weight":"","style":"", "face":
-		"\n\t\t@font-face {" + 
-		"\n\t\t\tfont-family: 'Holdstock';" + 
-		"\n\t\t\tsrc: url('http://fonts.ngeo.com/maps/1-0-0/holdstock.woff2') format('woff2')," +
-		"\n\t\t\turl('http://fonts.ngeo.com/maps/1-0-0/holdstock.woff') format('woff');" +
-		"\n\t\t}"
-	},
-	{"aifont":"NatGeoJaeger","family":"'Jaeger',Georgia,serif","weight":"","style":"", "face":
-		"\n\t\t@font-face {" + 
-		"\n\t\t\tfont-family: 'Jaeger';" + 
-		"\n\t\t\tsrc: url('http://fonts.ngeo.com/maps/1-0-0/jaeger.woff2') format('woff2')," +
-		"\n\t\t\turl('http://fonts.ngeo.com/maps/1-0-0/jaeger.woff') format('woff');" +
-		"\n\t\t}"
-	},
-	{"aifont":"NatGeoLudwig","family":"'Ludwig',Georgia,serif","weight":"","style":"", "face":
-		"\n\t\t@font-face {" + 
-		"\n\t\t\tfont-family: 'Ludwig';" + 
-		"\n\t\t\tsrc: url('http://fonts.ngeo.com/maps/1-0-0/ludwig.woff2') format('woff2')," +
-		"\n\t\t\turl('http://fonts.ngeo.com/maps/1-0-0/ludwig.woff') format('woff');" +
-		"\n\t\t}"
-	},
-	{"aifont":"NatGeoMcAleer-Heavy","family":"'McaleerHeavy',Georgia,serif","weight":"","style":"", "face":
-		"\n\t\t@font-face {" + 
-		"\n\t\t\tfont-family: 'McaleerHeavy';" + 
-		"\n\t\t\tsrc: url('http://fonts.ngeo.com/maps/1-0-0/mcaleer-heavy..woff2') format('woff2')," +
-		"\n\t\t\turl('http://fonts.ngeo.com/maps/1-0-0/mcaleer-heavy..woff') format('woff');" +
-		"\n\t\t}"
-	},	
-	{"aifont":"NatGeoMcAleer-Light","family":"'McaleerLight',Georgia,serif","weight":"","style":"", "face":
-		"\n\t\t@font-face {" + 
-		"\n\t\t\tfont-family: 'McaleerLight';" + 
-		"\n\t\t\tsrc: url('http://fonts.ngeo.com/maps/1-0-0/mcaleer-light.woff2') format('woff2')," +
-		"\n\t\t\turl('http://fonts.ngeo.com/maps/1-0-0/mcaleer-light.woff') format('woff');" +
-		"\n\t\t}"
-	},
-	{"aifont":"NatGeoMcAleer","family":"'Mcaleer',Georgia,serif","weight":"","style":"", "face":
-		"\n\t\t@font-face {" + 
-		"\n\t\t\tfont-family: 'Mcaleer';" + 
-		"\n\t\t\tsrc: url('http://fonts.ngeo.com/maps/1-0-0/mcaleer.woff2') format('woff2')," +
-		"\n\t\t\turl('http://fonts.ngeo.com/maps/1-0-0/mcaleer.woff') format('woff');" +
-		"\n\t\t}"
-	},		
-	{"aifont":"NatGeoNeoMolinari-Heavy","family":"'MolinariHeavy',Georgia,serif","weight":"","style":"", "face":
-		"\n\t\t@font-face {" + 
-		"\n\t\t\tfont-family: 'MolinariHeavy';" + 
-		"\n\t\t\tsrc: url('http://fonts.ngeo.com/maps/1-0-0/molinari-heavy.woff2') format('woff2')," +
-		"\n\t\t\turl('http://fonts.ngeo.com/maps/1-0-0/molinari-heavy.woff') format('woff');" +
-		"\n\t\t}"
-	},
-	{"aifont":"NatGeoNeoMolinari","family":"'Molinari',Georgia,serif","weight":"","style":"", "face":
-		"\n\t\t@font-face {" + 
-		"\n\t\t\tfont-family: 'Molinari';" + 
-		"\n\t\t\tsrc: url('http://fonts.ngeo.com/maps/1-0-0/molinari.woff2') format('woff2')," +
-		"\n\t\t\turl('http://fonts.ngeo.com/maps/1-0-0/molinari.woff') format('woff');" +
-		"\n\t\t}"
-	},
-	{"aifont":"NatGeoNeoGothic-Heavy","family":"'NeogothicHeavy',Georgia,serif","weight":"","style":"", "face":
-		"\n\t\t@font-face {" + 
-		"\n\t\t\tfont-family: 'NeogothicHeavy';" + 
-		"\n\t\t\tsrc: url('http://fonts.ngeo.com/maps/1-0-0/neogothic-heavy.woff2') format('woff2')," +
-		"\n\t\t\turl('http://fonts.ngeo.com/maps/1-0-0/neogothic-heavy.woff') format('woff');" +
-		"\n\t\t}"
-	},
-	{"aifont":"NatGeoNeoGothic-Italic","family":"'NeogothicItalic',Georgia,serif","weight":"","style":"", "face":
-		"\n\t\t@font-face {" + 
-		"\n\t\t\tfont-family: 'NeogothicItalic';" + 
-		"\n\t\t\tsrc: url('http://fonts.ngeo.com/maps/1-0-0/neogothic-italic.woff2') format('woff2')," +
-		"\n\t\t\turl('http://fonts.ngeo.com/maps/1-0-0/neogothic-italic.woff') format('woff');" +
-		"\n\t\t}"
-	},
-	{"aifont":"NatGeoNeoGothic","family":"'Neogothic',Georgia,serif","weight":"","style":"", "face":
-		"\n\t\t@font-face {" + 
-		"\n\t\t\tfont-family: 'Neogothic';" + 
-		"\n\t\t\tsrc: url('http://fonts.ngeo.com/maps/1-0-0/neogothic.woff2') format('woff2')," +
-		"\n\t\t\turl('http://fonts.ngeo.com/maps/1-0-0/neogothic.woff') format('woff');" +
-		"\n\t\t}"
-	},
-	{"aifont":"NatGeoPeele-Italic","family":"'PeeleItalic',Georgia,serif","weight":"","style":"", "face":
-		"\n\t\t@font-face {" + 
-		"\n\t\t\tfont-family: 'PeeleItalic';" + 
-		"\n\t\t\tsrc: url('http://fonts.ngeo.com/maps/1-0-0/peele-italic.woff2') format('woff2')," +
-		"\n\t\t\turl('http://fonts.ngeo.com/maps/1-0-0/peele-italic.woff') format('woff');" +
-		"\n\t\t}"
-	},
-	{"aifont":"NatGeoPeele-Light","family":"'PeeleLight',Georgia,serif","weight":"","style":"", "face":
-		"\n\t\t@font-face {" + 
-		"\n\t\t\tfont-family: 'PeeleLight';" + 
-		"\n\t\t\tsrc: url('http://fonts.ngeo.com/maps/1-0-0/peele-light.woff2') format('woff2')," +
-		"\n\t\t\turl('http://fonts.ngeo.com/maps/1-0-0/peele-light.woff') format('woff');" +
-		"\n\t\t}"
-	},
-	{"aifont":"NatGeoPeele-LightItalic","family":"'PeeleLightItalic',Georgia,serif","weight":"","style":"", "face":
-		"\n\t\t@font-face {" + 
-		"\n\t\t\tfont-family: 'PeeleLightItalic';" + 
-		"\n\t\t\tsrc: url('http://fonts.ngeo.com/maps/1-0-0/peele-lightitalic.woff2') format('woff2')," +
-		"\n\t\t\turl('http://fonts.ngeo.com/maps/1-0-0/peele-lightitalic.woff') format('woff');" +
-		"\n\t\t}"
-	},
-	{"aifont":"NatGeoPeele","family":"'Peele',Georgia,serif","weight":"","style":"", "face":
-		"\n\t\t@font-face {" + 
-		"\n\t\t\tfont-family: 'Peele';" + 
-		"\n\t\t\tsrc: url('http://fonts.ngeo.com/maps/1-0-0/peele.woff2') format('woff2')," +
-		"\n\t\t\turl('http://fonts.ngeo.com/maps/1-0-0/peele.woff') format('woff');" +
-		"\n\t\t}"
-	},
-	{"aifont":"NatGeoRiddiford-Heavy","family":"'RiddifordHeavy',Georgia,serif","weight":"","style":"", "face":
-		"\n\t\t@font-face {" + 
-		"\n\t\t\tfont-family: 'RiddifordHeavy';" + 
-		"\n\t\t\tsrc: url('http://fonts.ngeo.com/maps/1-0-0/riddiford-heavy.woff2') format('woff2')," +
-		"\n\t\t\turl('http://fonts.ngeo.com/maps/1-0-0/riddiford-heavy.woff') format('woff');" +
-		"\n\t\t}"
-	},
-	{"aifont":"NatGeoRiddiford-HeavyOpen","family":"'RiddifordHeavyOpen',Georgia,serif","weight":"","style":"", "face":
-		"\n\t\t@font-face {" + 
-		"\n\t\t\tfont-family: 'RiddifordHeavyOpen';" + 
-		"\n\t\t\tsrc: url('http://fonts.ngeo.com/maps/1-0-0/riddiford-heavyopen.woff2') format('woff2')," +
-		"\n\t\t\turl('http://fonts.ngeo.com/maps/1-0-0/riddiford-heavyopen.woff') format('woff');" +
-		"\n\t\t}"
-	},
-	{"aifont":"NatGeoRiddiford-Ultra","family":"'RiddifordUltra',Georgia,serif","weight":"","style":"", "face":
-		"\n\t\t@font-face {" + 
-		"\n\t\t\tfont-family: 'RiddifordUltra';" + 
-		"\n\t\t\tsrc: url('http://fonts.ngeo.com/maps/1-0-0/riddiford-ultra.woff2') format('woff2')," +
-		"\n\t\t\turl('http://fonts.ngeo.com/maps/1-0-0/riddiford-ultra.woff') format('woff');" +
-		"\n\t\t}"
-	},
-	{"aifont":"NatGeoRiddiford","family":"'Riddiford',Georgia,serif","weight":"","style":"", "face":
-		"\n\t\t@font-face {" + 
-		"\n\t\t\tfont-family: 'Riddiford';" + 
-		"\n\t\t\tsrc: url('http://fonts.ngeo.com/maps/1-0-0/riddiford.woff2') format('woff2')," +
-		"\n\t\t\turl('http://fonts.ngeo.com/maps/1-0-0/riddiford.woff') format('woff');" +
-		"\n\t\t}"
-	},
-	{"aifont":"NatGeoRiddifordElev-Heavy","family":"'RiddifordElevHeavy',Georgia,serif","weight":"","style":"", "face":
-		"\n\t\t@font-face {" + 
-		"\n\t\t\tfont-family: 'RiddifordElevHeavy';" + 
-		"\n\t\t\tsrc: url('http://fonts.ngeo.com/maps/1-0-0/riddifordelev-heavy.woff2') format('woff2')," +
-		"\n\t\t\turl('http://fonts.ngeo.com/maps/1-0-0/riddifordelev-heavy.woff') format('woff');" +
-		"\n\t\t}"
-	},
-	{"aifont":"NatGeoSternRoman","family":"'Stern Roman',Georgia,serif","weight":"","style":"", "face":
-		"\n\t\t@font-face {" + 
-		"\n\t\t\tfont-family: 'Stern Roman';" + 
-		"\n\t\t\tsrc: url('http://fonts.ngeo.com/maps/1-0-0/sternroman.woff2') format('woff2')," +
-		"\n\t\t\turl('http://fonts.ngeo.com/maps/1-0-0/sternroman.woff') format('woff');" +
-		"\n\t\t}"
-	},
-];
-
-/*----------  NGM END  ----------*/
 
 var caps = [
 	{"ai":"FontCapsOption.NORMALCAPS","html":""},
@@ -1012,20 +697,10 @@ var dateTimeStamp = currYear + "-" + currMonth + "-" + currDate + " - " + currHo
 // user inputs, settings, etc
 var defaultFamily       = "nyt-franklin,arial,helvetica,sans-serif";
 var defaultWeight       = "";
-
-/*----------  NGM START  ----------*/
-var defaultFamily       = "'Haas', 'Franklin Gothic Medium', 'Franklin Gothic', 'ITC Franklin Gothic', Arial, sans-serif;"
-var defaultWeight       = "400";
-/*----------  NGM END  ----------*/
-
-
 var defaultStyle        = "";
 var defaultSize         = 13;
 var defaultLeading      = 18;
 var nameSpace           = "g-";
-/*----------  NGM START  ----------*/
-var nameSpace           = "NGAI-";
-/*----------  NGM END  ----------*/
 var imageScale          = 200;
 var maxJpgImageScaling  = 776.19; // This is specified in the Javascript Object Reference under ExportOptionsJPEG.
 var pctPrecision        = 4;
@@ -1883,14 +1558,6 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 						pStyleKey += b + blueOut.toString(16);
 
 						pStyleKey += b + thisFrame.paragraphs[k].characters[sampleChar].tracking;
-						/*----------  NGM START  ----------*/
-						// btj, attempt to default leading value from font size
-						// if (thisFrame.kind=="TextType.POINTTEXT") {
-						// 	var leading = Math.round(thisFrame.paragraphs[k].characters[sampleChar].size);
-						// } else if (thisFrame.kind=="TextType.AREATEXT") {
-						// 	var leading = Math.round(thisFrame.paragraphs[k].leading);
-						// }
-						/*----------  NGM END  ----------*/
 						pStyleKey += b + Math.round(thisFrame.paragraphs[k].leading);
 						pStyleKey += b + Math.round(thisFrame.paragraphs[k].spaceBefore);
 						pStyleKey += b + Math.round(thisFrame.paragraphs[k].spaceAfter);
@@ -1906,9 +1573,6 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 			pStyleKeys = pStyleKeys.findUniqueValues();
 
 			// Write css for each style key
-			/*----------  NGM START  ----------*/
-			var pFontFamilyHash = {}
-			/*----------  NGM END  ----------*/
 			var pStyleCss = "";
 			// var cStyleCss = "";
 			pBar.setTitle(docArtboardName + ': Writing CSS for text styles...');
@@ -1928,10 +1592,6 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 						pHash['style']  = defaultStyle;
 						for (var k=0;k<fonts.length;k++) {
 							if (pHash['aifont']==fonts[k]['aifont']) {
-								/*----------  NGM START  ----------*/
-								// store font family being used for font face extraction
-								pFontFamilyHash[fonts[k]['aifont']] = true;
-								/*----------  NGM END  ----------*/
 								pHash['family'] = fonts[k]['family'];
 								pHash['weight'] = fonts[k]['weight'];
 								pHash['style']  = fonts[k]['style'];
@@ -1964,32 +1624,16 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 					};
 					if (thisTag=="tracking") {
 						// pHash['tracking'] = pHash['tracking']/1000;
-
-						/*----------  NGM START  ----------*/
-						// use divisor that doesnt break the tracking
-						// pHash['tracking'] = pHash['tracking']/1200;
-						pHash['tracking'] = pHash['tracking']/1000;
-						/*----------  NGM END  ----------*/
-
+						pHash['tracking'] = pHash['tracking']/1200;
 					};
 					if (thisTag=="opacity") {
 						pHash['opacity'] = pHash['opacity']/100;
 					};
-					/*----------  NGM START  ----------*/
-					// calculate leading by ems
-					if (thisTag=="leading") {
-						pHash['leading'] = pHash['leading']/pHash['size'] //1 + (pHash['leading']/1000);
-					};
-					/*----------  NGM END  ----------*/
-
 				};
 				pStyleCss += "\t\t\t#"+nameSpace+docArtboardName+" ."+nameSpace+"aiPstyle" + i + " {\r";
 				if (pHash['family']!=defaultFamily) { pStyleCss += "\t\t\t\tfont-family:" + pHash['family'] + ";\r"; };
 				if (pHash['size']!=defaultSize) { pStyleCss += "\t\t\t\tfont-size:" + pHash['size'] + "px;\r"; };
-				/*----------  NGM START  ----------*/
-				// set leading by ems
-				if (pHash['leading']!=defaultLeading) { pStyleCss += "\t\t\t\tline-height:" + pHash['leading']+ "em;\r"; };
-				/*----------  NGM END  ----------*/
+				if (pHash['leading']!=defaultLeading) { pStyleCss += "\t\t\t\tline-height:" + pHash['leading'] + "px;\r"; };
 				if (pHash['weight']!="") { pStyleCss += "\t\t\t\tfont-weight:" + pHash['weight'] + ";\r"; };
 				if (pHash['style']!="" ) { pStyleCss += "\t\t\t\tfont-style:" + pHash['style'] + ";\r"; };
 				if (pHash['capitalization']!="" ) { pStyleCss += "\t\t\t\ttext-transform:" + pHash['capitalization'] + ";\r"; };
@@ -2440,34 +2084,8 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 			headerText               += "\t<!-- preview: " + docSettings.preview_slug + " -->\r";
 			headerText               += "\t<!-- scoop  : " + docSettings.scoop_slug_from_config_yml + " -->\r";
 		};
-
-		/*----------  NGM START  ----------*/
-		// append font face definition to css if exists
-		headerText                   += "\r";
-		headerText            		 += "\t<!-- font face references -->\n"
-		headerText                   += "\t<style type='text/css' media='screen,print'>\r";
-
-		for (var aifont in pFontFamilyHash) {
-			for (var k=0;k<fonts.length;k++) {
-				if (fonts[k].aifont == aifont && fonts[k].face) {
-					headerText += fonts[k].face;
-				}
-			}
-		}
-		headerText                   += "\n\t</style>\r";
-		/*----------  NGM END  ----------*/
-
 		headerText                   += "\r";
 		headerText                   += "\t<style type='text/css' media='screen,print'>\r";
-
-		/*----------  NGM START  ----------*/
-		// font smoothing css
-		headerText             += "\t\t#" + nameSpace + makeKeyword(docSettings.project_name) + "-box {\r";
-		headerText             += "\t\t\t-webkit-font-smoothing: antialiased;\r";
-		headerText             += "\t\t\t-moz-osx-font-smoothing: grayscale;\r";
-		headerText             += "\t\t}\r";
-		/*----------  NGM END  ----------*/
-
 		if (docSettings.max_width!="") {
 			headerText               += "\t\t#" + nameSpace + makeKeyword(docSettings.project_name) + "-box {\r";
 			headerText               += "\t\t\tmax-width:" + docSettings.max_width + "px;\r";
@@ -2661,7 +2279,7 @@ function getResizerScript() {
 	resizerScript += "\n" + "                widthById = {};";
 	resizerScript += "\n" + "            elements.forEach(function(el) {";
 	resizerScript += "\n" + "                var parent = el.parentNode,";
-	resizerScript += "\n" + "                    width = Math.round(widthById[parent.id]) || Math.round(parent.getBoundingClientRect().width),";
+	resizerScript += "\n" + "                    width = widthById[parent.id] || parent.getBoundingClientRect().width,";
 	resizerScript += "\n" + "                    minwidth = el.getAttribute(\"data-min-width\"),";
 	resizerScript += "\n" + "                    maxwidth = el.getAttribute(\"data-max-width\");";
 	resizerScript += "\n" + "                widthById[parent.id] = width;";
