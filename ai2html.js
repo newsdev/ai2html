@@ -1662,6 +1662,9 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 			html[2] += pStyleCss;
 
 			html[2] += '\t\t\t.g-aiPtransformed p { white-space: nowrap; }\r';
+			if (docSettings.characterstyles_to_classnames == 'yes') {
+				html[2] = "";
+			}
 
 			// Output html for each text frame
 			pBar.setTitle(docArtboardName + ': Writing HTML for text blocks...');
@@ -1863,6 +1866,47 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 				var numChars = thisFrame.characters.length;
 				var runningChars = 0;
 				for (var k=0;k<thisFrame.paragraphs.length;k++) {
+
+					if (docSettings.characterstyles_to_classnames == 'yes' && runningChars<numChars && thisFrame.paragraphs[k].characters.length!=0) {
+						var sampleChar = Math.round(thisFrame.paragraphs[k].length/2)-1;
+						
+						// if a character style is applied, it's name becomes the paragraph tag's class name
+						var character = thisFrame.paragraphs[k].characters[sampleChar];
+						if (character) {
+							var charStyleName = character.characterStyles[0].name;
+							if (charStyleName != '[Normal Character Style]') {
+								
+								//alert(charStyleName)
+
+								// preserve text-align as inline definition
+								if (thisFrame.characters[0].justification=="Justification.LEFT") {
+									alignment = "left";
+								} else if (thisFrame.characters[0].justification=="Justification.RIGHT") {
+									alignment = "right";
+								} else if (thisFrame.characters[0].justification=="Justification.CENTER") {
+									alignment = "center";
+								} else {
+									alignment = "other";
+								};
+
+								html[6] += "\t\t\t\t<p class='"+charStyleName+"' style='text-align:"+alignment+"'>";
+								if (isNaN(thisFrame.paragraphs[k].length)) {
+									html[6] += "&nbsp;";
+								} else {
+									textToClean = thisFrame.paragraphs[k].contents;
+									textToClean = straightenCurlyQuotesInsideAngleBrackets(textToClean);
+									cleanedText = cleanText(textToClean);
+									html[6] += cleanedText;
+								};
+								html[6] += "</p>\r";
+								runningChars += (thisFrame.paragraphs[k].characters.length)+1;
+								continue;
+							}
+						} else {
+							html[6] += "\t\t\t\t<p>&nbsp;</p>\r";
+							runningChars += 1;
+						};
+					}
 
 					if (runningChars<numChars && thisFrame.paragraphs[k].characters.length!=0) {
 						// var sampleChar = thisFrame.paragraphs[k].length-1;
