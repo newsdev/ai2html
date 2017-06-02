@@ -1660,8 +1660,8 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 			};
 
 			html[2] += pStyleCss;
-
-			html[2] += '\t\t\t.g-aiPtransformed p { white-space: nowrap; }\r';
+			
+			html[2] += '\t\t\t.'+ nameSpace +'aiPtransformed p { white-space: nowrap; }\r';
 
 			// Output html for each text frame
 			pBar.setTitle(docArtboardName + ': Writing HTML for text blocks...');
@@ -1759,7 +1759,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 				};
 				html[6] += "\t\t\t<div id='"+thisFrameId;
 				html[6] += "' class='"+nameSpace+frameLayer+" "+nameSpace+"aiAbs"+
-					(textIsTransformed(thisFrame) && kind == "point" ? ' g-aiPtransformed' : '')+"' style='";
+					(textIsTransformed(thisFrame) && kind == "point" ? ' '+nameSpace+'aiPtransformed' : '')+"' style='";
 
 				// check if text is transformed
 				if (textIsTransformed(thisFrame)) {
