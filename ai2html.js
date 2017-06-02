@@ -1338,7 +1338,7 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 					var bpArtboard = nyt5Breakpoint.artboards[bpArtboardNumber];
 					if (abNumber==bpArtboard) {
 						showClass += (showClass.length>0) ? " ":"";
-						showClass += "g-show-" + nyt5Breakpoint.name;
+						showClass += nameSpace+"show-" + nyt5Breakpoint.name;
 					}
 				}
 			}
@@ -2281,12 +2281,12 @@ function getResizerScript() {
 	resizerScript += "\n" + "<script type=\"text\/javascript\">";
 	resizerScript += "\n" + "    (function() {";
 	resizerScript += "\n" + "        \/\/ only want one resizer on the page";
-	resizerScript += "\n" + "        if (document.documentElement.className.indexOf(\"g-resizer-v3-init\") > -1) return;";
-	resizerScript += "\n" + "        document.documentElement.className += \" g-resizer-v3-init\";";
+	resizerScript += "\n" + "        if (document.documentElement.className.indexOf(\""+nameSpace+"resizer-v3-init\") > -1) return;";
+	resizerScript += "\n" + "        document.documentElement.className += \" "+nameSpace+"resizer-v3-init\";";
 	resizerScript += "\n" + "        \/\/ require IE9+";
 	resizerScript += "\n" + "        if (!(\"querySelector\" in document)) return;";
 	resizerScript += "\n" + "        function resizer() {";
-	resizerScript += "\n" + "            var elements = Array.prototype.slice.call(document.querySelectorAll(\".g-artboard-v3[data-min-width]\")),";
+	resizerScript += "\n" + "            var elements = Array.prototype.slice.call(document.querySelectorAll(\"."+nameSpace+"artboard-v3[data-min-width]\")),";
 	resizerScript += "\n" + "                widthById = {};";
 	resizerScript += "\n" + "            elements.forEach(function(el) {";
 	resizerScript += "\n" + "                var parent = el.parentNode,";
@@ -2296,7 +2296,7 @@ function getResizerScript() {
 	resizerScript += "\n" + "                widthById[parent.id] = width;";
 	resizerScript += "\n" + "";
 	resizerScript += "\n" + "                if (+minwidth <= width && (+maxwidth >= width || maxwidth === null)) {";
-	resizerScript += "\n" + "                    var img = el.querySelector('.g-aiImg');";
+	resizerScript += "\n" + "                    var img = el.querySelector('."+nameSpace+"aiImg');";
 	resizerScript += "\n" + "                    if (img.getAttribute('data-src') && img.getAttribute('src') != img.getAttribute('data-src')) {";
 	resizerScript += "\n" + "                        img.setAttribute('src', img.getAttribute('data-src'));";
 	resizerScript += "\n" + "                    }";
