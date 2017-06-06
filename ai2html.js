@@ -1761,8 +1761,10 @@ if (doc.documentColorSpace!="DocumentColorSpace.RGB") {
 					thisFrameId = makeKeyword(thisFrame.name);
 				};
 				html[6] += "\t\t\t<div id='"+thisFrameId;
-				html[6] += "' class='"+nameSpace+frameLayer+" "+nameSpace+"aiAbs"+
-					(textIsTransformed(thisFrame) && kind == "point" ? ' g-aiPtransformed' : '')+"' style='";
+				var classNames = docSettings.characterstyles_to_classnames != 'yes' ? nameSpace + frameLayer + ' ' : '';
+				classNames += nameSpace + "aiAbs";
+				classNames += textIsTransformed(thisFrame) && kind == "point" ? ' ' + nameSpace + 'aiPtransformed' : '';
+				html[6] += "' class='" + classNames + "' style='";
 
 				// check if text is transformed
 				if (textIsTransformed(thisFrame)) {
