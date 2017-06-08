@@ -523,7 +523,8 @@ if (scriptEnvironment=="nyt") {
         scoop_asset_id: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
         scoop_username: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
         scoop_slug: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
-        scoop_external_edit_key: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""}
+        scoop_external_edit_key: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
+		characterstyles_to_classnames: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: "Set this to “yes” if you want character styles applied in Illustrator to become paragraph class names."}
 	};
 } else {
 	var ai2htmlBaseSettings = {
@@ -575,7 +576,8 @@ if (scriptEnvironment=="nyt") {
         scoop_asset_id: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
         scoop_username: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
         scoop_slug: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
-        scoop_external_edit_key: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""}
+        scoop_external_edit_key: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
+		characterstyles_to_classnames: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: "Set this to “yes” if you want character styles applied in Illustrator to become paragraph class names."}
 	};
 };
 // End of ai2htmlBaseSettings block copied from Google Spreadsheet.
