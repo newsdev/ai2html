@@ -2346,7 +2346,7 @@ function getTextFrameCss(thisFrame, abBox, pgData) {
 
   classes = nameSpace + makeKeyword(thisFrame.layer.name) + " " + nameSpace + "aiAbs";
   if (thisFrame.kind == TextType.POINTTEXT) {
-    classes += ' g-aiPointText';
+    classes += ' ' + nameSpace + 'aiPointText';
     // using pixel width with point text, because pct width causes alignment problems -- see issue #63
     // adding extra pixels in case HTML width is slightly less than AI width (affects alignment of right-aligned text)
     styles += "width:" + roundTo(htmlW + 2, cssPrecision) + 'px;';
@@ -2695,7 +2695,7 @@ function findShowClassesForArtboard(ab, breakpoints) {
   var id = getArtboardId(ab);
   forEach(breakpoints, function(bp) {
     if (contains(bp.artboards, id)) {
-      classes.push('g-show-' + bp.name);
+      classes.push(nameSpace + 'show-' + bp.name);
     }
   });
   return classes.join(' ');
@@ -2762,7 +2762,7 @@ function generatePageCss(containerId, settings) {
   css += t3 + "width:100% !important;\r";
   css += t2 + "}\r";
 
-  css += t2 + '.g-aiPointText p { white-space: nowrap; }\r'; // TODO: move to page css block
+  css += t2 + '.' + nameSpace + 'aiPointText p { white-space: nowrap; }\r'; // TODO: move to page css block
   css += "\t</style>\r";
   return css;
 }
@@ -2812,12 +2812,12 @@ function convertSettingsToYaml(settings) {
 function getResizerScript() {
   var resizer = function (scriptEnvironment) {
     // only want one resizer on the page
-    if (document.documentElement.className.indexOf("g-resizer-v3-init") > -1) return;
-    document.documentElement.className += " g-resizer-v3-init";
+    if (document.documentElement.className.indexOf(nameSpace + "resizer-v3-init") > -1) return;
+    document.documentElement.className += " " + nameSpace + "resizer-v3-init";
     // require IE9+
     if (!("querySelector" in document)) return;
     function updateSize() {
-      var elements = Array.prototype.slice.call(document.querySelectorAll(".g-artboard-v3[data-min-width]")),
+      var elements = Array.prototype.slice.call(document.querySelectorAll("." + nameSpace + "artboard-v3[data-min-width]")),
           widthById = {};
       elements.forEach(function(el) {
         var parent = el.parentNode,
@@ -2827,7 +2827,7 @@ function getResizerScript() {
         if (parent.id) widthById[parent.id] = width; // only if parent.id is set
 
         if (+minwidth <= width && (+maxwidth >= width || maxwidth === null)) {
-          var img = el.querySelector(".g-aiImg");
+          var img = el.querySelector("." + nameSpace + "aiImg");
           if (img.getAttribute("data-src") && img.getAttribute("src") != img.getAttribute("data-src")) {
             img.setAttribute("src", img.getAttribute("data-src"));
           }
