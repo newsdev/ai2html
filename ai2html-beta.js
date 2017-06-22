@@ -2810,7 +2810,7 @@ function convertSettingsToYaml(settings) {
 }
 
 function getResizerScript() {
-  var resizer = function (scriptEnvironment) {
+  var resizer = function (scriptEnvironment, nameSpace) {
     // only want one resizer on the page
     if (document.documentElement.className.indexOf(nameSpace + "resizer-v3-init") > -1) return;
     document.documentElement.className += " " + nameSpace + "resizer-v3-init";
@@ -2825,7 +2825,6 @@ function getResizerScript() {
             minwidth = el.getAttribute("data-min-width"),
             maxwidth = el.getAttribute("data-max-width");
         if (parent.id) widthById[parent.id] = width; // only if parent.id is set
-
         if (+minwidth <= width && (+maxwidth >= width || maxwidth === null)) {
           var img = el.querySelector("." + nameSpace + "aiImg");
           if (img.getAttribute("data-src") && img.getAttribute("src") != img.getAttribute("data-src")) {
@@ -2892,7 +2891,7 @@ function getResizerScript() {
   // convert function to JS source code
   var resizerJs = '(' +
     trim(resizer.toString().replace(/  /g, '\t')) + // indent with tabs
-    ')("' + scriptEnvironment + '");';
+    ')("' + scriptEnvironment + '", "' + nameSpace + '");';
   return '<script type="text/javascript">\n\t' + resizerJs + '\n\t</script>\n\n';
 }
 
