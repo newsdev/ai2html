@@ -2305,11 +2305,6 @@ function getTextFrameCss(thisFrame, abBox, pgData) {
   var htmlH = htmlBox.height + marginTopPx + marginBottomPx;
   var alignment, v_align, vertAnchorPct;
 
-  v_align = thisFrameAttributes.valign || "top";
-  if (v_align == "center") {
-    v_align = "middle";
-  }
-
   if (firstPgStyle.justification == "Justification.LEFT") {
     alignment = "left";
   } else if (firstPgStyle.justification == "Justification.RIGHT") {
@@ -2324,14 +2319,31 @@ function getTextFrameCss(thisFrame, abBox, pgData) {
   }
 
   if (thisFrame.kind == TextType.AREATEXT) {
+    v_align = "top"; // area text aligned to top by default
     // EXPERIMENTAL feature
     // Put a box around the text, if the text frame's textPath is styled
     styles += convertAreaTextPath(thisFrame);
+  } else {
+    // point text aligned to midline (sensible default for chart y-axes, map labels, etc.)
+    v_align = "middle";
+  }
+
+  if (thisFrameAttributes.valign) {
+    // override default vertical alignment
+    v_align = thisFrameAttributes.valign;
+    if (v_align == "center") {
+      v_align = "middle";
+    }
   }
 
   if (v_align == "bottom") {
     var bottomPx = abBox.height - (htmlBox.top + htmlBox.height + marginBottomPx);
     styles += "bottom:" + formatCssPct(bottomPx, abBox.height);
+  } else if (v_align == "middle") {
+    // https://css-tricks.com/centering-in-the-unknown/
+    // TODO: consider: http://zerosixthree.se/vertical-align-anything-with-just-3-lines-of-css/
+    styles += "top:" + formatCssPct(htmlT + marginTopPx + htmlBox.height / 2, abBox.height);
+    styles += "margin-top:-" + roundTo(marginTopPx + htmlBox.height / 2, 1) + 'px;';
   } else {
     styles += "top:" + formatCssPct(htmlT, abBox.height);
   }
