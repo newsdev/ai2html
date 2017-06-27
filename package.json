@@ -1,11 +1,10 @@
 {
   "name": "ai2html",
-  "version": "0.64.1",
+  "version": "0.64.2",
   "description": "A script for Adobe Illustrator that converts your Illustrator artwork into an html page.",
 "main": "./ai2html-beta.js",
 "scripts": {
-    "test": "mocha --check-leaks",
-    "_test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha --check-leaks"
   },
   "repository": {
     "type": "git",

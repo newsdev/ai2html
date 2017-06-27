@@ -1,3 +1,6 @@
+### v0.64.2
+- Promote `ai2html-beta.js` to `ai2html.js`, rename old `ai2html.js` to `ai2html-legacy.js`
+
 ### v0.64.1 (ai2html-beta.js)
 - Point text is valign:middle by default
 
