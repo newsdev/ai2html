@@ -149,6 +149,9 @@ Most of the script’s options are set in the settings text block. When you run 
   - <span style="font-variant: small-caps">Possible values</span>: `yes` `no`
   - <span style="font-variant: small-caps">Default</span>: `yes`
   - Specifying `yes` on this setting tells the script to output images at double the resolution if possible. The script uses limits specified in this [document](http://apple.co/1M1dvES) to determine if the size of the image is too large to make it double resolution.
+- **clickable_link**
+  - <span style="font-variant: small-caps">Default</span>: `<blank>`
+  - Use this to wrap the entire graphic in an `<a>` tag pointing to the given URL.
 - **testing_mode**
   - <span style="font-variant: small-caps">Possible values</span>: `yes` `no`
   - <span style="font-variant: small-caps">Default</span>: `no`
@@ -197,7 +200,7 @@ Note that you can pass mustache or erb/ejs notation untouched to your html parti
 #### Artboards palette
 
 - **Artboard names**
-  - Artboard names become part of the `id` of the `div` corresponding to that artboard. It is not necessary to rename the artboards from the Illustrator defaults, though take care not to begin the name with a numeral since html id’s are not recognized if they begin with a number. 
+  - Artboard names become part of the `id` of the `div` corresponding to that artboard. They should have unique names.
 
 - **Specifying artboards to ignore**
   - Add a dash, ie. `-`, as the first character of an artboard name to tell the script that you don’t want it to be included in the output.
