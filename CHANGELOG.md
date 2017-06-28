@@ -1,4 +1,6 @@
-### v0.64.2
+
+
+### v0.65.0
 - Promote `ai2html-beta.js` to `ai2html.js`, rename old `ai2html.js` to `ai2html-legacy.js`
 
 ### v0.64.1 (ai2html-beta.js)

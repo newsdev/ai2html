@@ -1,7 +1,7 @@
-// ai2html.js
-var scriptVersion     = "0.64";
-// var scriptEnvironment = "nyt";
-var scriptEnvironment = "";
+// ai2html-legacy.js
+var scriptVersion     = "0.64.0";  // Increment the final digit after future updates
+var scriptEnvironment = "nyt";
+// var scriptEnvironment = "";
 
 // ai2html is a script for Adobe Illustrator that converts your Illustrator document into html and css.
 
@@ -127,7 +127,7 @@ var exportImageFiles = function(dest,width,height,formats,initialScaling,doubler
 	// options, dest contains the full path including the file name
 	// doubleres is "yes" or "no" whether you want to allow images to be double res
 	// if you want to force ai2html to use doubleres, use "always"
-	
+
 	if (doubleres=="yes" || doubleres=="always") {
 		// if image is too big to use double-res, then just output single-res.
 		var pngImageScaling = 200 * initialScaling;
