@@ -344,6 +344,7 @@ if (runningInNode()) {
     findHtmlTag,
     cleanHtmlTags,
     convertSettingsToYaml,
+    parseDataAttributes,
     parseArtboardName,
     initScriptEnvironment
   ].forEach(function(f) {
@@ -961,7 +962,12 @@ function parseKeyValueString(str, o) {
 // Very simple Yaml parsing. Does not implement nested properties and other features
 function parseYaml(str) {
   // TODO: strip comments // var comment = /\s*/
-  return parseKeyValuePairs(str);
+  var o = {};
+  var lines = stringToLines(str);
+  for (var i = 0; i < lines.length; i++) {
+    parseKeyValueString(lines[i], o);
+  }
+  return o;
 }
 
 // TODO: improve
@@ -2211,14 +2217,14 @@ function findTextFramesToRender(frames, artboardRect) {
   return selected;
 }
 
-// Extract key: value pairs from lines of a string
-function parseKeyValuePairs(note) {
+// Extract key: value pairs from the contents of a note attribute
+function parseDataAttributes(note) {
   var o = {};
-  var lines, line;
+  var parts, part;
   if (note) {
-    lines = stringToLines(note);
-    for (var i = 0; i < lines.length; i++) {
-      parseKeyValueString(lines[i], o);
+    parts = note.split(/[\r\n;,]+/);
+    for (var i = 0; i < parts.length; i++) {
+      parseKeyValueString(parts[i], o);
     }
   }
   return o;
@@ -2286,7 +2292,7 @@ function getTextFrameCss(thisFrame, abBox, pgData) {
   var isTransformed = textIsTransformed(thisFrame);
   var aiBounds = isTransformed ? getUntransformedTextBounds(thisFrame) : thisFrame.geometricBounds;
   var htmlBox = convertAiBounds(shiftBounds(aiBounds, -abBox.left, abBox.top));
-  var thisFrameAttributes = parseKeyValuePairs(thisFrame.note);
+  var thisFrameAttributes = parseDataAttributes(thisFrame.note);
   // Using AI style of first paragraph in TextFrame to get information about
   // tracking, justification and top padding
   // TODO: consider positioning paragraphs separately, to handle pgs with different
