@@ -2822,6 +2822,8 @@ function convertSettingsToYaml(settings) {
 }
 
 function getResizerScript() {
+  // The resizer function is embedded in the HTML page -- outside variables must
+  // be passed in.
   var resizer = function (scriptEnvironment, nameSpace) {
     // only want one resizer on the page
     if (document.documentElement.className.indexOf(nameSpace + "resizer-v3-init") > -1) return;
@@ -2871,31 +2873,24 @@ function getResizerScript() {
     window.addEventListener("resize", throttle(updateSize, 200));
 
     function throttle(func, wait) {
-      // from underscore.js
-      var _now = Date.now || function() { return new Date().getTime(); },
-          context, args, result, timeout = null, previous = 0;
-      var later = function() {
+      // based on underscore.js
+      var _now = Date.now || function() { return +new Date(); },
+          timeout = null, previous = 0;
+      var run = function() {
           previous = _now();
           timeout = null;
-          result = func.apply(context, args);
-          if (!timeout) context = args = null;
+          func();
       };
       return function() {
-        var now = _now(), remaining = wait - (now - previous);
-        context = this;
-        args = arguments;
+        var remaining = wait - (_now() - previous);
         if (remaining <= 0 || remaining > wait) {
           if (timeout) {
             clearTimeout(timeout);
-            timeout = null;
           }
-          previous = now;
-          result = func.apply(context, args);
-          if (!timeout) context = args = null;
+          run();
         } else if (!timeout) {
-          timeout = setTimeout(later, remaining);
+          timeout = setTimeout(run, remaining);
         }
-        return result;
       };
     }
   };
