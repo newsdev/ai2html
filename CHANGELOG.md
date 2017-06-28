@@ -1,4 +1,7 @@
 
+### v0.65.1
+- Change default use_lazy_loader setting to "yes" for NYT environment.
+
 
 ### v0.65.0
 - Promote `ai2html-beta.js` to `ai2html.js`, rename old `ai2html.js` to `ai2html-legacy.js`
