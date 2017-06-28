@@ -492,8 +492,8 @@
 <ul>
   <li><strong>valign</strong>
     <ul>
-      <li><span style="font-variant: small-caps">Possible values</span>: <code class="highlighter-rouge">top</code> <code class="highlighter-rouge">bottom</code></li>
-      <li><span style="font-variant: small-caps">Default</span>: <code class="highlighter-rouge">top</code></li>
+      <li><span style="font-variant: small-caps">Possible values</span>: <code class="highlighter-rouge">top</code> <code class="highlighter-rouge">bottom</code> <code class="highlighter-rouge">middle</code></li>
+      <li><span style="font-variant: small-caps">Default</span>: <code class="highlighter-rouge">middle</code> for Illustrator point text, <code class="highlighter-rouge">top</code> for area text.</li>
       <li>Text objects stay anchored to the artboard div relative to the top-left, top-right or top-center of the text block’s bounding box depending on whether the text is left, right or center aligned. If you want the text block to anchor to its bottom edge instead of the top, then set <code class="highlighter-rouge">valign: bottom</code>.</li>
       <li>This setting is mainly useful when you set <code class="highlighter-rouge">responsiveness: dynamic</code> in the settings text block, but can also make a difference for area-text objects because text often wraps differently in different browsers so that a text block may be four lines in one browser and five lines in another. With the default <code class="highlighter-rouge">valign: top</code>, the fifth line will be added to the bottom of the text block. With <code class="highlighter-rouge">valign: bottom</code> the fifth line will cause the entire text block to be shifted up one line.</li>
     </ul>
@@ -507,7 +507,7 @@
 <ul>
   <li><strong>Point text</strong>
     <ul>
-      <li>The div containing a point text object is not given any width so that text will flow indefinitely outward from its anchor (<a href="#attributes-palette">see <code class="highlighter-rouge">valign</code> discussion</a>).</li>
+      <li>Lines of point text are prevented from wrapping, so lines will flow indefinitely outward from their anchors (<a href="#attributes-palette">see <code class="highlighter-rouge">valign</code> discussion</a>).</li>
     </ul>
   </li>
   <li><strong>Area text</strong>

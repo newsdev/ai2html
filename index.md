@@ -213,8 +213,8 @@ Note that you can pass mustache or erb/ejs notation untouched to your html parti
 Parameters can be attached to a text object and passed to the script using the notes field of the Attributes palette. The variables in the notes field should be in the format of `key: value`. There is currently only one text-object parameter that can be specified here:
 
 - **valign**
-  - <span style="font-variant: small-caps">Possible values</span>: `top` `bottom`
-  - <span style="font-variant: small-caps">Default</span>: `top`
+  - <span style="font-variant: small-caps">Possible values</span>: `top` `bottom` `middle`
+  - <span style="font-variant: small-caps">Default</span>: `middle` for Illustrator point text, `top` for area text.
   - Text objects stay anchored to the artboard div relative to the top-left, top-right or top-center of the text block’s bounding box depending on whether the text is left, right or center aligned. If you want the text block to anchor to its bottom edge instead of the top, then set `valign: bottom`.
   - This setting is mainly useful when you set `responsiveness: dynamic` in the settings text block, but can also make a difference for area-text objects because text often wraps differently in different browsers so that a text block may be four lines in one browser and five lines in another. With the default `valign: top`, the fifth line will be added to the bottom of the text block. With `valign: bottom` the fifth line will cause the entire text block to be shifted up one line.
 
@@ -223,7 +223,7 @@ Parameters can be attached to a text object and passed to the script using the n
 The script handles point text and area text slightly differently which has ramifications on how text wraps on your web page. Fonts never appear identically in Illustrator and in web browsers. For example, the versions of Arial in Illustrator, in Chrome on a Mac and in Internet Explorer on Windows are not exactly the same — so text that fits in a box in Illustrator may be longer on IE or shorter in Chrome.
 
 - **Point text**
-  - The div containing a point text object is not given any width so that text will flow indefinitely outward from its anchor ([see `valign` discussion](#attributes-palette)).
+  - Lines of point text are prevented from wrapping, so lines will flow indefinitely outward from their anchors ([see `valign` discussion](#attributes-palette)).
 
 - **Area text**
   - The div containing an area text object is given the width of the bounding box so that text will likely wrap differently on different browsers within that width.
