@@ -1,5 +1,16 @@
 
-### Unreleased (ai2html-beta.js)
+### v0.65.1
+- Change default use_lazy_loader setting to "yes" for NYT environment.
+
+
+### v0.65.0
+- Promote `ai2html-beta.js` to `ai2html.js`, rename old `ai2html.js` to `ai2html-legacy.js`
+
+### v0.64.1 (ai2html-beta.js)
+- Point text is valign:middle by default
+
+
+### v0.64.0 (ai2html-beta.js)
 - Character styles applied to text inside a paragraph are now preserved (e.g. a bolded phrase).
 - Users are prompted to generate promo images when relevant (previously, promo images were automatically generated).
 - Promo images are smaller than before, for performance (1024px instead of >3000px wide).

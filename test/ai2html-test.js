@@ -5,7 +5,6 @@ var assert = require('assert');
 
 describe('Ai2html-specific functions', function () {
 
-
   describe('parseArtboardName()', function () {
     it('extract width and other settings', function () {
       var settings = lib.parseArtboardName("Artboard 1:600,image_only");
@@ -15,6 +14,13 @@ describe('Ai2html-specific functions', function () {
     it('parse old-style width declarations', function() {
       var settings = lib.parseArtboardName("ai2html-700");
       assert.deepEqual(settings, {width: 700});
+    })
+  })
+
+  describe('parseDataAttributes()', function () {
+    it('treat semicolons, newlines and commas as delimiters', function () {
+      var note = 'valign: top; align: left, name: foo\nid: bar\n';
+      assert.deepEqual(lib.parseDataAttributes(note), {valign:'top', align: 'left', name: 'foo', id: 'bar'});
     })
   })
 
