@@ -26,7 +26,7 @@ describe('Ai2html-specific functions', function () {
 
   describe('convertSettingsToYaml()', function () {
     it('ignores settings that are not explicitly included in default environment', function() {
-      lib.initScriptEnvironment('');
+      lib.initDocumentSettings('');
       var settings = {
         dummy_setting: "true",
         image_format: "png",
@@ -36,7 +36,7 @@ describe('Ai2html-specific functions', function () {
     })
 
     it('ignores settings that are not explicitly included in nyt environment', function() {
-      lib.initScriptEnvironment('nyt');
+      lib.initDocumentSettings('nyt');
       var settings = {
         dummy_setting: "true",
         image_format: "png",
@@ -46,7 +46,7 @@ describe('Ai2html-specific functions', function () {
     })
 
     it('converts NYT Preview settings correctly', function () {
-      lib.initScriptEnvironment('nyt');
+      lib.initDocumentSettings('nyt');
       var settings = {
         show_in_compatible_apps: "no", // special case -- needs to be quoted
         headline: "Breaking \"News\"",

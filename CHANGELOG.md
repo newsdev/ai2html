@@ -1,6 +1,7 @@
 ### v0.65.2
-- Auto-detect image format if image_format is set to "auto". (Uses jpg if a placed image is visible, otherwise uses png.)
-
+- Auto-detect output image format if image_format is set to "auto". (Uses jpg if a placed image is visible, otherwise uses png.)
+- Detect NYT context by looking for proprietary Times fonts.
+- Display a prompt when Times users run ai2html outside of a Preview project (the previous warming message was often overlooked).
 
 ### v0.65.1
 - Change default use_lazy_loader setting to "yes" for NYT environment.

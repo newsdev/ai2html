@@ -7,7 +7,7 @@ function main() {
 // See (for example) https://forums.adobe.com/thread/1810764 and
 // http://wwwimages.adobe.com/content/dam/Adobe/en/devnet/pdf/illustrator/scripting/Readme.txt
 
-var scriptVersion = "0.65.1"; // Increment final digit for bug fixes, middle digit for new functionality
+var scriptVersion = "0.65.2"; // Increment final digit for bug fixes, middle digit for new functionality
 
 // ai2html is a script for Adobe Illustrator that converts your Illustrator document into html and css.
 // Copyright (c) 2011-2015 The New York Times Company
@@ -346,7 +346,7 @@ if (runningInNode()) {
     convertSettingsToYaml,
     parseDataAttributes,
     parseArtboardName,
-    initScriptEnvironment
+    initDocumentSettings
   ].forEach(function(f) {
     module.exports[f.name] = f;
   });
@@ -374,20 +374,17 @@ if (!app.documents.length) {
   errors.push("Ai2html is unable to run because you are editing an Opacity Mask.");
 
 } else {
+  // initialize global variables
   doc = app.activeDocument;
   docPath = doc.path + "/";
   docIsSaved = doc.saved;
-  // Use "nyt" environment if it looks like the document is in a Preview project
-  initScriptEnvironment(folderExists(docPath + "../public/_assets") ? 'nyt' : '');
+  scriptEnvironment = detectScriptEnvironment();
+  initDocumentSettings(scriptEnvironment);
+}
+
+if (errors.length === 0) {
   validateArtboardNames();
-
-  //message($.list());
-
-  // initialize document settings
-  for (var setting in ai2htmlBaseSettings) {
-    docSettings[setting] = ai2htmlBaseSettings[setting].defaultValue;
-  }
-
+  initUtilityFunctions(); // init T and JSON
   T.start();
   try {
     render();
@@ -428,6 +425,7 @@ if (isTrue(docSettings.show_completion_dialog_box ) || errors.length > 0) {
   var showPromo = showCompletionAlert(promptForPromo);
   if (showPromo) createPromoImage(docSettings);
 }
+
 
 
 // =================================
@@ -506,30 +504,21 @@ function render() {
   // ================================================
 
   if (scriptEnvironment == "nyt") {
-
-    // Read yml file if it exists to determine what type of project this is
-    //
-    var yaml = readYamlConfigFile(docPath + "../config.yml");
-    if (!yaml) {
-      previewProjectType = "config.yml is missing";
-    } else {
-      if (yaml.project_type == 'ai2html') {
-        previewProjectType = 'ai2html';
-      }
-      if (yaml.scoop_slug) {
-        docSettings.scoop_slug_from_config_yml = yaml.scoop_slug;
-      }
-    }
-
-    if (previewProjectType=="config.yml is missing" ||
-        (previewProjectType=="ai2html" && !folderExists(docPath + "../public/")) ||
+    // Read yml file to determine what type of project this is
+    // (yml file should be confirmed to exist when nyt environment is set)
+    var yaml = readYamlConfigFile(docPath + "../config.yml") || {};
+    previewProjectType = yaml.project_type == 'ai2html' ? 'ai2html' : '';
+    if ((previewProjectType=="ai2html" && !folderExists(docPath + "../public/")) ||
         (previewProjectType!="ai2html" && !folderExists(docPath + "../src/"))) {
       errors.push("Make sure your Illustrator file is inside the \u201Cai\u201D folder of a Preview project.");
-      errors.push("If the Illustrator file is in the correct folder, your Preview project may be missing a config.yml file or a \u201Cpublic\u201D or a \u201Csrc\u201D folder.");
+      errors.push("If the Illustrator file is in the correct folder, your Preview project may be missing a \u201Cpublic\u201D or a \u201Csrc\u201D folder.");
       errors.push("If this is an ai2html project, it is probably easier to just create a new ai2html Preview project and move this Illustrator file into the \u201Cai\u201D folder inside the project.");
       return;
     }
 
+    if (yaml.scoop_slug) {
+      docSettings.scoop_slug_from_config_yml = yaml.scoop_slug;
+    }
     // Read .git/config file to get preview slug
     var gitConfig = readGitConfigFile(docPath + "../.git/config") || {};
     if (gitConfig.url) {
@@ -537,8 +526,7 @@ function render() {
     }
 
     docSettings.image_source_path = "_assets/";
-
-    if (previewProjectType=="ai2html") {
+    if (previewProjectType == "ai2html") {
       docSettings.html_output_path      = "/../public/";
       docSettings.html_output_extension = ".html";
       docSettings.image_output_path     = "_assets/";
@@ -1170,18 +1158,38 @@ function showEngineInfo() {
   alert('Info:\n' + msg);
 }
 
-function detectTimesFonts() {
-  var found;
-  try {
-    found = app.textFonts.getByName('NYTFranklin-Medium') && app.textFonts.getByName('NYTCheltenham-Medium');
-  } catch(e) {}
-  return found ? true : false;
+function detectScriptEnvironment() {
+  var env = detectTimesFonts() ? 'nyt' : '';
+  // Handle case where user seems to be at NYT but is running ai2html outside of Preview
+  if (env == 'nyt' && !fileExists(docPath + "../config.yml")) {
+    if(confirm("You seem to be running ai2html outside of NYT Preview.\nContinue in non-Preview mode?", true)) {
+      env = ''; // switch to non-nyt context
+    } else {
+      errors.push("Ai2html should be run inside a Preview project.");
+    }
+  }
+  return env;
 }
 
-function initScriptEnvironment(env) {
-  scriptEnvironment = env;
-  ai2htmlBaseSettings = env == 'nyt' ? nytBaseSettings : defaultBaseSettings;
+function detectTimesFonts() {
+  var found = false;
+  try {
+    app.textFonts.getByName('NYTFranklin-Medium') && app.textFonts.getByName('NYTCheltenham-Medium');
+    found = true;
+  } catch(e) {}
+  return found;
+}
 
+function initDocumentSettings(env) {
+  ai2htmlBaseSettings = env == 'nyt' ? nytBaseSettings : defaultBaseSettings;
+  // initialize document settings
+  docSettings = {};
+  for (var setting in ai2htmlBaseSettings) {
+    docSettings[setting] = ai2htmlBaseSettings[setting].defaultValue;
+  }
+}
+
+function initUtilityFunctions() {
   // Enable timing using T.start() and T.stop("message")
   T = {
     stack: [],
