@@ -57,7 +57,7 @@ var nytBaseSettings = {
   ai2html_environment: {defaultValue: scriptEnvironment, includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
   settings_version: {defaultValue: scriptVersion, includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
   create_promo_image: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
-  image_format: {defaultValue: ["png"], includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "array", possibleValues: "jpg, png, png24", notes: "Images will be generated in mulitple formats if multiple formats are listed, separated by commas. The first format will be used in the html. Sometimes this is useful to compare which format will have a smaller file size."},
+  image_format: {defaultValue: ["auto"], includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "array", possibleValues: "jpg, png, png24", notes: "Images will be generated in mulitple formats if multiple formats are listed, separated by commas. The first format will be used in the html. Sometimes this is useful to compare which format will have a smaller file size."},
   write_image_files: {defaultValue: "yes", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: "Set this to \u201Cno\u201D to skip writing the image files. Generally only use this after you have run the script once with this setting set to \u201Cyes.\u201D"},
   responsiveness: {defaultValue: "fixed", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "fixed, dynamic", notes: "Dynamic responsiveness means ai graphics will scale to fill the container they are placed in."},
   max_width: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "integer", possibleValues: "", notes: "Blank or any positive number in pixels, but do not write \u201Cpx\u201D - blank means artboards will set max size, instead it is written to the config file so that the max width can be applied to the template’s container."},
@@ -109,7 +109,7 @@ var defaultBaseSettings = {
   ai2html_environment: {defaultValue: scriptEnvironment, includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
   settings_version: {defaultValue: scriptVersion, includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
   create_promo_image: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
-  image_format: {defaultValue: ["png"], includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "array", possibleValues: "jpg, png, png24", notes: "Images will be generated in mulitple formats if multiple formats are listed, separated by commas. The first format will be used in the html. Sometimes this is useful to compare which format will have a smaller file size."},
+  image_format: {defaultValue: ["auto"], includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "array", possibleValues: "jpg, png, png24", notes: "Images will be generated in mulitple formats if multiple formats are listed, separated by commas. The first format will be used in the html. Sometimes this is useful to compare which format will have a smaller file size."},
   write_image_files: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: "Set this to \u201Cno\u201D to skip writing the image files. Generally only use this after you have run the script once with this setting set to \u201Cyes.\u201D"},
   responsiveness: {defaultValue: "fixed", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "fixed, dynamic", notes: "Dynamic responsiveness means ai graphics will scale to fill the container they are placed in."},
   max_width: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "integer", possibleValues: "", notes: "Blank or any positive number in pixels, but do not write \u201Cpx\u201D - blank means artboards will set max size, the max width is not included in the html stub, instead it is written to the config file so that the max width can be applied to the template’s container."},
@@ -565,6 +565,8 @@ function render() {
 
   if (docSettings.image_format.length === 0) {
     warnings.push("No images were created because no image formats were specified.");
+  } else if (contains(docSettings.image_format, "auto")) {
+    docSettings.image_format = [documentContainsVisibleRasterImages() ? 'jpg' : 'png'];
   } else if (documentContainsVisibleRasterImages() && !contains(docSettings.image_format, "jpg")) {
     warnings.push("An artboard contains a raster image -- consider exporting to jpg instead of " +
         docSettings.image_format[0] + ".");
@@ -1166,6 +1168,14 @@ function showEngineInfo() {
   // msg = $.list().split('\n').length;
   // msg = truncateString($.listLO(), 300);
   alert('Info:\n' + msg);
+}
+
+function detectTimesFonts() {
+  var found;
+  try {
+    found = app.textFonts.getByName('NYTFranklin-Medium') && app.textFonts.getByName('NYTCheltenham-Medium');
+  } catch(e) {}
+  return found ? true : false;
 }
 
 function initScriptEnvironment(env) {

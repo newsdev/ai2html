@@ -1,3 +1,6 @@
+### v0.65.2
+- Auto-detect image format if image_format is set to "auto". (Uses jpg if a placed image is visible, otherwise uses png.)
+
 
 ### v0.65.1
 - Change default use_lazy_loader setting to "yes" for NYT environment.
