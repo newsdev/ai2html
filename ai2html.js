@@ -566,7 +566,7 @@ function render() {
   pBar = new ProgressBar({name: "Ai2html progress", steps: calcProgressBarSteps()});
   unlockObjects(); // Unlock containers and clipping masks
   var masks = findMasks(); // identify all clipping masks and their contents
-  var artboardContent = "";
+  var artboardContent = {html: "", css: "", js: ""};
 
   forEachUsableArtboard(function(activeArtboard, abNumber) {
     var abSettings = getArtboardSettings(activeArtboard);
@@ -602,6 +602,13 @@ function render() {
     // finish generating artboard HTML and CSS
     //=====================================
 
+    artboardContent.html += "\r\t<!-- Artboard: " + getArtboardName(activeArtboard) + " -->\r" +
+       generateArtboardDiv(activeArtboard, breakpoints, docSettings) +
+       generateImageHtml(activeArtboard, docSettings) +
+       textData.html +
+       "\t</div>\r";
+    artboardContent.css += generateArtboardCss(activeArtboard, textData.styles, docSettings);
+    /*
     artboardContent +=
       "\r\t<!-- Artboard: " + getArtboardName(activeArtboard) + " -->\r" +
       generateArtboardDiv(activeArtboard, breakpoints, docSettings) +
@@ -609,14 +616,16 @@ function render() {
       generateImageHtml(activeArtboard, docSettings) +
       textData.html +
       "\t</div>\r";
+    */
 
     //=====================================
     // output html file here if doing a file for every artboard
     //=====================================
 
     if (docSettings.output=="multiple-files") {
-      generateOutputHtml(addCustomContent(artboardContent, customBlocks), docArtboardName, docSettings);
-      artboardContent = "";
+      addCustomContent(artboardContent, customBlocks);
+      generateOutputHtml(artboardContent, docArtboardName, docSettings);
+      artboardContent = {html: "", css: "", js: ""};
     }
 
   }); // end artboard loop
@@ -626,7 +635,8 @@ function render() {
   //=====================================
 
   if (docSettings.output=="one-file") {
-    generateOutputHtml(addCustomContent(artboardContent, customBlocks), docName, docSettings);
+    addCustomContent(artboardContent, customBlocks);
+    generateOutputHtml(artboardContent, docName, docSettings);
   }
 
   //=====================================
@@ -848,7 +858,7 @@ function getDateTimeStamp() {
   var month = zeroPad(d.getMonth() + 1,2);
   var hour  = zeroPad(d.getHours(),2);
   var min   = zeroPad(d.getMinutes(),2);
-  return year + "-" + month + "-" + date + " - " + hour + ":" + min;
+  return year + "-" + month + "-" + date + " " + hour + ":" + min;
 }
 
 // obj: JS object containing css properties and values
@@ -1929,10 +1939,10 @@ function convertTextFrames(textFrames, ab) {
 
   var allStyles = pgStyles.concat(charStyles);
   var cssBlocks = map(allStyles, function(obj) {
-    return '.' + obj.classname + ' {' + formatCss(obj.style, '\t\t\t\t') + '\t\t\t}\r';
+    return '.' + obj.classname + ' {' + formatCss(obj.style, '\t\t') + '\t}\r';
   });
   if (divs.length > 0) {
-    cssBlocks.unshift('p {' + formatCss(baseStyle, '\t\t\t\t') + '\t\t\t}\r');
+    cssBlocks.unshift('p {' + formatCss(baseStyle, '\t\t') + '\t}\r');
   }
 
   return {
@@ -2700,7 +2710,6 @@ function exportSVG(dest, ab, masks) {
 }
 
 
-
 // ===================================
 // ai2html output generation functions
 // ===================================
@@ -2738,11 +2747,10 @@ function findShowClassesForArtboard(ab, breakpoints) {
 }
 
 function generateArtboardCss(ab, textClasses, settings) {
-  var t3 = '\t\t\t',
+  var t3 = '\t',
       t4 = t3 + '\t',
       abId = "#" + nameSpace + getArtboardFullName(ab),
       css = "";
-  css += "\t\t<style type='text/css' media='screen,print'>\r";
   css += t3 + abId + " {\r";
   css += t4 + "position:relative;\r";
   css += t4 + "overflow:hidden;\r";
@@ -2755,16 +2763,14 @@ function generateArtboardCss(ab, textClasses, settings) {
   forEach(textClasses, function(cssBlock) {
     css += t3 + abId + " " + cssBlock;
   });
-
-  css += "\t\t</style>\r";
   return css;
 }
 
 // Get CSS styles that are common to all generated content
 function generatePageCss(containerId, settings) {
-  var css = "\r\t<style type='text/css' media='screen,print'>\r";
-  var t2 = '\t\t';
-  var t3 = '\t\t\t';
+  var css = "";
+  var t2 = '\t';
+  var t3 = '\t\t';
 
   if (!!settings.max_width) {
     css += t2 + "#" + containerId + " {\r";
@@ -2798,8 +2804,7 @@ function generatePageCss(containerId, settings) {
   css += t3 + "width:100% !important;\r";
   css += t2 + "}\r";
 
-  css += t2 + '.' + nameSpace + 'aiPointText p { white-space: nowrap; }\r'; // TODO: move to page css block
-  css += "\t</style>\r";
+  css += t2 + '.' + nameSpace + 'aiPointText p { white-space: nowrap; }\r';
   return css;
 }
 
@@ -2892,7 +2897,13 @@ function getResizerScript() {
     }
 
     updateSize();
+
+    // TODO: add condition when vi bug is fixed
+    // if (window.NYT_DEFER_LOAD) {
+      window.addEventListener('nyt:embed:load', updatSize);
+    // }
     document.addEventListener("DOMContentLoaded", updateSize);
+
     // feel free to replace throttle with _.throttle, if available
     window.addEventListener("resize", throttle(updateSize, 200));
 
@@ -2923,7 +2934,7 @@ function getResizerScript() {
   var resizerJs = '(' +
     trim(resizer.toString().replace(/  /g, '\t')) + // indent with tabs
     ')("' + scriptEnvironment + '", "' + nameSpace + '");';
-  return '<script type="text/javascript">\n\t' + resizerJs + '\n\t</script>\n\n';
+  return '<script type="text/javascript">\r\t' + resizerJs + '\r</script>\r';
 }
 
 
@@ -2937,27 +2948,29 @@ function outputLocalPreviewPage(textForFile, localPreviewDestination, settings) 
 
 function addCustomContent(content, customBlocks) {
   if (customBlocks.css) {
+    content.css += "\r\t\t/* Custom CSS */\r\t\t" + customBlocks.css.join('\r\t\t') + '\r';
+    /*
     content = "\r\t<style type='text/css' media='screen,print'>\r" +
-      "\t\t/* Custom CSS */\r\t\t" + customBlocks.css.join('\r\t\t') +
+      "\t\t" + customBlocks.css.join('\r\t\t') +
       "\t</style>\r" + content;
+    */
   }
   if (customBlocks.html) {
-    content += "\r\t<!-- Custom HTML -->\r" + customBlocks.html.join('\r') + '\r';
+    content.html += "\r\t<!-- Custom HTML -->\r" + customBlocks.html.join('\r') + '\r';
   }
   // TODO: assumed JS contained in <script> tag -- verify this?
   if (customBlocks.js) {
-    content += "\r\t<!-- Custom JS -->\r" + customBlocks.js.join('\r') + '\r';
+    content.js += "\r\t<!-- Custom JS -->\r" + customBlocks.js.join('\r') + '\r';
   }
-  return content;
 }
 
 // Wrap content HTML in a <div>, add styles and resizer script, write to a file
-function generateOutputHtml(pageContent, pageName, settings) {
+function generateOutputHtml(content, pageName, settings) {
   var linkSrc = settings.clickable_link || "";
-  var textForFile = "";
   var responsiveCss = "";
   var responsiveJs = "";
   var containerId = nameSpace + pageName + "-box";
+  var textForFile, html, js, css;
   var htmlFileDestination, htmlFileDestinationFolder;
 
   pBar.setTitle('Writing HTML output...');
@@ -2969,36 +2982,49 @@ function generateOutputHtml(pageContent, pageName, settings) {
     }
   }
   if (isTrue(settings.include_resizer_script)) {
-    responsiveJs  = '\t' + getResizerScript() + '\n';
+    responsiveJs  = getResizerScript();
     responsiveCss = "";
   }
 
-  // wrap content in a <div> tag
-  textForFile += '<div id="' + containerId + '" class="ai2html">\r';
-
-  textForFile += "\t<!-- Generated by ai2html v" + scriptVersion + " - " + getDateTimeStamp() + " -->\r";
-  textForFile += "\t<!-- ai file: " + doc.name + " -->\r";
-  if (scriptEnvironment == "nyt") {
-    textForFile += "\t<!-- preview: " + settings.preview_slug + " -->\r";
-    textForFile += "\t<!-- scoop  : " + settings.scoop_slug_from_config_yml + " -->\r";
-  }
-  textForFile += generatePageCss(containerId, settings);
-
+  // HTML
+  html = '<div id="' + containerId + '" class="ai2html">\r';
   if (linkSrc) {
     // optional link around content
-    textForFile += "\t<a class='" + nameSpace + "ai2htmlLink' href='" + linkSrc + "'>\r";
+    html += "\t<a class='" + nameSpace + "ai2htmlLink' href='" + linkSrc + "'>\r";
   }
-
-  textForFile += responsiveCss;
-  textForFile += pageContent;
-  textForFile += responsiveJs;
-
+  html += content.html;
   if (linkSrc) {
-    textForFile += "\t</a>\r";
+    html += "\t</a>\r";
+  }
+  html += "\r</div>\r";
+
+  // CSS
+  css = "<style type='text/css' media='screen,print'>\r" +
+    generatePageCss(containerId, settings) +
+    content.css +
+    "\r</style>\r" + responsiveCss;
+
+  // JS
+  js = content.js + responsiveJs;
+
+  if (scriptEnvironment == "nyt") {
+    html = '<!-- SCOOP HTML -->\r' + html;
+    css = '<!-- SCOOP CSS -->\r' + css;
+    if (js) js ='<!-- SCOOP JS -->\r' + js;
   }
 
-  // close <div> wrapper
-  textForFile += "\t<!-- End ai2html" + " - " + getDateTimeStamp() + " -->\r</div>\r";
+  textForFile =
+    "<!-- Generated by ai2html v" + scriptVersion + " - " + getDateTimeStamp() + " -->\r" +
+    "<!-- ai file: " + doc.name + " -->\r";
+
+  if (scriptEnvironment == "nyt") {
+    textForFile += "<!-- preview: " + settings.preview_slug + " -->\r";
+  }
+  if (settings.scoop_slug_from_config_yml) {
+    textForFile += "<!-- scoop: " + settings.scoop_slug_from_config_yml + " -->\r";
+  }
+  textForFile += '\r' + css + '\r' + html + '\r' + js +
+    "\r<!-- End ai2html" + " - " + getDateTimeStamp() + " -->\r";
 
   textForFile = applyTemplate(textForFile, settings);
   htmlFileDestinationFolder = docPath + settings.html_output_path;
