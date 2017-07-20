@@ -7,7 +7,7 @@ function main() {
 // See (for example) https://forums.adobe.com/thread/1810764 and
 // http://wwwimages.adobe.com/content/dam/Adobe/en/devnet/pdf/illustrator/scripting/Readme.txt
 
-var scriptVersion = "0.65.2"; // Increment final digit for bug fixes, middle digit for new functionality
+var scriptVersion = "0.65.3"; // Increment final digit for bug fixes, middle digit for new functionality
 
 // ai2html is a script for Adobe Illustrator that converts your Illustrator document into html and css.
 // Copyright (c) 2011-2015 The New York Times Company
@@ -207,6 +207,7 @@ var fonts = [
   {"aifont":"NYTCheltenham-Medium","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"500","style":""},
   {"aifont":"NYTCheltenham-Bold","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"700","style":""},
   {"aifont":"NYTCheltenham-BoldCond","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"bold","style":""},
+  {"aifont":"NYTCheltenhamCond-BoldXC","family":"nyt-cheltenham-extra-cn-bd,georgia,'times new roman',times,serif","weight":"bold","style":""},
   {"aifont":"NYTCheltenham-BoldExtraCond","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"bold","style":""},
   {"aifont":"NYTCheltenham-ExtraBold","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"bold","style":""},
   {"aifont":"NYTCheltenham-ExtraLightIt","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"","style":"italic"},
