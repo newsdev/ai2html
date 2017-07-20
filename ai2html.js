@@ -2466,7 +2466,6 @@ function generateImageHtml(ab, settings) {
 
   html = '\t\t<img id="' + imgId + '" class="' + nameSpace + 'aiImg"';
   if (isTrue(settings.use_lazy_loader)) {
-    html += ' data-height-multiplier="' + roundTo(abPos.height / abPos.width, 4) + '"';
     html += ' data-src="' + src + '"';
     // spaceholder while image loads
     src = 'data:image/gif;base64,R0lGODlhCgAKAIAAAB8fHwAAACH5BAEAAAAALAAAAAAKAAoAAAIIhI+py+0PYysAOw==';
@@ -2900,7 +2899,7 @@ function getResizerScript() {
 
     // TODO: add condition when vi bug is fixed
     // if (window.NYT_DEFER_LOAD) {
-      window.addEventListener('nyt:embed:load', updatSize);
+      window.addEventListener('nyt:embed:load', updateSize);
     // }
     document.addEventListener("DOMContentLoaded", updateSize);
 
