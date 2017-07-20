@@ -1647,15 +1647,28 @@ function findCommonAncestorLayer(items) {
   return ancestorLyr;
 }
 
+// Test if a mask can be ignored
+// (An optimization -- currently only finds group masks with no text frames)
+function maskIsRelevant(mask) {
+  var parent = mask.parent;
+  if (parent.typename == "GroupItem") {
+    if (parent.textFrames.length === 0) {
+      return false;
+    }
+  }
+  return true;
+}
+
 function findMasks() {
   var found = [],
-      masks;
+      masks, relevantMasks;
   // assumes clipping paths have been unlocked
   app.executeMenuCommand('Clipping Masks menu item');
   masks = toArray(doc.selection);
   clearSelection();
+  relevantMasks = filter(masks, maskIsRelevant);
   forEach(masks, function(mask) {mask.locked = true;});
-  forEach(masks, function(mask) {
+  forEach(relevantMasks, function(mask) {
     var items, obj;
     mask.locked = false;
     // select a single mask
