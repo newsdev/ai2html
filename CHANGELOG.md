@@ -1,3 +1,7 @@
+### v0.65.3
+- Added NYTCheltenhamCond-BoldXC
+- Improved performance on documents containing many masked images.
+
 ### v0.65.2
 - Auto-detect output image format if image_format is set to "auto". (Uses jpg if a placed image is visible, otherwise uses png.)
 - Detect NYT context by looking for proprietary Times fonts.
