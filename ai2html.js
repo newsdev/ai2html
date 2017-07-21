@@ -7,7 +7,9 @@ function main() {
 // See (for example) https://forums.adobe.com/thread/1810764 and
 // http://wwwimages.adobe.com/content/dam/Adobe/en/devnet/pdf/illustrator/scripting/Readme.txt
 
-var scriptVersion = "0.65.3"; // Increment final digit for bug fixes, middle digit for new functionality
+// Increment final digit for bug fixes, middle digit for new functionality.
+// Remember to add an entry in CHANGELOG when updating the version number.
+var scriptVersion = "0.65.3";
 
 // ai2html is a script for Adobe Illustrator that converts your Illustrator document into html and css.
 // Copyright (c) 2011-2015 The New York Times Company
