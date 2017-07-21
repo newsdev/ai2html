@@ -2866,7 +2866,7 @@ function convertSettingsToYaml(settings) {
 }
 
 function getResizerScript() {
-  // The resizer function is embedded in the HTML page -- outside variables must
+  // The resizer function is embedded in the HTML page -- external variables must
   // be passed in.
   var resizer = function (scriptEnvironment, nameSpace) {
     // only want one resizer on the page
@@ -2913,17 +2913,13 @@ function getResizerScript() {
 
     updateSize();
 
-    // TODO: add condition when vi bug is fixed
-    // if (window.NYT_DEFER_LOAD) {
-      window.addEventListener('nyt:embed:load', updateSize);
-    // }
+    window.addEventListener('nyt:embed:load', updateSize); // for nyt vi compatibility
     document.addEventListener("DOMContentLoaded", updateSize);
 
-    // feel free to replace throttle with _.throttle, if available
     window.addEventListener("resize", throttle(updateSize, 200));
 
+    // based on underscore.js
     function throttle(func, wait) {
-      // based on underscore.js
       var _now = Date.now || function() { return +new Date(); },
           timeout = null, previous = 0;
       var run = function() {
