@@ -9,7 +9,7 @@ function main() {
 
 // Increment final digit for bug fixes, middle digit for new functionality.
 // Remember to add an entry in CHANGELOG when updating the version number.
-var scriptVersion = "0.65.3";
+var scriptVersion = "0.65.4";
 
 // ai2html is a script for Adobe Illustrator that converts your Illustrator document into html and css.
 // Copyright (c) 2011-2015 The New York Times Company

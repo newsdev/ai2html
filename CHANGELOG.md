@@ -1,3 +1,6 @@
+### v0.65.4
+- Use separate CSS, HTML and JS blocks for compatibility with NYT vi system
+
 ### v0.65.3
 - Added NYTCheltenhamCond-BoldXC
 - Improved performance on documents containing many masked images.
