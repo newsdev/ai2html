@@ -1,5 +1,5 @@
 \#*#
 *~
 .DS_Store
-dist/
-*.zip
+node_modules
+ai2html-output

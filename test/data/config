@@ -1,0 +1,8 @@
+[core]
+	repositoryformatversion = 0
+	ignorecase = true
+[remote "origin"]
+	url = git@github.com:newsdev/ai2html.git
+[branch "master"]
+	remote = origin
+	merge = refs/heads/master

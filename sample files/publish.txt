@@ -1,0 +1,18 @@
+Subject line: Graphic for {{ SUBJECT }}
+
+This goes with a {{ AUTHOR }} post.
+
+ai2html embed code
+
+In the CMS, switch to the code view and put these two lines of code where you want the graphic to appear -> 
+
+[shortcode-pym-iframe id="ID" url="URL"]
+<small class="image-media media-photo-credit">Data: {{ SOURCE }}; Chart: {{ AUTHOR }} / Axios</small>
+
+Image fallback
+
+You can link to this images for fallbacks in newsletters and other formats that can't accept html.
+
+Link -> {{ FALLBACK_URL }}
+
+Image credit should read -> Data: {{ SOURCE }}; Chart: {{ AUTHOR }} / Axios
