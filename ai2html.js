@@ -104,7 +104,8 @@ var nytBaseSettings = {
   scoop_asset_id: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
   scoop_username: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
   scoop_slug: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
-  scoop_external_edit_key: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""}
+  scoop_external_edit_key: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
+  characterstyles_to_classnames: { defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: "Set this to “yes” if you want character styles applied in Illustrator to become paragraph class names." }
 };
 
 var defaultBaseSettings = {
@@ -156,7 +157,8 @@ var defaultBaseSettings = {
   scoop_asset_id: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
   scoop_username: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
   scoop_slug: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
-  scoop_external_edit_key: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""}
+  scoop_external_edit_key: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
+  characterstyles_to_classnames: { defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: "Set this to “yes” if you want character styles applied in Illustrator to become paragraph class names." }
 };
 
 // End of settings blocks copied from Google Spreadsheet.
@@ -1782,6 +1784,15 @@ function getCharStyle(c) {
   return o;
 }
 
+// Parse an AI CharacterAttributes object
+function getCharStyleClassNames(c) {
+    var charStyleName = c.characterStyles[0].name;
+    return {
+      classNames: charStyleName != '[Normal Character Style]' ? charStyleName : '',
+      size: Math.round(c.size)
+    }
+}
+
 // p: an AI paragraph (appears to be a TextRange object with mixed-in ParagraphAttributes)
 // opacity: Computed opacity (0-100) of TextFrame containing this pg
 function getParagraphStyle(p) {
@@ -1829,7 +1840,11 @@ function getParagraphRanges(p) {
   var prev, curr, c;
   for (var i=0, n=p.characters.length; i<n; i++) {
     c = p.characters[i];
-    curr = getCharStyle(c);
+    if (docSettings.characterstyles_to_classnames == 'yes') {
+      curr = getCharStyleClassNames(c);
+    } else {
+      curr = getCharStyle(c);
+    }
     if (!prev || objectSubtract(curr, prev)) {
       currRange = {
         text: "",
@@ -1925,10 +1940,31 @@ function generateParagraphHtml(pData, baseStyle, pStyles, cStyles) {
   return html;
 }
 
+function generateParagraphHtmlWithCharacterStyleClasses(pData) {
+  var html, diff, classname, range, text;
+  if (pData.text.length === 0) { 
+    return '<p>&nbsp;</p>';
+  }
+  html = '<p style="text-align: ' + pData.cssStyle['text-align'] + '">';
+  for (var j=0; j<pData.ranges.length; j++) {
+    html += '<span class="' + pData.ranges[j].aiStyle.classNames + '">' + cleanText(range.text) + '</span>';
+  }
+  html += '</p>';
+  return html;
+}
+
 function generateTextFrameHtml(paragraphs, baseStyle, pStyles, cStyles) {
   var html = "";
   for (var i=0; i<paragraphs.length; i++) {
     html += '\r\t\t\t' + generateParagraphHtml(paragraphs[i], baseStyle, pStyles, cStyles);
+  }
+  return html;
+}
+
+function generateTextFrameHtmlWithCharacterStyleClasses(paragraphs) {
+  var html = "";
+  for (var i=0; i<paragraphs.length; i++) {
+    html += '\r\t\t\t' + generateParagraphHtmlWithCharacterStyleClasses(paragraphs[i]);
   }
   return html;
 }
@@ -1940,26 +1976,41 @@ function convertTextFrames(textFrames, ab) {
       paragraphs: importTextFrameParagraphs(frame)
     };
   });
-  var pgStyles = [];
-  var charStyles = [];
-  var baseStyle = deriveCssStyles(frameData);
-  var idPrefix = nameSpace + "ai" + getArtboardId(ab) + "-";
+  
+  var cssBlocks = '';
+  var divs = [];
   var abBox = convertAiBounds(ab.artboardRect);
-  var divs = map(frameData, function(obj, i) {
-    var frame = textFrames[i];
-    var divId = frame.name ? makeKeyword(frame.name) : idPrefix  + (i + 1);
-    var positionCss = getTextFrameCss(frame, abBox, obj.paragraphs);
-    return '\t\t<div id="' + divId + '" ' + positionCss + '>' +
-        generateTextFrameHtml(obj.paragraphs, baseStyle, pgStyles, charStyles) + '\r\t\t</div>\r';
-  });
+  var idPrefix = nameSpace + "ai" + getArtboardId(ab) + "-";
+  var baseStyle = deriveCssStyles(frameData);
+  if (docSettings.characterstyles_to_classnames == 'yes') {
+    divs = map(frameData, function (obj, i) {
+      var frame = textFrames[i];
+      var divId = frame.name ? makeKeyword(frame.name) : idPrefix + (i + 1);
+      var positionCss = getTextFrameCss(frame, abBox, obj.paragraphs);
+      return '\t\t<div id="' + divId + '" ' + positionCss + '>' +
+        generateTextFrameHtmlWithCharacterStyleClasses(obj.paragraphs, baseStyle) + '\r\t\t</div>\r';
+    });
+  } else {
+    var pgStyles = [];
+    var charStyles = [];
+    divs = map(frameData, function(obj, i) {
+      var frame = textFrames[i];
+      var divId = frame.name ? makeKeyword(frame.name) : idPrefix  + (i + 1);
+      var positionCss = getTextFrameCss(frame, abBox, obj.paragraphs);
+      return '\t\t<div id="' + divId + '" ' + positionCss + '>' +
+          generateTextFrameHtml(obj.paragraphs, baseStyle, pgStyles, charStyles) + '\r\t\t</div>\r';
+    });
+  
+    var allStyles = pgStyles.concat(charStyles);
+    cssBlocks = map(allStyles, function(obj) {
+      return '.' + obj.classname + ' {' + formatCss(obj.style, '\t\t') + '\t}\r';
+    });
+    if (divs.length > 0) {
+      cssBlocks.unshift('p {' + formatCss(baseStyle, '\t\t') + '\t}\r');
+    }
 
-  var allStyles = pgStyles.concat(charStyles);
-  var cssBlocks = map(allStyles, function(obj) {
-    return '.' + obj.classname + ' {' + formatCss(obj.style, '\t\t') + '\t}\r';
-  });
-  if (divs.length > 0) {
-    cssBlocks.unshift('p {' + formatCss(baseStyle, '\t\t') + '\t}\r');
   }
+
 
   return {
     styles: cssBlocks,
@@ -2127,6 +2178,12 @@ function getBlendMode(obj) {
 // convert an object containing parsed AI text styles to an object containing CSS style properties
 function convertAiTextStyle(aiStyle) {
   var cssStyle = {};
+  if (docSettings.characterstyles_to_classnames == 'yes') {
+    if (aiStyle.justification && (tmp = getJustificationCss(aiStyle.justification))) {
+      cssStyle["text-align"] = tmp;
+    }
+    return cssStyle;
+  }  
   var fontInfo, tmp;
   if (aiStyle.aifont) {
     fontInfo = findFontInfo(aiStyle.aifont);
@@ -2417,7 +2474,11 @@ function getTextFrameCss(thisFrame, abBox, pgData) {
     // TODO: consider only using pct width with wider text boxes that contain paragraphs of text
     styles += "width:" + formatCssPct(htmlW, abBox.width);
   }
-  return 'class="' + classes + '" style="' + styles + '"';
+  if (docSettings.characterstyles_to_classnames == 'yes') {
+    return 'style="position:absolute;' + styles + '"';
+  } else {
+    return 'class="' + classes + '" style="' + styles + '"';
+  }
 }
 
 
@@ -2738,6 +2799,9 @@ function generateArtboardDiv(ab, breakpoints, settings) {
     classnames += " " + findShowClassesForArtboard(ab, breakpoints);
   }
   html += '\t<div id="' + divId + '" class="' + classnames + '"';
+  if (docSettings.characterstyles_to_classnames == 'yes') {
+    html += ' style="position: relative"';
+  }
   if (isTrue(settings.include_resizer_widths)) {
     // add data-min/max-width attributes
     // TODO: see if we can use breakpoint data to set min and max widths
@@ -2783,6 +2847,11 @@ function generateArtboardCss(ab, textClasses, settings) {
 
 // Get CSS styles that are common to all generated content
 function generatePageCss(containerId, settings) {
+  
+  if (settings.characterstyles_to_classnames == 'yes') {
+  	return "";
+  }
+  
   var css = "";
   var t2 = '\t';
   var t3 = '\t\t';
