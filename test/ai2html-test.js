@@ -5,7 +5,6 @@ var assert = require('assert');
 
 describe('Ai2html-specific functions', function () {
 
-
   describe('parseArtboardName()', function () {
     it('extract width and other settings', function () {
       var settings = lib.parseArtboardName("Artboard 1:600,image_only");
@@ -18,9 +17,16 @@ describe('Ai2html-specific functions', function () {
     })
   })
 
+  describe('parseDataAttributes()', function () {
+    it('treat semicolons, newlines and commas as delimiters', function () {
+      var note = 'valign: top; align: left, name: foo\nid: bar\n';
+      assert.deepEqual(lib.parseDataAttributes(note), {valign:'top', align: 'left', name: 'foo', id: 'bar'});
+    })
+  })
+
   describe('convertSettingsToYaml()', function () {
     it('ignores settings that are not explicitly included in default environment', function() {
-      lib.initScriptEnvironment('');
+      lib.initDocumentSettings('');
       var settings = {
         dummy_setting: "true",
         image_format: "png",
@@ -30,7 +36,7 @@ describe('Ai2html-specific functions', function () {
     })
 
     it('ignores settings that are not explicitly included in nyt environment', function() {
-      lib.initScriptEnvironment('nyt');
+      lib.initDocumentSettings('nyt');
       var settings = {
         dummy_setting: "true",
         image_format: "png",
@@ -40,7 +46,7 @@ describe('Ai2html-specific functions', function () {
     })
 
     it('converts NYT Preview settings correctly', function () {
-      lib.initScriptEnvironment('nyt');
+      lib.initDocumentSettings('nyt');
       var settings = {
         show_in_compatible_apps: "no", // special case -- needs to be quoted
         headline: "Breaking \"News\"",
