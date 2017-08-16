@@ -2840,10 +2840,10 @@ function generateArtboardCss(ab, textClasses, settings) {
 
 // Get CSS styles that are common to all generated content
 function generatePageCss(containerId, settings) {
-  
   var css = "";
   var t2 = '\t';
   var t3 = '\t\t';
+
   if (!!settings.max_width) {
     css += t2 + "#" + containerId + " {\r";
     css += t3 + "max-width:" + settings.max_width + "px;\r";
