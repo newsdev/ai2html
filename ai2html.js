@@ -2474,11 +2474,7 @@ function getTextFrameCss(thisFrame, abBox, pgData) {
     // TODO: consider only using pct width with wider text boxes that contain paragraphs of text
     styles += "width:" + formatCssPct(htmlW, abBox.width);
   }
-  if (docSettings.characterstyles_to_classnames == 'yes') {
-    return 'style="position:absolute;' + styles + '"';
-  } else {
-    return 'class="' + classes + '" style="' + styles + '"';
-  }
+  return 'class="' + classes + '" style="' + styles + '"';
 }
 
 
@@ -2799,9 +2795,6 @@ function generateArtboardDiv(ab, breakpoints, settings) {
     classnames += " " + findShowClassesForArtboard(ab, breakpoints);
   }
   html += '\t<div id="' + divId + '" class="' + classnames + '"';
-  if (docSettings.characterstyles_to_classnames == 'yes') {
-    html += ' style="position: relative"';
-  }
   if (isTrue(settings.include_resizer_widths)) {
     // add data-min/max-width attributes
     // TODO: see if we can use breakpoint data to set min and max widths
@@ -2848,14 +2841,9 @@ function generateArtboardCss(ab, textClasses, settings) {
 // Get CSS styles that are common to all generated content
 function generatePageCss(containerId, settings) {
   
-  if (settings.characterstyles_to_classnames == 'yes') {
-  	return "";
-  }
-  
   var css = "";
   var t2 = '\t';
   var t3 = '\t\t';
-
   if (!!settings.max_width) {
     css += t2 + "#" + containerId + " {\r";
     css += t3 + "max-width:" + settings.max_width + "px;\r";
