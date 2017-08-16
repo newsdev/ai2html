@@ -1901,45 +1901,41 @@ function cleanHtmlTags(str) {
 }
 
 function generateParagraphHtml(pData, baseStyle, pStyles, cStyles) {
-  var html, diff, classname, range, text;
+  var html, range;
   if (pData.text.length === 0) { // empty pg
     // TODO: Calculate the height of empty paragraphs and generate
     // CSS to preserve this height (not supported by Illustrator API)
     return '<p>&nbsp;</p>';
   }
-  diff = objectSubtract(pData.cssStyle, baseStyle);
-  // Give the pg a class, if it has a different style than the base pg class
-  if (diff) {
-    classname = getTextStyleClass(diff, pStyles, 'pstyle');
-    html = '<p class="' + classname + '">';
+  if (docSettings.characterstyles_to_classnames == 'yes') {
+    html = '<p style="text-align: ' + pData.cssStyle['text-align'] + '">';
+    for (var j = 0; j < pData.ranges.length; j++) {
+      range = pData.ranges[j];
+      html += '<span class="' + range.aiStyle.classNames + '">' + cleanText(range.text) + '</span>';
+    }
   } else {
-    html = '<p>';
-  }
-  for (var j=0; j<pData.ranges.length; j++) {
-    range = pData.ranges[j];
-    range.text = cleanHtmlTags(range.text);
-    diff = objectSubtract(range.cssStyle, pData.cssStyle);
+    var diff, classname;
+    diff = objectSubtract(pData.cssStyle, baseStyle);
+    // Give the pg a class, if it has a different style than the base pg class
     if (diff) {
-      classname = getTextStyleClass(diff, cStyles, 'cstyle');
-      html += '<span class="' + classname + '">';
+      classname = getTextStyleClass(diff, pStyles, 'pstyle');
+      html = '<p class="' + classname + '">';
+    } else {
+      html = '<p>';
     }
-    html += cleanText(range.text);
-    if (diff) {
-      html += '</span>';
+    for (var j=0; j<pData.ranges.length; j++) {
+      range = pData.ranges[j];
+      range.text = cleanHtmlTags(range.text);
+      diff = objectSubtract(range.cssStyle, pData.cssStyle);
+      if (diff) {
+        classname = getTextStyleClass(diff, cStyles, 'cstyle');
+        html += '<span class="' + classname + '">';
+      }
+      html += cleanText(range.text);
+      if (diff) {
+        html += '</span>';
+      }
     }
-  }
-  html += '</p>';
-  return html;
-}
-
-function generateParagraphHtmlWithCharacterStyleClasses(pData) {
-  var html, diff, classname, range, text;
-  if (pData.text.length === 0) { 
-    return '<p>&nbsp;</p>';
-  }
-  html = '<p style="text-align: ' + pData.cssStyle['text-align'] + '">';
-  for (var j=0; j<pData.ranges.length; j++) {
-    html += '<span class="' + pData.ranges[j].aiStyle.classNames + '">' + cleanText(range.text) + '</span>';
   }
   html += '</p>';
   return html;
@@ -1947,62 +1943,40 @@ function generateParagraphHtmlWithCharacterStyleClasses(pData) {
 
 function generateTextFrameHtml(paragraphs, baseStyle, pStyles, cStyles) {
   var html = "";
-  for (var i=0; i<paragraphs.length; i++) {
+  for (var i = 0; i < paragraphs.length; i++) {
     html += '\r\t\t\t' + generateParagraphHtml(paragraphs[i], baseStyle, pStyles, cStyles);
   }
   return html;
 }
 
-function generateTextFrameHtmlWithCharacterStyleClasses(paragraphs) {
-  var html = "";
-  for (var i=0; i<paragraphs.length; i++) {
-    html += '\r\t\t\t' + generateParagraphHtmlWithCharacterStyleClasses(paragraphs[i]);
-  }
-  return html;
-}
 
 // Convert a collection of TextFrames to HTML and CSS
 function convertTextFrames(textFrames, ab) {
-  var frameData = map(textFrames, function(frame, i) {
+  var frameData = map(textFrames, function (frame, i) {
     return {
       paragraphs: importTextFrameParagraphs(frame)
     };
   });
-  
-  var cssBlocks = '';
-  var divs = [];
-  var abBox = convertAiBounds(ab.artboardRect);
-  var idPrefix = nameSpace + "ai" + getArtboardId(ab) + "-";
+  var pgStyles = [];
+  var charStyles = [];
   var baseStyle = deriveCssStyles(frameData);
-  if (docSettings.characterstyles_to_classnames == 'yes') {
-    divs = map(frameData, function (obj, i) {
-      var frame = textFrames[i];
-      var divId = frame.name ? makeKeyword(frame.name) : idPrefix + (i + 1);
-      var positionCss = getTextFrameCss(frame, abBox, obj.paragraphs);
-      return '\t\t<div id="' + divId + '" ' + positionCss + '>' +
-        generateTextFrameHtmlWithCharacterStyleClasses(obj.paragraphs, baseStyle) + '\r\t\t</div>\r';
-    });
-  } else {
-    var pgStyles = [];
-    var charStyles = [];
-    divs = map(frameData, function(obj, i) {
-      var frame = textFrames[i];
-      var divId = frame.name ? makeKeyword(frame.name) : idPrefix  + (i + 1);
-      var positionCss = getTextFrameCss(frame, abBox, obj.paragraphs);
-      return '\t\t<div id="' + divId + '" ' + positionCss + '>' +
-          generateTextFrameHtml(obj.paragraphs, baseStyle, pgStyles, charStyles) + '\r\t\t</div>\r';
-    });
-  
-    var allStyles = pgStyles.concat(charStyles);
-    cssBlocks = map(allStyles, function(obj) {
-      return '.' + obj.classname + ' {' + formatCss(obj.style, '\t\t') + '\t}\r';
-    });
-    if (divs.length > 0) {
-      cssBlocks.unshift('p {' + formatCss(baseStyle, '\t\t') + '\t}\r');
-    }
+  var idPrefix = nameSpace + "ai" + getArtboardId(ab) + "-";
+  var abBox = convertAiBounds(ab.artboardRect);
+  var divs = map(frameData, function (obj, i) {
+    var frame = textFrames[i];
+    var divId = frame.name ? makeKeyword(frame.name) : idPrefix + (i + 1);
+    var positionCss = getTextFrameCss(frame, abBox, obj.paragraphs);
+    return '\t\t<div id="' + divId + '" ' + positionCss + '>' +
+      generateTextFrameHtml(obj.paragraphs, baseStyle, pgStyles, charStyles) + '\r\t\t</div>\r';
+  });
 
+  var allStyles = pgStyles.concat(charStyles);
+  var cssBlocks = map(allStyles, function (obj) {
+    return '.' + obj.classname + ' {' + formatCss(obj.style, '\t\t') + '\t}\r';
+  });
+  if (divs.length > 0) {
+    cssBlocks.unshift('p {' + formatCss(baseStyle, '\t\t') + '\t}\r');
   }
-
 
   return {
     styles: cssBlocks,
