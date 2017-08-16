@@ -1949,7 +1949,6 @@ function generateTextFrameHtml(paragraphs, baseStyle, pStyles, cStyles) {
   return html;
 }
 
-
 // Convert a collection of TextFrames to HTML and CSS
 function convertTextFrames(textFrames, ab) {
   var frameData = map(textFrames, function(frame, i) {
@@ -1971,7 +1970,7 @@ function convertTextFrames(textFrames, ab) {
   });
 
   var allStyles = pgStyles.concat(charStyles);
-  var cssBlocks = map(allStyles, function (obj) {
+  var cssBlocks = map(allStyles, function(obj) {
     return '.' + obj.classname + ' {' + formatCss(obj.style, '\t\t') + '\t}\r';
   });
   if (divs.length > 0) {
