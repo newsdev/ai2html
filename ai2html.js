@@ -1834,7 +1834,7 @@ function getParagraphRanges(p) {
   var segments = [];
   var currRange;
   var prev, curr, c;
-  for (var i = 0, n = p.characters.length; i < n; i++) {
+  for (var i=0, n=p.characters.length; i<n; i++) {
     c = p.characters[i];
     curr = getCharStyle(c);
     if (!prev || objectSubtract(curr, prev)) {
