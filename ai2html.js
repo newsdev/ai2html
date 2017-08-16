@@ -1777,20 +1777,16 @@ function convertAiColor(color, opacity) {
 function getCharStyle(c) {
   var o = convertAiColor(c.fillColor);
   var caps = String(c.capitalization);
-  o.aifont = c.textFont.name;
   o.size = Math.round(c.size);
-  o.capitalization = caps == 'FontCapsOption.NORMALCAPS' ? '' : caps;
-  o.tracking = c.tracking
+  if (docSettings.characterstyles_to_classnames == 'yes') {
+    var firstCharStyleName = c.characterStyles.length > 0 ? c.characterStyles[0].name : '';
+    o.classNames = firstCharStyleName && firstCharStyleName != '[Normal Character Style]' ? firstCharStyleName : '';
+  } else {
+    o.aifont = c.textFont.name;
+    o.capitalization = caps == 'FontCapsOption.NORMALCAPS' ? '' : caps;
+    o.tracking = c.tracking
+  }
   return o;
-}
-
-// Parse an AI CharacterAttributes object
-function getCharStyleClassNames(c) {
-    var charStyleName = c.characterStyles[0].name;
-    return {
-      classNames: charStyleName != '[Normal Character Style]' ? charStyleName : '',
-      size: Math.round(c.size)
-    }
 }
 
 // p: an AI paragraph (appears to be a TextRange object with mixed-in ParagraphAttributes)
@@ -1838,13 +1834,9 @@ function getParagraphRanges(p) {
   var segments = [];
   var currRange;
   var prev, curr, c;
-  for (var i=0, n=p.characters.length; i<n; i++) {
+  for (var i = 0, n = p.characters.length; i < n; i++) {
     c = p.characters[i];
-    if (docSettings.characterstyles_to_classnames == 'yes') {
-      curr = getCharStyleClassNames(c);
-    } else {
-      curr = getCharStyle(c);
-    }
+    curr = getCharStyle(c);
     if (!prev || objectSubtract(curr, prev)) {
       currRange = {
         text: "",
