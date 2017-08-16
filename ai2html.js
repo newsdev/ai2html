@@ -1943,7 +1943,7 @@ function generateParagraphHtml(pData, baseStyle, pStyles, cStyles) {
 
 function generateTextFrameHtml(paragraphs, baseStyle, pStyles, cStyles) {
   var html = "";
-  for (var i = 0; i < paragraphs.length; i++) {
+  for (var i=0; i<paragraphs.length; i++) {
     html += '\r\t\t\t' + generateParagraphHtml(paragraphs[i], baseStyle, pStyles, cStyles);
   }
   return html;
@@ -1952,7 +1952,7 @@ function generateTextFrameHtml(paragraphs, baseStyle, pStyles, cStyles) {
 
 // Convert a collection of TextFrames to HTML and CSS
 function convertTextFrames(textFrames, ab) {
-  var frameData = map(textFrames, function (frame, i) {
+  var frameData = map(textFrames, function(frame, i) {
     return {
       paragraphs: importTextFrameParagraphs(frame)
     };
@@ -1962,12 +1962,12 @@ function convertTextFrames(textFrames, ab) {
   var baseStyle = deriveCssStyles(frameData);
   var idPrefix = nameSpace + "ai" + getArtboardId(ab) + "-";
   var abBox = convertAiBounds(ab.artboardRect);
-  var divs = map(frameData, function (obj, i) {
+  var divs = map(frameData, function(obj, i) {
     var frame = textFrames[i];
-    var divId = frame.name ? makeKeyword(frame.name) : idPrefix + (i + 1);
+    var divId = frame.name ? makeKeyword(frame.name) : idPrefix  + (i + 1);
     var positionCss = getTextFrameCss(frame, abBox, obj.paragraphs);
     return '\t\t<div id="' + divId + '" ' + positionCss + '>' +
-      generateTextFrameHtml(obj.paragraphs, baseStyle, pgStyles, charStyles) + '\r\t\t</div>\r';
+        generateTextFrameHtml(obj.paragraphs, baseStyle, pgStyles, charStyles) + '\r\t\t</div>\r';
   });
 
   var allStyles = pgStyles.concat(charStyles);
