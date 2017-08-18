@@ -9,7 +9,7 @@ function main() {
 
 // Increment final digit for bug fixes, middle digit for new functionality.
 // Remember to add an entry in CHANGELOG when updating the version number.
-var scriptVersion = "0.65.4";
+var scriptVersion = "0.65.5";
 
 // ai2html is a script for Adobe Illustrator that converts your Illustrator document into html and css.
 // Copyright (c) 2011-2015 The New York Times Company
@@ -1308,7 +1308,8 @@ function showCompletionAlert(showPrompt) {
   alertText += "\n";
   if (showPrompt) {
     alertText += rule + "Generate promo image?";
-    makePromo = confirm(alertHed  + alertText, true); // true: "No" is default
+    // confirm(<msg>, false) makes "Yes" the default (at Baden's request).
+    makePromo = confirm(alertHed  + alertText, false);
   } else {
     alertText += rule + "ai2html-nyt5 v" + scriptVersion;
     alert(alertHed + alertText);
