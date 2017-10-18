@@ -1,3 +1,6 @@
+### v0.65.6
+- Prevent paths in SVG output from scaling by adding CSS to the .svg file.
+
 ### v0.65.5
 - Made "Yes" the default when prompting to create a promo image.
 

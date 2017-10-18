@@ -146,6 +146,15 @@ describe('Utility function tests', function() {
     });
   });
 
+  describe('pathJoin()', function() {
+    it('Adds fwd slash to separate directories', function() {
+      assert.equal(lib.pathJoin('ai', 'output'), 'ai/output');
+    })
 
+    it('removes duplicate slashes', function() {
+      assert.equal(lib.pathJoin('ai/', '/output/', 'image.svg'), 'ai/output/image.svg');
+    })
+
+  })
 
 });
