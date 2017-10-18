@@ -104,7 +104,8 @@ var nytBaseSettings = {
   scoop_asset_id: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
   scoop_username: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
   scoop_slug: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
-  scoop_external_edit_key: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""}
+  scoop_external_edit_key: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
+  characterstyles_to_classnames: { defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: "Set this to “yes” if you want character styles applied in Illustrator to become paragraph class names." }
 };
 
 var defaultBaseSettings = {
@@ -156,7 +157,8 @@ var defaultBaseSettings = {
   scoop_asset_id: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
   scoop_username: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
   scoop_slug: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
-  scoop_external_edit_key: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""}
+  scoop_external_edit_key: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
+  characterstyles_to_classnames: { defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: "Set this to “yes” if you want character styles applied in Illustrator to become paragraph class names." }
 };
 
 // End of settings blocks copied from Google Spreadsheet.
@@ -1791,10 +1793,15 @@ function convertAiColor(color, opacity) {
 function getCharStyle(c) {
   var o = convertAiColor(c.fillColor);
   var caps = String(c.capitalization);
-  o.aifont = c.textFont.name;
   o.size = Math.round(c.size);
-  o.capitalization = caps == 'FontCapsOption.NORMALCAPS' ? '' : caps;
-  o.tracking = c.tracking
+  if (docSettings.characterstyles_to_classnames == 'yes') {
+    var firstCharStyleName = c.characterStyles.length > 0 ? c.characterStyles[0].name : '';
+    o.classNames = firstCharStyleName && firstCharStyleName != '[Normal Character Style]' ? firstCharStyleName : '';
+  } else {
+    o.aifont = c.textFont.name;
+    o.capitalization = caps == 'FontCapsOption.NORMALCAPS' ? '' : caps;
+    o.tracking = c.tracking
+  }
   return o;
 }
 
@@ -1910,31 +1917,40 @@ function cleanHtmlTags(str) {
 }
 
 function generateParagraphHtml(pData, baseStyle, pStyles, cStyles) {
-  var html, diff, classname, range, text;
+  var html, range;
   if (pData.text.length === 0) { // empty pg
     // TODO: Calculate the height of empty paragraphs and generate
     // CSS to preserve this height (not supported by Illustrator API)
     return '<p>&nbsp;</p>';
   }
-  diff = objectSubtract(pData.cssStyle, baseStyle);
-  // Give the pg a class, if it has a different style than the base pg class
-  if (diff) {
-    classname = getTextStyleClass(diff, pStyles, 'pstyle');
-    html = '<p class="' + classname + '">';
-  } else {
-    html = '<p>';
-  }
-  for (var j=0; j<pData.ranges.length; j++) {
-    range = pData.ranges[j];
-    range.text = cleanHtmlTags(range.text);
-    diff = objectSubtract(range.cssStyle, pData.cssStyle);
-    if (diff) {
-      classname = getTextStyleClass(diff, cStyles, 'cstyle');
-      html += '<span class="' + classname + '">';
+  if (docSettings.characterstyles_to_classnames == 'yes') {
+    html = '<p style="text-align: ' + pData.cssStyle['text-align'] + '">';
+    for (var j = 0; j < pData.ranges.length; j++) {
+      range = pData.ranges[j];
+      html += '<span class="' + range.aiStyle.classNames + '">' + cleanText(range.text) + '</span>';
     }
-    html += cleanText(range.text);
+  } else {
+    var diff, classname;
+    diff = objectSubtract(pData.cssStyle, baseStyle);
+    // Give the pg a class, if it has a different style than the base pg class
     if (diff) {
-      html += '</span>';
+      classname = getTextStyleClass(diff, pStyles, 'pstyle');
+      html = '<p class="' + classname + '">';
+    } else {
+      html = '<p>';
+    }
+    for (var j=0; j<pData.ranges.length; j++) {
+      range = pData.ranges[j];
+      range.text = cleanHtmlTags(range.text);
+      diff = objectSubtract(range.cssStyle, pData.cssStyle);
+      if (diff) {
+        classname = getTextStyleClass(diff, cStyles, 'cstyle');
+        html += '<span class="' + classname + '">';
+      }
+      html += cleanText(range.text);
+      if (diff) {
+        html += '</span>';
+      }
     }
   }
   html += '</p>';
@@ -2143,6 +2159,12 @@ function getBlendMode(obj) {
 // convert an object containing parsed AI text styles to an object containing CSS style properties
 function convertAiTextStyle(aiStyle) {
   var cssStyle = {};
+  if (docSettings.characterstyles_to_classnames == 'yes') {
+    if (aiStyle.justification && (tmp = getJustificationCss(aiStyle.justification))) {
+      cssStyle["text-align"] = tmp;
+    }
+    return cssStyle;
+  }  
   var fontInfo, tmp;
   if (aiStyle.aifont) {
     fontInfo = findFontInfo(aiStyle.aifont);
