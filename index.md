@@ -140,7 +140,7 @@ Most of the script’s options are set in the settings text block. When you run 
 - **png_transparent**
   - <span style="font-variant: small-caps">Possible values</span>: `yes` `no`
   - <span style="font-variant: small-caps">Default</span>: `no`
-  - This option lets you make transparent any png image that is output by the program. Note that specifying transparent png’s can result in a visibly significant degradation in the image.
+  - This option enables transparency for any png image that is output by the program. Note that specifying transparent pngs can result in a visible degradation in image quality. Using `image_format: png24` can help prevent this.
 - **center_html_output**
   - <span style="font-variant: small-caps">Possible values</span>: `true` `false`
   - <span style="font-variant: small-caps">Default</span>: `true`
