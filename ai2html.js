@@ -2879,7 +2879,7 @@ function injectCSSinSVG(path, css) {
 
 function generateArtboardDiv(ab, breakpoints, settings) {
   var divId = nameSpace + getArtboardFullName(ab);
-  var classnames = nameSpace + "artboard " + nameSpace + "artboard-v3";
+  var classnames = nameSpace + "artboard " + nameSpace + "artboard-v4";
   var widthRange = getArtboardWidthRange(ab);
   var html = "";
   if (!isFalse(settings.include_resizer_classes)) {
@@ -3018,8 +3018,8 @@ function getResizerScript() {
   // be passed in.
   var resizer = function (scriptEnvironment, nameSpace) {
     // only want one resizer on the page
-    if (document.documentElement.className.indexOf(nameSpace + "resizer-v3-init") > -1) return;
-    document.documentElement.className += " " + nameSpace + "resizer-v3-init";
+    if (document.documentElement.className.indexOf(nameSpace + "resizer-v4-init") > -1) return;
+    document.documentElement.className += " " + nameSpace + "resizer-v4-init";
     // require IE9+
     if (!("querySelector" in document)) return;
     function selectElements(selector, parent) {
@@ -3032,7 +3032,7 @@ function getResizerScript() {
       }
     }
     function updateSize() {
-      var elements = selectElements("." + nameSpace + "artboard-v3[data-min-width]"),
+      var elements = selectElements("." + nameSpace + "artboard-v4[data-min-width]"),
           widthById = {};
       elements.forEach(function(el) {
         var parent = el.parentNode,
