@@ -317,6 +317,7 @@ var errors   = [];
 var oneTimeWarnings = [];
 var textFramesToUnhide = [];
 var objectsToRelock = [];
+var svgLayersToUnhide = [];
 
 // Global variables set by main()
 var docSettings = {};
@@ -350,6 +351,8 @@ if (runningInNode()) {
     convertSettingsToYaml,
     parseDataAttributes,
     parseArtboardName,
+    parseObjectName,
+    cleanObjectName,
     initDocumentSettings
   ].forEach(function(f) {
     module.exports[f.name] = f;
@@ -575,7 +578,7 @@ function render() {
   forEachUsableArtboard(function(activeArtboard, abNumber) {
     var abSettings = getArtboardSettings(activeArtboard);
     var docArtboardName  = getArtboardFullName(activeArtboard);
-    var textFrames, textData;
+    var textFrames, textData, imageData;
     doc.artboards.setActiveArtboardIndex(abNumber);
 
     // ========================
@@ -598,7 +601,9 @@ function render() {
 
     if (isTrue(docSettings.write_image_files)) {
       pBar.setTitle(docArtboardName + ': Capturing image...');
-      captureArtboardImage(activeArtboard, textFrames, masks, docSettings);
+      imageData = convertArtItems(activeArtboard, textFrames, masks, docSettings);
+    } else {
+      imageData = {html: ""};
     }
     pBar.step();
 
@@ -608,7 +613,7 @@ function render() {
 
     artboardContent.html += "\r\t<!-- Artboard: " + getArtboardName(activeArtboard) + " -->\r" +
        generateArtboardDiv(activeArtboard, breakpoints, docSettings) +
-       generateImageHtml(activeArtboard, docSettings) +
+       imageData.html +
        textData.html +
        "\t</div>\r";
     artboardContent.css += generateArtboardCss(activeArtboard, textData.styles, docSettings);
@@ -1202,8 +1207,7 @@ function detectScriptEnvironment() {
 function detectTimesFonts() {
   var found = false;
   try {
-    app.textFonts.getByName('NYTFranklin-Medium') && app.textFonts.getByName('NYTCheltenham-Medium');
-    found = true;
+    found = !!(app.textFonts.getByName('NYTFranklin-Medium') && app.textFonts.getByName('NYTCheltenham-Medium'));
   } catch(e) {}
   return found;
 }
@@ -1424,10 +1428,14 @@ function getArtboardId(ab) {
   return id;
 }
 
+function cleanObjectName(name) {
+  return makeKeyword(name.replace( /^(.+):.*$/, "$1"));
+}
+
 // TODO: prevent duplicate names? or treat duplicate names an an error condition?
 // (artboard name is assumed to be unique in several places)
 function getArtboardName(ab) {
-  return makeKeyword(ab.name.replace( /^(.+):.*$/, "$1"));
+  return cleanObjectName(ab.name);
 }
 
 function getArtboardFullName(ab) {
@@ -1472,31 +1480,52 @@ function getArtboardWidthRange(ab) {
   return [minw, maxw ? maxw - 1 : Infinity];
 }
 
-// Parse artboard-specific settings from artboard name
-function parseArtboardName(name) {
-  // parse old-style width declaration
-  var widthStr = (/^ai2html-(\d+)/.exec(name) || [])[1];
+// Parse data that is encoded in a name
+function parseObjectName(name) {
   // capture portion of name after colon
   var settingsStr = (/:(.*)/.exec(name) || [])[1] || "";
   var settings = {};
-  forEach(settingsStr.split(','), function(part) {
-    if (/^\d+$/.test(part)) {
-      widthStr = part;
-    } else if (part) {
-      // assuming setting is a flag
-      settings[part] = true;
-    }
-  });
+  // parse old-style width declaration
+  var widthStr = (/^ai2html-(\d+)/.exec(name) || [])[1];
   if (widthStr) {
     settings.width = parseFloat(widthStr);
   }
+  forEach(settingsStr.split(','), function(part) {
+    var eq = part.indexOf('=');
+    var name, value;
+    if (/^\d+$/.test(part)) {
+      name = 'width';
+      value = part;
+    } else if (eq > 0) {
+      name = part.substr(0, eq);
+      value = part.substr(eq + 1);
+    } else if (part) {
+      // assuming setting is a flag
+      name = part;
+      value = "true";
+    }
+    if (name && value) {
+      if (/^\d+$/.test(value)) {
+        value = parseFloat(value);
+      } else if (isTrue(value)) {
+        value = true;
+      }
+      settings[name] = value;
+    }
+  });
   return settings;
+}
+
+// TODO: redundant -- remove
+function parseArtboardName(name) {
+  return parseObjectName(name);
 }
 
 function getArtboardSettings(ab) {
   // currently, artboard-specific settings are all stashed in the artboard name
   return parseArtboardName(ab.name);
 }
+
 
 // return array of data records about each usable artboard, sorted from narrow to wide
 function getArtboardInfo() {
@@ -1794,7 +1823,7 @@ function getCharStyle(c) {
   o.aifont = c.textFont.name;
   o.size = Math.round(c.size);
   o.capitalization = caps == 'FontCapsOption.NORMALCAPS' ? '' : caps;
-  o.tracking = c.tracking
+  o.tracking = c.tracking;
   return o;
 }
 
@@ -2460,43 +2489,129 @@ function convertAreaTextPath(frame) {
 // ai2html image functions
 // =================================
 
-// ab: artboard (assumed to be the active artboard)
-// textFrames:  text frames belonging to the active artboard
-function captureArtboardImage(ab, textFrames, masks, settings) {
-  var docArtboardName = getArtboardFullName(ab);
-  var imageDestinationFolder = pathJoin(docPath, settings.html_output_path, settings.image_output_path);
-  var imageDestination = pathJoin(imageDestinationFolder, docArtboardName);
-  var i;
-  checkForOutputFolder(imageDestinationFolder, "image_output_path");
+function getArtboardImageId(ab) {
+  return nameSpace + "ai" + getArtboardId(ab) + "-0";
+}
 
-  if (!isTrue(settings.testing_mode)) {
-    for (i=0; i<textFrames.length; i++) {
+function getLayerImageId(lyr, ab) {
+  return nameSpace + "ai" + getArtboardId(ab) + "-" + cleanObjectName(lyr.name);
+}
+
+
+function getArtboardImageName(ab) {
+  return getArtboardFullName(ab);
+}
+
+function getLayerImageName(lyr, ab) {
+  return getArtboardImageName(ab) + "-" + cleanObjectName(lyr.name);
+}
+
+// Generate images and return HTML embed code
+function convertArtItems(activeArtboard, textFrames, masks, settings) {
+  var imageFolder = getImageFolder(settings);
+  var imgName = getArtboardImageName(activeArtboard);
+  // TODO: improve
+  var imgFile = imgName + '.' + (settings.image_format[0] || "png").substring(0,3);
+  var imgId = getArtboardImageId(activeArtboard);
+  var imgClass = nameSpace + 'aiImg';
+  var imageDestination = pathJoin(imageFolder, imgName);
+  var hideTextFrames = !isTrue(settings.testing_mode);
+  var html = "";
+  var n = textFrames.length;
+  var svgLayers;
+  var i;
+
+  checkForOutputFolder(imageFolder, "image_output_path");
+
+  if (hideTextFrames) {
+    for (i=0; i<n; i++) {
       textFrames[i].hidden = true;
     }
   }
 
+  svgLayers = findSvgExportLayers();
+  if (svgLayers.length > 0) {
+    // TODO: export layer content
+    forEach(svgLayers, function(lyr) {
+      var svgName = getLayerImageName(lyr, activeArtboard);
+      var svgId = getLayerImageId(lyr, activeArtboard);
+      var svgClass = imgClass + ' ' + nameSpace + 'aiAbs';
+      var outputPath = pathJoin(imageFolder, svgName);
+      exportSVG(outputPath, activeArtboard, masks, [lyr]);
+      html += generateImageHtml(svgName + '.svg', svgId, svgClass, activeArtboard, settings);
+    });
+
+    // hide all svg Layers
+    forEach(svgLayers, function(lyr) {
+      lyr.visible = false;
+    });
+  }
+
+  captureArtboardImage(imageDestination, activeArtboard, masks, settings);
+  html += generateImageHtml(imgFile, imgId, imgClass, activeArtboard, settings);
+
+  // unhide svg export layers (if any)
+  forEach(svgLayers, function(lyr) {
+    lyr.visible = true;
+  });
+
+
+  if (hideTextFrames) {
+    for (i=0; i<n; i++) {
+      textFrames[i].hidden = false;
+    }
+  }
+
+  return {html: html};
+}
+
+function findLayers(layers, test) {
+  var retn = null;
+  forEach(layers, function(lyr) {
+    var found = null;
+    if (objectIsHidden(lyr)) {
+      // skip
+    } else if (test(lyr)) {
+      found = [lyr];
+    } else if (lyr.layers.length > 0) {
+      // examine sublayers (only if layer didn't test positive)
+      found = findLayers(lyr.layers, test);
+    }
+    if (found) {
+      retn = retn ? retn.concat(found) : found;
+    }
+  });
+  return retn;
+}
+
+function findSvgExportLayers() {
+  function test(lyr) {
+    return parseObjectName(lyr.name).svg;
+  }
+  return findLayers(doc.layers, test);
+}
+
+function getImageFolder(settings) {
+  return pathJoin(docPath, settings.html_output_path, settings.image_output_path);
+}
+
+
+// ab: artboard (assumed to be the active artboard)
+// textFrames:  text frames belonging to the active artboard
+function captureArtboardImage(imageDestination, ab, masks, settings) {
   exportImageFiles(imageDestination, ab, settings.image_format, 1, docSettings.use_2x_images_if_possible);
   if (contains(settings.image_format, 'svg')) {
     exportSVG(imageDestination, ab, masks);
   }
-
-  if (!isTrue(settings.testing_mode)) {
-    for (i=0; i<textFrames.length; i++) {
-      textFrames[i].hidden = false;
-    }
-  }
 }
 
 // Create an <img> tag for the artboard image
-function generateImageHtml(ab, settings) {
-  var abName = getArtboardFullName(ab),
-      abPos = convertAiBounds(ab.artboardRect),
-      imgId = nameSpace + "ai" + getArtboardId(ab) + "-0",
-      extension = (settings.image_format[0] || "png").substring(0,3),
-      src = settings.image_source_path + abName + "." + extension,
+function generateImageHtml(imgFile, imgId, imgClass, ab, settings) {
+  var abPos = convertAiBounds(ab.artboardRect),
+      src = settings.image_source_path + imgFile,
       html;
 
-  html = '\t\t<img id="' + imgId + '" class="' + nameSpace + 'aiImg"';
+  html = '\t\t<img id="' + imgId + '" class="' + imgClass + '"';
   if (isTrue(settings.use_lazy_loader)) {
     html += ' data-src="' + src + '"';
     // spaceholder while image loads
@@ -2616,13 +2731,14 @@ function exportImageFiles(dest, ab, formats, initialScaling, doubleres) {
 
 
 // Copy contents of an artboard to a temporary document, excluding objects
-// that are hidden by masks
+//   that are hidden by masks
+// layers Optional argument to copy specific layers (default is all layers)
 // TODO: grouped text is copied (but hidden). Avoid copying text in groups, for
 //   smaller SVG output.
-function copyArtboardForImageExport(ab, masks) {
+function copyArtboardForImageExport(ab, masks, layers) {
   var layerMasks = filter(masks, function(o) {return !!o.layer;}),
       artboardBounds = ab.artboardRect,
-      sourceLayers = toArray(doc.layers),
+      sourceLayers = layers || toArray(doc.layers),
       destLayer = doc.layers.add(),
       destGroup = doc.groupItems.add(),
       groupPos, group2, doc2;
@@ -2720,11 +2836,11 @@ function copyArtboardForImageExport(ab, masks) {
   }
 }
 
-function exportSVG(dest, ab, masks) {
+function exportSVG(dest, ab, masks, layers) {
   // Illustrator's SVG output contains all objects in a document (it doesn't
   //   clip to the current artboard), so we copy artboard objects to a temporary
   //   document for export.
-  var exportDoc = copyArtboardForImageExport(ab, masks);
+  var exportDoc = copyArtboardForImageExport(ab, masks, layers);
   var opts = new ExportOptionsSVG();
   var ofile = dest + '.svg';
   opts.embedAllFonts         = false;
@@ -2744,6 +2860,7 @@ function exportSVG(dest, ab, masks) {
 }
 
 // Injects css and rewrites file
+// TODO: remove CDATA (incompatible with NYT h.p.)
 function injectCSSinSVG(path, css) {
   var file = new File(path);
   var style = '<style type="text/css"><![CDATA[\n' + css + '\n]]></style>';
@@ -2905,8 +3022,17 @@ function getResizerScript() {
     document.documentElement.className += " " + nameSpace + "resizer-v3-init";
     // require IE9+
     if (!("querySelector" in document)) return;
+    function selectElements(selector, parent) {
+      var selection = (parent || document).querySelectorAll(selector);
+      return Array.prototype.slice.call(selection);
+    }
+    function setImgSrc(img) {
+      if (img.getAttribute("data-src") && img.getAttribute("src") != img.getAttribute("data-src")) {
+        img.setAttribute("src", img.getAttribute("data-src"));
+      }
+    }
     function updateSize() {
-      var elements = Array.prototype.slice.call(document.querySelectorAll("." + nameSpace + "artboard-v3[data-min-width]")),
+      var elements = selectElements("." + nameSpace + "artboard-v3[data-min-width]"),
           widthById = {};
       elements.forEach(function(el) {
         var parent = el.parentNode,
@@ -2915,10 +3041,7 @@ function getResizerScript() {
             maxwidth = el.getAttribute("data-max-width");
         if (parent.id) widthById[parent.id] = width; // only if parent.id is set
         if (+minwidth <= width && (+maxwidth >= width || maxwidth === null)) {
-          var img = el.querySelector("." + nameSpace + "aiImg");
-          if (img.getAttribute("data-src") && img.getAttribute("src") != img.getAttribute("data-src")) {
-            img.setAttribute("src", img.getAttribute("data-src"));
-          }
+          selectElements("." + nameSpace + "aiImg", el).forEach(setImgSrc);
           el.style.display = "block";
         } else {
           el.style.display = "none";

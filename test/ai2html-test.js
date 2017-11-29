@@ -17,6 +17,20 @@ describe('Ai2html-specific functions', function () {
     })
   })
 
+  describe('parseObjectName()', function () {
+    it('extract flags, numbers and strings', function () {
+      var settings = lib.parseObjectName("Layer 7:600,svg,label=Text Layer,height=400");
+      assert.deepEqual(settings, {width: 600, svg: true, label: "Text Layer", height: 400});
+    })
+  })
+
+  describe('cleanObjectName()', function () {
+    it('remove colon-delimited annotation and convert spaces', function () {
+      var name = lib.cleanObjectName("Layer 7:600,svg,label=Text Layer,height=400");
+      assert.equal(name, "Layer_7");
+    })
+  })
+
   describe('parseDataAttributes()', function () {
     it('treat semicolons, newlines and commas as delimiters', function () {
       var note = 'valign: top; align: left, name: foo\nid: bar\n';
