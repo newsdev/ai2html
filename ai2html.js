@@ -1959,7 +1959,7 @@ function convertTextFrames(textFrames, ab) {
   var pgStyles = [];
   var charStyles = [];
   var baseStyle = deriveCssStyles(frameData);
-  var idPrefix = nameSpace + "ai" + getArtboardId(ab) + "-";
+  var idPrefix = nameSpace + "ai-" + docName + "-" + getArtboardId(ab) + "-";
   var abBox = convertAiBounds(ab.artboardRect);
   var divs = map(frameData, function(obj, i) {
     var frame = textFrames[i];
@@ -2491,7 +2491,7 @@ function captureArtboardImage(ab, textFrames, masks, settings) {
 function generateImageHtml(ab, settings) {
   var abName = getArtboardFullName(ab),
       abPos = convertAiBounds(ab.artboardRect),
-      imgId = nameSpace + "ai" + getArtboardId(ab) + "-0",
+      imgId = nameSpace + "ai-" + docName + "-" + getArtboardId(ab) + "-0",
       extension = (settings.image_format[0] || "png").substring(0,3),
       src = settings.image_source_path + abName + "." + extension,
       html;
