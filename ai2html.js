@@ -2588,7 +2588,7 @@ function findSvgExportLayers() {
   function test(lyr) {
     return parseObjectName(lyr.name).svg;
   }
-  return findLayers(doc.layers, test);
+  return findLayers(doc.layers, test) || [];
 }
 
 function getImageFolder(settings) {
