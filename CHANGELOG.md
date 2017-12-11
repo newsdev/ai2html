@@ -1,3 +1,7 @@
+### v0.66.0
+- Export content of layers with ":svg" appended to their layer name as svg files.
+
+
 ### v0.65.6
 - Prevent paths in SVG output from scaling by adding CSS to the .svg file.
 
