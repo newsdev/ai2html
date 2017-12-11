@@ -2446,7 +2446,9 @@ function getTextFrameCss(thisFrame, abBox, pgData) {
     styles += "right:" + formatCssPct(abBox.width - (htmlL + htmlBox.width), abBox.width);
   } else if (alignment == "center") {
     styles += "left:" + formatCssPct(htmlL + htmlBox.width/ 2, abBox.width);
-    styles += "margin-left:" + formatCssPct(-htmlW / 2, abBox.width);
+    // using pct margin causes problems in a dynamic layout, switching to pixels
+    // styles += "margin-left:" + formatCssPct(-htmlW / 2, abBox.width);
+    styles += "margin-left:-" + roundTo(htmlBox.width / 2, 1) + 'px;';
   } else {
     styles += "left:" + formatCssPct(htmlL, abBox.width);
   }
