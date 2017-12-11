@@ -9,7 +9,7 @@ function main() {
 
 // Increment final digit for bug fixes, middle digit for new functionality.
 // Remember to add an entry in CHANGELOG when updating the version number.
-var scriptVersion = "0.66.0";
+var scriptVersion = "0.66.1";
 
 // ai2html is a script for Adobe Illustrator that converts your Illustrator document into html and css.
 // Copyright (c) 2011-2015 The New York Times Company
@@ -2856,7 +2856,7 @@ function exportSVG(dest, ab, masks, layers) {
   //exportDoc.pageItems.removeAll();
   exportDoc.close(SaveOptions.DONOTSAVECHANGES);
   // prevent SVG strokes from scaling
-  injectCSSinSVG(ofile, 'rect,circle,path { vector-effect: non-scaling-stroke; }');
+  injectCSSinSVG(ofile, 'rect,circle,path,line,polyline { vector-effect: non-scaling-stroke; }');
 }
 
 // Injects css and rewrites file

@@ -1,3 +1,7 @@
+### v0.66.1
+- Prevent SVG line and polyline objects from scaling.
+
+
 ### v0.66.0
 - Export content of layers with ":svg" appended to their layer name as svg files.
 
