@@ -1,3 +1,6 @@
+### v0.66.2
+- Prevent duplicate layer image file names
+
 ### v0.66.1
 - Prevent SVG line and polyline objects from scaling.
 

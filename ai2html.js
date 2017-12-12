@@ -9,7 +9,7 @@ function main() {
 
 // Increment final digit for bug fixes, middle digit for new functionality.
 // Remember to add an entry in CHANGELOG when updating the version number.
-var scriptVersion = "0.66.1";
+var scriptVersion = "0.66.2";
 
 // ai2html is a script for Adobe Illustrator that converts your Illustrator document into html and css.
 // Copyright (c) 2011-2015 The New York Times Company
@@ -353,7 +353,8 @@ if (runningInNode()) {
     parseArtboardName,
     parseObjectName,
     cleanObjectName,
-    initDocumentSettings
+    initDocumentSettings,
+    uniqAssetName
   ].forEach(function(f) {
     module.exports[f.name] = f;
   });
@@ -2493,15 +2494,6 @@ function convertAreaTextPath(frame) {
 // ai2html image functions
 // =================================
 
-function getArtboardImageId(ab) {
-  return nameSpace + "ai" + getArtboardId(ab) + "-0";
-}
-
-function getLayerImageId(lyr, ab) {
-  return nameSpace + "ai" + getArtboardId(ab) + "-" + cleanObjectName(lyr.name);
-}
-
-
 function getArtboardImageName(ab) {
   return getArtboardFullName(ab);
 }
@@ -2510,18 +2502,33 @@ function getLayerImageName(lyr, ab) {
   return getArtboardImageName(ab) + "-" + cleanObjectName(lyr.name);
 }
 
+function getImageId(imgName) {
+  return nameSpace + imgName + "-img";
+}
+
+function uniqAssetName(name, names) {
+  var uniqName = name;
+  var num = 2;
+  while (contains(names, uniqName)) {
+    uniqName = name + '-' + num;
+    num++;
+  }
+  return uniqName;
+}
+
+
 // Generate images and return HTML embed code
 function convertArtItems(activeArtboard, textFrames, masks, settings) {
   var imageFolder = getImageFolder(settings);
   var imgName = getArtboardImageName(activeArtboard);
-  // TODO: improve
   var imgFile = imgName + '.' + (settings.image_format[0] || "png").substring(0,3);
-  var imgId = getArtboardImageId(activeArtboard);
+  var imgId = getImageId(imgName);
   var imgClass = nameSpace + 'aiImg';
   var imageDestination = pathJoin(imageFolder, imgName);
   var hideTextFrames = !isTrue(settings.testing_mode);
   var html = "";
   var n = textFrames.length;
+  var imageNames = [];
   var svgLayers;
   var i;
 
@@ -2535,13 +2542,13 @@ function convertArtItems(activeArtboard, textFrames, masks, settings) {
 
   svgLayers = findSvgExportLayers();
   if (svgLayers.length > 0) {
-    // TODO: export layer content
     forEach(svgLayers, function(lyr) {
-      var svgName = getLayerImageName(lyr, activeArtboard);
-      var svgId = getLayerImageId(lyr, activeArtboard);
+      var svgName = uniqAssetName(getLayerImageName(lyr, activeArtboard), imageNames);
+      var svgId = getImageId(svgName);
       var svgClass = imgClass + ' ' + nameSpace + 'aiAbs';
       var outputPath = pathJoin(imageFolder, svgName);
       exportSVG(outputPath, activeArtboard, masks, [lyr]);
+      imageNames.push(svgName); // TODO: skip blank images
       html += generateImageHtml(svgName + '.svg', svgId, svgClass, activeArtboard, settings);
     });
 

@@ -38,6 +38,17 @@ describe('Ai2html-specific functions', function () {
     })
   })
 
+  describe('uniqAssetName()', function() {
+    it('adds numerical suffix to create unique names', function() {
+      var name = lib.uniqAssetName('img', ['img', 'img-2']);
+      assert.equal(name, 'img-3');
+    })
+
+    it('no change if name is already unique', function() {
+      assert.equal(lib.uniqAssetName('img', []), 'img');
+    })
+  })
+
   describe('parseDataAttributes()', function () {
     it('treat semicolons, newlines and commas as delimiters', function () {
       var note = 'valign: top; align: left, name: foo\nid: bar\n';
