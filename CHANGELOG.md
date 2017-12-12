@@ -1,12 +1,12 @@
 ### v0.66.2
-- Prevent duplicate layer image file names
+- Fix: Prevent creation of single-layer image files with duplicate names.
+- Prevent export of single-layer SVG files containing no artwork.
 
 ### v0.66.1
-- Prevent SVG line and polyline objects from scaling.
-
+- Prevent scaling of line and polyline objects in exported SVG files.
 
 ### v0.66.0
-- Export content of layers with ":svg" appended to their layer name as svg files.
+- Export content of layers with ":svg" appended to their layer name as SVG files.
 
 
 ### v0.65.6
