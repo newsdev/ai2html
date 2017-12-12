@@ -22,6 +22,13 @@ describe('Ai2html-specific functions', function () {
       var settings = lib.parseObjectName("Layer 7:600,svg,label=Text Layer,height=400");
       assert.deepEqual(settings, {width: 600, svg: true, label: "Text Layer", height: 400});
     })
+
+    it('ignore suffixes added by copying: " copy" " copy 2" etc.', function () {
+      var settings = lib.parseObjectName("subways:svg copy");
+      assert.deepEqual(settings, {svg: true});
+      assert.deepEqual(lib.parseObjectName("subways:svg copy 2"), {svg: true});
+    })
+
   })
 
   describe('cleanObjectName()', function () {

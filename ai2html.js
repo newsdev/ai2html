@@ -1490,6 +1490,8 @@ function parseObjectName(name) {
   if (widthStr) {
     settings.width = parseFloat(widthStr);
   }
+  // remove suffixes added by copying
+  settingsStr = settingsStr.replace(/ copy.*/i, '');
   forEach(settingsStr.split(','), function(part) {
     var eq = part.indexOf('=');
     var name, value;
