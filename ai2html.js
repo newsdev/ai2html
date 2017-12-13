@@ -2550,6 +2550,7 @@ function convertArtItems(activeArtboard, textFrames, masks, settings) {
       var ofile = exportSVG(outputPath, activeArtboard, masks, [lyr]);
       if (ofile) {
         // only generate html for files that were created (empty files are not created)
+        message('Exported a layer as ' + ofile.replace(/.*\//, ''));
         imageNames.push(svgName);
         html += generateImageHtml(svgName + '.svg', svgId, svgClass, activeArtboard, settings);
       }
