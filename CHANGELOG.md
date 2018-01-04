@@ -1,3 +1,6 @@
+### v0.66.4
+- Fix for slight rightward shift of centered point text (Issue #84).
+
 ### v0.66.3
 - Fix for bug causing misalignment of columns of text at some browser zooms, affecting Chrome and Safari (Issue #83).
 
