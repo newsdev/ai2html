@@ -2428,9 +2428,10 @@ function getTextFrameCss(thisFrame, abBox, pgData) {
     // EXPERIMENTAL feature
     // Put a box around the text, if the text frame's textPath is styled
     styles += convertAreaTextPath(thisFrame);
-  } else {
+  } else {  // point text
     // point text aligned to midline (sensible default for chart y-axes, map labels, etc.)
     v_align = "middle";
+    htmlW += 22; // add a bit of extra width to try to prevent overflow
   }
 
   if (thisFrameAttributes.valign) {
@@ -2455,10 +2456,10 @@ function getTextFrameCss(thisFrame, abBox, pgData) {
   if (alignment == "right") {
     styles += "right:" + formatCssPct(abBox.width - (htmlL + htmlBox.width), abBox.width);
   } else if (alignment == "center") {
-    styles += "left:" + formatCssPct(htmlL + htmlBox.width/ 2, abBox.width);
+    styles += "left:" + formatCssPct(htmlL + htmlBox.width / 2, abBox.width);
     // using pct margin causes problems in a dynamic layout, switching to pixels
     // styles += "margin-left:" + formatCssPct(-htmlW / 2, abBox.width);
-    styles += "margin-left:-" + roundTo(htmlBox.width / 2, 1) + 'px;';
+    styles += "margin-left:-" + roundTo(htmlW / 2, 1) + 'px;';
   } else {
     styles += "left:" + formatCssPct(htmlL, abBox.width);
   }
@@ -2468,7 +2469,7 @@ function getTextFrameCss(thisFrame, abBox, pgData) {
     classes += ' ' + nameSpace + 'aiPointText';
     // using pixel width with point text, because pct width causes alignment problems -- see issue #63
     // adding extra pixels in case HTML width is slightly less than AI width (affects alignment of right-aligned text)
-    styles += "width:" + roundTo(htmlW + 2, cssPrecision) + 'px;';
+    styles += "width:" + roundTo(htmlW, cssPrecision) + 'px;';
   } else {
     // area text uses pct width, so width of text boxes will scale
     // TODO: consider only using pct width with wider text boxes that contain paragraphs of text
