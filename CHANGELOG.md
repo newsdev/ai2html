@@ -1,3 +1,6 @@
+### v0.66.3
+- Fix for bug causing misalignment of columns of text at some browser zooms, affecting Chrome and Safari (Issue #83).
+
 ### v0.66.2
 - Fix: Prevent creation of single-layer image files with duplicate names.
 - Prevent export of single-layer SVG files containing no artwork.
@@ -8,13 +11,11 @@
 ### v0.66.0
 - Export content of layers with ":svg" appended to their layer name as SVG files.
 
-
 ### v0.65.6
 - Prevent paths in SVG output from scaling by adding CSS to the .svg file.
 
 ### v0.65.5
 - Made "Yes" the default when prompting to create a promo image.
-
 
 ### v0.65.4
 - Use separate CSS, HTML and JS blocks for compatibility with NYT vi system.

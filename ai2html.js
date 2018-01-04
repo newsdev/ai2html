@@ -9,7 +9,7 @@ function main() {
 
 // Increment final digit for bug fixes, middle digit for new functionality.
 // Remember to add an entry in CHANGELOG when updating the version number.
-var scriptVersion = "0.66.2";
+var scriptVersion = "0.66.3";
 
 // ai2html is a script for Adobe Illustrator that converts your Illustrator document into html and css.
 // Copyright (c) 2011-2015 The New York Times Company
@@ -272,6 +272,7 @@ var blendModes = [
 ];
 
 // list of CSS properties used for translating AI text styles
+// (used for creating a unique identifier for each style)
 var cssTextStyleProperties = [
   'font-family',
   'font-size',
@@ -279,6 +280,7 @@ var cssTextStyleProperties = [
   'font-style',
   'color',
   'line-height',
+  'height', // used for point-type paragraph styles
   'letter-spacing',
   'opacity',
   'padding-top',
@@ -1920,11 +1922,12 @@ function importTextFrameParagraphs(textFrame) {
     } else {
       d = {
         text: p.contents,
-        aiStyle: getParagraphStyle(p, opacity),
+        aiStyle: getParagraphStyle(p),
         ranges: getParagraphRanges(p)
       };
       d.aiStyle.opacity = opacity;
       d.aiStyle.blendMode = blendMode;
+      d.aiStyle.frameType = textFrame.kind == TextType.POINTTEXT ? 'point' : 'area';
     }
     data.push(d);
     charsLeft -= (plen + 1); // char count + newline
@@ -1942,7 +1945,8 @@ function cleanHtmlTags(str) {
 }
 
 function generateParagraphHtml(pData, baseStyle, pStyles, cStyles) {
-  var html, diff, classname, range, text;
+  var classStr = '',
+      html, diff, range, text;
   if (pData.text.length === 0) { // empty pg
     // TODO: Calculate the height of empty paragraphs and generate
     // CSS to preserve this height (not supported by Illustrator API)
@@ -1951,18 +1955,15 @@ function generateParagraphHtml(pData, baseStyle, pStyles, cStyles) {
   diff = objectSubtract(pData.cssStyle, baseStyle);
   // Give the pg a class, if it has a different style than the base pg class
   if (diff) {
-    classname = getTextStyleClass(diff, pStyles, 'pstyle');
-    html = '<p class="' + classname + '">';
-  } else {
-    html = '<p>';
+    classStr = ' class="' + getTextStyleClass(diff, pStyles, 'pstyle') + '"';
   }
+  html = '<p' + classStr + '>';
   for (var j=0; j<pData.ranges.length; j++) {
     range = pData.ranges[j];
     range.text = cleanHtmlTags(range.text);
     diff = objectSubtract(range.cssStyle, pData.cssStyle);
     if (diff) {
-      classname = getTextStyleClass(diff, cStyles, 'cstyle');
-      html += '<span class="' + classname + '">';
+      html += '<span class="' + getTextStyleClass(diff, cStyles, 'cstyle') + '">';
     }
     html += cleanText(range.text);
     if (diff) {
@@ -2029,7 +2030,8 @@ function deriveCssStyles(frameData) {
     'padding-bottom': 0,
     'padding-top': 0,
     'mix-blend-mode': 'normal',
-    'font-style': 'normal'
+    'font-style': 'normal',
+    'height': 'auto'
   };
   var defaultAiStyle = {
     opacity: 100 // given as AI style because opacity is converted to several CSS properties
@@ -2040,11 +2042,12 @@ function deriveCssStyles(frameData) {
     forEach(frame.paragraphs, analyzeParagraphStyle);
   });
 
-  // find the most common pg style and override certain properties
+  // initialize the base <p> style to be equal to the most common pg style
   if (pgStyles.length > 0) {
     pgStyles.sort(compareCharCount);
     extend(baseStyle, pgStyles[0].cssStyle);
   }
+  // override certain base style properties with default values
   extend(baseStyle, defaultCssStyle, convertAiTextStyle(defaultAiStyle));
   return baseStyle;
 
@@ -2193,6 +2196,10 @@ function convertAiTextStyle(aiStyle) {
   }
   if ('leading' in aiStyle) {
     cssStyle["line-height"] = aiStyle.leading + "px";
+    // Fix for line height error affecting point text in Chrome/Safari at certain browser zooms.
+    if (aiStyle.frameType == 'point') {
+      cssStyle.height = cssStyle["line-height"];
+    }
   }
   // if (('opacity' in aiStyle) && aiStyle.opacity < 100) {
   if ('opacity' in aiStyle) {
