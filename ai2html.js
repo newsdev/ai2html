@@ -2885,29 +2885,52 @@ function exportSVG(dest, ab, masks, layers) {
   opts.compressed            = false;
   opts.documentEncoding      = SVGDocumentEncoding.UTF8;
   opts.embedRasterImages     = isTrue(docSettings.svg_embed_images);
-  opts.DTD                   = SVGDTDVersion.SVG1_1;
+  // opts.DTD                   = SVGDTDVersion.SVG1_1;
+  opts.DTD                   = SVGDTDVersion.SVGTINY1_2;
   opts.cssProperties         = SVGCSSPropertyLocation.STYLEATTRIBUTES;
+
+  // SVGTINY* DTD variants:
+  //  * Smaller file size (50% on one test file)
+  //  * Convert raster/vector effects to external .png images (other DTDs use jpg)
 
   exportDoc.exportFile(new File(ofile), ExportType.SVG, opts);
   doc.activate();
   //exportDoc.pageItems.removeAll();
   exportDoc.close(SaveOptions.DONOTSAVECHANGES);
-  // prevent SVG strokes from scaling
-  injectCSSinSVG(ofile, 'rect,circle,path,line,polyline { vector-effect: non-scaling-stroke; }');
+  rewriteSVGFile(ofile);
   return ofile;
 }
 
-// Injects css and rewrites file
-// TODO: remove CDATA (incompatible with NYT h.p.)
-function injectCSSinSVG(path, css) {
+function rewriteSVGFile(path) {
   var file = new File(path);
-  var style = '<style type="text/css"><![CDATA[\n' + css + '\n]]></style>';
-  var content;
   if (!file.exists) return;
   file.open("r");
-  content = file.read();
+  var content = file.read();
   file.close();
-  saveTextFile(path, content.replace('</svg>', style + '\n</svg>'));
+  // prevent SVG strokes from scaling
+  content = injectCSSinSVG(content, 'rect,circle,path,line,polyline { vector-effect: non-scaling-stroke; }');
+  // remove images
+  content = removeImagesInSVG(content);
+  saveTextFile(path, content);
+}
+
+function removeImagesInSVG(content) {
+  var count = 0;
+  content = content.replace(/<image[^<]+<\/image>/gm, function(a) {
+    count++;
+    return '';
+  });
+  if (count > 0) {
+    warnOnce("This document contains images or effects that can't be exported to SVG.");
+  }
+  return content;
+}
+
+// Note: stopped wrapping CSS in CDATA tags (caused problems with NYT cms)
+// TODO: check for XML reserved chars
+function injectCSSinSVG(content, css) {
+  var style = '<style type="text/css">\n' + css + '\n</style>';
+  return content.replace('</svg>', style + '\n</svg>');
 }
 
 
