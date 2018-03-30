@@ -9,7 +9,7 @@ function main() {
 
 // Increment final digit for bug fixes, middle digit for new functionality.
 // Remember to add an entry in CHANGELOG when updating the version number.
-var scriptVersion = "0.66.4";
+var scriptVersion = "0.67.0";
 
 // ai2html is a script for Adobe Illustrator that converts your Illustrator document into html and css.
 // Copyright (c) 2011-2015 The New York Times Company
@@ -341,6 +341,7 @@ if (runningInNode()) {
     zeroPad,
     roundTo,
     pathJoin,
+    pathSplit,
     folderExists,
     formatCss,
     getCssColor,
@@ -941,6 +942,13 @@ function pathJoin() {
   return path;
 }
 
+// Split a full path into directory and filename parts
+function pathSplit(path) {
+  var parts = path.split('/');
+  var filename = parts.pop();
+  return [parts.join('/'), filename];
+}
+
 
 // ======================================
 // Illustrator specific utility functions
@@ -965,6 +973,13 @@ function folderExists(path) {
 
 function fileExists(path) {
   return new File(path).exists;
+}
+
+function deleteFile(path) {
+  var file = new File(path);
+  if (file.exists) {
+    file.remove();
+  }
 }
 
 function readYamlConfigFile(path) {
@@ -1166,7 +1181,7 @@ function runningInNode() {
 
 function isTestedIllustratorVersion(version) {
   var majorNum = parseInt(version);
-  return majorNum >= 18 && majorNum <= 21; // Illustrator CC 2014 through 2017
+  return majorNum >= 18 && majorNum <= 22; // Illustrator CC 2014 through 2018
 }
 
 function validateArtboardNames() {
@@ -2909,15 +2924,17 @@ function rewriteSVGFile(path) {
   file.close();
   // prevent SVG strokes from scaling
   content = injectCSSinSVG(content, 'rect,circle,path,line,polyline { vector-effect: non-scaling-stroke; }');
-  // remove images
-  content = removeImagesInSVG(content);
+  // remove images from filesystem and SVG file
+  content = removeImagesInSVG(content, path);
   saveTextFile(path, content);
 }
 
-function removeImagesInSVG(content) {
+function removeImagesInSVG(content, path) {
+  var dir = pathSplit(path)[0];
   var count = 0;
-  content = content.replace(/<image[^<]+<\/image>/gm, function(a) {
+  content = content.replace(/<image[^<]+href="([^"]+)"[^<]+<\/image>/gm, function(match, href) {
     count++;
+    deleteFile(pathJoin(dir, href));
     return '';
   });
   if (count > 0) {

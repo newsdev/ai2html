@@ -1,3 +1,8 @@
+### v0.67.0
+- Switched to more compact SVGTINY format for SVG output.
+- Show warning if SVG output includes linked images (Illustrator converts path effects into images during SVG export).
+- Delete images created by Illustrator during SVG output.
+
 ### v0.66.4
 - Fix for slight rightward shift of centered point text (Issue #84).
 

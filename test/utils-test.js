@@ -151,10 +151,22 @@ describe('Utility function tests', function() {
       assert.equal(lib.pathJoin('ai', 'output'), 'ai/output');
     })
 
+    it('handles empty directory', function() {
+      assert.equal(lib.pathJoin('', 'ab.svg'), 'ab.svg');
+    })
+
     it('removes duplicate slashes', function() {
       assert.equal(lib.pathJoin('ai/', '/output/', 'image.svg'), 'ai/output/image.svg');
     })
-
   })
 
+  describe('pathJoin()', function() {
+    it('test1', function() {
+      assert.deepEqual(lib.pathSplit('output/images/image.jpg'), ['output/images', 'image.jpg']);
+    })
+
+    it('test2', function() {
+      assert.deepEqual(lib.pathSplit('image.svg'), ['', 'image.svg']);
+    })
+  })
 });
