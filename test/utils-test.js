@@ -140,9 +140,9 @@ describe('Utility function tests', function() {
 
   });
 
-  describe('cleanText()', function() {
+  describe('cleanHtmlText()', function() {
     it('Replaces apostrophe with &rsquo;', function() {
-      assert.equal(lib.cleanText('1980\u2019s'), '1980&rsquo;s');
+      assert.equal(lib.cleanHtmlText('1980\u2019s'), '1980&rsquo;s');
     });
   });
 

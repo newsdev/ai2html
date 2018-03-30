@@ -1,7 +1,12 @@
+### v0.67.1
+- Remove fancy quotes from custom CSS and JS blocks. (AI likes to auto-convert regular double and single quotes to fancy quotes.)
+- Try to fix some other errors in custom CSS, JS and HTML blocks.
+
 ### v0.67.0
 - Switched to more compact SVGTINY format for SVG output.
 - Show warning if SVG output includes linked images (Illustrator converts path effects into images during SVG export).
 - Delete images created by Illustrator during SVG output.
+- Remove "untested" warning when using Illustrator CC 2018.
 
 ### v0.66.4
 - Fix for slight rightward shift of centered point text (Issue #84).
