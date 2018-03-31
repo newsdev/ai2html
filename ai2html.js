@@ -57,105 +57,105 @@ var scriptVersion = "0.67.1";
 // Modify the settings to taste.
 // Copy the contents from column Images and replace the settings statements:
 var nytBaseSettings = {
-  settings_version: {defaultValue: scriptVersion, includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
-  create_promo_image: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
-  image_format: {defaultValue: ["auto"], includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "array", possibleValues: "jpg, png, png24", notes: "Images will be generated in mulitple formats if multiple formats are listed, separated by commas. The first format will be used in the html. Sometimes this is useful to compare which format will have a smaller file size."},
-  write_image_files: {defaultValue: "yes", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: "Set this to \u201Cno\u201D to skip writing the image files. Generally only use this after you have run the script once with this setting set to \u201Cyes.\u201D"},
-  responsiveness: {defaultValue: "fixed", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "fixed, dynamic", notes: "Dynamic responsiveness means ai graphics will scale to fill the container they are placed in."},
-  max_width: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "integer", possibleValues: "", notes: "Blank or any positive number in pixels, but do not write \u201Cpx\u201D - blank means artboards will set max size, instead it is written to the config file so that the max width can be applied to the template’s container."},
-  output: {defaultValue: "one-file", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "one-file, multiple-files", notes: "One html file containing all the artboards or a separate html file for each artboard."},
-  project_name: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: "Use this to set a custom project name. The project name is being used in output filenames, class names, etc."},
-  html_output_path: {defaultValue: "../src/", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "folderPath", possibleValues: "", notes: "Allows user to change folder to write html files, path should be written relative to ai file location. This is ignored if the project_type in the yml is ai2html."},
-  html_output_extension: {defaultValue: ".html", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "fileExtension", possibleValues: "", notes: "This is ignored if the project_type in the yml is ai2html."},
-  image_output_path: {defaultValue: "../public/_assets/", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "folderPath", possibleValues: "", notes: "_assets/ for preview default. This is where the image files get written to locally and should be written as if the html_output location is the starting point."},
-  image_source_path: {defaultValue: null, includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "folderPath", possibleValues: "", notes: "Use this setting to specify from where the images are being loaded from the HTML file. Defaults to image_output_path"},
-  create_config_file: {defaultValue: "true", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "trueFalse", possibleValues: "", notes: "This is ignored in env=nyt."},
-  config_file_path: {defaultValue: "../config.yml", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "filePath", possibleValues: "", notes: "This only gets used to write the config file. It’s not used in the nyt mode to read the config.yml. Path should written relative to the ai file location."},
-  local_preview_template: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "filePath", possibleValues: "", notes: ""},
-  png_transparent: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
-  png_number_of_colors: {defaultValue: 128, includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "integer", possibleValues: "2 to 256", notes: ""},
-  jpg_quality: {defaultValue: 60, includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "integer", possibleValues: "0 to 100", notes: ""},
-  center_html_output: {defaultValue: "true", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: "Adds \u201Cmargin:0 auto;\u201D to the div containing the ai2html output."},
-  use_2x_images_if_possible: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
-  use_lazy_loader: {defaultValue: "yes", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
-  include_resizer_css_js: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
-  include_resizer_classes: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
-  include_resizer_widths: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
-  include_resizer_script: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
-  svg_embed_images: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
-  render_rotated_skewed_text_as: {defaultValue: "html", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "image, html", notes: ""},
-  show_completion_dialog_box: {defaultValue: "true", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "trueFalse", possibleValues: "", notes: "Set this to false if you don't want to see the dialog box confirming completion of the script."},
-  clickable_link: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: "If you put a url in this field, an <a> tag will be added, wrapping around the output and pointing to that url."},
-  testing_mode: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
-  last_updated_text: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: ""},
-  headline: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: ""},
-  leadin: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: ""},
-  summary: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: "Summary field for Scoop assets"},
-  notes: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: ""},
-  sources: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: ""},
-  credit: {defaultValue: "By The New York Times", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: ""},
-  page_template: {defaultValue: "nyt5-article-embed", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
-  publish_system: {defaultValue: "scoop", includeInSettingsBlock: false, includeInConfigFile: true, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
-  environment: {defaultValue: "production", includeInSettingsBlock: false, includeInConfigFile: true, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
-  show_in_compatible_apps: {defaultValue: "yes", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: true, inputType: "yesNo", possibleValues: "", notes: ""},
-  display_for_promotion_only: {defaultValue: "false", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: false, inputType: "trueFalse", possibleValues: "", notes: ""},
-  constrain_width_to_text_column: {defaultValue: "false", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: false, inputType: "trueFalse", possibleValues: "", notes: ""},
-  scoop_publish_fields: {defaultValue: "true", includeInSettingsBlock: false, includeInConfigFile: true, useQuoteMarksInConfigFile: false, inputType: "trueFalse", possibleValues: "", notes: ""},
-  scoop_asset_id: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
-  scoop_username: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
-  scoop_slug: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
-  scoop_external_edit_key: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""}
+  settings_version: {defaultValue: scriptVersion, includeInSettingsBlock: true, includeInConfigFile: false},
+  create_promo_image: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false},
+  image_format: {defaultValue: ["auto"], includeInSettingsBlock: true, includeInConfigFile: false},
+  write_image_files: {defaultValue: "yes", includeInSettingsBlock: true, includeInConfigFile: false},
+  responsiveness: {defaultValue: "fixed", includeInSettingsBlock: true, includeInConfigFile: false},
+  max_width: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: false},
+  output: {defaultValue: "one-file", includeInSettingsBlock: true, includeInConfigFile: false},
+  project_name: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
+  html_output_path: {defaultValue: "../src/", includeInSettingsBlock: false, includeInConfigFile: false},
+  html_output_extension: {defaultValue: ".html", includeInSettingsBlock: false, includeInConfigFile: false},
+  image_output_path: {defaultValue: "../public/_assets/", includeInSettingsBlock: false, includeInConfigFile: false},
+  image_source_path: {defaultValue: null, includeInSettingsBlock: false, includeInConfigFile: false},
+  create_config_file: {defaultValue: "true", includeInSettingsBlock: false, includeInConfigFile: false},
+  config_file_path: {defaultValue: "../config.yml", includeInSettingsBlock: false, includeInConfigFile: false},
+  local_preview_template: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
+  png_transparent: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false},
+  png_number_of_colors: {defaultValue: 128, includeInSettingsBlock: true, includeInConfigFile: false},
+  jpg_quality: {defaultValue: 60, includeInSettingsBlock: true, includeInConfigFile: false},
+  center_html_output: {defaultValue: "true", includeInSettingsBlock: false, includeInConfigFile: false},
+  use_2x_images_if_possible: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false},
+  use_lazy_loader: {defaultValue: "yes", includeInSettingsBlock: true, includeInConfigFile: false},
+  include_resizer_css_js: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false},
+  include_resizer_classes: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false},
+  include_resizer_widths: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false},
+  include_resizer_script: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false},
+  svg_embed_images: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false},
+  render_rotated_skewed_text_as: {defaultValue: "html", includeInSettingsBlock: false, includeInConfigFile: false},
+  show_completion_dialog_box: {defaultValue: "true", includeInSettingsBlock: true, includeInConfigFile: false},
+  clickable_link: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
+  testing_mode: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false},
+  last_updated_text: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true},
+  headline: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true},
+  leadin: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true},
+  summary: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true},
+  notes: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true},
+  sources: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true},
+  credit: {defaultValue: "By The New York Times", includeInSettingsBlock: true, includeInConfigFile: true},
+  page_template: {defaultValue: "nyt5-article-embed", includeInSettingsBlock: true, includeInConfigFile: true},
+  publish_system: {defaultValue: "scoop", includeInSettingsBlock: false, includeInConfigFile: true},
+  environment: {defaultValue: "production", includeInSettingsBlock: false, includeInConfigFile: true},
+  show_in_compatible_apps: {defaultValue: "yes", includeInSettingsBlock: true, includeInConfigFile: true},
+  display_for_promotion_only: {defaultValue: "false", includeInSettingsBlock: true, includeInConfigFile: true},
+  constrain_width_to_text_column: {defaultValue: "false", includeInSettingsBlock: true, includeInConfigFile: true},
+  scoop_publish_fields: {defaultValue: "true", includeInSettingsBlock: false, includeInConfigFile: true},
+  scoop_asset_id: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true},
+  scoop_username: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true},
+  scoop_slug: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true},
+  scoop_external_edit_key: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true}
 };
 
 var defaultBaseSettings = {
-  settings_version: {defaultValue: scriptVersion, includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
-  create_promo_image: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
-  image_format: {defaultValue: ["auto"], includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "array", possibleValues: "jpg, png, png24", notes: "Images will be generated in mulitple formats if multiple formats are listed, separated by commas. The first format will be used in the html. Sometimes this is useful to compare which format will have a smaller file size."},
-  write_image_files: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: "Set this to \u201Cno\u201D to skip writing the image files. Generally only use this after you have run the script once with this setting set to \u201Cyes.\u201D"},
-  responsiveness: {defaultValue: "fixed", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "fixed, dynamic", notes: "Dynamic responsiveness means ai graphics will scale to fill the container they are placed in."},
-  max_width: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "integer", possibleValues: "", notes: "Blank or any positive number in pixels, but do not write \u201Cpx\u201D - blank means artboards will set max size, the max width is not included in the html stub, instead it is written to the config file so that the max width can be applied to the template’s container."},
-  output: {defaultValue: "one-file", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "one-file, multiple-files", notes: "One html file containing all the artboards or a separate html file for each artboard."},
-  project_name: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: "Use this to set a custom project name. The project name is being used in output filenames, class names, etc."},
-  html_output_path: {defaultValue: "/ai2html-output/", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "folderPath", possibleValues: "", notes: "Allows user to change folder to write html files, path should be written relative to ai file location. This is ignored if the project_type in the yml is ai2html."},
-  html_output_extension: {defaultValue: ".html", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "fileExtension", possibleValues: "", notes: "This is ignored if the project_type in the yml is ai2html."},
-  image_output_path: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "folderPath", possibleValues: "", notes: "This is where the image files get written to locally and should be written as if the html_output is the starting point."},
-  image_source_path: {defaultValue: null, includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "folderPath", possibleValues: "", notes: "Use this setting to specify from where the images are being loaded from the HTML file. Defaults to image_output_path"},
-  create_config_file: {defaultValue: "false", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "trueFalse", possibleValues: "", notes: "This is ignored in env=nyt."},
-  config_file_path: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "filePath", possibleValues: "", notes: "This only gets used to write the config file. It’s not used in the nyt mode to read the config.yml. Path should written relative to the ai file location."},
-  local_preview_template: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "filePath", possibleValues: "", notes: ""},
-  png_transparent: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
-  png_number_of_colors: {defaultValue: 128, includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "integer", possibleValues: "2 to 256", notes: ""},
-  jpg_quality: {defaultValue: 60, includeInSettingsBlock: true, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "integer", possibleValues: "0 to 100", notes: ""},
-  center_html_output: {defaultValue: "true", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: "Adds \u201Cmargin:0 auto;\u201D to the div containing the ai2html output."},
-  use_2x_images_if_possible: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
-  use_lazy_loader: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
-  include_resizer_css_js: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
-  include_resizer_classes: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
-  include_resizer_widths: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: "If set to \u201Cyes\u201D, ai2html adds data-min-width and data-max-width attributes to each artboard"},
-  include_resizer_script: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
-  svg_embed_images: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
-  render_rotated_skewed_text_as: {defaultValue: "html", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "image, html", notes: ""},
-  show_completion_dialog_box: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: "Set this to \u201Cno\u201D if you don't want to see the dialog box confirming completion of the script."},
-  clickable_link: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: "If you put a url in this field, an <a> tag will be added, wrapping around the output and pointing to that url."},
-  testing_mode: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "yesNo", possibleValues: "", notes: ""},
-  last_updated_text: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: ""},
-  headline: {defaultValue: "Ai Graphic Headline", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: ""},
-  leadin: {defaultValue: "Introductory text here.", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: ""},
-  summary: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: true, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: "Summary field for Scoop assets"},
-  notes: {defaultValue: "Notes: Text goes here.", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: ""},
-  sources: {defaultValue: "Source: Name goes here.", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: ""},
-  credit: {defaultValue: "By ai2html", includeInSettingsBlock: true, includeInConfigFile: true, useQuoteMarksInConfigFile: true, inputType: "text", possibleValues: "", notes: ""},
-  page_template: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
-  publish_system: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
-  environment: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
-  show_in_compatible_apps: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: true, inputType: "yesNo", possibleValues: "", notes: ""},
-  display_for_promotion_only: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "trueFalse", possibleValues: "", notes: ""},
-  constrain_width_to_text_column: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "trueFalse", possibleValues: "", notes: ""},
-  scoop_publish_fields: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "trueFalse", possibleValues: "", notes: ""},
-  scoop_asset_id: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
-  scoop_username: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
-  scoop_slug: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""},
-  scoop_external_edit_key: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false, useQuoteMarksInConfigFile: false, inputType: "text", possibleValues: "", notes: ""}
+  settings_version: {defaultValue: scriptVersion, includeInSettingsBlock: true, includeInConfigFile: false},
+  create_promo_image: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false},
+  image_format: {defaultValue: ["auto"], includeInSettingsBlock: true, includeInConfigFile: false},
+  write_image_files: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false},
+  responsiveness: {defaultValue: "fixed", includeInSettingsBlock: true, includeInConfigFile: false},
+  max_width: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
+  output: {defaultValue: "one-file", includeInSettingsBlock: true, includeInConfigFile: false},
+  project_name: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
+  html_output_path: {defaultValue: "/ai2html-output/", includeInSettingsBlock: true, includeInConfigFile: false},
+  html_output_extension: {defaultValue: ".html", includeInSettingsBlock: true, includeInConfigFile: false},
+  image_output_path: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: false},
+  image_source_path: {defaultValue: null, includeInSettingsBlock: false, includeInConfigFile: false},
+  create_config_file: {defaultValue: "false", includeInSettingsBlock: false, includeInConfigFile: false},
+  config_file_path: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
+  local_preview_template: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: false},
+  png_transparent: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false},
+  png_number_of_colors: {defaultValue: 128, includeInSettingsBlock: true, includeInConfigFile: false},
+  jpg_quality: {defaultValue: 60, includeInSettingsBlock: true, includeInConfigFile: false},
+  center_html_output: {defaultValue: "true", includeInSettingsBlock: false, includeInConfigFile: false},
+  use_2x_images_if_possible: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false},
+  use_lazy_loader: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false},
+  include_resizer_css_js: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false},
+  include_resizer_classes: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false},
+  include_resizer_widths: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false},
+  include_resizer_script: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false},
+  svg_embed_images: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false},
+  render_rotated_skewed_text_as: {defaultValue: "html", includeInSettingsBlock: false, includeInConfigFile: false},
+  show_completion_dialog_box: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false},
+  clickable_link: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
+  testing_mode: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false},
+  last_updated_text: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
+  headline: {defaultValue: "Ai Graphic Headline", includeInSettingsBlock: true, includeInConfigFile: true},
+  leadin: {defaultValue: "Introductory text here.", includeInSettingsBlock: true, includeInConfigFile: true},
+  summary: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: true},
+  notes: {defaultValue: "Notes: Text goes here.", includeInSettingsBlock: true, includeInConfigFile: true},
+  sources: {defaultValue: "Source: Name goes here.", includeInSettingsBlock: true, includeInConfigFile: true},
+  credit: {defaultValue: "By ai2html", includeInSettingsBlock: true, includeInConfigFile: true},
+  page_template: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
+  publish_system: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
+  environment: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
+  show_in_compatible_apps: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
+  display_for_promotion_only: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
+  constrain_width_to_text_column: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
+  scoop_publish_fields: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
+  scoop_asset_id: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
+  scoop_username: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
+  scoop_slug: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
+  scoop_external_edit_key: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false}
 };
 
 // End of settings blocks copied from Google Spreadsheet.
@@ -1334,39 +1334,42 @@ function createSettingsBlock() {
   textArea.contents = settingsLines.join('\n');
 }
 
-
 // Add ai2html settings from a text block to the document settings object
 function parseSettingsEntries(entries, docSettings) {
   var entryRxp = /^([\w-]+)\s*:\s*(.*)$/;
   forEach(entries, function(str) {
-    var match, hashKey, hashValue;
+    var match, key, value;
     str = trim(str);
     match = entryRxp.exec(str);
     if (!match) {
       if (str) warnings.push("Malformed setting, skipping: " + str);
       return;
     }
-    hashKey   = match[1];
-    hashValue = straightenCurlyQuotesInsideAngleBrackets(match[2]);
-    if (hashKey in docSettings === false) {
+    key   = match[1];
+    value = straightenCurlyQuotesInsideAngleBrackets(match[2]);
+    if (key in docSettings === false) {
       // assumes docSettings has been initialized with default settings
-      warnings.push("Settings block contains an unsupported parameter: " + hashKey);
+      warnings.push("Settings block contains an unsupported parameter: " + key);
     }
-    // replace values from old versions of script with current values
-    if (hashKey=="output" && hashValue=="one-file-for-all-artboards") { hashValue="one-file"; }
-    if (hashKey=="output" && hashValue=="one-file-per-artboard")      { hashValue="multiple-files"; }
-    if (hashKey=="output" && hashValue=="preview-one-file")           { hashValue="one-file"; }
-    if (hashKey=="output" && hashValue=="preview-multiple-files")     { hashValue="multiple-files"; }
-    if ((hashKey in ai2htmlBaseSettings) && ai2htmlBaseSettings[hashKey].inputType=="array") {
-      hashValue = hashValue.replace( /[\s,]+/g , ',' );
-      if (hashValue.length === 0) {
-        hashValue = []; // have to do this because .split always returns an array of length at least 1 even if it's splitting an empty string
-      } else {
-        hashValue = hashValue.split(",");
+    if (key == 'output') {
+      // replace values from old versions of script with current values
+      if (value == 'one-file-for-all-artboards' || value == 'preview-one-file') {
+        value = 'one-file';
+      }
+      if (value == 'one-file-per-artboard' || value == 'preview-multiple-files') {
+        value = 'multiple-files';
       }
     }
-    docSettings[hashKey] = hashValue;
+    if (key == "image_format") {
+      value = parseAsArray(value);
+    }
+    docSettings[key] = value;
   });
+}
+
+function parseAsArray(str) {
+  str = trim(str).replace( /[\s,]+/g , ',' );
+  return str.length === 0 ? [] : str.split(',');
 }
 
 // Show alert or prompt; return true if promo image should be generated
