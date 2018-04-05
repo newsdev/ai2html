@@ -1,5 +1,5 @@
 ### v0.67.2
-- Add 'data-aspectratio' property to artboard divs
+- Add 'data-aspect-ratio' property to artboard divs
 
 ### v0.67.1
 - Remove fancy quotes from custom CSS and JS blocks. (AI likes to auto-convert regular double and single quotes to fancy quotes.)

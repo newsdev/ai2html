@@ -10,7 +10,7 @@ function main() {
 // Increment final digit for bug fixes, middle digit for new functionality.
 // Remember to add an entry in CHANGELOG when updating the version number
 // And update the version number in package.json
-var scriptVersion = "0.67.1";
+var scriptVersion = "0.67.2";
 
 // ai2html is a script for Adobe Illustrator that converts your Illustrator document into html and css.
 // Copyright (c) 2011-2015 The New York Times Company
@@ -3012,7 +3012,7 @@ function generateArtboardDiv(ab, breakpoints, settings) {
     classnames += " " + findShowClassesForArtboard(ab, breakpoints);
   }
   html += '\t<div id="' + divId + '" class="' + classnames + '"';
-  html += ' data-aspect-ratio="' + roundTo(abPos.width / abPos.height, 6) + '"';
+  html += ' data-aspect-ratio="' + roundTo(abPos.width / abPos.height, 3) + '"';
   if (isTrue(settings.include_resizer_widths)) {
     // add data-min/max-width attributes
     // TODO: see if we can use breakpoint data to set min and max widths
