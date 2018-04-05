@@ -3012,7 +3012,7 @@ function generateArtboardDiv(ab, breakpoints, settings) {
     classnames += " " + findShowClassesForArtboard(ab, breakpoints);
   }
   html += '\t<div id="' + divId + '" class="' + classnames + '"';
-  html += ' data-aspect-ratio="' + roundTo(abPos.width / abPos.height, 3) + '"';
+  html += ' data-aspect-ratio="' + roundTo(abPos.width / abPos.height, 6) + '"';
   if (isTrue(settings.include_resizer_widths)) {
     // add data-min/max-width attributes
     // TODO: see if we can use breakpoint data to set min and max widths
