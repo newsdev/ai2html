@@ -1255,6 +1255,10 @@ function detectTimesFonts() {
   return found;
 }
 
+function getScriptDirectory() {
+  return new File($.fileName).parent;
+}
+
 function initDocumentSettings(env) {
   ai2htmlBaseSettings = env == 'nyt' ? nytBaseSettings : defaultBaseSettings;
   // initialize document settings
