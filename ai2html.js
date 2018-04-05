@@ -3006,17 +3006,19 @@ function generateArtboardDiv(ab, breakpoints, settings) {
   var divId = nameSpace + getArtboardFullName(ab);
   var classnames = nameSpace + "artboard " + nameSpace + "artboard-v4";
   var widthRange = getArtboardWidthRange(ab);
+  var abPos = convertAiBounds(ab.artboardRect);
   var html = "";
   if (!isFalse(settings.include_resizer_classes)) {
     classnames += " " + findShowClassesForArtboard(ab, breakpoints);
   }
   html += '\t<div id="' + divId + '" class="' + classnames + '"';
+  html += ' data-aspect-ratio="' + roundTo(abPos.width / abPos.height, 3) + '"';
   if (isTrue(settings.include_resizer_widths)) {
     // add data-min/max-width attributes
     // TODO: see if we can use breakpoint data to set min and max widths
-    html += " data-min-width='" + widthRange[0] + "'";
+    html += ' data-min-width="' + widthRange[0] + '"';
     if (widthRange[1] < Infinity) {
-      html += " data-max-width='" + widthRange[1] + "'";
+      html +=  'data-max-width="' + widthRange[1] + '"';
     }
   }
   html += ">\r";
