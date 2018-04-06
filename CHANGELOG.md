@@ -1,3 +1,6 @@
+### v0.67.3
+- Add 'promo_image_width' setting, with 1024 as default
+
 ### v0.67.2
 - Add 'data-aspect-ratio' property to artboard divs
 

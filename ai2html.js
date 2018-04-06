@@ -42,7 +42,7 @@ function main() {
 // Increment final digit for bug fixes, middle digit for new functionality.
 // Remember to add an entry in CHANGELOG when updating the version number
 // And update the version number in package.json
-var scriptVersion = "0.67.2";
+var scriptVersion = "0.67.3";
 
 // ================================================
 // ai2html and config settings
