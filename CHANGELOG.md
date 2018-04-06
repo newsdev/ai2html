@@ -1,3 +1,6 @@
+### v0.68.0
+- Add 'inline_svg' setting, which inserts SVG output directly into the HTML output
+
 ### v0.67.3
 - Add 'promo_image_width' setting, with 1024 as default
 
