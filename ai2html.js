@@ -1,19 +1,5 @@
-// ai2html.js
-
-function main() {
-// Enclosing scripts in a named function (and not an anonymous, self-executing
-// function) has been recommended as a way to minimise intermittent "MRAP" errors.
-// (This advice may be superstitious, need more evidence to decide.)
-// See (for example) https://forums.adobe.com/thread/1810764 and
-// http://wwwimages.adobe.com/content/dam/Adobe/en/devnet/pdf/illustrator/scripting/Readme.txt
-
-// Increment final digit for bug fixes, middle digit for new functionality.
-// Remember to add an entry in CHANGELOG when updating the version number
-// And update the version number in package.json
-var scriptVersion = "0.67.2";
-
 // ai2html is a script for Adobe Illustrator that converts your Illustrator document into html and css.
-// Copyright (c) 2011-2015 The New York Times Company
+// Copyright (c) 2011-2018 The New York Times Company
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this library except in compliance with the License.
 // You may obtain a copy of the License at
@@ -46,6 +32,17 @@ var scriptVersion = "0.67.2";
 // - Go to the folder containing your Illustrator file. Inside will be a folder called ai2html-output.
 // - Open the html files in your browser to preview your output.
 
+function main() {
+// Enclosing scripts in a named function (and not an anonymous, self-executing
+// function) has been recommended as a way to minimise intermittent "MRAP" errors.
+// (This advice may be superstitious, need more evidence to decide.)
+// See (for example) https://forums.adobe.com/thread/1810764 and
+// http://wwwimages.adobe.com/content/dam/Adobe/en/devnet/pdf/illustrator/scripting/Readme.txt
+
+// Increment final digit for bug fixes, middle digit for new functionality.
+// Remember to add an entry in CHANGELOG when updating the version number
+// And update the version number in package.json
+var scriptVersion = "0.67.2";
 
 // ================================================
 // ai2html and config settings
