@@ -56,6 +56,7 @@ var scriptVersion = "0.67.2";
 var nytBaseSettings = {
   settings_version: {defaultValue: scriptVersion, includeInSettingsBlock: true, includeInConfigFile: false},
   create_promo_image: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false},
+  promo_image_width: {defaultValue: 1024, includeInSettingsBlock: false, includeInConfigFile: false},
   image_format: {defaultValue: ["auto"], includeInSettingsBlock: true, includeInConfigFile: false},
   write_image_files: {defaultValue: "yes", includeInSettingsBlock: true, includeInConfigFile: false},
   responsiveness: {defaultValue: "fixed", includeInSettingsBlock: true, includeInConfigFile: false},
@@ -107,6 +108,7 @@ var nytBaseSettings = {
 var defaultBaseSettings = {
   settings_version: {defaultValue: scriptVersion, includeInSettingsBlock: true, includeInConfigFile: false},
   create_promo_image: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false},
+  promo_image_width: {defaultValue: 1024, includeInSettingsBlock: false, includeInConfigFile: false},
   image_format: {defaultValue: ["auto"], includeInSettingsBlock: true, includeInConfigFile: false},
   write_image_files: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false},
   responsiveness: {defaultValue: "fixed", includeInSettingsBlock: true, includeInConfigFile: false},
@@ -2705,13 +2707,13 @@ function generateImageHtml(imgFile, imgId, imgClass, ab, settings) {
 
 // Create a promo image from the largest usable artboard
 function createPromoImage(settings) {
-  var PROMO_WIDTH = 1024;
+  var imageWidth = settings.promo_image_width || 1024;
   var abNumber = findLargestArtboard();
   if (abNumber == -1) return; // TODO: show error
 
   var artboard         =  doc.artboards[abNumber],
       abPos            =  convertAiBounds(artboard.artboardRect),
-      promoScale       =  PROMO_WIDTH / abPos.width,
+      promoScale       =  imageWidth / abPos.width,
       promoW           =  abPos.width * promoScale,
       promoH           =  abPos.height * promoScale,
       imageDestination =  docPath + docName + "-promo",
