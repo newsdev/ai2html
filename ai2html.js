@@ -39,9 +39,9 @@ function main() {
 // See (for example) https://forums.adobe.com/thread/1810764 and
 // http://wwwimages.adobe.com/content/dam/Adobe/en/devnet/pdf/illustrator/scripting/Readme.txt
 
-// Increment final digit for bug fixes, middle digit for new functionality.
-// Remember to add an entry in CHANGELOG when updating the version number
-// And update the version number in package.json
+// Increment middle digit for new functionality or breaking changes.
+// Increment final digit for minor bug fixes.
+// Also update the version number in package.json
 var scriptVersion = "0.68.1";
 
 // ================================================
