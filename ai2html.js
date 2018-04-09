@@ -42,7 +42,7 @@ function main() {
 // Increment final digit for bug fixes, middle digit for new functionality.
 // Remember to add an entry in CHANGELOG when updating the version number
 // And update the version number in package.json
-var scriptVersion = "0.68.0";
+var scriptVersion = "0.68.1";
 
 // ================================================
 // ai2html and config settings
@@ -3052,7 +3052,7 @@ function generateArtboardDiv(ab, breakpoints, settings) {
     // TODO: see if we can use breakpoint data to set min and max widths
     html += ' data-min-width="' + widthRange[0] + '"';
     if (widthRange[1] < Infinity) {
-      html +=  'data-max-width="' + widthRange[1] + '"';
+      html +=  ' data-max-width="' + widthRange[1] + '"';
     }
   }
   html += ">\r";

@@ -1,11 +1,14 @@
+### v0.68.1
+- Bug fix
+
 ### v0.68.0
-- Add 'inline_svg' setting, which inserts SVG output directly into the HTML output
+- Added 'inline_svg' setting, which inserts SVG output directly into the HTML output
 
 ### v0.67.3
-- Add 'promo_image_width' setting, with 1024 as default
+- Added 'promo_image_width' setting, with 1024 as default
 
 ### v0.67.2
-- Add 'data-aspect-ratio' property to artboard divs
+- Added 'data-aspect-ratio' property to artboard divs
 
 ### v0.67.1
 - Remove fancy quotes from custom CSS and JS blocks. (AI likes to auto-convert regular double and single quotes to fancy quotes.)
