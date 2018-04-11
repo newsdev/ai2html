@@ -131,10 +131,10 @@ describe('Ai2html-specific functions', function () {
 
   describe('replaceSvgIds()', function() {
     it ('tests', function() {
-      assert.equal(lib.replaceSvgIds('id="dot_1_"', 'ai2html-'), 'id="ai2html-dot"');
-      assert.equal(lib.replaceSvgIds('id="dot_1_"', 'ai2html-'), 'id="ai2html-dot_2"'); // id cache persists between calls
-      assert.equal(lib.replaceSvgIds('id="_x5F_a_x5F_b_x5F__2_"'), 'id="_a_b_"');  // hex codes are replaced
-      assert.equal(lib.replaceSvgIds('id="rect_4_" id="rect_8_"'), 'id="rect" id="rect_2"');
+      assert.equal(lib.replaceSvgIds('id="dot_1_"', 'ai2html-'), 'id="ai2html-dot" data-name="dot"');
+      assert.equal(lib.replaceSvgIds('id="dot_1_"', 'ai2html-'), 'id="ai2html-dot-2" data-name="dot"'); // id cache persists between calls
+      assert.equal(lib.replaceSvgIds('id="_x5F_a_x5F_b_x5F__2_"'), 'id="_a_b_" data-name="_a_b_"');  // hex codes are replaced
+      assert.equal(lib.replaceSvgIds('id="rect_4_" id="rect_8_"'), 'id="rect" data-name="rect" id="rect-2" data-name="rect"');
     })
 
   })
