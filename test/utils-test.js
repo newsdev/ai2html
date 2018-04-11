@@ -160,7 +160,7 @@ describe('Utility function tests', function() {
     })
   })
 
-  describe('pathJoin()', function() {
+  describe('pathSplit()', function() {
     it('test1', function() {
       assert.deepEqual(lib.pathSplit('output/images/image.jpg'), ['output/images', 'image.jpg']);
     })
