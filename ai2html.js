@@ -308,7 +308,6 @@ var nameSpace           = "g-";
 var cssPrecision        = 4;
 // If all three RBG channels (0-255) are below this value, convert text fill to pure black.
 var rgbBlackThreshold  = 36;
-var showDebugMessages  = true; // add text logged with message() function to completion alert
 
 // ================================
 // Variable declarations
@@ -318,7 +317,7 @@ var showDebugMessages  = true; // add text logged with message() function to com
 var feedback = [];
 var warnings = [];
 var errors   = [];
-var oneTimeWarnings = [];
+
 var textFramesToUnhide = [];
 var objectsToRelock = [];
 var svgLayersToUnhide = [];
@@ -371,7 +370,7 @@ if (runningInNode()) {
 }
 
 if (!isTestedIllustratorVersion(app.version)) {
-  warnings.push("Ai2html has not been tested on this version of Illustrator.");
+  warn("Ai2html has not been tested on this version of Illustrator.");
 }
 
 if (!app.documents.length) {
@@ -426,7 +425,7 @@ if (docIsSaved) {
   var saveOptions = new IllustratorSaveOptions();
   saveOptions.pdfCompatible = false;
   doc.saveAs(new File(docPath + doc.name), saveOptions);
-  feedback.push("Your Illustrator file was saved.");
+  message("Your Illustrator file was saved.");
 }
 
 if (pBar) pBar.close();
@@ -492,9 +491,9 @@ function render() {
     }
   });
 
-  if (customBlocks.css)  {feedback.push("Custom CSS blocks: " + customBlocks.css.length);}
-  if (customBlocks.html) {feedback.push("Custom HTML blocks: " + customBlocks.html.length);}
-  if (customBlocks.js)   {feedback.push("Custom JS blocks: " + customBlocks.js.length);}
+  if (customBlocks.css)  {message("Custom CSS blocks: " + customBlocks.css.length);}
+  if (customBlocks.html) {message("Custom HTML blocks: " + customBlocks.html.length);}
+  if (customBlocks.js)   {message("Custom JS blocks: " + customBlocks.js.length);}
 
   // ================================================
   // add settings text block if one does not exist
@@ -503,10 +502,10 @@ function render() {
   if (!documentHasSettingsBlock) {
     createSettingsBlock();
     if (scriptEnvironment=="nyt") {
-      feedback.push("A settings text block was created to the left of all your artboards. Fill out the settings to link your project to the Scoop asset.");
+      message("A settings text block was created to the left of all your artboards. Fill out the settings to link your project to the Scoop asset.");
       return; // Exit the script
     } else {
-      feedback.push("A settings text block was created to the left of all your artboards. You can use it to customize your output.");
+      message("A settings text block was created to the left of all your artboards. You can use it to customize your output.");
     }
   }
 
@@ -553,7 +552,7 @@ function render() {
     if (docSettings.max_width && !contains(breakpoints, function(bp) {
       return +docSettings.max_width == bp.upperLimit;
     })) {
-      warnings.push('The max_width setting of "' + docSettings.max_width +
+      warn('The max_width setting of "' + docSettings.max_width +
         '" is not a valid breakpoint and will create an error when you "preview publish."');
     }
   }
@@ -570,11 +569,11 @@ function render() {
   }
 
   if (docSettings.image_format.length === 0) {
-    warnings.push("No images were created because no image formats were specified.");
+    warn("No images were created because no image formats were specified.");
   } else if (contains(docSettings.image_format, "auto")) {
     docSettings.image_format = [documentContainsVisibleRasterImages() ? 'jpg' : 'png'];
   } else if (documentContainsVisibleRasterImages() && !contains(docSettings.image_format, "jpg")) {
-    warnings.push("An artboard contains a raster image -- consider exporting to jpg instead of " +
+    warn("An artboard contains a raster image -- consider exporting to jpg instead of " +
         docSettings.image_format[0] + ".");
   }
 
@@ -1068,7 +1067,7 @@ function readFile(path) {
     content = file.read();
     file.close();
   } else {
-    warnings.push(path + " could not be found.");
+    warn(path + " could not be found.");
   }
   return content;
 }
@@ -1084,7 +1083,7 @@ function readTextFile(path) {
     }
     file.close();
   } else {
-    warnings.push(path + " could not be found.");
+    warn(path + " could not be found.");
   }
   return outputText;
 }
@@ -1103,9 +1102,9 @@ function checkForOutputFolder(folderPath, nickname) {
   if (!outputFolder.exists) {
     var outputFolderCreated = outputFolder.create();
     if (outputFolderCreated) {
-      feedback.push("The " + nickname + " folder did not exist, so the folder was created.");
+      message("The " + nickname + " folder did not exist, so the folder was created.");
     } else {
-      warnings.push("The " + nickname + " folder did not exist and could not be created.");
+      warn("The " + nickname + " folder did not exist and could not be created.");
     }
   }
 }
@@ -1131,13 +1130,6 @@ function formatError(e) {
   return msg;
 }
 
-function warnOnce(msg, item) {
-  if (!contains(oneTimeWarnings, item)) {
-    warnings.push(msg);
-    oneTimeWarnings.push(item);
-  }
-}
-
 // display debugging message in completion alert box
 // (in debug mode)
 function message() {
@@ -1157,9 +1149,23 @@ function message() {
       msg += arg;
     }
   }
-  if (showDebugMessages) feedback.push(msg);
+  feedback.push(msg);
 }
 
+function warn(msg) {
+  warnings.push(msg);
+}
+
+var oneTimeWarnings;
+// id: optional identifier, for cases when the text for this type of warning may vary.
+function warnOnce(msg, id) {
+  id = id || msg;
+  oneTimeWarnings = oneTimeWarnings || [];
+  if (!contains(oneTimeWarnings, id)) {
+    warn(msg);
+    oneTimeWarnings.push(id);
+  }
+}
 
 // accept inconsistent true/yes setting value
 function isTrue(val) {
@@ -1232,7 +1238,7 @@ function validateArtboardNames() {
   forEachUsableArtboard(function(ab) {
     var name = getArtboardName(ab);
     if (contains(names, name)) {
-      warnOnce("Artboards should have unique names. \"" + name + "\" is duplicated.", name);
+      warnOnce("Artboards should have unique names. \"" + name + "\" is duplicated.");
     }
     names.push(name);
   });
@@ -1364,14 +1370,14 @@ function parseSettingsEntries(entries, docSettings) {
     str = trim(str);
     match = entryRxp.exec(str);
     if (!match) {
-      if (str) warnings.push("Malformed setting, skipping: " + str);
+      if (str) warn("Malformed setting, skipping: " + str);
       return;
     }
     key   = match[1];
     value = straightenCurlyQuotesInsideAngleBrackets(match[2]);
     if (key in docSettings === false) {
       // assumes docSettings has been initialized with default settings
-      warnings.push("Settings block contains an unsupported parameter: " + key);
+      warn("Settings block contains an unsupported parameter: " + key);
     }
     if (key == 'output') {
       // replace values from old versions of script with current values
@@ -1654,7 +1660,7 @@ function assignBreakpointsToArtboards(breakpoints) {
       }
     }
     if (bpInfo.artboards.length > 1 && scriptEnvironment=="nyt") {
-      warnings.push('The ' + breakpoint.upperLimit + "px breakpoint has " + bpInfo.artboards.length +
+      warn('The ' + breakpoint.upperLimit + "px breakpoint has " + bpInfo.artboards.length +
           " artboards. You probably want only one artboard per breakpoint.");
     }
     if (bpInfo.artboards.length === 0 && bpPrev) {
@@ -2021,7 +2027,7 @@ function cleanHtmlTags(str) {
   var tagName = findHtmlTag(str);
   // only warn for certain tags
   if (tagName && contains('i,span,b,strong,em'.split(','), tagName.toLowerCase())) {
-    warnOnce("Found a <" + tagName + "> tag. Try using Illustrator formatting instead.", tagName);
+    warnOnce("Found a <" + tagName + "> tag. Try using Illustrator formatting instead.");
   }
   return tagName ? straightenCurlyQuotesInsideAngleBrackets(str) : str;
 }
@@ -2146,14 +2152,14 @@ function deriveCssStyles(frameData) {
     }
     pdata.cssStyle = analyzeTextStyle(pdata.aiStyle, pdata.text, pgStyles);
     if (pdata.aiStyle.blendMode && !pdata.cssStyle['mix-blend-mode']) {
-      warnOnce("Missing a rule for converting " + pdata.aiStyle.blendMode + " to CSS.", pdata.aiStyle.blendMode);
+      warnOnce("Missing a rule for converting " + pdata.aiStyle.blendMode + " to CSS.");
     }
   }
 
   function convertRangeStyle(range) {
     range.cssStyle = analyzeTextStyle(range.aiStyle, range.text, currCharStyles);
     if (range.warning) {
-      warnings.push(range.warning.replace("%s", truncateString(range.text, 35)));
+      warn(range.warning.replace("%s", truncateString(range.text, 35)));
     }
     if (range.aiStyle.aifont && !range.cssStyle['font-family']) {
       warnOnce("Missing a rule for converting font: " + range.aiStyle.aifont +
@@ -2456,7 +2462,7 @@ function getTransformationCss(textFrame, vertAnchorPct) {
   var scaleX = charStyle.horizontalScale;
   var scaleY = charStyle.verticalScale;
   if (scaleX != 100 || scaleY != 100) {
-    warnings.push("Vertical or horizontal text scaling will be lost. Affected text: " + truncateString(textFrame.contents, 35));
+    warn("Vertical or horizontal text scaling will be lost. Affected text: " + truncateString(textFrame.contents, 35));
   }
 
   return "transform: " + transform +  "transform-origin: " + transformOrigin +
@@ -2744,8 +2750,10 @@ function replaceSvgIds(svg, prefix) {
   return svg.replace(idRxp, replaceId);
 
   function replaceId(str, id) {
-    id = uniqId(prefix + id);
-    return 'id="' + id.replace(hexRxp, replaceHexCode) + '"';
+    var fixedId = id.replace(hexRxp, replaceHexCode);
+    var uniqId = uniqify(fixedId);
+    if (uniqId != fixedId) warnOnce("Found a duplicate SVG id: " + fixedId);
+    return 'id="' + prefix + uniqId + '"';
   }
 
   function replaceHexCode(str, hex) {
@@ -2753,7 +2761,7 @@ function replaceSvgIds(svg, prefix) {
   }
 
   // resolve id collisions by appending a string
-  function uniqId(origId) {
+  function uniqify(origId) {
     var id = origId,
         n = 1;
     while (id in svgIds) {
@@ -2865,7 +2873,7 @@ function exportImageFile(imgPath, ab, format, settings) {
   } else if (format=="jpg") {
     if (imageScale > MAX_JPG_SCALE) {
       imageScale = MAX_JPG_SCALE;
-      warnings.push(imgPath.split("/").pop() + " was output at a smaller size than desired because of a limit on jpg exports in Illustrator." +
+      warn(imgPath.split("/").pop() + " was output at a smaller size than desired because of a limit on jpg exports in Illustrator." +
         " If the file needs to be larger, change the image format to png which does not appear to have limits.");
     }
     fileType = ExportType.JPEG;
@@ -2873,7 +2881,7 @@ function exportImageFile(imgPath, ab, format, settings) {
     exportOptions.qualitySetting = settings.jpg_quality;
 
   } else {
-    warnings.push("Unsupported image format: " + format);
+    warn("Unsupported image format: " + format);
     return;
   }
 
