@@ -95,6 +95,7 @@ describe('Ai2html-specific functions', function () {
     })
   })
 
+  /*
   describe('convertSettingsToYaml()', function () {
     it('ignores settings that are not explicitly included in default environment', function() {
       lib.initDocumentSettings('');
@@ -128,6 +129,7 @@ describe('Ai2html-specific functions', function () {
       assert.equal(lib.convertSettingsToYaml(settings), expected);
     })
   })
+  */
 
   describe('replaceSvgIds()', function() {
     it ('tests', function() {

@@ -63,6 +63,7 @@ var nytBaseSettings = {
   max_width: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: false},
   output: {defaultValue: "one-file", includeInSettingsBlock: true, includeInConfigFile: false},
   project_name: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
+  project_type: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
   html_output_path: {defaultValue: "../src/", includeInSettingsBlock: false, includeInConfigFile: false},
   html_output_extension: {defaultValue: ".html", includeInSettingsBlock: false, includeInConfigFile: false},
   image_output_path: {defaultValue: "../public/_assets/", includeInSettingsBlock: false, includeInConfigFile: false},
@@ -117,6 +118,7 @@ var defaultBaseSettings = {
   max_width: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
   output: {defaultValue: "one-file", includeInSettingsBlock: true, includeInConfigFile: false},
   project_name: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
+  project_type: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
   html_output_path: {defaultValue: "/ai2html-output/", includeInSettingsBlock: true, includeInConfigFile: false},
   html_output_extension: {defaultValue: ".html", includeInSettingsBlock: true, includeInConfigFile: false},
   image_output_path: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: false},
@@ -303,69 +305,33 @@ var nyt5Breakpoints = [
   { name:"xxlarge"   , lowerLimit:1050, upperLimit:1600 }
 ];
 
-// TODO: add these to settings spreadsheet
-var nameSpace           = "g-";
 var cssPrecision        = 4;
-// If all three RBG channels (0-255) are below this value, convert text fill to pure black.
-var rgbBlackThreshold  = 36;
 
 // ================================
-// Variable declarations
+// Global variable declarations
 // ================================
+var nameSpace           = "g-"; // TODO: add to settings
 
 // vars to hold warnings and informational messages at the end
 var feedback = [];
 var warnings = [];
 var errors   = [];
+var startTime = +new Date();
 
 var textFramesToUnhide = [];
 var objectsToRelock = [];
 var svgLayersToUnhide = [];
 
-// Global variables set by main()
 var docSettings = {};
+var scriptEnvironment = '';
+var textBlockData;
 var ai2htmlBaseSettings;
-var previewProjectType, scriptEnvironment;
-var doc, docPath, docName, docIsSaved;
+var doc, docPath, docIsSaved;
 var pBar, T;
 
-// ===========================================================
-// If running in Node.js: export functions for testing and exit
-// ===========================================================
+// If running in Node.js, export functions for testing and exit
 if (runningInNode()) {
-  [ testBoundsIntersection,
-    trim,
-    stringToLines,
-    contains,
-    arraySubtract,
-    firstBy,
-    zeroPad,
-    roundTo,
-    pathJoin,
-    pathSplit,
-    folderExists,
-    formatCss,
-    getCssColor,
-    readGitConfigFile,
-    readYamlConfigFile,
-    applyTemplate,
-    cleanHtmlText,
-    addEnclosingTag,
-    stripTag,
-    cleanCodeBlock,
-    findHtmlTag,
-    cleanHtmlTags,
-    convertSettingsToYaml,
-    parseDataAttributes,
-    parseArtboardName,
-    parseObjectName,
-    cleanObjectName,
-    initDocumentSettings,
-    uniqAssetName,
-    replaceSvgIds
-  ].forEach(function(f) {
-    module.exports[f.name] = f;
-  });
+  exportFunctionsForTesting();
   return;
 }
 
@@ -389,27 +355,31 @@ if (!app.documents.length) {
   // TODO: find a better way to detect this condition (mask can be renamed)
   errors.push("Ai2html is unable to run because you are editing an Opacity Mask.");
 
-} else {
-  // initialize global variables
-  doc = app.activeDocument;
-  docPath = doc.path + "/";
-  docIsSaved = doc.saved;
-  scriptEnvironment = detectScriptEnvironment();
-  initDocumentSettings(scriptEnvironment);
-}
-
-if (errors.length === 0) {
-  validateArtboardNames();
-  initUtilityFunctions(); // init T and JSON
-  T.start();
+} else { // no fatal errors
   try {
-    render();
+    // init JSON, etc.
+    initUtilityFunctions();
+
+    // initialize script settings
+    doc = app.activeDocument;
+    docPath = doc.path + "/";
+    docIsSaved = doc.saved;
+    textBlockData = initSpecialTextBlocks();
+    docSettings = initDocumentSettings(textBlockData.settings);
+
+    // warn about duplicate artboard names
+    validateArtboardNames();
+
+    // render the document
+    if (errors.length === 0) {
+      render(textBlockData.code);
+    }
+
   } catch(e) {
     errors.push(formatError(e));
   }
   restoreDocumentState();
 }
-
 
 // ==========================================
 // Save the AI document (if needed)
@@ -429,7 +399,7 @@ if (docIsSaved) {
 }
 
 if (pBar) pBar.close();
-if (T) message("Script ran in", (T.stop() / 1000).toFixed(1), "seconds");
+message("Script ran in", ((+new Date() - startTime) / 1000).toFixed(1), "seconds");
 
 // =========================================================
 // Show alert box, optionally prompt to generate promo image
@@ -437,18 +407,17 @@ if (T) message("Script ran in", (T.stop() / 1000).toFixed(1), "seconds");
 
 if (isTrue(docSettings.show_completion_dialog_box ) || errors.length > 0) {
   var promptForPromo = errors.length === 0 && isTrue(docSettings.write_image_files) &&
-    (previewProjectType == "ai2html" || isTrue(docSettings.create_promo_image));
+    isTrue(docSettings.create_promo_image);
   var showPromo = showCompletionAlert(promptForPromo);
   if (showPromo) createPromoImage(docSettings);
 }
-
 
 
 // =================================
 // ai2html render function
 // =================================
 
-function render() {
+function render(customBlocks) {
   // Fix for issue #50
   // If a text range is selected when the script runs, it interferes
   // with script-driven selection. The fix is to clear this kind of selection.
@@ -456,125 +425,20 @@ function render() {
     clearSelection();
   }
 
-  // ================================================
-  // import custom settings, html, css, js and text blocks
-  // ================================================
-  var documentHasSettingsBlock = false;
-  var customBlocks = {};
-  var customRxp = /^ai2html-(css|js|html|settings|text)\s*$/;
-
-  forEach(doc.textFrames, function(thisFrame) {
-    // var contents = thisFrame.contents; // caused MRAP error in AI 2017
-    var type = null;
-    var match, entries;
-    if (thisFrame.lines.length > 1) {
-      match = customRxp.exec(thisFrame.lines[0].contents);
-      type = match ? match[1] : null;
-    }
-    if (!type) return; // not a settings block
-    entries = stringToLines(thisFrame.contents);
-    entries.shift(); // remove header
-    if (type == 'settings') {
-      documentHasSettingsBlock = true;
-      parseSettingsEntries(entries, docSettings);
-    } else if (type == 'text') {
-      parseSettingsEntries(entries, docSettings);
-    } else {
-      // import custom js, css and html blocks
-      if (!customBlocks[type]) {
-        customBlocks[type] = [];
-      }
-      customBlocks[type].push(cleanCodeBlock(type, entries.join('\r')));
-    }
-    if (objectOverlapsAnArtboard(thisFrame)) {
-      hideTextFrame(thisFrame);
-    }
-  });
-
-  if (customBlocks.css)  {message("Custom CSS blocks: " + customBlocks.css.length);}
-  if (customBlocks.html) {message("Custom HTML blocks: " + customBlocks.html.length);}
-  if (customBlocks.js)   {message("Custom JS blocks: " + customBlocks.js.length);}
-
-  // ================================================
-  // add settings text block if one does not exist
-  // ================================================
-
-  if (!documentHasSettingsBlock) {
-    createSettingsBlock();
-    if (scriptEnvironment=="nyt") {
-      message("A settings text block was created to the left of all your artboards. Fill out the settings to link your project to the Scoop asset.");
-      return; // Exit the script
-    } else {
-      message("A settings text block was created to the left of all your artboards. You can use it to customize your output.");
-    }
-  }
-
-
-  // ================================================
-  // assign artboards to their corresponding breakpoints
-  // ================================================
-  // (can have more than one artboard per breakpoint.)
+  // ========================
+  // Initialize breakpoints
+  // ========================
+  // (can have more than one artboard per breakpoint)
+  // TODO: remove nyt-specific breakpoint code, generalize breakpoints for all environments
   var breakpoints = assignBreakpointsToArtboards(nyt5Breakpoints);
 
-  // ================================================
-  // initialization for NYT environment
-  // ================================================
-
-  if (scriptEnvironment == "nyt") {
-    // Read yml file to determine what type of project this is
-    // (yml file should be confirmed to exist when nyt environment is set)
-    var yaml = readYamlConfigFile(docPath + "../config.yml") || {};
-    previewProjectType = yaml.project_type == 'ai2html' ? 'ai2html' : '';
-    if ((previewProjectType=="ai2html" && !folderExists(docPath + "../public/")) ||
-        (previewProjectType!="ai2html" && !folderExists(docPath + "../src/"))) {
-      errors.push("Make sure your Illustrator file is inside the \u201Cai\u201D folder of a Preview project.");
-      errors.push("If the Illustrator file is in the correct folder, your Preview project may be missing a \u201Cpublic\u201D or a \u201Csrc\u201D folder.");
-      errors.push("If this is an ai2html project, it is probably easier to just create a new ai2html Preview project and move this Illustrator file into the \u201Cai\u201D folder inside the project.");
-      return;
-    }
-
-    if (yaml.scoop_slug) {
-      docSettings.scoop_slug_from_config_yml = yaml.scoop_slug;
-    }
-    // Read .git/config file to get preview slug
-    var gitConfig = readGitConfigFile(docPath + "../.git/config") || {};
-    if (gitConfig.url) {
-      docSettings.preview_slug = gitConfig.url.replace( /^[^:]+:/ , "" ).replace( /\.git$/ , "");
-    }
-
-    docSettings.image_source_path = "_assets/";
-    if (previewProjectType == "ai2html") {
-      docSettings.html_output_path      = "/../public/";
-      docSettings.html_output_extension = ".html";
-      docSettings.image_output_path     = "_assets/";
-    }
-
+  if (scriptEnvironment == "nyt-preview") {
     if (docSettings.max_width && !contains(breakpoints, function(bp) {
       return +docSettings.max_width == bp.upperLimit;
     })) {
       warn('The max_width setting of "' + docSettings.max_width +
         '" is not a valid breakpoint and will create an error when you "preview publish."');
     }
-  }
-
-  // ================================================
-  // initialization for all environments
-  // ================================================
-
-  docName = docSettings.project_name || doc.name.replace(/(.+)\.[aieps]+$/,"$1").replace(/ +/g,"-");
-  docName = makeKeyword(docName);
-
-  if (docSettings.image_source_path === null) {
-    docSettings.image_source_path = docSettings.image_output_path;
-  }
-
-  if (docSettings.image_format.length === 0) {
-    warn("No images were created because no image formats were specified.");
-  } else if (contains(docSettings.image_format, "auto")) {
-    docSettings.image_format = [documentContainsVisibleRasterImages() ? 'jpg' : 'png'];
-  } else if (documentContainsVisibleRasterImages() && !contains(docSettings.image_format, "jpg")) {
-    warn("An artboard contains a raster image -- consider exporting to jpg instead of " +
-        docSettings.image_format[0] + ".");
   }
 
   // ================================================
@@ -585,11 +449,11 @@ function render() {
   var masks = findMasks(); // identify all clipping masks and their contents
   var artboardContent = {html: "", css: "", js: ""};
 
-  forEachUsableArtboard(function(activeArtboard, abNumber) {
+  forEachUsableArtboard(function(activeArtboard, abIndex) {
     var abSettings = getArtboardSettings(activeArtboard);
-    var docArtboardName  = getArtboardFullName(activeArtboard);
+    var docArtboardName = getArtboardFullName(activeArtboard);
     var textFrames, textData, imageData;
-    doc.artboards.setActiveArtboardIndex(abNumber);
+    doc.artboards.setActiveArtboardIndex(abIndex);
 
     // ========================
     // Convert text objects
@@ -606,7 +470,7 @@ function render() {
     pBar.step();
 
     // ==========================
-    // generate artboard image(s)
+    // Generate artboard image(s)
     // ==========================
 
     if (isTrue(docSettings.write_image_files)) {
@@ -618,7 +482,7 @@ function render() {
     pBar.step();
 
     //=====================================
-    // finish generating artboard HTML and CSS
+    // Finish generating artboard HTML and CSS
     //=====================================
 
     artboardContent.html += "\r\t<!-- Artboard: " + getArtboardName(activeArtboard) + " -->\r" +
@@ -627,18 +491,9 @@ function render() {
        textData.html +
        "\t</div>\r";
     artboardContent.css += generateArtboardCss(activeArtboard, textData.styles, docSettings);
-    /*
-    artboardContent +=
-      "\r\t<!-- Artboard: " + getArtboardName(activeArtboard) + " -->\r" +
-      generateArtboardDiv(activeArtboard, breakpoints, docSettings) +
-      generateArtboardCss(activeArtboard, textData.styles, docSettings) +
-      generateImageHtml(activeArtboard, docSettings) +
-      textData.html +
-      "\t</div>\r";
-    */
 
     //=====================================
-    // output html file here if doing a file for every artboard
+    // Output html file here if doing a file for every artboard
     //=====================================
 
     if (docSettings.output=="multiple-files") {
@@ -650,21 +505,19 @@ function render() {
   }); // end artboard loop
 
   //=====================================
-  // output html file here if doing one file for all artboards
+  // Output html file here if doing one file for all artboards
   //=====================================
 
   if (docSettings.output=="one-file") {
     addCustomContent(artboardContent, customBlocks);
-    generateOutputHtml(artboardContent, docName, docSettings);
+    generateOutputHtml(artboardContent, getDocumentName(), docSettings);
   }
 
   //=====================================
-  // write configuration file with graphic metadata
+  // Write configuration file with graphic metadata
   //=====================================
 
-  if ((scriptEnvironment=="nyt" && previewProjectType=="ai2html") ||
-      (scriptEnvironment!="nyt" && isTrue(docSettings.create_config_file))) {
-    // TODO: switch to this?  (scriptEnvironment!="nyt" && docSettings.config_file_path)) {
+  if (isTrue(docSettings.create_config_file)) {
     var yamlPath = docPath + docSettings.config_file_path,
         yamlStr = generateYamlFileContent(breakpoints, docSettings);
     checkForOutputFolder(yamlPath.replace(/[^\/]+$/, ""), "configFileFolder");
@@ -1220,13 +1073,49 @@ function unlockContainer(o) {
 }
 
 
-
 // ==================================
 // ai2html program state and settings
 // ==================================
 
 function runningInNode() {
   return (typeof module != "undefined") && !!module.exports;
+}
+
+// Add internal functions to module.exports for testing in Node.js
+function exportFunctionsForTesting() {
+  [ testBoundsIntersection,
+    trim,
+    stringToLines,
+    contains,
+    arraySubtract,
+    firstBy,
+    zeroPad,
+    roundTo,
+    pathJoin,
+    pathSplit,
+    folderExists,
+    formatCss,
+    getCssColor,
+    readGitConfigFile,
+    readYamlConfigFile,
+    applyTemplate,
+    cleanHtmlText,
+    addEnclosingTag,
+    stripTag,
+    cleanCodeBlock,
+    findHtmlTag,
+    cleanHtmlTags,
+    convertSettingsToYaml,
+    parseDataAttributes,
+    parseArtboardName,
+    parseObjectName,
+    cleanObjectName,
+    initDocumentSettings,
+    uniqAssetName,
+    replaceSvgIds
+  ].forEach(function(f) {
+    module.exports[f.name] = f;
+  });
 }
 
 function isTestedIllustratorVersion(version) {
@@ -1284,13 +1173,120 @@ function getScriptDirectory() {
   return new File($.fileName).parent;
 }
 
-function initDocumentSettings(env) {
-  ai2htmlBaseSettings = env == 'nyt' ? nytBaseSettings : defaultBaseSettings;
-  // initialize document settings
-  docSettings = {};
-  for (var setting in ai2htmlBaseSettings) {
-    docSettings[setting] = ai2htmlBaseSettings[setting].defaultValue;
+// Import program settings and custom html, css and js code from specially
+//   formatted text blocks
+// Side effect: creates empty settings block if none found.
+function initSpecialTextBlocks() {
+  var rxp = /^ai2html-(css|js|html|settings|text)\s*$/;
+  var settings = null;
+  var settingsBlock;
+  var code = {};
+
+  forEach(doc.textFrames, function(thisFrame) {
+    // var contents = thisFrame.contents; // caused MRAP error in AI 2017
+    var type = null;
+    var match, lines;
+    if (thisFrame.lines.length > 1) {
+      match = rxp.exec(thisFrame.lines[0].contents);
+      type = match ? match[1] : null;
+    }
+    if (!type) return; // not a special block
+    lines = stringToLines(thisFrame.contents);
+    lines.shift(); // remove header
+    if (type == 'settings' || type == 'text') {
+      settings = settings || {};
+      if (type == 'settings') {
+        settingsBlock = thisFrame;
+      }
+      parseSettingsEntries(lines, settings);
+
+    } else { // import custom js, css and html blocks
+      code[type] = code[type] || [];
+      code[type].push(cleanCodeBlock(type, lines.join('\r')));
+    }
+    if (objectOverlapsAnArtboard(thisFrame)) {
+      hideTextFrame(thisFrame);
+    }
+  });
+
+  if (!settingsBlock) {
+    settingsBlock = createSettingsBlock();
+    message("A settings text block was created to the left of all your artboards.");
   }
+
+  // set name of settings block, so it can be found later using getName()
+  settingsBlock.name = 'ai2html-settings';
+
+  if (code.css)  {message("Custom CSS blocks: " + code.css.length);}
+  if (code.html) {message("Custom HTML blocks: " + code.html.length);}
+  if (code.js)   {message("Custom JS blocks: " + code.js.length);}
+
+  return {code: code, settings: settings};
+}
+
+
+// Derive ai2html program settings by combining default settings and optional overrides.
+function initDocumentSettings(textBlockSettings) {
+  var settings = {};
+  var yamlConfig;
+  var key;
+
+  // kludge: detect NYT environment
+  if (detectTimesFonts()) {
+    if (fileExists(docPath + '../config.yml')) {
+      scriptEnvironment = 'nyt-preview';
+    } else if (!confirm("You seem to be running ai2html outside of NYT Preview.\nContinue in non-Preview mode?", true)) {
+      errors.push("Make sure your Illustrator file is inside the \u201Cai\u201D folder of a Preview project.");
+    }
+  }
+
+  // initialize from default settings
+  ai2htmlBaseSettings = scriptEnvironment == 'nyt-preview' ? nytBaseSettings : defaultBaseSettings;
+  for (key in ai2htmlBaseSettings) {
+    settings[key] = ai2htmlBaseSettings[key].defaultValue;
+  }
+
+  // kludge: modify NYT settings based on project type
+  if (scriptEnvironment == 'nyt-preview') {
+    // Read yml file to determine what type of project this is
+    // (yml file should be confirmed to exist when nyt environment is set)
+    yamlConfig = readYamlConfigFile(docPath + "../config.yml") || {};
+    settings.project_type = yamlConfig.project_type == 'ai2html' ? 'ai2html' : '';
+    if (!folderExists(docPath + '../public/') ||
+        (settings.project_type != 'ai2html' && !folderExists(docPath + '../src/'))) {
+      errors.push("Your Preview project may be missing a \u201Cpublic\u201D or a \u201Csrc\u201D folder.");
+    }
+
+    if (yamlConfig.scoop_slug) {
+      settings.scoop_slug_from_config_yml = yamlConfig.scoop_slug;
+    }
+
+    // Read .git/config file to get preview slug
+    var gitConfig = readGitConfigFile(docPath + "../.git/config") || {};
+    if (gitConfig.url) {
+      docSettings.preview_slug = gitConfig.url.replace( /^[^:]+:/ , "" ).replace( /\.git$/ , "");
+    }
+
+    settings.image_source_path = "_assets/";
+    if (settings.project_type == "ai2html") {
+      settings.html_output_path = "/../public/";
+      settings.image_output_path = "_assets/";
+      settings.create_config_file = true;
+      settings.create_promo_image = true;
+    }
+  }
+
+  // merge settings from text block
+  if (textBlockSettings) {
+    for (key in textBlockSettings) {
+      if (key in settings === false) {
+        warn("Settings block contains an unsupported parameter: " + key);
+      }
+      settings[key] = textBlockSettings[key];
+    }
+  }
+
+  return settings;
 }
 
 function initUtilityFunctions() {
@@ -1303,7 +1299,6 @@ function initUtilityFunctions() {
     stop: function(note) {
       var ms = +new Date() - T.stack.pop();
       if (note) message(ms + 'ms - ' + note);
-      return ms;
     }
   };
 
@@ -1361,10 +1356,11 @@ function createSettingsBlock() {
   textArea.textRange.characterAttributes.leading = leading;
   textArea.textRange.characterAttributes.size = fontSize;
   textArea.contents = settingsLines.join('\n');
+  return textArea;
 }
 
-// Add ai2html settings from a text block to the document settings object
-function parseSettingsEntries(entries, docSettings) {
+// Add ai2html settings from a text block to a settings object
+function parseSettingsEntries(entries, settings) {
   var entryRxp = /^([\w-]+)\s*:\s*(.*)$/;
   forEach(entries, function(str) {
     var match, key, value;
@@ -1376,10 +1372,6 @@ function parseSettingsEntries(entries, docSettings) {
     }
     key   = match[1];
     value = straightenCurlyQuotesInsideAngleBrackets(match[2]);
-    if (key in docSettings === false) {
-      // assumes docSettings has been initialized with default settings
-      warn("Settings block contains an unsupported parameter: " + key);
-    }
     if (key == 'output') {
       // replace values from old versions of script with current values
       if (value == 'one-file-for-all-artboards' || value == 'preview-one-file') {
@@ -1392,7 +1384,7 @@ function parseSettingsEntries(entries, docSettings) {
     if (key == "image_format") {
       value = parseAsArray(value);
     }
-    docSettings[key] = value;
+    settings[key] = value;
   });
 }
 
@@ -1408,7 +1400,7 @@ function showCompletionAlert(showPrompt) {
 
   if (errors.length > 0) {
     alertHed = "The Script Was Unable to Finish";
-  } else if (scriptEnvironment == "nyt") {
+  } else if (scriptEnvironment == "nyt-preview") {
     alertHed = "Actually, that\u2019s not half bad :)"; // &rsquo;
   } else {
     alertHed = "Nice work!";
@@ -1530,8 +1522,13 @@ function getArtboardName(ab) {
   return cleanObjectName(ab.name);
 }
 
+function getDocumentName() {
+  var name = docSettings.project_name || doc.name.replace(/(.+)\.[aieps]+$/,"$1").replace(/ +/g,"-");
+  return makeKeyword(name);
+}
+
 function getArtboardFullName(ab) {
-  return docName + "-" + getArtboardName(ab);
+  return getDocumentName() + "-" + getArtboardName(ab);
 }
 
 // return coordinates of bounding box of all artboards
@@ -1620,7 +1617,6 @@ function getArtboardSettings(ab) {
   return parseArtboardName(ab.name);
 }
 
-
 // return array of data records about each usable artboard, sorted from narrow to wide
 function getArtboardInfo() {
   var artboards = [];
@@ -1660,7 +1656,7 @@ function assignBreakpointsToArtboards(breakpoints) {
         bpInfo.artboards.push(abInfo.id);
       }
     }
-    if (bpInfo.artboards.length > 1 && scriptEnvironment=="nyt") {
+    if (bpInfo.artboards.length > 1 && scriptEnvironment == "nyt-preview") {
       warn('The ' + breakpoint.upperLimit + "px breakpoint has " + bpInfo.artboards.length +
           " artboards. You probably want only one artboard per breakpoint.");
     }
@@ -1699,6 +1695,25 @@ function findLargestArtboard() {
   return largestId;
 }
 
+function findLayers(layers, test) {
+  var retn = null;
+  forEach(layers, function(lyr) {
+    var found = null;
+    if (objectIsHidden(lyr)) {
+      // skip
+    } else if (test(lyr)) {
+      found = [lyr];
+    } else if (lyr.layers.length > 0) {
+      // examine sublayers (only if layer didn't test positive)
+      found = findLayers(lyr.layers, test);
+    }
+    if (found) {
+      retn = retn ? retn.concat(found) : found;
+    }
+  });
+  return retn;
+}
+
 function clearSelection() {
   // setting selection to null doesn't always work:
   // it doesn't deselect text range selection and also seems to interfere with
@@ -1708,20 +1723,17 @@ function clearSelection() {
   app.executeMenuCommand('deselectall');
 }
 
-function documentContainsVisibleRasterImages() {
-  // TODO: verify that placed items are rasters
-  function isVisible(obj) {
-    return !objectIsHidden(obj) && objectOverlapsAnArtboard(obj);
-  }
-  return contains(doc.placedItems, isVisible) || contains(doc.rasterItems, isVisible);
-}
 
 function objectOverlapsAnArtboard(obj) {
   var hit = false;
   forEachUsableArtboard(function(ab) {
-    hit = hit || testBoundsIntersection(ab.artboardRect, obj.geometricBounds);
+    hit = hit || objectOverlapsArtboard(obj, ab);
   });
   return hit;
+}
+
+function objectOverlapsArtboard(obj, ab) {
+  return testBoundsIntersection(ab.artboardRect, obj.geometricBounds);
 }
 
 function objectIsHidden(obj) {
@@ -1882,6 +1894,8 @@ function hideTextFrame(textFrame) {
 // color: a color object, e.g. RGBColor
 // opacity (optional): opacity [0-100]
 function convertAiColor(color, opacity) {
+  // If all three RBG channels (0-255) are below this value, convert text fill to pure black.
+  var rgbBlackThreshold  = 36;
   var o = {};
   var r, g, b;
   if (color.typename == 'SpotColor') {
@@ -2611,6 +2625,34 @@ function uniqAssetName(name, names) {
   return uniqName;
 }
 
+function getPromoImageFormat(ab, settings) {
+  var fmt = settings.image_format[0];
+  if (fmt == 'svg' || !fmt) {
+    fmt = 'png';
+  } else {
+    fmt = resolveArtboardImageFormat(fmt, ab);
+  }
+  return fmt;
+}
+
+// setting: value from ai2html settings (e.g. "auto" "png")
+function resolveArtboardImageFormat(setting, ab) {
+  var fmt;
+  if (setting == 'auto') {
+    fmt = artboardContainsVisibleRasterImage(ab) ? 'jpg' : 'png';
+  } else {
+    fmt = setting;
+  }
+  return fmt;
+}
+
+function artboardContainsVisibleRasterImage(ab) {
+  function test(item) {
+    return objectOverlapsArtboard(item, ab) && !objectIsHidden(item);
+  }
+  // TODO: verify that placed items are rasters
+  return contains(doc.placedItems, test) || contains(doc.rasterItems, test);
+}
 
 // Generate images and return HTML embed code
 function convertArtItems(activeArtboard, textFrames, masks, settings) {
@@ -2654,7 +2696,6 @@ function convertArtItems(activeArtboard, textFrames, masks, settings) {
     lyr.visible = true;
   });
 
-
   if (hideTextFrames) {
     for (i=0; i<textFrameCount; i++) {
       textFrames[i].hidden = false;
@@ -2664,24 +2705,6 @@ function convertArtItems(activeArtboard, textFrames, masks, settings) {
   return {html: html};
 }
 
-function findLayers(layers, test) {
-  var retn = null;
-  forEach(layers, function(lyr) {
-    var found = null;
-    if (objectIsHidden(lyr)) {
-      // skip
-    } else if (test(lyr)) {
-      found = [lyr];
-    } else if (lyr.layers.length > 0) {
-      // examine sublayers (only if layer didn't test positive)
-      found = findLayers(lyr.layers, test);
-    }
-    if (found) {
-      retn = retn ? retn.concat(found) : found;
-    }
-  });
-  return retn;
-}
 
 function findSvgExportLayers() {
   function test(lyr) {
@@ -2694,12 +2717,15 @@ function getImageFolder(settings) {
   return pathJoin(docPath, settings.html_output_path, settings.image_output_path);
 }
 
+function getImageFileName(name, fmt) {
+  // for file extension, convert png24 -> png; other format names are same as extension
+  return name + '.' + fmt.substring(0, 3);
+}
+
 // Capture and save an image to the filesystem and return html embed code
 //
 function exportImage(imgName, format, ab, masks, layers, settings) {
-  // for file extension, convert png24 -> png; other format names are same as extension
-  var fileExt = '.' + format.substring(0, 3);
-  var imgFile = imgName + fileExt;
+  var imgFile = getImageFileName(imgName, format);
   var outputPath = pathJoin(getImageFolder(settings), imgFile);
   var imgId = getImageId(imgName);
   var imgClass = nameSpace + 'aiImg';
@@ -2715,12 +2741,11 @@ function exportImage(imgName, format, ab, masks, layers, settings) {
     if (layers) {
       // layer images are absolutely positioned
       imgClass += ' ' + nameSpace + 'aiAbs';
-      message('Exported a layer as ' + outputPath.replace(/.*\//, ''))
+      message('Exported a layer as ' + outputPath.replace(/.*\//, ''));
     }
 
   } else {
-    // raster image export
-    exportImageFile(outputPath, ab, format, settings);
+    exportRasterImage(outputPath, ab, format, settings);
   }
 
   if (format == 'svg' && settings.inline_svg) {
@@ -2785,21 +2810,43 @@ function replaceSvgIds(svg, prefix) {
 
 // ab: artboard (assumed to be the active artboard)
 function captureArtboardImage(imgName, ab, masks, settings) {
-  var retn;
-  forEach(settings.image_format, function(format) {
-    var html = exportImage(imgName, format, ab, masks, null, settings);
-    if (!retn) retn = html; // use embed code for first of multiple formats
+  var formats = settings.image_format;
+  var imgHtml;
+
+  if (!formats.length) {
+    warnOnce("No images were created because no image formats were specified.");
+    return '';
+  }
+
+  if (formats[0] != 'auto' && formats[0] != 'jpg' && artboardContainsVisibleRasterImage(ab)) {
+    warnOnce("An artboard contains a raster image -- consider exporting to jpg instead of " +
+        formats[0] + ".");
+  }
+
+  forEach(formats, function(fmt) {
+    var html;
+    fmt = resolveArtboardImageFormat(fmt, ab);
+    html = exportImage(imgName, fmt, ab, masks, null, settings);
+    if (!imgHtml) {
+      // use embed code for first of multiple formats
+      imgHtml = html;
+    }
   });
-  return retn;
+  return imgHtml;
 }
 
 
 // Create an <img> tag for the artboard image
 function generateImageHtml(imgFile, imgId, imgClass, ab, settings) {
   var abPos = convertAiBounds(ab.artboardRect),
-      src = settings.image_source_path + imgFile,
-      html;
+      imgDir = settings.image_source_path,
+      html, src;
 
+  if (imgDir === null) {
+    imgDir = settings.image_output_path;
+  }
+
+  src = imgDir + imgFile;
   html = '\t\t<img id="' + imgId + '" class="' + imgClass + '"';
   if (isTrue(settings.use_lazy_loader)) {
     html += ' data-src="' + src + '"';
@@ -2812,20 +2859,20 @@ function generateImageHtml(imgFile, imgId, imgClass, ab, settings) {
 
 // Create a promo image from the largest usable artboard
 function createPromoImage(settings) {
-  var abNumber = findLargestArtboard();
-  if (abNumber == -1) return; // TODO: show error
-  var artboard   = doc.artboards[abNumber],
-      abPos      = convertAiBounds(artboard.artboardRect),
-      format     = contains(settings.image_format, 'jpg') ? 'jpg' : 'png',
-      outputPath = docPath + docName + "-promo." + format,
+  var abIndex = findLargestArtboard();
+  if (abIndex == -1) return; // TODO: show error
+  var ab = doc.artboards[abIndex],
+      format = getPromoImageFormat(ab, settings),
+      imgFile = getImageFileName(getDocumentName() + "-promo", format),
+      outputPath = docPath + imgFile,
       opts = {
         image_width: settings.promo_image_width || 1024,
         jpg_quality: settings.jpg_quality,
         png_number_of_colors: settings.png_number_of_colors,
         png_transparent: false
       };
-  doc.artboards.setActiveArtboardIndex(abNumber);
-  exportImageFile(outputPath, artboard, format, opts);
+  doc.artboards.setActiveArtboardIndex(abIndex);
+  exportRasterImage(outputPath, ab, format, opts);
   alert("Promo image created\nLocation: " + outputPath);
 }
 
@@ -2857,7 +2904,7 @@ function getOutputImagePixelRatio(width, height, format, doubleres) {
 // ab: assumed to be active artboard
 // format: png, png24, jpg
 //
-function exportImageFile(imgPath, ab, format, settings) {
+function exportRasterImage(imgPath, ab, format, settings) {
   // This constant is specified in the Illustrator Scripting Reference under ExportOptionsJPEG.
   var MAX_JPG_SCALE  = 776.19;
   var abPos = convertAiBounds(ab.artboardRect);
@@ -3190,14 +3237,14 @@ function generatePageCss(containerId, settings) {
 function generateYamlFileContent(breakpoints, settings) {
   var lines = [];
   lines.push("ai2html_version: " + scriptVersion);
-  lines.push("project_type: " + previewProjectType);
+  lines.push("project_type: " + settings.project_type);
   lines.push("tags: ai2html");
   lines.push("min_width: " + breakpoints[0].upperLimit); // TODO: ask why upperLimit
   if (!!settings.max_width) {
     lines.push("max_width: " + settings.max_width);
-  } else if (settings.responsiveness != "fixed" && scriptEnvironment == "nyt") {
+  } else if (settings.responsiveness != "fixed" && scriptEnvironment == "nyt-preview") {
     lines.push("max_width: " + breakpoints[breakpoints.length-1].upperLimit);
-  } else if (settings.responsiveness != "fixed" && scriptEnvironment != "nyt") {
+  } else if (settings.responsiveness != "fixed" && scriptEnvironment != "nyt-preview") {
     // don't write a max_width setting as there should be no max width in this case
   } else {
     // this is the case of fixed responsiveness
@@ -3264,7 +3311,7 @@ function getResizerScript() {
         }
       });
 
-      if (scriptEnvironment=="nyt") {
+      if (scriptEnvironment == "nyt-preview") {
         try {
           if (window.parent && window.parent.$) {
             window.parent.$("body").trigger("resizedcontent", [window]);
@@ -3356,9 +3403,9 @@ function generateOutputHtml(content, pageName, settings) {
 
   pBar.setTitle('Writing HTML output...');
 
-  if (scriptEnvironment == "nyt" && !isFalse(settings.include_resizer_css_js)) {
+  if (scriptEnvironment == "nyt-preview" && !isFalse(settings.include_resizer_css_js)) {
     responsiveJs = '\t<script src="_assets/resizerScript.js"></script>' + "\n";
-    if (previewProjectType == "ai2html") {
+    if (settings.project_type == "ai2html") {
       responsiveCss = '\t<link rel="stylesheet" href="_assets/resizerStyle.css">' + "\n";
     }
   }
@@ -3371,7 +3418,7 @@ function generateOutputHtml(content, pageName, settings) {
   commentBlock = "<!-- Generated by ai2html v" + scriptVersion + " - " +
     getDateTimeStamp() + " -->\r" + "<!-- ai file: " + doc.name + " -->\r";
 
-  if (scriptEnvironment == "nyt") {
+  if (scriptEnvironment == "nyt-preview") {
     commentBlock += "<!-- preview: " + settings.preview_slug + " -->\r";
   }
   if (settings.scoop_slug_from_config_yml) {
@@ -3399,7 +3446,7 @@ function generateOutputHtml(content, pageName, settings) {
   // JS
   js = content.js + responsiveJs;
 
-  if (scriptEnvironment == "nyt") {
+  if (scriptEnvironment == "nyt-preview") {
     html = '<!-- SCOOP HTML -->\r' + commentBlock + html;
     css = '<!-- SCOOP CSS -->\r' + commentBlock + css;
     if (js) js ='<!-- SCOOP JS -->\r' + commentBlock + js;
@@ -3407,7 +3454,7 @@ function generateOutputHtml(content, pageName, settings) {
 
   textForFile = css + '\r' + html + '\r' + js;
 
-  if (scriptEnvironment != "nyt") {
+  if (scriptEnvironment != "nyt-preview") {
     textForFile = commentBlock + textForFile +
         "<!-- End ai2html" + " - " + getDateTimeStamp() + " -->\r";
   }
@@ -3417,7 +3464,7 @@ function generateOutputHtml(content, pageName, settings) {
   checkForOutputFolder(htmlFileDestinationFolder, "html_output_path");
   htmlFileDestination = htmlFileDestinationFolder + pageName + settings.html_output_extension;
 
-  if (settings.output == 'one-file' && previewProjectType == 'ai2html') {
+  if (settings.output == 'one-file' && settings.project_type == 'ai2html') {
     htmlFileDestination = htmlFileDestinationFolder + "index" + settings.html_output_extension;
   }
 
