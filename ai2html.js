@@ -367,6 +367,10 @@ if (!app.documents.length) {
     textBlockData = initSpecialTextBlocks();
     docSettings = initDocumentSettings(textBlockData.settings);
 
+    if (!textBlockData.settings) {
+      createSettingsBlock();
+    }
+
     // warn about duplicate artboard names
     validateArtboardNames();
 
@@ -1175,11 +1179,9 @@ function getScriptDirectory() {
 
 // Import program settings and custom html, css and js code from specially
 //   formatted text blocks
-// Side effect: creates empty settings block if none found.
 function initSpecialTextBlocks() {
   var rxp = /^ai2html-(css|js|html|settings|text)\s*$/;
   var settings = null;
-  var settingsBlock;
   var code = {};
 
   forEach(doc.textFrames, function(thisFrame) {
@@ -1196,7 +1198,8 @@ function initSpecialTextBlocks() {
     if (type == 'settings' || type == 'text') {
       settings = settings || {};
       if (type == 'settings') {
-        settingsBlock = thisFrame;
+        // set name of settings block, so it can be found later using getName()
+        thisFrame.name = 'ai2html-settings';
       }
       parseSettingsEntries(lines, settings);
 
@@ -1209,13 +1212,6 @@ function initSpecialTextBlocks() {
     }
   });
 
-  if (!settingsBlock) {
-    settingsBlock = createSettingsBlock();
-    message("A settings text block was created to the left of all your artboards.");
-  }
-
-  // set name of settings block, so it can be found later using getName()
-  settingsBlock.name = 'ai2html-settings';
 
   if (code.css)  {message("Custom CSS blocks: " + code.css.length);}
   if (code.html) {message("Custom HTML blocks: " + code.html.length);}
@@ -1356,6 +1352,8 @@ function createSettingsBlock() {
   textArea.textRange.characterAttributes.leading = leading;
   textArea.textRange.characterAttributes.size = fontSize;
   textArea.contents = settingsLines.join('\n');
+  textArea.name = 'ai2html-settings';
+  message("A settings text block was created to the left of all your artboards.");
   return textArea;
 }
 
