@@ -39,10 +39,13 @@ function main() {
 // See (for example) https://forums.adobe.com/thread/1810764 and
 // http://wwwimages.adobe.com/content/dam/Adobe/en/devnet/pdf/illustrator/scripting/Readme.txt
 
-// Increment middle digit for new functionality or breaking changes.
-// Increment final digit for minor bug fixes.
-// Also update the version number in package.json
-var scriptVersion = "0.68.1";
+// How to update the version number:
+// - Increment middle digit for new functionality or breaking changes
+//      or increment final digit for simple bug fixes or other minor changes.
+// - Update the version number in package.json
+// - Add an entry to CHANGELOG.md
+// - Run the release.sh script to create a new GitHub release
+var scriptVersion = "0.69.0";
 
 // ================================================
 // ai2html and config settings

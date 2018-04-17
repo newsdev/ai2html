@@ -1,3 +1,8 @@
+### v0.69.0
+- Improved ids of inline SVG elements (based on original Illustrator object names, but unique within a document)
+- Added "svg-id-prefix" setting for namespacing the ids of inline SVG elements to avoid collisions with other elements on the page
+- Added "data-name" attribute to inline SVG elements, containing the original name of the Illustrator art object
+
 ### v0.68.1
 - Bug fix
 
