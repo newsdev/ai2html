@@ -10,7 +10,10 @@ then
 	exit 1
 fi
 
-git commit -a -m "$TAGNAME"  # create a new commit if there are uncommitted changes
-git tag "$TAGNAME" && \      # use the new version number to tag the current head
+# create a new commit if there are uncommitted changes
+git commit -a -m "$TAGNAME"
+
+# use the new version number to tag the current head
+git tag "$TAGNAME" && \
 git push --tags && \
 git push
