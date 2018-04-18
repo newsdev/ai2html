@@ -71,6 +71,7 @@ var nytBaseSettings = {
   html_output_extension: {defaultValue: ".html", includeInSettingsBlock: false, includeInConfigFile: false},
   image_output_path: {defaultValue: "../public/_assets/", includeInSettingsBlock: false, includeInConfigFile: false},
   image_source_path: {defaultValue: null, includeInSettingsBlock: false, includeInConfigFile: false},
+  cache_bust_token: {defaultValue: null, includeInSettingsBlock: false, includeInConfigFile: false},
   create_config_file: {defaultValue: "true", includeInSettingsBlock: false, includeInConfigFile: false},
   config_file_path: {defaultValue: "../config.yml", includeInSettingsBlock: false, includeInConfigFile: false},
   local_preview_template: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
@@ -126,6 +127,7 @@ var defaultBaseSettings = {
   html_output_extension: {defaultValue: ".html", includeInSettingsBlock: true, includeInConfigFile: false},
   image_output_path: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: false},
   image_source_path: {defaultValue: null, includeInSettingsBlock: false, includeInConfigFile: false},
+  cache_bust_token: {defaultValue: null, includeInSettingsBlock: false, includeInConfigFile: false},
   create_config_file: {defaultValue: "false", includeInSettingsBlock: false, includeInConfigFile: false},
   config_file_path: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
   local_preview_template: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: false},
@@ -521,14 +523,19 @@ function render(customBlocks) {
   }
 
   //=====================================
-  // Write configuration file with graphic metadata
+  // Post-output operations
   //=====================================
 
   if (isTrue(docSettings.create_config_file)) {
+    // Write configuration file with graphic metadata
     var yamlPath = docPath + docSettings.config_file_path,
         yamlStr = generateYamlFileContent(breakpoints, docSettings);
     checkForOutputFolder(yamlPath.replace(/[^\/]+$/, ""), "configFileFolder");
     saveTextFile(yamlPath, yamlStr);
+  }
+
+  if (docSettings.cache_bust_token) {
+    incrementCacheBustToken(docSettings);
   }
 
 } // end render()
@@ -1215,14 +1222,12 @@ function initSpecialTextBlocks() {
     }
   });
 
-
   if (code.css)  {message("Custom CSS blocks: " + code.css.length);}
   if (code.html) {message("Custom HTML blocks: " + code.html.length);}
   if (code.js)   {message("Custom JS blocks: " + code.js.length);}
 
   return {code: code, settings: settings};
 }
-
 
 // Derive ai2html program settings by combining default settings and optional overrides.
 function initDocumentSettings(textBlockSettings) {
@@ -1287,6 +1292,7 @@ function initDocumentSettings(textBlockSettings) {
 
   return settings;
 }
+
 
 function initUtilityFunctions() {
   // Enable timing using T.start() and T.stop("message")
@@ -1360,19 +1366,50 @@ function createSettingsBlock() {
   return textArea;
 }
 
+// Update an entry in the settings text block (or add a new entry if not found)
+function updateSettingsEntry(key, value) {
+  var block = doc.textFrames.getByName('ai2html-settings');
+  var entry = key + ': ' + value;
+  var updated = false;
+  var lines;
+  if (!block) return;
+  lines = stringToLines(block.contents);
+  // one alternative to splitting contents into lines is to iterate
+  //   over paragraphs, but an error is thrown when accessing an empty pg
+  forEach(lines, function(line, i) {
+    var data = parseSettingsEntry(line);
+    if (!updated && data && data[0] == key) {
+      lines[i] = entry;
+      updated = true;
+    }
+  });
+  if (!updated) {
+    // entry not found; adding new entry at the top of the list,
+    // so it will be visible if the content overflows the text frame
+    lines.splice(1, 0, entry);
+  }
+  docIsSaved = false; // doc has changed, need to save
+  block.contents = lines.join('\n');
+}
+
+function parseSettingsEntry(str) {
+  var entryRxp = /^([\w-]+)\s*:\s*(.*)$/;
+  var match = entryRxp.exec(trim(str));
+  if (!match) return null;
+  return [match[1], straightenCurlyQuotesInsideAngleBrackets(match[2])];
+}
+
 // Add ai2html settings from a text block to a settings object
 function parseSettingsEntries(entries, settings) {
-  var entryRxp = /^([\w-]+)\s*:\s*(.*)$/;
   forEach(entries, function(str) {
-    var match, key, value;
-    str = trim(str);
-    match = entryRxp.exec(str);
+    var match = parseSettingsEntry(str);
+    var key, value;
     if (!match) {
       if (str) warn("Malformed setting, skipping: " + str);
       return;
     }
-    key   = match[1];
-    value = straightenCurlyQuotesInsideAngleBrackets(match[2]);
+    key   = match[0];
+    value = match[1];
     if (key == 'output') {
       // replace values from old versions of script with current values
       if (value == 'one-file-for-all-artboards' || value == 'preview-one-file') {
@@ -2842,12 +2879,13 @@ function generateImageHtml(imgFile, imgId, imgClass, ab, settings) {
   var abPos = convertAiBounds(ab.artboardRect),
       imgDir = settings.image_source_path,
       html, src;
-
   if (imgDir === null) {
     imgDir = settings.image_output_path;
   }
-
-  src = imgDir + imgFile;
+  src = pathJoin(imgDir, imgFile);
+  if (settings.cache_bust_token) {
+    src += '?v=' + settings.cache_bust_token;
+  }
   html = '\t\t<img id="' + imgId + '" class="' + imgClass + '"';
   if (isTrue(settings.use_lazy_loader)) {
     html += ' data-src="' + src + '"';
@@ -2856,6 +2894,15 @@ function generateImageHtml(imgFile, imgId, imgClass, ab, settings) {
   }
   html += ' src="' + src + '"/>\r';
   return html;
+}
+
+function incrementCacheBustToken(settings) {
+  var c = settings.cache_bust_token;
+  if (parseInt(c) != +c) {
+    warn('cache_bust_token should be a positive integer');
+  } else {
+    updateSettingsEntry('cache_bust_token', +c + 1);
+  }
 }
 
 // Create a promo image from the largest usable artboard
