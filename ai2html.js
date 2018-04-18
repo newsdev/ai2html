@@ -72,7 +72,7 @@ var nytBaseSettings = {
   image_output_path: {defaultValue: "../public/_assets/", includeInSettingsBlock: false, includeInConfigFile: false},
   image_source_path: {defaultValue: null, includeInSettingsBlock: false, includeInConfigFile: false},
   cache_bust_token: {defaultValue: null, includeInSettingsBlock: false, includeInConfigFile: false},
-  create_config_file: {defaultValue: "true", includeInSettingsBlock: false, includeInConfigFile: false},
+  create_config_file: {defaultValue: "false", includeInSettingsBlock: false, includeInConfigFile: false},
   config_file_path: {defaultValue: "../config.yml", includeInSettingsBlock: false, includeInConfigFile: false},
   local_preview_template: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
   png_transparent: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false},
