@@ -331,7 +331,7 @@ var docSettings = {};
 var scriptEnvironment = '';
 var textBlockData;
 var ai2htmlBaseSettings;
-var doc, docPath, docIsSaved;
+var doc, docPath, docName, docIsSaved;
 var pBar, T;
 
 // If running in Node.js, export functions for testing and exit
@@ -371,6 +371,7 @@ if (!app.documents.length) {
     docIsSaved = doc.saved;
     textBlockData = initSpecialTextBlocks();
     docSettings = initDocumentSettings(textBlockData.settings);
+    docName = getDocumentName(docSettings.project_name);
 
     if (!textBlockData.settings) {
       createSettingsBlock();
@@ -381,7 +382,7 @@ if (!app.documents.length) {
 
     // render the document
     if (errors.length === 0) {
-      render(textBlockData.code);
+      render(docSettings, textBlockData.code);
     }
 
   } catch(e) {
@@ -426,7 +427,7 @@ if (isTrue(docSettings.show_completion_dialog_box ) || errors.length > 0) {
 // ai2html render function
 // =================================
 
-function render(customBlocks) {
+function render(settings, customBlocks) {
   // Fix for issue #50
   // If a text range is selected when the script runs, it interferes
   // with script-driven selection. The fix is to clear this kind of selection.
@@ -442,10 +443,10 @@ function render(customBlocks) {
   var breakpoints = assignBreakpointsToArtboards(nyt5Breakpoints);
 
   if (scriptEnvironment == "nyt-preview") {
-    if (docSettings.max_width && !contains(breakpoints, function(bp) {
-      return +docSettings.max_width == bp.upperLimit;
+    if (settings.max_width && !contains(breakpoints, function(bp) {
+      return +settings.max_width == bp.upperLimit;
     })) {
-      warn('The max_width setting of "' + docSettings.max_width +
+      warn('The max_width setting of "' + settings.max_width +
         '" is not a valid breakpoint and will create an error when you "preview publish."');
     }
   }
@@ -473,7 +474,7 @@ function render(customBlocks) {
       textData = {html: "", styles: []};
     } else {
       pBar.setTitle(docArtboardName + ': Generating text...');
-      textFrames = getTextFramesByArtboard(activeArtboard, masks);
+      textFrames = getTextFramesByArtboard(activeArtboard, masks, settings);
       textData = convertTextFrames(textFrames, activeArtboard);
     }
     pBar.step();
@@ -482,9 +483,9 @@ function render(customBlocks) {
     // Generate artboard image(s)
     // ==========================
 
-    if (isTrue(docSettings.write_image_files)) {
+    if (isTrue(settings.write_image_files)) {
       pBar.setTitle(docArtboardName + ': Capturing image...');
-      imageData = convertArtItems(activeArtboard, textFrames, masks, docSettings);
+      imageData = convertArtItems(activeArtboard, textFrames, masks, settings);
     } else {
       imageData = {html: ""};
     }
@@ -495,19 +496,19 @@ function render(customBlocks) {
     //=====================================
 
     artboardContent.html += "\r\t<!-- Artboard: " + getArtboardName(activeArtboard) + " -->\r" +
-       generateArtboardDiv(activeArtboard, breakpoints, docSettings) +
+       generateArtboardDiv(activeArtboard, breakpoints, settings) +
        imageData.html +
        textData.html +
        "\t</div>\r";
-    artboardContent.css += generateArtboardCss(activeArtboard, textData.styles, docSettings);
+    artboardContent.css += generateArtboardCss(activeArtboard, textData.styles, settings);
 
     //=====================================
     // Output html file here if doing a file for every artboard
     //=====================================
 
-    if (docSettings.output=="multiple-files") {
+    if (settings.output=="multiple-files") {
       addCustomContent(artboardContent, customBlocks);
-      generateOutputHtml(artboardContent, docArtboardName, docSettings);
+      generateOutputHtml(artboardContent, docArtboardName, settings);
       artboardContent = {html: "", css: "", js: ""};
     }
 
@@ -517,25 +518,25 @@ function render(customBlocks) {
   // Output html file here if doing one file for all artboards
   //=====================================
 
-  if (docSettings.output=="one-file") {
+  if (settings.output=="one-file") {
     addCustomContent(artboardContent, customBlocks);
-    generateOutputHtml(artboardContent, getDocumentName(), docSettings);
+    generateOutputHtml(artboardContent, getDocumentName(), settings);
   }
 
   //=====================================
   // Post-output operations
   //=====================================
 
-  if (isTrue(docSettings.create_config_file)) {
+  if (isTrue(settings.create_config_file)) {
     // Write configuration file with graphic metadata
-    var yamlPath = docPath + docSettings.config_file_path,
-        yamlStr = generateYamlFileContent(breakpoints, docSettings);
+    var yamlPath = docPath + settings.config_file_path,
+        yamlStr = generateYamlFileContent(breakpoints, settings);
     checkForOutputFolder(yamlPath.replace(/[^\/]+$/, ""), "configFileFolder");
     saveTextFile(yamlPath, yamlStr);
   }
 
-  if (docSettings.cache_bust_token) {
-    incrementCacheBustToken(docSettings);
+  if (settings.cache_bust_token) {
+    incrementCacheBustToken(settings);
   }
 
 } // end render()
@@ -1235,7 +1236,7 @@ function initDocumentSettings(textBlockSettings) {
   var yamlConfig;
   var key;
 
-  // kludge: detect NYT environment
+  // kludge: detect NYT environment and project type
   if (detectTimesFonts()) {
     if (fileExists(docPath + '../config.yml')) {
       scriptEnvironment = 'nyt-preview';
@@ -1252,8 +1253,6 @@ function initDocumentSettings(textBlockSettings) {
 
   // kludge: modify NYT settings based on project type
   if (scriptEnvironment == 'nyt-preview') {
-    // Read yml file to determine what type of project this is
-    // (yml file should be confirmed to exist when nyt environment is set)
     yamlConfig = readYamlConfigFile(docPath + "../config.yml") || {};
     settings.project_type = yamlConfig.project_type == 'ai2html' ? 'ai2html' : '';
     if (!folderExists(docPath + '../public/') ||
@@ -1268,7 +1267,7 @@ function initDocumentSettings(textBlockSettings) {
     // Read .git/config file to get preview slug
     var gitConfig = readGitConfigFile(docPath + "../.git/config") || {};
     if (gitConfig.url) {
-      docSettings.preview_slug = gitConfig.url.replace( /^[^:]+:/ , "" ).replace( /\.git$/ , "");
+      settings.preview_slug = gitConfig.url.replace( /^[^:]+:/ , "" ).replace( /\.git$/ , "");
     }
 
     settings.image_source_path = "_assets/";
@@ -1560,8 +1559,8 @@ function getArtboardName(ab) {
   return cleanObjectName(ab.name);
 }
 
-function getDocumentName() {
-  var name = docSettings.project_name || doc.name.replace(/(.+)\.[aieps]+$/,"$1").replace(/ +/g,"-");
+function getDocumentName(customName) {
+  var name = customName || docName || doc.name.replace(/(.+)\.[aieps]+$/,"$1").replace(/ +/g,"-");
   return makeKeyword(name);
 }
 
@@ -2382,8 +2381,6 @@ function textFrameIsRenderable(frame, artboardRect) {
     good = false;
   } else if (frame.contents === "") {
     good = false;
-  } else if (docSettings.render_rotated_skewed_text_as == "image" && textIsTransformed(frame)) {
-    good = false;
   }
   return good;
 }
@@ -2433,11 +2430,15 @@ function getClippedTextFramesByArtboard(ab, masks) {
 
 // Get array of TextFrames belonging to an artboard, excluding text that
 // overlaps the artboard but is hidden by a clipping mask
-function getTextFramesByArtboard(ab, masks) {
+function getTextFramesByArtboard(ab, masks, settings) {
   var candidateFrames = findTextFramesToRender(doc.textFrames, ab.artboardRect);
   var excludedFrames = getClippedTextFramesByArtboard(ab, masks);
-  var goodFrames = arraySubtract(candidateFrames, excludedFrames);
-  return goodFrames;
+  var candidateFrames = arraySubtract(candidateFrames, excludedFrames);
+  if (settings.render_rotated_skewed_text_as == "image") {
+    excludedFrames = filter(candidateFrames, textIsTransformed);
+    candidateFrames = arraySubtract(candidateFrames, excludedFrames);
+  }
+  return candidateFrames;
 }
 
 function findTextFramesToRender(frames, artboardRect) {
@@ -2770,7 +2771,7 @@ function exportImage(imgName, format, ab, masks, layers, settings) {
   var created, html;
 
   if (format == 'svg') {
-    created = exportSVG(outputPath, ab, masks, layers);
+    created = exportSVG(outputPath, ab, masks, layers, settings);
     if (!created) {
       return ''; // no image was created
     }
@@ -3115,7 +3116,7 @@ function copyArtboardForImageExport(ab, masks, layers) {
 }
 
 // Returns true if a file was created or else false (because svg document was empty);
-function exportSVG(ofile, ab, masks, layers) {
+function exportSVG(ofile, ab, masks, layers, settings) {
   // Illustrator's SVG output contains all objects in a document (it doesn't
   //   clip to the current artboard), so we copy artboard objects to a temporary
   //   document for export.
@@ -3127,7 +3128,7 @@ function exportSVG(ofile, ab, masks, layers) {
   opts.fontSubsetting        = SVGFontSubsetting.None;
   opts.compressed            = false;
   opts.documentEncoding      = SVGDocumentEncoding.UTF8;
-  opts.embedRasterImages     = isTrue(docSettings.svg_embed_images);
+  opts.embedRasterImages     = isTrue(settings.svg_embed_images);
   // opts.DTD                   = SVGDTDVersion.SVG1_1;
   opts.DTD                   = SVGDTDVersion.SVGTINY1_2;
   opts.cssProperties         = SVGCSSPropertyLocation.STYLEATTRIBUTES;
