@@ -340,56 +340,55 @@ if (runningInNode()) {
   return;
 }
 
-if (!isTestedIllustratorVersion(app.version)) {
-  warn("Ai2html has not been tested on this version of Illustrator.");
-}
-
-if (!app.documents.length) {
-  errors.push("No documents are open");
-
-} else if (!String(app.activeDocument.path)) {
-  errors.push("You need to save your Illustrator file before running this script");
-
-} else if (app.activeDocument.documentColorSpace != DocumentColorSpace.RGB) {
-  errors.push("You should change the document color mode to \"RGB\" before running ai2html (File>Document Color Mode>RGB Color).");
-
-} else if (app.activeDocument.activeLayer.name == "Isolation Mode") {
-  errors.push("Ai2html is unable to run because the document is in Isolation Mode.");
-
-} else if (app.activeDocument.activeLayer.name == "<Opacity Mask>" && app.activeDocument.layers.length == 1) {
-  // TODO: find a better way to detect this condition (mask can be renamed)
-  errors.push("Ai2html is unable to run because you are editing an Opacity Mask.");
-
-} else { // no fatal errors
-  try {
-    // init JSON, etc.
-    initUtilityFunctions();
-
-    // initialize script settings
-    doc = app.activeDocument;
-    docPath = doc.path + "/";
-    docIsSaved = doc.saved;
-    textBlockData = initSpecialTextBlocks();
-    docSettings = initDocumentSettings(textBlockData.settings);
-    docName = getDocumentName(docSettings.project_name);
-
-    if (!textBlockData.settings) {
-      createSettingsBlock();
-    }
-
-    // warn about duplicate artboard names
-    validateArtboardNames();
-
-    // render the document
-    if (errors.length === 0) {
-      render(docSettings, textBlockData.code);
-    }
-
-  } catch(e) {
-    errors.push(formatError(e));
+try {
+  if (!isTestedIllustratorVersion(app.version)) {
+    warn("Ai2html has not been tested on this version of Illustrator.");
   }
-  restoreDocumentState();
+  if (!app.documents.length) {
+    error("No documents are open");
+  }
+  if (!String(app.activeDocument.path)) {
+    error("You need to save your Illustrator file before running this script");
+  }
+  if (app.activeDocument.documentColorSpace != DocumentColorSpace.RGB) {
+    error("You should change the document color mode to \"RGB\" before running ai2html (File>Document Color Mode>RGB Color).");
+  }
+  if (app.activeDocument.activeLayer.name == "Isolation Mode") {
+    error("Ai2html is unable to run because the document is in Isolation Mode.");
+  }
+  if (app.activeDocument.activeLayer.name == "<Opacity Mask>" && app.activeDocument.layers.length == 1) {
+    // TODO: find a better way to detect this condition (mask can be renamed)
+    error("Ai2html is unable to run because you are editing an Opacity Mask.");
+  }
+
+  // init JSON, etc.
+  initUtilityFunctions();
+
+  // initialize script settings
+  doc = app.activeDocument;
+  docPath = doc.path + "/";
+  docIsSaved = doc.saved;
+  textBlockData = initSpecialTextBlocks();
+  docSettings = initDocumentSettings(textBlockData.settings);
+  docName = getDocumentName(docSettings.project_name);
+
+  if (!textBlockData.settings) {
+    createSettingsBlock();
+  }
+
+  // warn about duplicate artboard names
+  validateArtboardNames();
+
+  // render the document
+  if (errors.length === 0) {
+    render(docSettings, textBlockData.code);
+  }
+
+} catch(e) {
+  errors.push(formatError(e));
 }
+restoreDocumentState();
+
 
 // ==========================================
 // Save the AI document (if needed)
@@ -993,7 +992,9 @@ function calcProgressBarSteps() {
 }
 
 function formatError(e) {
-  var msg = "Runtime error";
+  var msg;
+  if (e.name == 'UserError') return e.message; // triggered by error() function
+  msg = "RuntimeError";
   if (e.line) msg += " on line " + e.line;
   if (e.message) msg += ": " + e.message;
   return msg;
@@ -1023,6 +1024,12 @@ function message() {
 
 function warn(msg) {
   warnings.push(msg);
+}
+
+function error(msg) {
+  var e = new Error(msg);
+  e.name = 'UserError';
+  throw e;
 }
 
 var oneTimeWarnings;
@@ -1170,7 +1177,7 @@ function detectScriptEnvironment() {
     if(confirm("You seem to be running ai2html outside of NYT Preview.\nContinue in non-Preview mode?", true)) {
       env = ''; // switch to non-nyt context
     } else {
-      errors.push("Ai2html should be run inside a Preview project.");
+      error("Ai2html should be run inside a Preview project.");
     }
   }
   return env;
@@ -1241,7 +1248,7 @@ function initDocumentSettings(textBlockSettings) {
     if (fileExists(docPath + '../config.yml')) {
       scriptEnvironment = 'nyt-preview';
     } else if (!confirm("You seem to be running ai2html outside of NYT Preview.\nContinue in non-Preview mode?", true)) {
-      errors.push("Make sure your Illustrator file is inside the \u201Cai\u201D folder of a Preview project.");
+      error("Make sure your Illustrator file is inside the \u201Cai\u201D folder of a Preview project.");
     }
   }
 
@@ -1257,7 +1264,7 @@ function initDocumentSettings(textBlockSettings) {
     settings.project_type = yamlConfig.project_type == 'ai2html' ? 'ai2html' : '';
     if (!folderExists(docPath + '../public/') ||
         (settings.project_type != 'ai2html' && !folderExists(docPath + '../src/'))) {
-      errors.push("Your Preview project may be missing a \u201Cpublic\u201D or a \u201Csrc\u201D folder.");
+      error("Your Preview project may be missing a \u201Cpublic\u201D or a \u201Csrc\u201D folder.");
     }
 
     if (yamlConfig.scoop_slug) {
