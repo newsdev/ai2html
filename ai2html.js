@@ -310,12 +310,12 @@ var nyt5Breakpoints = [
   { name:"xxlarge"   , lowerLimit:1050, upperLimit:1600 }
 ];
 
-var cssPrecision        = 4;
+var cssPrecision = 4;
 
 // ================================
 // Global variable declarations
 // ================================
-var nameSpace           = "g-"; // TODO: add to settings
+var nameSpace = "g-"; // TODO: add to settings
 
 // vars to hold warnings and informational messages at the end
 var feedback = [];
@@ -325,14 +325,15 @@ var startTime = +new Date();
 
 var textFramesToUnhide = [];
 var objectsToRelock = [];
-var svgLayersToUnhide = [];
 
-var docSettings = {};
 var scriptEnvironment = '';
+var docSettings;
 var textBlockData;
-var ai2htmlBaseSettings;
 var doc, docPath, docName, docIsSaved;
-var pBar, T;
+var progressBar;
+var JSON;
+
+initJSON();
 
 // If running in Node.js, export functions for testing and exit
 if (runningInNode()) {
@@ -361,9 +362,6 @@ try {
     error("Ai2html is unable to run because you are editing an Opacity Mask.");
   }
 
-  // init JSON, etc.
-  initUtilityFunctions();
-
   // initialize script settings
   doc = app.activeDocument;
   docPath = doc.path + "/";
@@ -373,22 +371,20 @@ try {
   docName = getDocumentName(docSettings.project_name);
 
   if (!textBlockData.settings) {
-    createSettingsBlock();
+    createSettingsBlock(docSettings);
   }
 
   // warn about duplicate artboard names
   validateArtboardNames();
 
   // render the document
-  if (errors.length === 0) {
-    render(docSettings, textBlockData.code);
-  }
-
+  render(docSettings, textBlockData.code);
 } catch(e) {
   errors.push(formatError(e));
 }
-restoreDocumentState();
 
+restoreDocumentState();
+if (progressBar) progressBar.close();
 
 // ==========================================
 // Save the AI document (if needed)
@@ -400,23 +396,21 @@ if (docIsSaved) {
   // because of unlocking / relocking of objects
   doc.saved = true;
 } else if (errors.length === 0) {
-  // Auto-save the document if no errors occurred
   var saveOptions = new IllustratorSaveOptions();
   saveOptions.pdfCompatible = false;
   doc.saveAs(new File(docPath + doc.name), saveOptions);
   message("Your Illustrator file was saved.");
 }
 
-if (pBar) pBar.close();
-message("Script ran in", ((+new Date() - startTime) / 1000).toFixed(1), "seconds");
-
 // =========================================================
 // Show alert box, optionally prompt to generate promo image
 // =========================================================
+if (errors.length > 0) {
+  showCompletionAlert();
 
-if (isTrue(docSettings.show_completion_dialog_box ) || errors.length > 0) {
-  var promptForPromo = errors.length === 0 && isTrue(docSettings.write_image_files) &&
-    isTrue(docSettings.create_promo_image);
+} else if (isTrue(docSettings.show_completion_dialog_box )) {
+  message("Script ran in", ((+new Date() - startTime) / 1000).toFixed(1), "seconds");
+  var promptForPromo = isTrue(docSettings.write_image_files) && isTrue(docSettings.create_promo_image);
   var showPromo = showCompletionAlert(promptForPromo);
   if (showPromo) createPromoImage(docSettings);
 }
@@ -453,7 +447,7 @@ function render(settings, customBlocks) {
   // ================================================
   // Generate HTML, CSS and images for each artboard
   // ================================================
-  pBar = new ProgressBar({name: "Ai2html progress", steps: calcProgressBarSteps()});
+  progressBar = new ProgressBar({name: "Ai2html progress", steps: calcProgressBarSteps()});
   unlockObjects(); // Unlock containers and clipping masks
   var masks = findMasks(); // identify all clipping masks and their contents
   var artboardContent = {html: "", css: "", js: ""};
@@ -472,23 +466,23 @@ function render(settings, customBlocks) {
       textFrames = [];
       textData = {html: "", styles: []};
     } else {
-      pBar.setTitle(docArtboardName + ': Generating text...');
+      progressBar.setTitle(docArtboardName + ': Generating text...');
       textFrames = getTextFramesByArtboard(activeArtboard, masks, settings);
       textData = convertTextFrames(textFrames, activeArtboard);
     }
-    pBar.step();
+    progressBar.step();
 
     // ==========================
     // Generate artboard image(s)
     // ==========================
 
     if (isTrue(settings.write_image_files)) {
-      pBar.setTitle(docArtboardName + ': Capturing image...');
+      progressBar.setTitle(docArtboardName + ': Capturing image...');
       imageData = convertArtItems(activeArtboard, textFrames, masks, settings);
     } else {
       imageData = {html: ""};
     }
-    pBar.step();
+    progressBar.step();
 
     //=====================================
     // Finish generating artboard HTML and CSS
@@ -528,7 +522,7 @@ function render(settings, customBlocks) {
 
   if (isTrue(settings.create_config_file)) {
     // Write configuration file with graphic metadata
-    var yamlPath = docPath + settings.config_file_path,
+    var yamlPath = docPath + (settings.config_file_path || 'config.yml'),
         yamlStr = generateYamlFileContent(breakpoints, settings);
     checkForOutputFolder(yamlPath.replace(/[^\/]+$/, ""), "configFileFolder");
     saveTextFile(yamlPath, yamlStr);
@@ -1241,6 +1235,7 @@ function initSpecialTextBlocks() {
 function initDocumentSettings(textBlockSettings) {
   var settings = {};
   var yamlConfig;
+  var baseSettings;
   var key;
 
   // kludge: detect NYT environment and project type
@@ -1253,10 +1248,14 @@ function initDocumentSettings(textBlockSettings) {
   }
 
   // initialize from default settings
-  ai2htmlBaseSettings = scriptEnvironment == 'nyt-preview' ? nytBaseSettings : defaultBaseSettings;
-  for (key in ai2htmlBaseSettings) {
-    settings[key] = ai2htmlBaseSettings[key].defaultValue;
-  }
+  settings.config_file = [];
+  settings.settings_block = [];
+  baseSettings = scriptEnvironment == 'nyt-preview' ? nytBaseSettings : defaultBaseSettings;
+  forEachProperty(baseSettings, function(o, key) {
+    settings[key] = o.defaultValue;
+    if (o.includeInSettingsBlock) settings.settings_block.push(key);
+    if (o.includeInConfigFile) settings.config_file.push(key);
+  });
 
   // kludge: modify NYT settings based on project type
   if (scriptEnvironment == 'nyt-preview') {
@@ -1300,19 +1299,7 @@ function initDocumentSettings(textBlockSettings) {
 }
 
 
-function initUtilityFunctions() {
-  // Enable timing using T.start() and T.stop("message")
-  T = {
-    stack: [],
-    start: function() {
-      T.stack.push(+new Date());
-    },
-    stop: function(note) {
-      var ms = +new Date() - T.stack.pop();
-      if (note) message(ms + 'ms - ' + note);
-    }
-  };
-
+function initJSON() {
   // Minified json2.js from https://github.com/douglascrockford/JSON-js
   // This code is in the public domain.
   if(typeof JSON!=="object"){JSON={}}(function(){"use strict";var rx_one=/^[\],:{}\s]*$/;var rx_two=/\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g;var rx_three=/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g;var rx_four=/(?:^|:|,)(?:\s*\[)+/g;var rx_escapable=/[\\"\u0000-\u001f\u007f-\u009f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;var rx_dangerous=/[\u0000\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;function f(n){return n<10?"0"+n:n}function this_value(){return this.valueOf()}if(typeof Date.prototype.toJSON!=="function"){Date.prototype.toJSON=function(){return isFinite(this.valueOf())?this.getUTCFullYear()+"-"+f(this.getUTCMonth()+1)+"-"+f(this.getUTCDate())+"T"+f(this.getUTCHours())+":"+f(this.getUTCMinutes())+":"+f(this.getUTCSeconds())+"Z":null};Boolean.prototype.toJSON=this_value;Number.prototype.toJSON=this_value;String.prototype.toJSON=this_value}var gap;var indent;var meta;var rep;function quote(string){rx_escapable.lastIndex=0;return rx_escapable.test(string)?'"'+string.replace(rx_escapable,function(a){var c=meta[a];return typeof c==="string"?c:"\\u"+("0000"+a.charCodeAt(0).toString(16)).slice(-4)})+'"':'"'+string+'"'}function str(key,holder){var i;var k;var v;var length;var mind=gap;var partial;var value=holder[key];if(value&&typeof value==="object"&&typeof value.toJSON==="function"){value=value.toJSON(key)}if(typeof rep==="function"){value=rep.call(holder,key,value)}switch(typeof value){case"string":return quote(value);case"number":return isFinite(value)?String(value):"null";case"boolean":case"null":return String(value);case"object":if(!value){return"null"}gap+=indent;partial=[];if(Object.prototype.toString.apply(value)==="[object Array]"){length=value.length;for(i=0;i<length;i+=1){partial[i]=str(i,value)||"null"}v=partial.length===0?"[]":gap?"[\n"+gap+partial.join(",\n"+gap)+"\n"+mind+"]":"["+partial.join(",")+"]";gap=mind;return v}if(rep&&typeof rep==="object"){length=rep.length;for(i=0;i<length;i+=1){if(typeof rep[i]==="string"){k=rep[i];v=str(k,value);if(v){partial.push(quote(k)+(gap?": ":":")+v)}}}}else{for(k in value){if(Object.prototype.hasOwnProperty.call(value,k)){v=str(k,value);if(v){partial.push(quote(k)+(gap?": ":":")+v)}}}}v=partial.length===0?"{}":gap?"{\n"+gap+partial.join(",\n"+gap)+"\n"+mind+"}":"{"+partial.join(",")+"}";gap=mind;return v}}if(typeof JSON.stringify!=="function"){meta={"\b":"\\b","\t":"\\t","\n":"\\n","\f":"\\f","\r":"\\r",'"':'\\"',"\\":"\\\\"};JSON.stringify=function(value,replacer,space){var i;gap="";indent="";if(typeof space==="number"){for(i=0;i<space;i+=1){indent+=" "}}else if(typeof space==="string"){indent=space}rep=replacer;if(replacer&&typeof replacer!=="function"&&(typeof replacer!=="object"||typeof replacer.length!=="number")){throw new Error("JSON.stringify")}return str("",{"":value})}}if(typeof JSON.parse!=="function"){JSON.parse=function(text,reviver){var j;function walk(holder,key){var k;var v;var value=holder[key];if(value&&typeof value==="object"){for(k in value){if(Object.prototype.hasOwnProperty.call(value,k)){v=walk(value,k);if(v!==undefined){value[k]=v}else{delete value[k]}}}}return reviver.call(holder,key,value)}text=String(text);rx_dangerous.lastIndex=0;if(rx_dangerous.test(text)){text=text.replace(rx_dangerous,function(a){return"\\u"+("0000"+a.charCodeAt(0).toString(16)).slice(-4)})}if(rx_one.test(text.replace(rx_two,"@").replace(rx_three,"]").replace(rx_four,""))){j=eval("("+text+")");return typeof reviver==="function"?walk({"":j},""):j}throw new SyntaxError("JSON.parse")}}})(); // jshint ignore:line
@@ -1335,7 +1322,7 @@ function cleanCodeBlock(type, raw) {
   return clean;
 }
 
-function createSettingsBlock() {
+function createSettingsBlock(settings) {
   var bounds      = getAllArtboardBounds();
   var fontSize    = 15;
   var leading     = 19;
@@ -1346,11 +1333,9 @@ function createSettingsBlock() {
   var settingsLines = ["ai2html-settings"];
   var layer, rect, textArea, height;
 
-  for (var name in ai2htmlBaseSettings) {
-    if (ai2htmlBaseSettings[name].includeInSettingsBlock) {
-      settingsLines.push(name + ": " + ai2htmlBaseSettings[name].defaultValue);
-    }
-  }
+  forEach(settings.settings_block, function(key) {
+    settingsLines.push(key + ": " + settings[key]);
+  });
 
   try {
     layer = doc.layers.getByName("ai2html-settings");
@@ -3310,25 +3295,21 @@ function generateYamlFileContent(breakpoints, settings) {
 }
 
 function convertSettingsToYaml(settings) {
-  var lines = [];
-  var value, useQuotes;
-  for (var setting in settings) {
-    if ((setting in ai2htmlBaseSettings) && ai2htmlBaseSettings[setting].includeInConfigFile) {
-      value = trim(String(settings[setting]));
-      useQuotes = value === "" || /\s/.test(value);
-      if (setting == "show_in_compatible_apps") {
-        // special case: this setting takes quoted "yes" or "no"
-        useQuotes = true; // assuming value is 'yes' or 'no';
-      }
-      if (useQuotes) {
-        value = JSON.stringify(value); // wrap in quotes and escape internal quotes
-      } else if (isTrue(value) || isFalse(value)) {
-        // use standard values for boolean settings
-        value = isTrue(value) ? "true" : "false";
-      }
-      lines.push(setting + ': ' + value);
+  var lines = map(settings.config_file, function(key) {
+    var value = trim(String(settings[key]));
+    var useQuotes = value === "" || /\s/.test(value);
+    if (key == "show_in_compatible_apps") {
+      // special case: this setting takes quoted "yes" or "no"
+      useQuotes = true; // assuming value is 'yes' or 'no';
     }
-  }
+    if (useQuotes) {
+      value = JSON.stringify(value); // wrap in quotes and escape internal quotes
+    } else if (isTrue(value) || isFalse(value)) {
+      // use standard values for boolean settings
+      value = isTrue(value) ? "true" : "false";
+    }
+    return key + ': ' + value;
+  });
   return lines.join('\n');
 }
 
@@ -3457,7 +3438,7 @@ function generateOutputHtml(content, pageName, settings) {
   var textForFile, html, js, css, commentBlock;
   var htmlFileDestinationFolder;
 
-  pBar.setTitle('Writing HTML output...');
+  progressBar.setTitle('Writing HTML output...');
 
   if (scriptEnvironment == "nyt-preview" && !isFalse(settings.include_resizer_css_js)) {
     responsiveJs = '\t<script src="_assets/resizerScript.js"></script>' + "\n";
