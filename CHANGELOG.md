@@ -1,3 +1,7 @@
+### v0.70.0
+- Render rectangles and circles as divs if they have a parent layer with the :symbol suffix in its name.
+
+
 ### v0.69.1
 - Bug fix
 
