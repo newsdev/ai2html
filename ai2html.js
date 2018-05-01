@@ -1906,6 +1906,7 @@ function findMasks() {
 
 
 
+
 // ==============================
 // ai2html text functions
 // ==============================
@@ -2631,6 +2632,188 @@ function convertAreaTextPath(frame) {
 
 
 // =================================
+// ai2html symbol functions
+// =================================
+
+// Find layers with :symbol suffix in layer name
+function findSymbolExportLayers() {
+  function test(lyr) {
+    return parseObjectName(lyr.name).symbol;
+  }
+  return findLayers(doc.layers, test) || [];
+}
+
+// Return inline CSS for styling a single symbol
+// TODO: create classes to capture style properties that are used repeatedly
+function getBasicSymbolCss(data, style, abBox) {
+  var styles = [];
+  var width, height;
+  var type = data.type;
+  if (type == 'rectangle') {
+    width = roundTo(data.width, 1);
+    height = roundTo(data.height, 1);
+  } else if (type == 'circle') {
+    width = roundTo(data.radius * 2, 1);
+    height = width;
+    styles.push('border-radius: ' + roundTo(data.radius, 1) + 'px');
+  }
+  styles.push('width: ' + width + 'px');
+  styles.push('height: ' + height + 'px');
+  styles.push('margin-top: ' + (-height / 2) + 'px');
+  styles.push('margin-left: ' + (-width / 2) + 'px');
+
+  if (style.stroke) {
+    styles.push('border: ' + style.strokeWidth + 'px solid ' + style.stroke);
+  }
+  if (style.fill) {
+    styles.push('background-color: ' + style.fill);
+  }
+  styles.push('left: ' + formatCssPct(data.center[0], abBox.width));
+  styles.push('top: ' + formatCssPct(data.center[1], abBox.height));
+  styles.push('position: absolute');
+  styles.push('z-index: 50');
+  // TODO: use class for colors and other properties
+  return 'style="' + styles.join('; ') + ';"';
+}
+
+function exportSymbolAsDiv(geom, style, abBox) {
+  return '<div ' + getBasicSymbolCss(geom, style, abBox) + '></div>';
+}
+
+// Convert paths representing simple shapes to HTML and hide them
+function exportSymbols(lyr, ab, masks, settings) {
+  var divs = [];
+  var items = [];
+  var abBox = convertAiBounds(ab.artboardRect);
+  forLayer(lyr);
+
+  function forLayer(lyr) {
+    if (lyr.hidden) return;
+    forEach(lyr.pageItems, forPageItem);
+    forEach(lyr.layers, forLayer);
+  }
+
+  function forPageItem(item) {
+    // TODO: skip hidden or masked items
+    var geom = getBasicSymbolGeometry(item);
+    if (!geom) return; // item is not convertible to an HTML symbol
+    // make center coords relative to top,left of artboard
+    geom.center = [geom.center[0] - abBox.left, -geom.center[1] - abBox.top];
+    divs.push(exportSymbolAsDiv(geom, getBasicSymbolStyle(item), abBox));
+    items.push(item);
+    item.hidden = true;
+  }
+
+  return {
+    html: divs.join('\r'),
+    items: items
+  };
+}
+
+function getBasicSymbolStyle(item) {
+  // TODO: handle opacity
+  var style = {};
+  var stroke, fill;
+  if (item.filled) {
+    fill = convertAiColor(item.fillColor);
+    style.fill = fill.color;
+  }
+  if (item.stroked) {
+    stroke = convertAiColor(item.strokeColor);
+    style.stroke = stroke.color;
+    style.strokeWidth = item.strokeWidth;
+  }
+  return style;
+}
+
+// Return data for rectangle or circle, or null if item is not a
+//    rectangular or circular PathItem
+// TODO: also accept straight lines
+function getBasicSymbolGeometry(item) {
+  if (item.typename != 'PathItem' || !item.closed) {
+    return null;
+  }
+  return getRectangleData(item.pathPoints) || getCircleData(item.pathPoints);
+}
+
+function getPathBBox(points) {
+  var bbox = [Infinity, Infinity, -Infinity, -Infinity];
+  var p;
+  for (var i=0, n=points.length; i<n; i++) {
+    p = points[i].anchor;
+    if (p[0] < bbox[0]) bbox[0] = p[0];
+    if (p[0] > bbox[2]) bbox[2] = p[0];
+    if (p[1] < bbox[1]) bbox[1] = p[1];
+    if (p[1] > bbox[3]) bbox[3] = p[1];
+  }
+  return bbox;
+}
+
+function getBBoxCenter(bbox) {
+  return [(bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2];
+}
+
+// If path described by points array looks like a rectangle, return data for rendering
+//   as a rectangle; else return null
+// points: an array of PathPoint objects
+function getRectangleData(points) {
+  var bbox, p, xy;
+  if (points.length != 4) return null;
+  bbox = getPathBBox(points);
+  for (var i=0; i<4; i++) {
+    p = points[i];
+    xy = p.anchor;
+    if (p.pointType != PointType.CORNER) {
+      return null;
+    }
+    if  (xy[0] != p.leftDirection[0] || xy[0] != p.rightDirection[0] ||
+          xy[1] != p.leftDirection[1] || xy[1] != p.rightDirection[1]) {
+      return null;
+    }
+    if (xy[0] != bbox[0] && xy[0] != bbox[2] && xy[1] != bbox[1] && xy[1] != bbox[3]) {
+      return null;
+    }
+  }
+  return {
+    type: 'rectangle',
+    center: getBBoxCenter(bbox),
+    width: bbox[2] - bbox[0],
+    height: bbox[3] - bbox[1]
+  };
+}
+
+// If path described by points array looks like a circle, return data for rendering
+//    as a circle; else return null
+// Assumes that circles have four anchor points at the top, right, bottom and left
+//    positions around the circle.
+// points: an array of PathPoint objects
+function getCircleData(points) {
+  var bbox, p, xy, edges;
+  if (points.length != 4) return null;
+  bbox = getPathBBox(points);
+  for (var i=0; i<4; i++) {
+    p = points[i];
+    xy = p.anchor;
+    // heuristic for identifying circles:
+    // * each vertex is "smooth"
+    // * either x or y coord of each vertex is on the bbox
+    if (p.pointType != PointType.SMOOTH) return null;
+    edges = 0;
+    if (xy[0] == bbox[0] || xy[0] == bbox[2]) edges++;
+    if (xy[1] == bbox[1] || xy[1] == bbox[3]) edges++;
+    if (edges != 1) return null;
+  }
+  return {
+    type: 'circle',
+    center: getBBoxCenter(bbox),
+    // radius is the average of vertical and horizontal half-axes
+    // ellipses are converted to circles
+    radius: (bbox[2] - bbox[0] + bbox[3] - bbox[1]) / 4
+  };
+}
+
+
+// =================================
 // ai2html image functions
 // =================================
 
@@ -2692,6 +2875,8 @@ function convertArtItems(activeArtboard, textFrames, masks, settings) {
   var textFrameCount = textFrames.length;
   var html = "";
   var svgLayers, svgNames;
+  var hiddenItems = [];
+  var symbolLayers = findSymbolExportLayers();
   var i;
 
   checkForOutputFolder(getImageFolder(settings), "image_output_path");
@@ -2701,6 +2886,12 @@ function convertArtItems(activeArtboard, textFrames, masks, settings) {
       textFrames[i].hidden = true;
     }
   }
+
+  forEach(symbolLayers, function(lyr) {
+    var obj = exportSymbols(lyr, activeArtboard, masks, settings);
+    html += obj.html;
+    hiddenItems = hiddenItems.concat(obj.items);
+  });
 
   svgLayers = findSvgExportLayers();
   if (svgLayers.length > 0) {
@@ -2727,11 +2918,17 @@ function convertArtItems(activeArtboard, textFrames, masks, settings) {
     lyr.visible = true;
   });
 
+  // unhide text frames
   if (hideTextFrames) {
     for (i=0; i<textFrameCount; i++) {
       textFrames[i].hidden = false;
     }
   }
+
+  // unhide items exported as symbols
+  forEach(hiddenItems, function(item) {
+    item.hidden = false;
+  });
 
   return {html: html};
 }
