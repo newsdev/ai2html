@@ -2684,6 +2684,9 @@ function getBasicSymbolCss(geom, style, abBox, opts) {
   if (style.opacity < 1 && style.opacity) {
     styles.push('opacity: ' + style.opacity);
   }
+  if (style.multiply) {
+    styles.push('mix-blend-mode: multiply');
+  }
   styles.push('left: ' + formatCssPct(geom.center[0], abBox.width));
   styles.push('top: ' + formatCssPct(geom.center[1], abBox.height));
   // TODO: use class for colors and other properties
@@ -2742,6 +2745,9 @@ function getBasicSymbolStyle(item) {
   var style = {};
   var stroke, fill;
   style.opacity = roundTo(getComputedOpacity(item) / 100, 2);
+  if (getBlendMode(item) == BlendModes.MULTIPLY) {
+    style.multiply = true;
+  }
   if (item.filled) {
     fill = convertAiColor(item.fillColor);
     style.fill = fill.color;
