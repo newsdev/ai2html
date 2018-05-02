@@ -1,3 +1,6 @@
+### v0.71.1
+- Render horizontal and vertical lines as divs inside layers with :div suffix.
+
 ### v0.71.0
 - Render rectangles and circles as scaling divs if they have a parent layer with the :div suffix in its name.
 

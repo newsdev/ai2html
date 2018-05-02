@@ -45,7 +45,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run the release.sh script to create a new GitHub release
-var scriptVersion = "0.71.0";
+var scriptVersion = "0.71.1";
 
 // ================================================
 // ai2html and config settings
@@ -2637,19 +2637,21 @@ function convertAreaTextPath(frame) {
 
 // Return inline CSS for styling a single symbol
 // TODO: create classes to capture style properties that are used repeatedly
-function getBasicSymbolCss(data, style, abBox, opts) {
+function getBasicSymbolCss(geom, style, abBox, opts) {
   var styles = [];
   var width, height;
-  var widthPct, heightPct;
-  var type = data.type;
+  var border;
 
-  if (type == 'rectangle') {
-    width = roundTo(data.width, 1);
-    height = roundTo(data.height, 1);
-  } else if (type == 'circle') {
-    width = roundTo(data.radius * 2, 1);
+  if (geom.type == 'line') {
+    width = roundTo(geom.width, 1);
+    height = roundTo(geom.height, 1);
+  } else if (geom.type == 'rectangle') {
+    width = roundTo(geom.width, 1);
+    height = roundTo(geom.height, 1);
+  } else if (geom.type == 'circle') {
+    width = roundTo(geom.radius * 2, 1);
     height = width;
-    // styles.push('border-radius: ' + roundTo(data.radius, 1) + 'px');
+    // styles.push('border-radius: ' + roundTo(geom.radius, 1) + 'px');
     styles.push('border-radius: 50%');
   }
   if (opts.scaled) {
@@ -2667,13 +2669,20 @@ function getBasicSymbolCss(data, style, abBox, opts) {
   }
 
   if (style.stroke) {
-    styles.push('border: ' + style.strokeWidth + 'px solid ' + style.stroke);
+    if (geom.type == 'line' && width > height) {
+      border = 'border-top';
+    } else if (geom.type == 'line') {
+      border = 'border-left';
+    } else {
+      border = 'border';
+    }
+    styles.push(border + ': ' + style.strokeWidth + 'px solid ' + style.stroke);
   }
   if (style.fill) {
     styles.push('background-color: ' + style.fill);
   }
-  styles.push('left: ' + formatCssPct(data.center[0], abBox.width));
-  styles.push('top: ' + formatCssPct(data.center[1], abBox.height));
+  styles.push('left: ' + formatCssPct(geom.center[0], abBox.width));
+  styles.push('top: ' + formatCssPct(geom.center[1], abBox.height));
   // TODO: use class for colors and other properties
   return 'style="' + styles.join('; ') + ';"';
 }
@@ -2702,7 +2711,7 @@ function exportSymbols(lyr, ab, masks, opts) {
 
   function forPageItem(item) {
     // TODO: skip hidden or masked items
-    var geom = getBasicSymbolGeometry(item);
+    var geom = getBasicSymbolGeometry(item, opts);
     if (!geom) return; // item is not convertible to an HTML symbol
     // make center coords relative to top,left of artboard
     geom.center = [geom.center[0] - abBox.left, -geom.center[1] - abBox.top];
@@ -2737,11 +2746,14 @@ function getBasicSymbolStyle(item) {
 // Return data for rectangle or circle, or null if item is not a
 //    rectangular or circular PathItem
 // TODO: also accept straight lines
-function getBasicSymbolGeometry(item) {
-  if (item.typename != 'PathItem' || !item.closed) {
-    return null;
+function getBasicSymbolGeometry(item, opts) {
+  var geom = null;
+  if (item.typename != 'PathItem') return null;
+  geom = getLineData(item.pathPoints);
+  if (!geom && item.closed) {
+    geom = getRectangleData(item.pathPoints) || getCircleData(item.pathPoints);
   }
-  return getRectangleData(item.pathPoints) || getCircleData(item.pathPoints);
+  return geom;
 }
 
 function getPathBBox(points) {
@@ -2761,6 +2773,30 @@ function getBBoxCenter(bbox) {
   return [(bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2];
 }
 
+function getLineData(points) {
+  var bbox, w, h;
+  if (points.length != 2) return null;
+  if (!pathPointIsCorner(points[0]) || !pathPointIsCorner(points[1])) return null;
+  bbox = getPathBBox(points);
+  w = bbox[2] - bbox[0];
+  h = bbox[3] - bbox[1];
+  if ((w > 1 && h > 1) || (w < 1 && h < 1)) return null;
+  return {
+    type: 'line',
+    center: getBBoxCenter(bbox),
+    width: w,
+    height: h
+  };
+}
+
+function pathPointIsCorner(p) {
+  var xy = p.anchor;
+  if (p.pointType != PointType.CORNER) return false;
+  if (xy[0] != p.leftDirection[0] || xy[0] != p.rightDirection[0] ||
+      xy[1] != p.leftDirection[1] || xy[1] != p.rightDirection[1]) return false;
+  return true;
+}
+
 // If path described by points array looks like a rectangle, return data for rendering
 //   as a rectangle; else return null
 // points: an array of PathPoint objects
@@ -2771,13 +2807,8 @@ function getRectangleData(points) {
   for (var i=0; i<4; i++) {
     p = points[i];
     xy = p.anchor;
-    if (p.pointType != PointType.CORNER) {
-      return null;
-    }
-    if  (xy[0] != p.leftDirection[0] || xy[0] != p.rightDirection[0] ||
-          xy[1] != p.leftDirection[1] || xy[1] != p.rightDirection[1]) {
-      return null;
-    }
+    if (!pathPointIsCorner(p)) return null;
+    // point must be a bbox corner
     if (xy[0] != bbox[0] && xy[0] != bbox[2] && xy[1] != bbox[1] && xy[1] != bbox[3]) {
       return null;
     }
@@ -2789,6 +2820,7 @@ function getRectangleData(points) {
     height: bbox[3] - bbox[1]
   };
 }
+
 
 // If path described by points array looks like a circle, return data for rendering
 //    as a circle; else return null
