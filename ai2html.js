@@ -2635,32 +2635,36 @@ function convertAreaTextPath(frame) {
 // ai2html symbol functions
 // =================================
 
-// Find layers with :symbol suffix in layer name
-function findSymbolExportLayers() {
-  function test(lyr) {
-    return parseObjectName(lyr.name).symbol;
-  }
-  return findLayers(doc.layers, test) || [];
-}
-
 // Return inline CSS for styling a single symbol
 // TODO: create classes to capture style properties that are used repeatedly
-function getBasicSymbolCss(data, style, abBox) {
+function getBasicSymbolCss(data, style, abBox, opts) {
   var styles = [];
   var width, height;
+  var widthPct, heightPct;
   var type = data.type;
+
   if (type == 'rectangle') {
     width = roundTo(data.width, 1);
     height = roundTo(data.height, 1);
   } else if (type == 'circle') {
     width = roundTo(data.radius * 2, 1);
     height = width;
-    styles.push('border-radius: ' + roundTo(data.radius, 1) + 'px');
+    // styles.push('border-radius: ' + roundTo(data.radius, 1) + 'px');
+    styles.push('border-radius: 50%');
   }
-  styles.push('width: ' + width + 'px');
-  styles.push('height: ' + height + 'px');
-  styles.push('margin-top: ' + (-height / 2) + 'px');
-  styles.push('margin-left: ' + (-width / 2) + 'px');
+  if (opts.scaled) {
+    styles.push('width: ' + formatCssPct(width, abBox.width));
+    styles.push('height: ' + formatCssPct(height, abBox.height));
+    styles.push('margin-left: ' + formatCssPct(-width / 2, abBox.width));
+    // vertical margin pct is calculated as pct of width
+    styles.push('margin-top: ' + formatCssPct(-height / 2, abBox.width));
+
+  } else {
+    styles.push('width: ' + width + 'px');
+    styles.push('height: ' + height + 'px');
+    styles.push('margin-top: ' + (-height / 2) + 'px');
+    styles.push('margin-left: ' + (-width / 2) + 'px');
+  }
 
   if (style.stroke) {
     styles.push('border: ' + style.strokeWidth + 'px solid ' + style.stroke);
@@ -2678,12 +2682,12 @@ function getSymbolClass() {
   return nameSpace + 'aiSymbol';
 }
 
-function exportSymbolAsDiv(geom, style, abBox) {
-  return '<div class="' + getSymbolClass() + '" ' + getBasicSymbolCss(geom, style, abBox) + '></div>';
+function exportSymbolAsDiv(geom, style, abBox, opts) {
+  return '<div class="' + getSymbolClass() + '" ' + getBasicSymbolCss(geom, style, abBox, opts) + '></div>';
 }
 
 // Convert paths representing simple shapes to HTML and hide them
-function exportSymbols(lyr, ab, masks, settings) {
+function exportSymbols(lyr, ab, masks, opts) {
   var divs = [];
   var items = [];
   var abBox = convertAiBounds(ab.artboardRect);
@@ -2702,7 +2706,7 @@ function exportSymbols(lyr, ab, masks, settings) {
     if (!geom) return; // item is not convertible to an HTML symbol
     // make center coords relative to top,left of artboard
     geom.center = [geom.center[0] - abBox.left, -geom.center[1] - abBox.top];
-    divs.push(exportSymbolAsDiv(geom, getBasicSymbolStyle(item), abBox));
+    divs.push(exportSymbolAsDiv(geom, getBasicSymbolStyle(item), abBox, opts));
     items.push(item);
     item.hidden = true;
   }
@@ -2880,7 +2884,6 @@ function convertArtItems(activeArtboard, textFrames, masks, settings) {
   var html = "";
   var svgLayers, svgNames;
   var hiddenItems = [];
-  var symbolLayers = findSymbolExportLayers();
   var i;
 
   checkForOutputFolder(getImageFolder(settings), "image_output_path");
@@ -2891,13 +2894,21 @@ function convertArtItems(activeArtboard, textFrames, masks, settings) {
     }
   }
 
-  forEach(symbolLayers, function(lyr) {
-    var obj = exportSymbols(lyr, activeArtboard, masks, settings);
+  // Symbols in :symbol layers are not scaled
+  forEach(findTaggedLayers('symbol'), function(lyr) {
+    var obj = exportSymbols(lyr, activeArtboard, masks, {scaled: false});
     html += obj.html;
     hiddenItems = hiddenItems.concat(obj.items);
   });
 
-  svgLayers = findSvgExportLayers();
+  // Symbols in :div layers are scaled
+  forEach(findTaggedLayers('div'), function(lyr) {
+    var obj = exportSymbols(lyr, activeArtboard, masks, {scaled: true});
+    html += obj.html;
+    hiddenItems = hiddenItems.concat(obj.items);
+  });
+
+  svgLayers = findTaggedLayers('svg');
   if (svgLayers.length > 0) {
     svgNames = [];
     forEach(svgLayers, function(lyr) {
@@ -2937,10 +2948,9 @@ function convertArtItems(activeArtboard, textFrames, masks, settings) {
   return {html: html};
 }
 
-
-function findSvgExportLayers() {
+function findTaggedLayers(tag) {
   function test(lyr) {
-    return parseObjectName(lyr.name).svg;
+    return tag && parseObjectName(lyr.name)[tag];
   }
   return findLayers(doc.layers, test) || [];
 }
