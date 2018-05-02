@@ -2681,6 +2681,9 @@ function getBasicSymbolCss(geom, style, abBox, opts) {
   if (style.fill) {
     styles.push('background-color: ' + style.fill);
   }
+  if (style.opacity < 1 && style.opacity) {
+    styles.push('opacity: ' + style.opacity);
+  }
   styles.push('left: ' + formatCssPct(geom.center[0], abBox.width));
   styles.push('top: ' + formatCssPct(geom.center[1], abBox.height));
   // TODO: use class for colors and other properties
@@ -2707,6 +2710,13 @@ function exportSymbols(lyr, ab, masks, opts) {
     if (lyr.hidden) return;
     forEach(lyr.pageItems, forPageItem);
     forEach(lyr.layers, forLayer);
+    forEach(lyr.groupItems, forGroup);
+  }
+
+  function forGroup(group) {
+    if (group.hidden) return;
+    forEach(group.pageItems, forPageItem);
+    forEach(group.groupItems, forGroup);
   }
 
   function forPageItem(item) {
@@ -2731,6 +2741,7 @@ function getBasicSymbolStyle(item) {
   // TODO: handle opacity
   var style = {};
   var stroke, fill;
+  style.opacity = roundTo(getComputedOpacity(item) / 100, 2);
   if (item.filled) {
     fill = convertAiColor(item.fillColor);
     style.fill = fill.color;
