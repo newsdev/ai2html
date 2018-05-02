@@ -2463,7 +2463,7 @@ function parseDataAttributes(note) {
 }
 
 function formatCssPct(part, whole) {
-  return roundTo(part / whole * 100, cssPrecision) + "%;";
+  return roundTo(part / whole * 100, cssPrecision) + "%";
 }
 
 function getUntransformedTextBounds(textFrame) {
@@ -2577,24 +2577,24 @@ function getTextFrameCss(thisFrame, abBox, pgData) {
 
   if (v_align == "bottom") {
     var bottomPx = abBox.height - (htmlBox.top + htmlBox.height + marginBottomPx);
-    styles += "bottom:" + formatCssPct(bottomPx, abBox.height);
+    styles += "bottom:" + formatCssPct(bottomPx, abBox.height) + ';';
   } else if (v_align == "middle") {
     // https://css-tricks.com/centering-in-the-unknown/
     // TODO: consider: http://zerosixthree.se/vertical-align-anything-with-just-3-lines-of-css/
-    styles += "top:" + formatCssPct(htmlT + marginTopPx + htmlBox.height / 2, abBox.height);
+    styles += "top:" + formatCssPct(htmlT + marginTopPx + htmlBox.height / 2, abBox.height) + ';';
     styles += "margin-top:-" + roundTo(marginTopPx + htmlBox.height / 2, 1) + 'px;';
   } else {
-    styles += "top:" + formatCssPct(htmlT, abBox.height);
+    styles += "top:" + formatCssPct(htmlT, abBox.height) + ';';
   }
   if (alignment == "right") {
-    styles += "right:" + formatCssPct(abBox.width - (htmlL + htmlBox.width), abBox.width);
+    styles += "right:" + formatCssPct(abBox.width - (htmlL + htmlBox.width), abBox.width) + ';';
   } else if (alignment == "center") {
-    styles += "left:" + formatCssPct(htmlL + htmlBox.width / 2, abBox.width);
+    styles += "left:" + formatCssPct(htmlL + htmlBox.width / 2, abBox.width) + ';';
     // using pct margin causes problems in a dynamic layout, switching to pixels
     // styles += "margin-left:" + formatCssPct(-htmlW / 2, abBox.width);
     styles += "margin-left:-" + roundTo(htmlW / 2, 1) + 'px;';
   } else {
-    styles += "left:" + formatCssPct(htmlL, abBox.width);
+    styles += "left:" + formatCssPct(htmlL, abBox.width) + ';';
   }
 
   classes = nameSpace + makeKeyword(thisFrame.layer.name) + " " + nameSpace + "aiAbs";
@@ -2606,7 +2606,7 @@ function getTextFrameCss(thisFrame, abBox, pgData) {
   } else {
     // area text uses pct width, so width of text boxes will scale
     // TODO: consider only using pct width with wider text boxes that contain paragraphs of text
-    styles += "width:" + formatCssPct(htmlW, abBox.width);
+    styles += "width:" + formatCssPct(htmlW, abBox.width) + ';';
   }
   return 'class="' + classes + '" style="' + styles + '"';
 }
@@ -2670,14 +2670,16 @@ function getBasicSymbolCss(data, style, abBox) {
   }
   styles.push('left: ' + formatCssPct(data.center[0], abBox.width));
   styles.push('top: ' + formatCssPct(data.center[1], abBox.height));
-  styles.push('position: absolute');
-  styles.push('z-index: 50');
   // TODO: use class for colors and other properties
   return 'style="' + styles.join('; ') + ';"';
 }
 
+function getSymbolClass() {
+  return nameSpace + 'aiSymbol';
+}
+
 function exportSymbolAsDiv(geom, style, abBox) {
-  return '<div ' + getBasicSymbolCss(geom, style, abBox) + '></div>';
+  return '<div class="' + getSymbolClass() + '" ' + getBasicSymbolCss(geom, style, abBox) + '></div>';
 }
 
 // Convert paths representing simple shapes to HTML and hide them
@@ -2685,6 +2687,7 @@ function exportSymbols(lyr, ab, masks, settings) {
   var divs = [];
   var items = [];
   var abBox = convertAiBounds(ab.artboardRect);
+  var html;
   forLayer(lyr);
 
   function forLayer(lyr) {
@@ -2703,9 +2706,10 @@ function exportSymbols(lyr, ab, masks, settings) {
     items.push(item);
     item.hidden = true;
   }
-
+  html = '\t\t<div class="' + nameSpace + 'symbol-layer">\r\t\t\t';
+  html += divs.join('\r\t\t\t') + '\r\t\t</div>';
   return {
-    html: divs.join('\r'),
+    html: html,
     items: items
   };
 }
@@ -3468,6 +3472,11 @@ function generatePageCss(containerId, settings) {
   css += t3 + "width:100% !important;\r";
   css += t2 + "}\r";
 
+  css += t2 + '.' + getSymbolClass() + ' {\r';
+  css += t3 + 'position: absolute;\r';
+  css += t3 + 'box-sizing: border-box;\r';
+  css += t2 + '}\r';
+
   css += t2 + '.' + nameSpace + 'aiPointText p { white-space: nowrap; }\r';
   return css;
 }
@@ -3566,7 +3575,6 @@ function getResizerScript() {
 
     window.addEventListener('nyt:embed:load', updateSize); // for nyt vi compatibility
     document.addEventListener("DOMContentLoaded", updateSize);
-
     window.addEventListener("resize", throttle(updateSize, 200));
 
     // based on underscore.js
