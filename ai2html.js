@@ -2638,13 +2638,20 @@ function convertAreaTextPath(frame) {
 // Return inline CSS for styling a single symbol
 // TODO: create classes to capture style properties that are used repeatedly
 function getBasicSymbolCss(geom, style, abBox, opts) {
+  var center = geom.center;
   var styles = [];
   var width, height;
   var border;
 
   if (geom.type == 'line') {
-    width = roundTo(geom.width, 1);
-    height = roundTo(geom.height, 1);
+    width = roundTo(geom.width, 2);
+    height = roundTo(geom.height, 2);
+    if (width > height) {
+      // kludge to minimize gaps between segments (found using trial and error)
+      width += style.strokeWidth * 0.5;
+      center[0] += style.strokeWidth * 0.333;
+    }
+
   } else if (geom.type == 'rectangle') {
     width = roundTo(geom.width, 1);
     height = roundTo(geom.height, 1);
@@ -2672,7 +2679,7 @@ function getBasicSymbolCss(geom, style, abBox, opts) {
     if (geom.type == 'line' && width > height) {
       border = 'border-top';
     } else if (geom.type == 'line') {
-      border = 'border-left';
+      border = 'border-right';
     } else {
       border = 'border';
     }
@@ -2687,8 +2694,8 @@ function getBasicSymbolCss(geom, style, abBox, opts) {
   if (style.multiply) {
     styles.push('mix-blend-mode: multiply');
   }
-  styles.push('left: ' + formatCssPct(geom.center[0], abBox.width));
-  styles.push('top: ' + formatCssPct(geom.center[1], abBox.height));
+  styles.push('left: ' + formatCssPct(center[0], abBox.width));
+  styles.push('top: ' + formatCssPct(center[1], abBox.height));
   // TODO: use class for colors and other properties
   return 'style="' + styles.join('; ') + ';"';
 }
@@ -2697,8 +2704,19 @@ function getSymbolClass() {
   return nameSpace + 'aiSymbol';
 }
 
-function exportSymbolAsDiv(geom, style, abBox, opts) {
-  return '<div class="' + getSymbolClass() + '" ' + getBasicSymbolCss(geom, style, abBox, opts) + '></div>';
+function exportSymbolAsHtml(geometries, style, abBox, opts) {
+  var html = '';
+  var geom, x, y;
+  for (var i=0; i<geometries.length; i++) {
+    geom = geometries[i];
+    // make center coords relative to top,left of artboard
+    x = geom.center[0] - abBox.left;
+    y = -geom.center[1] - abBox.top;
+    geom.center = [x, y];
+    html += '\r\t\t\t' + '<div class="' + getSymbolClass() + '" ' +
+      getBasicSymbolCss(geom, style, abBox, opts) + '></div>';
+  }
+  return html;
 }
 
 // Convert paths representing simple shapes to HTML and hide them
@@ -2706,7 +2724,7 @@ function exportSymbols(lyr, ab, masks, opts) {
   var divs = [];
   var items = [];
   var abBox = convertAiBounds(ab.artboardRect);
-  var html;
+  var html = '';
   forLayer(lyr);
 
   function forLayer(lyr) {
@@ -2723,17 +2741,24 @@ function exportSymbols(lyr, ab, masks, opts) {
   }
 
   function forPageItem(item) {
-    // TODO: skip hidden or masked items
-    var geom = getBasicSymbolGeometry(item, opts);
-    if (!geom) return; // item is not convertible to an HTML symbol
-    // make center coords relative to top,left of artboard
-    geom.center = [geom.center[0] - abBox.left, -geom.center[1] - abBox.top];
-    divs.push(exportSymbolAsDiv(geom, getBasicSymbolStyle(item), abBox, opts));
+    var geom, geometries;
+    if (item.typename != 'PathItem') return;
+    if (item.closed) {
+      // try to convert to circle or rectangle
+      geom = getRectangleData(item.pathPoints) || getCircleData(item.pathPoints);
+      geometries = geom ? [geom] : null;
+    } else if (opts.scaled && !item.closed) {
+      // try to convert to line segment(s)
+      geometries = getLineGeometry(item.pathPoints);
+    }
+    if (!geometries) return; // item is not convertible to an HTML symbol
+    html += exportSymbolAsHtml(geometries, getBasicSymbolStyle(item), abBox, opts);
     items.push(item);
     item.hidden = true;
   }
-  html = '\t\t<div class="' + nameSpace + 'symbol-layer">\r\t\t\t';
-  html += divs.join('\r\t\t\t') + '\r\t\t</div>';
+  if (html) {
+    html = '\t\t<div class="' + nameSpace + 'symbol-layer">' + html + '\r\t\t</div>\r';
+  }
   return {
     html: html,
     items: items
@@ -2760,19 +2785,6 @@ function getBasicSymbolStyle(item) {
   return style;
 }
 
-// Return data for rectangle or circle, or null if item is not a
-//    rectangular or circular PathItem
-// TODO: also accept straight lines
-function getBasicSymbolGeometry(item, opts) {
-  var geom = null;
-  if (item.typename != 'PathItem') return null;
-  geom = getLineData(item.pathPoints);
-  if (!geom && item.closed) {
-    geom = getRectangleData(item.pathPoints) || getCircleData(item.pathPoints);
-  }
-  return geom;
-}
-
 function getPathBBox(points) {
   var bbox = [Infinity, Infinity, -Infinity, -Infinity];
   var p;
@@ -2790,25 +2802,38 @@ function getBBoxCenter(bbox) {
   return [(bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2];
 }
 
-function getLineData(points) {
-  var bbox, w, h;
-  if (points.length != 2) return null;
-  if (!pathPointIsCorner(points[0]) || !pathPointIsCorner(points[1])) return null;
-  bbox = getPathBBox(points);
-  w = bbox[2] - bbox[0];
-  h = bbox[3] - bbox[1];
-  if ((w > 1 && h > 1) || (w < 1 && h < 1)) return null;
-  return {
-    type: 'line',
-    center: getBBoxCenter(bbox),
-    width: w,
-    height: h
-  };
+// Return array of line records if path is composed only of vertical and/or
+//   horizontal line segments, else return null;
+function getLineGeometry(points) {
+  var bbox, w, h, p;
+  var lines = [];
+  for (var i=0, n=points.length; i<n; i++) {
+    p = points[i];
+    if (!pathPointIsCorner(p)) {
+      return null;
+    }
+    if (i === 0) continue;
+    bbox = getPathBBox([points[i-1], p]);
+    w = bbox[2] - bbox[0];
+    h = bbox[3] - bbox[1];
+    if (w < 1 && h < 1) continue; // double vertex = skip
+    if (w > 1 && h > 1) return null; // diagonal line = fail
+    c =
+    lines.push({
+      type: 'line',
+      center: getBBoxCenter(bbox),
+      width: w,
+      height: h
+    });
+  }
+  return lines.length > 0 ? lines : null;
 }
 
 function pathPointIsCorner(p) {
   var xy = p.anchor;
-  if (p.pointType != PointType.CORNER) return false;
+  // Vertices of polylines (often) use PointType.SMOOTH. Need to check control points
+  //   to determine if the line is curved or not at p
+  // if (p.pointType != PointType.CORNER) return false;
   if (xy[0] != p.leftDirection[0] || xy[0] != p.rightDirection[0] ||
       xy[1] != p.leftDirection[1] || xy[1] != p.rightDirection[1]) return false;
   return true;
