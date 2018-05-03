@@ -1,3 +1,6 @@
+### v0.71.2
+- Support converting multi-segment lines to divs inside :div layers. (Segments must be horizontal or vertical).
+
 ### v0.71.1
 - Render horizontal and vertical lines as divs inside layers with :div suffix.
 
