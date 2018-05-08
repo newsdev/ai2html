@@ -45,7 +45,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run the release.sh script to create a new GitHub release
-var scriptVersion = "0.71.2";
+var scriptVersion = "0.72.0";
 
 // ================================================
 // ai2html and config settings
@@ -3607,59 +3607,32 @@ function getResizerScript() {
   // The resizer function is embedded in the HTML page -- external variables must
   // be passed in.
   var resizer = function (scriptEnvironment, nameSpace) {
+    
     // only want one resizer on the page
     if (document.documentElement.className.indexOf(nameSpace + "resizer-v4-init") > -1) return;
     document.documentElement.className += " " + nameSpace + "resizer-v4-init";
+    
     // require IE9+
     if (!("querySelector" in document)) return;
+    
+    var artBoardSelector = "." + nameSpace + "artboard-v4[data-min-width]";
+    var ai2htmlSelector = ".ai2html";
+    var supportsIntersectionObserver = !!window.IntersectionObserver;
+    var ai2htmlEls = selectElements(ai2htmlSelector);
+    var artboardEls = selectElements(artBoardSelector);
+    var ai2htmlIsReady = {}; // Track ready state for all ai2html embeds to facilitate lazy loading { 'id1': true, 'id2': false }.
+    var ai2htmlObserver; // IntersectionObserver for lazy loading images on scroll
+
     function selectElements(selector, parent) {
       var selection = (parent || document).querySelectorAll(selector);
       return Array.prototype.slice.call(selection);
     }
+    
     function setImgSrc(img) {
       if (img.getAttribute("data-src") && img.getAttribute("src") != img.getAttribute("data-src")) {
         img.setAttribute("src", img.getAttribute("data-src"));
       }
     }
-    function updateSize() {
-      var elements = selectElements("." + nameSpace + "artboard-v4[data-min-width]"),
-          widthById = {};
-      elements.forEach(function(el) {
-        var parent = el.parentNode,
-            width = widthById[parent.id] || Math.round(parent.getBoundingClientRect().width),
-            minwidth = el.getAttribute("data-min-width"),
-            maxwidth = el.getAttribute("data-max-width");
-        if (parent.id) widthById[parent.id] = width; // only if parent.id is set
-        if (+minwidth <= width && (+maxwidth >= width || maxwidth === null)) {
-          selectElements("." + nameSpace + "aiImg", el).forEach(setImgSrc);
-          el.style.display = "block";
-        } else {
-          el.style.display = "none";
-        }
-      });
-
-      if (scriptEnvironment == "nyt-preview") {
-        try {
-          if (window.parent && window.parent.$) {
-            window.parent.$("body").trigger("resizedcontent", [window]);
-          }
-          document.documentElement.dispatchEvent(new Event("resizedcontent"));
-          if (window.require && document.querySelector("meta[name=sourceApp]") && document.querySelector("meta[name=sourceApp]").content == "nyt-v5") {
-            require(["foundation/main"], function() {
-              require(["shared/interactive/instances/app-communicator"], function(AppCommunicator) {
-                AppCommunicator.triggerResize();
-              });
-            });
-          }
-        } catch(e) { console.log(e); }
-      }
-    }
-
-    updateSize();
-
-    window.addEventListener('nyt:embed:load', updateSize); // for nyt vi compatibility
-    document.addEventListener("DOMContentLoaded", updateSize);
-    window.addEventListener("resize", throttle(updateSize, 200));
 
     // based on underscore.js
     function throttle(func, wait) {
@@ -3682,6 +3655,81 @@ function getResizerScript() {
         }
       };
     }
+    
+    // determine which artboard size to display
+    // and if images are ready to be lazily loaded
+    function updateArtboards(artboardElsToCheck) {  
+      artboardElsToCheck = artboardElsToCheck || artboardEls; // default to all artboards.
+      var widthById = {}; // cache artboard parent width
+
+      artboardElsToCheck.forEach(function(el) {
+        var parent = el.parentNode;
+
+        // lazy load on browsers that support window.IntersectionObserver, don't load image until it's in the viewport. otherwise just load image.
+        var readyToLoadImage = !!(!parent.id || !supportsIntersectionObserver ? true : parent.id && ai2htmlIsReady && ai2htmlIsReady[parent.id]);
+        var width = widthById[parent.id] || Math.round(parent.getBoundingClientRect().width);
+        var minwidth = el.getAttribute("data-min-width");
+        var maxwidth = el.getAttribute("data-max-width");
+
+        if (parent.id) widthById[parent.id] = width; // cache if parent.id is set
+
+        // show and hide the correct container element to pre-fill space regardless of whether image loads or not
+        if (+minwidth <= width && (+maxwidth >= width || maxwidth === null)) {
+          if (readyToLoadImage) selectElements("." + nameSpace + "aiImg", el).forEach(setImgSrc); // image swamp only if necessary
+          el.style.display = "block";
+        } else {
+          el.style.display = "none";
+        }
+      });
+
+      if (scriptEnvironment=="nyt") {
+        try {
+          if (window.parent && window.parent.$) {
+            window.parent.$("body").trigger("resizedcontent", [window]);
+          }
+          document.documentElement.dispatchEvent(new Event("resizedcontent"));
+          if (window.require && document.querySelector("meta[name=sourceApp]") && document.querySelector("meta[name=sourceApp]").content == "nyt-v5") {
+            require(["foundation/main"], function() {
+              require(["shared/interactive/instances/app-communicator"], function(AppCommunicator) {
+                AppCommunicator.triggerResize();
+              });
+            });
+          }
+        } catch(e) { console.log(e); }
+      }
+    }
+
+
+    function observeAi2htmlEl(el){
+      ai2htmlObserver.observe(el);
+    }
+
+    function ai2htmlIntersectionHandler(entries, observer){
+      entries.forEach(function(entry){
+        if (entry.isIntersecting) {
+          ai2htmlIsReady[entry.target.id] = true;
+          updateArtboards(selectElements(artBoardSelector, entry.target)); // update just the ai2html in the viewport.
+          ai2htmlObserver.unobserve(entry.target); // only needed once, so remove from list.
+        }
+      });
+    }
+
+    function readyHandler(){
+      ai2htmlEls = selectElements(ai2htmlSelector); // re-query elements since additional markup could have loaded since first query.
+      artboardEls = selectElements(artBoardSelector);
+      
+      if (supportsIntersectionObserver) {
+        ai2htmlObserver = new IntersectionObserver(ai2htmlIntersectionHandler, {});
+        ai2htmlEls.forEach(observeAi2htmlEl);
+      }
+
+      updateArtboards();
+    }
+    
+    updateArtboards(); // will run as each ai2html embed's js is executed. the correct container will be set to block but images won't load.
+    document.addEventListener("DOMContentLoaded", readyHandler); // after all markup is ready, a full check and image load will be run.
+    window.addEventListener('nyt:embed:load', readyHandler); // for nyt vi compatibility
+    window.addEventListener("resize", throttle(updateArtboards, 200));
   };
 
   // convert function to JS source code
