@@ -1,3 +1,7 @@
+### v0.72.2
+- Fix glitches with rendering to divs (flickering lines, rectangle detection).
+- Add support for npm publish
+
 ### v0.72.1
 - Load artboard image immediately if it intersects the browser viewport.
 
