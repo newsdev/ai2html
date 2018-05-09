@@ -2741,13 +2741,15 @@ function exportSymbols(lyr, ab, masks, opts) {
   }
 
   function forPageItem(item) {
-    var geom, geometries;
+    var singleGeom, geometries;
     if (item.typename != 'PathItem') return;
-    if (item.closed) {
-      // try to convert to circle or rectangle
-      geom = getRectangleData(item.pathPoints) || getCircleData(item.pathPoints);
-      geometries = geom ? [geom] : null;
-    } else if (opts.scaled && !item.closed) {
+    if (item.hidden || !testBoundsIntersection(item.visibleBounds, ab.artboardRect)) return;
+    // try to convert to circle or rectangle
+    // note: filled shapes aren't necessarily closed
+    singleGeom = getRectangleData(item.pathPoints) || getCircleData(item.pathPoints);
+    if (singleGeom) {
+      geometries = [singleGeom];
+    } else if (opts.scaled && item.stroked && !item.closed) {
       // try to convert to line segment(s)
       geometries = getLineGeometry(item.pathPoints);
     }
@@ -2780,7 +2782,9 @@ function getBasicSymbolStyle(item) {
   if (item.stroked) {
     stroke = convertAiColor(item.strokeColor);
     style.stroke = stroke.color;
-    style.strokeWidth = item.strokeWidth;
+    // Chrome doesn't consistently render borders that are less than 1px, which
+    // can cause lines to disappear or flicker as the window is resized.
+    style.strokeWidth = item.strokeWidth < 1 ? 1 : Math.round(item.strokeWidth);
   }
   return style;
 }
@@ -2844,7 +2848,8 @@ function pathPointIsCorner(p) {
 // points: an array of PathPoint objects
 function getRectangleData(points) {
   var bbox, p, xy;
-  if (points.length != 4) return null;
+  // Some rectangles are 4-point closed paths, some are 5-point open paths
+  if (points.length < 4 || points.length > 5) return null;
   bbox = getPathBBox(points);
   for (var i=0; i<4; i++) {
     p = points[i];
