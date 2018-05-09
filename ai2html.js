@@ -45,7 +45,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run the release.sh script to create a new GitHub release
-var scriptVersion = "0.72.0";
+var scriptVersion = "0.72.1";
 
 // ================================================
 // ai2html and config settings
@@ -3466,7 +3466,7 @@ function injectCSSinSVG(content, css) {
 
 function generateArtboardDiv(ab, breakpoints, settings) {
   var divId = nameSpace + getArtboardFullName(ab);
-  var classnames = nameSpace + "artboard " + nameSpace + "artboard-v5";
+  var classnames = nameSpace + "artboard";
   var widthRange = getArtboardWidthRange(ab);
   var abPos = convertAiBounds(ab.artboardRect);
   var html = "";
@@ -3607,43 +3607,33 @@ function getResizerScript() {
   // The resizer function is embedded in the HTML page -- external variables must
   // be passed in.
   var resizer = function (scriptEnvironment, nameSpace) {
-    // only want one resizer on the page
+    // Use a sentinel class to ensure that this version of the resizer only initializes once
     if (document.documentElement.className.indexOf(nameSpace + "resizer-v5-init") > -1) return;
     document.documentElement.className += " " + nameSpace + "resizer-v5-init";
     // require IE9+
     if (!("querySelector" in document)) return;
-
     var observer = window.IntersectionObserver ? new IntersectionObserver(onIntersectionChange, {}) : null;
     var visibilityIndex = {}; // visibility of each graphic, indexed by container id (used with InteractionObserver)
+
+    updateAllGraphics();
     window.addEventListener('nyt:embed:load', updateAllGraphics); // for nyt vi compatibility
     document.addEventListener("DOMContentLoaded", updateAllGraphics);
     window.addEventListener("resize", throttle(updateAllGraphics, 200));
-    updateAllGraphics();
 
     function updateAllGraphics() {
-      selectElements(".ai2html").forEach(updateGraphic);
+      selectElements(".ai2html-box-v5").forEach(updateGraphic);
       if (scriptEnvironment == "nyt-preview") {
         nytOnResize();
       }
     }
 
     function updateGraphic(container) {
-      var artboards = selectElements("." + nameSpace + "artboard-v5[data-min-width]", container),
+      var artboards = selectElements("." + nameSpace + "artboard[data-min-width]", container),
           width = Math.round(container.getBoundingClientRect().width),
-          id = container.id,
-          showImages;
+          id = container.id, // assume container has an id
+          showImages = !observer || visibilityIndex[id] == 'visible';
 
-      if (id && observer) {
-        if (id in visibilityIndex == false) {
-          visibilityIndex[id] = 'hidden';
-          observer.observe(container);
-        }
-        showImages = visibilityIndex[id] != 'hidden';
-      } else {
-        showImages = true;
-      }
-
-      // set artboard visibility based on container width
+      // Set artboard visibility based on container width
       artboards.forEach(function(el) {
         var minwidth = el.getAttribute("data-min-width"),
             maxwidth = el.getAttribute("data-max-width");
@@ -3656,6 +3646,30 @@ function getResizerScript() {
           el.style.display = "none";
         }
       });
+
+      // Initialize lazy loading on first call, if IntersectionObserver is available
+      if (observer && !visibilityIndex[id]) {
+        if (containerIsVisible(container)) {
+          // Skip IntersectionObserver if graphic is initially visible
+          // Note: We're doing this after artboard visibility is first calculated
+          //   (above) -- otherwise all artboard images are display:block and the
+          //   calculated height of the graphic is huge.
+          // TODO: Consider making artboard images position:absolute and setting
+          //   height as a padding % (calculated from the aspect ratio of the graphic).
+          //   This will correctly set the initial height of the graphic before
+          //   an image is loaded.
+          visibilityIndex[id] = 'visible';
+          updateGraphic(container); // Call again to start loading right away
+        } else {
+          visibilityIndex[id] = 'hidden';
+          observer.observe(container);
+        }
+      }
+    }
+
+    function containerIsVisible(container) {
+      var bounds = container.getBoundingClientRect();
+      return bounds.top < window.innerHeight && bounds.bottom > 0;
     }
 
     function updateImgSrc(img) {
@@ -3788,7 +3802,7 @@ function generateOutputHtml(content, pageName, settings) {
   }
 
   // HTML
-  html = '<div id="' + containerId + '" class="ai2html">\r';
+  html = '<div id="' + containerId + '" class="ai2html ai2html-box-v5">\r';
   if (linkSrc) {
     // optional link around content
     html += "\t<a class='" + nameSpace + "ai2htmlLink' href='" + linkSrc + "'>\r";
