@@ -1,3 +1,6 @@
+### v0.72.0
+- Use IntersectionObserver api in the resizer script, so artboard images are only loaded when they are visible in the browser viewport.
+
 ### v0.71.2
 - Support converting multi-segment lines to divs inside :div layers. (Segments must be horizontal or vertical).
 

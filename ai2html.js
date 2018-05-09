@@ -45,7 +45,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run the release.sh script to create a new GitHub release
-var scriptVersion = "0.71.2";
+var scriptVersion = "0.72.0";
 
 // ================================================
 // ai2html and config settings
@@ -2426,7 +2426,7 @@ function getClippedTextFramesByArtboard(ab, masks) {
 function getTextFramesByArtboard(ab, masks, settings) {
   var candidateFrames = findTextFramesToRender(doc.textFrames, ab.artboardRect);
   var excludedFrames = getClippedTextFramesByArtboard(ab, masks);
-  var candidateFrames = arraySubtract(candidateFrames, excludedFrames);
+  candidateFrames = arraySubtract(candidateFrames, excludedFrames);
   if (settings.render_rotated_skewed_text_as == "image") {
     excludedFrames = filter(candidateFrames, textIsTransformed);
     candidateFrames = arraySubtract(candidateFrames, excludedFrames);
@@ -3466,7 +3466,7 @@ function injectCSSinSVG(content, css) {
 
 function generateArtboardDiv(ab, breakpoints, settings) {
   var divId = nameSpace + getArtboardFullName(ab);
-  var classnames = nameSpace + "artboard " + nameSpace + "artboard-v4";
+  var classnames = nameSpace + "artboard " + nameSpace + "artboard-v5";
   var widthRange = getArtboardWidthRange(ab);
   var abPos = convertAiBounds(ab.artboardRect);
   var html = "";
@@ -3608,58 +3608,94 @@ function getResizerScript() {
   // be passed in.
   var resizer = function (scriptEnvironment, nameSpace) {
     // only want one resizer on the page
-    if (document.documentElement.className.indexOf(nameSpace + "resizer-v4-init") > -1) return;
-    document.documentElement.className += " " + nameSpace + "resizer-v4-init";
+    if (document.documentElement.className.indexOf(nameSpace + "resizer-v5-init") > -1) return;
+    document.documentElement.className += " " + nameSpace + "resizer-v5-init";
     // require IE9+
     if (!("querySelector" in document)) return;
-    function selectElements(selector, parent) {
-      var selection = (parent || document).querySelectorAll(selector);
-      return Array.prototype.slice.call(selection);
-    }
-    function setImgSrc(img) {
-      if (img.getAttribute("data-src") && img.getAttribute("src") != img.getAttribute("data-src")) {
-        img.setAttribute("src", img.getAttribute("data-src"));
+
+    var observer = window.IntersectionObserver ? new IntersectionObserver(onIntersectionChange, {}) : null;
+    var visibilityIndex = {}; // visibility of each graphic, indexed by container id (used with InteractionObserver)
+    window.addEventListener('nyt:embed:load', updateAllGraphics); // for nyt vi compatibility
+    document.addEventListener("DOMContentLoaded", updateAllGraphics);
+    window.addEventListener("resize", throttle(updateAllGraphics, 200));
+    updateAllGraphics();
+
+    function updateAllGraphics() {
+      selectElements(".ai2html").forEach(updateGraphic);
+      if (scriptEnvironment == "nyt-preview") {
+        nytOnResize();
       }
     }
-    function updateSize() {
-      var elements = selectElements("." + nameSpace + "artboard-v4[data-min-width]"),
-          widthById = {};
-      elements.forEach(function(el) {
-        var parent = el.parentNode,
-            width = widthById[parent.id] || Math.round(parent.getBoundingClientRect().width),
-            minwidth = el.getAttribute("data-min-width"),
+
+    function updateGraphic(container) {
+      var artboards = selectElements("." + nameSpace + "artboard-v5[data-min-width]", container),
+          width = Math.round(container.getBoundingClientRect().width),
+          id = container.id,
+          showImages;
+
+      if (id && observer) {
+        if (id in visibilityIndex == false) {
+          visibilityIndex[id] = 'hidden';
+          observer.observe(container);
+        }
+        showImages = visibilityIndex[id] != 'hidden';
+      } else {
+        showImages = true;
+      }
+
+      // set artboard visibility based on container width
+      artboards.forEach(function(el) {
+        var minwidth = el.getAttribute("data-min-width"),
             maxwidth = el.getAttribute("data-max-width");
-        if (parent.id) widthById[parent.id] = width; // only if parent.id is set
         if (+minwidth <= width && (+maxwidth >= width || maxwidth === null)) {
-          selectElements("." + nameSpace + "aiImg", el).forEach(setImgSrc);
+          if (showImages) {
+            selectElements("." + nameSpace + "aiImg", el).forEach(updateImgSrc);
+          }
           el.style.display = "block";
         } else {
           el.style.display = "none";
         }
       });
+    }
 
-      if (scriptEnvironment == "nyt-preview") {
-        try {
-          if (window.parent && window.parent.$) {
-            window.parent.$("body").trigger("resizedcontent", [window]);
-          }
-          document.documentElement.dispatchEvent(new Event("resizedcontent"));
-          if (window.require && document.querySelector("meta[name=sourceApp]") && document.querySelector("meta[name=sourceApp]").content == "nyt-v5") {
-            require(["foundation/main"], function() {
-              require(["shared/interactive/instances/app-communicator"], function(AppCommunicator) {
-                AppCommunicator.triggerResize();
-              });
-            });
-          }
-        } catch(e) { console.log(e); }
+    function updateImgSrc(img) {
+      var src = img.getAttribute("data-src");
+      if (src && img.getAttribute("src") != src) {
+        img.setAttribute("src", src);
       }
     }
 
-    updateSize();
+    function onIntersectionChange(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          visibilityIndex[entry.target.id] = 'visible';
+          observer.unobserve(entry.target);
+          updateGraphic(entry.target);
+        }
+      });
+    }
 
-    window.addEventListener('nyt:embed:load', updateSize); // for nyt vi compatibility
-    document.addEventListener("DOMContentLoaded", updateSize);
-    window.addEventListener("resize", throttle(updateSize, 200));
+    function selectElements(selector, parent) {
+      var selection = (parent || document).querySelectorAll(selector);
+      return Array.prototype.slice.call(selection);
+    }
+
+    function nytOnResize() {
+      // TODO: add comments
+      try {
+        if (window.parent && window.parent.$) {
+          window.parent.$("body").trigger("resizedcontent", [window]);
+        }
+        document.documentElement.dispatchEvent(new Event("resizedcontent"));
+        if (window.require && document.querySelector("meta[name=sourceApp]") && document.querySelector("meta[name=sourceApp]").content == "nyt-v5") {
+          require(["foundation/main"], function() {
+            require(["shared/interactive/instances/app-communicator"], function(AppCommunicator) {
+              AppCommunicator.triggerResize();
+            });
+          });
+        }
+      } catch(e) { console.log(e); }
+    }
 
     // based on underscore.js
     function throttle(func, wait) {
