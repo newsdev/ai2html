@@ -4,7 +4,8 @@
   "description": "A script for Adobe Illustrator that converts your Illustrator artwork into an html page.",
 "main": "./ai2html.js",
 "scripts": {
-    "test": "mocha --check-leaks"
+    "test": "mocha --check-leaks",
+    "prepublish": "./prepublish.sh"
   },
   "repository": {
     "type": "git",
