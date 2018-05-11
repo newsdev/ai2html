@@ -45,7 +45,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run the release.sh script to create a new GitHub release
-var scriptVersion = "0.72.2";
+var scriptVersion = "0.72.3";
 
 // ================================================
 // ai2html and config settings
@@ -1551,6 +1551,10 @@ function getArtboardName(ab) {
   return cleanObjectName(ab.name);
 }
 
+function getLayerName(lyr) {
+  return cleanObjectName(lyr.name);
+}
+
 function getDocumentName(customName) {
   var name = customName || docName || doc.name.replace(/(.+)\.[aieps]+$/,"$1").replace(/ +/g,"-");
   return makeKeyword(name);
@@ -2597,7 +2601,7 @@ function getTextFrameCss(thisFrame, abBox, pgData) {
     styles += "left:" + formatCssPct(htmlL, abBox.width) + ';';
   }
 
-  classes = nameSpace + makeKeyword(thisFrame.layer.name) + " " + nameSpace + "aiAbs";
+  classes = nameSpace + getLayerName(thisFrame.layer) + " " + nameSpace + "aiAbs";
   if (thisFrame.kind == TextType.POINTTEXT) {
     classes += ' ' + nameSpace + 'aiPointText';
     // using pixel width with point text, because pct width causes alignment problems -- see issue #63
@@ -2759,7 +2763,7 @@ function exportSymbols(lyr, ab, masks, opts) {
     item.hidden = true;
   }
   if (html) {
-    html = '\t\t<div class="' + nameSpace + 'symbol-layer">' + html + '\r\t\t</div>\r';
+    html = '\t\t<div class="' + nameSpace + 'symbol-layer ' + nameSpace + getLayerName(lyr) + '">' + html + '\r\t\t</div>\r';
   }
   return {
     html: html,
@@ -2909,7 +2913,7 @@ function getArtboardImageName(ab) {
 }
 
 function getLayerImageName(lyr, ab) {
-  return getArtboardImageName(ab) + "-" + cleanObjectName(lyr.name);
+  return getArtboardImageName(ab) + "-" + getLayerName(lyr);
 }
 
 function getImageId(imgName) {

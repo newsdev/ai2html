@@ -1,3 +1,6 @@
+### v0.72.3
+- Add class containing layer name to symbol layer containers.
+
 ### v0.72.2
 - Fix glitches with rendering to divs (flickering lines, rectangle detection).
 - Add support for npm publish
