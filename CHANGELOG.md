@@ -1,3 +1,7 @@
+
+### v0.73.0
+- Add data-name= properties to div symbols if they are named in Illustrator.
+
 ### v0.72.3
 - Add class containing layer name to symbol layer containers.
 

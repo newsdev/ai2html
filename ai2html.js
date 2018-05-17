@@ -45,7 +45,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run the release.sh script to create a new GitHub release
-var scriptVersion = "0.72.3";
+var scriptVersion = "0.73.0";
 
 // ================================================
 // ai2html and config settings
@@ -2708,8 +2708,10 @@ function getSymbolClass() {
   return nameSpace + 'aiSymbol';
 }
 
-function exportSymbolAsHtml(geometries, style, abBox, opts) {
+function exportSymbolAsHtml(item, geometries, abBox, opts) {
   var html = '';
+  var style = getBasicSymbolStyle(item);
+  var properties = item.name ? 'data-name="' + makeKeyword(item.name) + '" ' : '';
   var geom, x, y;
   for (var i=0; i<geometries.length; i++) {
     geom = geometries[i];
@@ -2717,7 +2719,7 @@ function exportSymbolAsHtml(geometries, style, abBox, opts) {
     x = geom.center[0] - abBox.left;
     y = -geom.center[1] - abBox.top;
     geom.center = [x, y];
-    html += '\r\t\t\t' + '<div class="' + getSymbolClass() + '" ' +
+    html += '\r\t\t\t' + '<div class="' + getSymbolClass() + '" ' + properties +
       getBasicSymbolCss(geom, style, abBox, opts) + '></div>';
   }
   return html;
@@ -2758,7 +2760,7 @@ function exportSymbols(lyr, ab, masks, opts) {
       geometries = getLineGeometry(item.pathPoints);
     }
     if (!geometries) return; // item is not convertible to an HTML symbol
-    html += exportSymbolAsHtml(geometries, getBasicSymbolStyle(item), abBox, opts);
+    html += exportSymbolAsHtml(item, geometries, abBox, opts);
     items.push(item);
     item.hidden = true;
   }
@@ -3619,7 +3621,7 @@ function getResizerScript() {
     // Use a sentinel class to ensure that this version of the resizer only initializes once
     if (document.documentElement.className.indexOf(nameSpace + "resizer-v5-init") > -1) return;
     document.documentElement.className += " " + nameSpace + "resizer-v5-init";
-    // require IE9+
+    // requires IE9+
     if (!("querySelector" in document)) return;
     var observer = window.IntersectionObserver ? new IntersectionObserver(onIntersectionChange, {}) : null;
     var visibilityIndex = {}; // visibility of each graphic, indexed by container id (used with InteractionObserver)
@@ -3681,6 +3683,8 @@ function getResizerScript() {
       return bounds.top < window.innerHeight && bounds.bottom > 0;
     }
 
+    // Replace blank placeholder image with actual image
+    // (only relevant if use_lazy_loader option is true)
     function updateImgSrc(img) {
       var src = img.getAttribute("data-src");
       if (src && img.getAttribute("src") != src) {
