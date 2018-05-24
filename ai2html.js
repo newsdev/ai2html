@@ -3645,13 +3645,16 @@ function getResizerScript(settings) {
     }
 
     function updateGraphic(container) {
-      var artboards = selectElements("." + nameSpace + "artboard[data-min-width]", container),
+      var artboards = selectElements("." + nameSpace + "artboard[data-min-width]", container);
           width = Math.round(container.getBoundingClientRect().width),
           height = Math.round(window.innerHeight),
           id = container.id, // assume container has an id
           showImages = !observer || visibilityIndex[id] == 'visible',
           heightLimit = opts.responsive_height_limit,
           maxHeight = Math.round((heightLimit / 100) * height);
+
+      // Sort from widest to narrowest
+      artboards.sort(function(a, b) { return b.getAttribute("data-min-width") - a.getAttribute("data-min-width")});
 
       // Set artboard visibility
       artboards.some(function(el, i) {
@@ -3783,8 +3786,9 @@ function getResizerScript(settings) {
       };
     }
   };
-  
-  // validate settings for responsive height
+
+  // convert function to JS source code
+  // validate options for responsive height
   if (settings.use_responsive_height == 'yes') {
     var heightLimit = parseFloat(settings.responsive_height_limit) || null; // accepts 90% or 90
     if (heightLimit > 100 || heightLimit < 0) {
@@ -3792,7 +3796,6 @@ function getResizerScript(settings) {
     }
   }
 
-  // convert function to JS source code
   var opts = {
     namespace: nameSpace,
     environment: scriptEnvironment,
