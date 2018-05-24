@@ -3621,6 +3621,7 @@ function convertSettingsToYaml(settings) {
 function getResizerScript(settings) {
   // The resizer function is embedded in the HTML page -- external variables must
   // be passed in.
+
   var resizer = function (opts) {
     var nameSpace = opts.namespace;
     // Use a sentinel class to ensure that this version of the resizer only initializes once
@@ -3649,7 +3650,7 @@ function getResizerScript(settings) {
           height = Math.round(window.innerHeight),
           id = container.id, // assume container has an id
           showImages = !observer || visibilityIndex[id] == 'visible',
-          heightLimit = parseFloat(opts.responsive_height_limit) || null, // accepts 90% or 90
+          heightLimit = opts.responsive_height_limit,
           maxHeight = Math.round((heightLimit / 100) * height);
 
       // Set artboard visibility
@@ -3782,13 +3783,21 @@ function getResizerScript(settings) {
       };
     }
   };
+  
+  // validate settings for responsive height
+  if (settings.use_responsive_height == 'yes') {
+    var heightLimit = parseFloat(settings.responsive_height_limit) || null; // accepts 90% or 90
+    if (heightLimit > 100 || heightLimit < 0) {
+      error('responsive_height_limit must be between 0 and 100.');
+    }
+  }
 
   // convert function to JS source code
   var opts = {
     namespace: nameSpace,
     environment: scriptEnvironment,
     responsiveness: settings.responsiveness,
-    responsive_height_limit: settings.use_responsive_height == 'yes' ? settings.responsive_height_limit : null
+    responsive_height_limit: settings.use_responsive_height == 'yes' ? heightLimit : null
   };
   var resizerJs = '(' +
     trim(resizer.toString().replace(/  /g, '\t')) + // indent with tabs
