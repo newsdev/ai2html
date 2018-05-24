@@ -45,7 +45,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run the release.sh script to create a new GitHub release
-var scriptVersion = "0.73.0";
+var scriptVersion = "0.74.0";
 
 // ================================================
 // ai2html and config settings
@@ -81,6 +81,8 @@ var nytBaseSettings = {
   center_html_output: {defaultValue: "true", includeInSettingsBlock: false, includeInConfigFile: false},
   use_2x_images_if_possible: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false},
   use_lazy_loader: {defaultValue: "yes", includeInSettingsBlock: true, includeInConfigFile: false},
+  use_responsive_height: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false},
+  responsive_height_limit: {defaultValue: null, includeInSettingsBlock: false, includeInConfigFile: false},
   include_resizer_css_js: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false},
   include_resizer_classes: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false},
   include_resizer_widths: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false},
@@ -137,6 +139,8 @@ var defaultBaseSettings = {
   center_html_output: {defaultValue: "true", includeInSettingsBlock: false, includeInConfigFile: false},
   use_2x_images_if_possible: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false},
   use_lazy_loader: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false},
+  use_responsive_height: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false},
+  responsive_height_limit: {defaultValue: null, includeInSettingsBlock: false, includeInConfigFile: false},
   include_resizer_css_js: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false},
   include_resizer_classes: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false},
   include_resizer_widths: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false},
@@ -3614,10 +3618,11 @@ function convertSettingsToYaml(settings) {
   return lines.join('\n');
 }
 
-function getResizerScript() {
+function getResizerScript(settings) {
   // The resizer function is embedded in the HTML page -- external variables must
   // be passed in.
-  var resizer = function (scriptEnvironment, nameSpace) {
+  var resizer = function (opts) {
+    var nameSpace = opts.namespace;
     // Use a sentinel class to ensure that this version of the resizer only initializes once
     if (document.documentElement.className.indexOf(nameSpace + "resizer-v5-init") > -1) return;
     document.documentElement.className += " " + nameSpace + "resizer-v5-init";
@@ -3633,7 +3638,7 @@ function getResizerScript() {
 
     function updateAllGraphics() {
       selectElements(".ai2html-box-v5").forEach(updateGraphic);
-      if (scriptEnvironment == "nyt-preview") {
+      if (opts.environment == "nyt-preview") {
         nytOnResize();
       }
     }
@@ -3641,20 +3646,51 @@ function getResizerScript() {
     function updateGraphic(container) {
       var artboards = selectElements("." + nameSpace + "artboard[data-min-width]", container),
           width = Math.round(container.getBoundingClientRect().width),
+          height = Math.round(window.innerHeight),
           id = container.id, // assume container has an id
-          showImages = !observer || visibilityIndex[id] == 'visible';
+          showImages = !observer || visibilityIndex[id] == 'visible',
+          heightLimit = parseFloat(opts.responsive_height_limit) || null, // accepts 90% or 90
+          maxHeight = Math.round((heightLimit / 100) * height);
 
-      // Set artboard visibility based on container width
-      artboards.forEach(function(el) {
+      // Set artboard visibility
+      artboards.some(function(el, i) {
         var minwidth = el.getAttribute("data-min-width"),
-            maxwidth = el.getAttribute("data-max-width");
-        if (+minwidth <= width && (+maxwidth >= width || maxwidth === null)) {
+            maxwidth = el.getAttribute("data-max-width")
+            aspectRatio = el.getAttribute("data-aspect-ratio"),
+            show = +minwidth <= width;
+
+        // if the responsive height limit is on and responsiveness is dynamic,
+        // the width the artboard will display at is either the page width
+        // or the maxHeight * aspectRatio, whichever is smaller
+        if (heightLimit && opts.responsiveness == "dynamic") {
+          var widthAtMaxHeight = maxHeight * aspectRatio,
+            displayWidth = width > widthAtMaxHeight ? widthAtMaxHeight : width;
+          show = +minwidth <= displayWidth;
+        }
+
+        // if responsive height limit is on and responsiveness is fixed
+        // the width the artboard will display at is the minimum width of the artboard
+        else if (heightLimit && opts.responsiveness == "fixed") {
+          // the height at this width is
+          var heightAtMinWidth = minwidth / aspectRatio;
+          // make sure it's not too tall
+          show = show && (heightAtMinWidth < maxHeight);
+        }
+
+        // if none of the artboards are the right size, display the smallest one
+        var isSmallestArtboard = i == artboards.length - 1;
+
+        if (show || isSmallestArtboard) {
           if (showImages) {
             selectElements("." + nameSpace + "aiImg", el).forEach(updateImgSrc);
           }
+          // hide all the artboards
+          artboards.forEach(function(el) { el.style.display = 'none' });
+          // show just this one
           el.style.display = "block";
-        } else {
-          el.style.display = "none";
+          // explicitly set width of the artboard if responsiveness is dynamic
+          if (heightLimit && opts.responsiveness == "dynamic") { el.style.width = displayWidth + "px" }
+          return true;
         }
       });
 
@@ -3748,12 +3784,17 @@ function getResizerScript() {
   };
 
   // convert function to JS source code
+  var opts = {
+    namespace: nameSpace,
+    environment: scriptEnvironment,
+    responsiveness: settings.responsiveness,
+    responsive_height_limit: settings.use_responsive_height == 'yes' ? settings.responsive_height_limit : null
+  };
   var resizerJs = '(' +
     trim(resizer.toString().replace(/  /g, '\t')) + // indent with tabs
-    ')("' + scriptEnvironment + '", "' + nameSpace + '");';
+    ')(' + JSON.stringify(opts) + ');';
   return '<script type="text/javascript">\r\t' + resizerJs + '\r</script>\r';
 }
-
 
 // Write an HTML page to a file for NYT Preview
 function outputLocalPreviewPage(textForFile, localPreviewDestination, settings) {
@@ -3799,7 +3840,7 @@ function generateOutputHtml(content, pageName, settings) {
     }
   }
   if (isTrue(settings.include_resizer_script)) {
-    responsiveJs  = getResizerScript();
+    responsiveJs  = getResizerScript(settings);
     responsiveCss = "";
   }
 

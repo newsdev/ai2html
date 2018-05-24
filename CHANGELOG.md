@@ -1,3 +1,5 @@
+### v0.74.0
+- Add 'use_responsive_height' and 'responsive_height_limit' settings to limit the maximum artboard height based on the height of the window.
 
 ### v0.73.0
 - Add data-name= properties to div symbols if they are named in Illustrator.
