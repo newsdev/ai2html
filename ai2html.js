@@ -82,7 +82,7 @@ var nytBaseSettings = {
   use_2x_images_if_possible: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false},
   use_lazy_loader: {defaultValue: "yes", includeInSettingsBlock: true, includeInConfigFile: false},
   use_responsive_height: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false},
-  responsive_height_limit: {defaultValue: null, includeInSettingsBlock: false, includeInConfigFile: false},
+  responsive_height_limit: {defaultValue: "90%", includeInSettingsBlock: false, includeInConfigFile: false},
   include_resizer_css_js: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false},
   include_resizer_classes: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false},
   include_resizer_widths: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false},
@@ -140,7 +140,7 @@ var defaultBaseSettings = {
   use_2x_images_if_possible: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false},
   use_lazy_loader: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false},
   use_responsive_height: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false},
-  responsive_height_limit: {defaultValue: null, includeInSettingsBlock: false, includeInConfigFile: false},
+  responsive_height_limit: {defaultValue: "90%", includeInSettingsBlock: false, includeInConfigFile: false},
   include_resizer_css_js: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false},
   include_resizer_classes: {defaultValue: "no", includeInSettingsBlock: false, includeInConfigFile: false},
   include_resizer_widths: {defaultValue: "yes", includeInSettingsBlock: false, includeInConfigFile: false},
@@ -1132,7 +1132,8 @@ function exportFunctionsForTesting() {
     cleanObjectName,
     initDocumentSettings,
     uniqAssetName,
-    replaceSvgIds
+    replaceSvgIds,
+    findVisibleArtboard
   ].forEach(function(f) {
     module.exports[f.name] = f;
   });
@@ -3619,193 +3620,214 @@ function convertSettingsToYaml(settings) {
 }
 
 function getResizerScript(settings) {
-  // The resizer function is embedded in the HTML page -- external variables must
-  // be passed in.
-
-  var resizer = function (opts) {
-    var nameSpace = opts.namespace;
-    // Use a sentinel class to ensure that this version of the resizer only initializes once
-    if (document.documentElement.className.indexOf(nameSpace + "resizer-v5-init") > -1) return;
-    document.documentElement.className += " " + nameSpace + "resizer-v5-init";
-    // requires IE9+
-    if (!("querySelector" in document)) return;
-    var observer = window.IntersectionObserver ? new IntersectionObserver(onIntersectionChange, {}) : null;
-    var visibilityIndex = {}; // visibility of each graphic, indexed by container id (used with InteractionObserver)
-
-    updateAllGraphics();
-    window.addEventListener('nyt:embed:load', updateAllGraphics); // for nyt vi compatibility
-    document.addEventListener("DOMContentLoaded", updateAllGraphics);
-    window.addEventListener("resize", throttle(updateAllGraphics, 200));
-
-    function updateAllGraphics() {
-      selectElements(".ai2html-box-v5").forEach(updateGraphic);
-      if (opts.environment == "nyt-preview") {
-        nytOnResize();
-      }
-    }
-
-    function updateGraphic(container) {
-      var artboards = selectElements("." + nameSpace + "artboard[data-min-width]", container);
-          width = Math.round(container.getBoundingClientRect().width),
-          height = Math.round(window.innerHeight),
-          id = container.id, // assume container has an id
-          showImages = !observer || visibilityIndex[id] == 'visible',
-          heightLimit = opts.responsive_height_limit,
-          maxHeight = Math.round((heightLimit / 100) * height);
-
-      // Sort from widest to narrowest
-      artboards.sort(function(a, b) { return b.getAttribute("data-min-width") - a.getAttribute("data-min-width")});
-
-      // Set artboard visibility
-      artboards.some(function(el, i) {
-        var minwidth = el.getAttribute("data-min-width"),
-            maxwidth = el.getAttribute("data-max-width")
-            aspectRatio = el.getAttribute("data-aspect-ratio"),
-            show = +minwidth <= width;
-
-        // if the responsive height limit is on and responsiveness is dynamic,
-        // the width the artboard will display at is either the page width
-        // or the maxHeight * aspectRatio, whichever is smaller
-        if (heightLimit && opts.responsiveness == "dynamic") {
-          var widthAtMaxHeight = maxHeight * aspectRatio,
-            displayWidth = width > widthAtMaxHeight ? widthAtMaxHeight : width;
-          show = +minwidth <= displayWidth;
-        }
-
-        // if responsive height limit is on and responsiveness is fixed
-        // the width the artboard will display at is the minimum width of the artboard
-        else if (heightLimit && opts.responsiveness == "fixed") {
-          // the height at this width is
-          var heightAtMinWidth = minwidth / aspectRatio;
-          // make sure it's not too tall
-          show = show && (heightAtMinWidth < maxHeight);
-        }
-
-        // if none of the artboards are the right size, display the smallest one
-        var isSmallestArtboard = i == artboards.length - 1;
-
-        if (show || isSmallestArtboard) {
-          if (showImages) {
-            selectElements("." + nameSpace + "aiImg", el).forEach(updateImgSrc);
-          }
-          // hide all the artboards
-          artboards.forEach(function(el) { el.style.display = 'none' });
-          // show just this one
-          el.style.display = "block";
-          // explicitly set width of the artboard if responsiveness is dynamic
-          if (heightLimit && opts.responsiveness == "dynamic") { el.style.width = displayWidth + "px" }
-          return true;
-        }
-      });
-
-      // Initialize lazy loading on first call, if IntersectionObserver is available
-      if (observer && !visibilityIndex[id]) {
-        if (containerIsVisible(container)) {
-          // Skip IntersectionObserver if graphic is initially visible
-          // Note: We're doing this after artboard visibility is first calculated
-          //   (above) -- otherwise all artboard images are display:block and the
-          //   calculated height of the graphic is huge.
-          // TODO: Consider making artboard images position:absolute and setting
-          //   height as a padding % (calculated from the aspect ratio of the graphic).
-          //   This will correctly set the initial height of the graphic before
-          //   an image is loaded.
-          visibilityIndex[id] = 'visible';
-          updateGraphic(container); // Call again to start loading right away
-        } else {
-          visibilityIndex[id] = 'hidden';
-          observer.observe(container);
-        }
-      }
-    }
-
-    function containerIsVisible(container) {
-      var bounds = container.getBoundingClientRect();
-      return bounds.top < window.innerHeight && bounds.bottom > 0;
-    }
-
-    // Replace blank placeholder image with actual image
-    // (only relevant if use_lazy_loader option is true)
-    function updateImgSrc(img) {
-      var src = img.getAttribute("data-src");
-      if (src && img.getAttribute("src") != src) {
-        img.setAttribute("src", src);
-      }
-    }
-
-    function onIntersectionChange(entries) {
-      entries.forEach(function(entry) {
-        if (entry.isIntersecting) {
-          visibilityIndex[entry.target.id] = 'visible';
-          observer.unobserve(entry.target);
-          updateGraphic(entry.target);
-        }
-      });
-    }
-
-    function selectElements(selector, parent) {
-      var selection = (parent || document).querySelectorAll(selector);
-      return Array.prototype.slice.call(selection);
-    }
-
-    function nytOnResize() {
-      // TODO: add comments
-      try {
-        if (window.parent && window.parent.$) {
-          window.parent.$("body").trigger("resizedcontent", [window]);
-        }
-        document.documentElement.dispatchEvent(new Event("resizedcontent"));
-        if (window.require && document.querySelector("meta[name=sourceApp]") && document.querySelector("meta[name=sourceApp]").content == "nyt-v5") {
-          require(["foundation/main"], function() {
-            require(["shared/interactive/instances/app-communicator"], function(AppCommunicator) {
-              AppCommunicator.triggerResize();
-            });
-          });
-        }
-      } catch(e) { console.log(e); }
-    }
-
-    // based on underscore.js
-    function throttle(func, wait) {
-      var _now = Date.now || function() { return +new Date(); },
-          timeout = null, previous = 0;
-      var run = function() {
-          previous = _now();
-          timeout = null;
-          func();
-      };
-      return function() {
-        var remaining = wait - (_now() - previous);
-        if (remaining <= 0 || remaining > wait) {
-          if (timeout) {
-            clearTimeout(timeout);
-          }
-          run();
-        } else if (!timeout) {
-          timeout = setTimeout(run, remaining);
-        }
-      };
-    }
-  };
-
-  // convert function to JS source code
-  // validate options for responsive height
-  if (settings.use_responsive_height == 'yes') {
-    var heightLimit = parseFloat(settings.responsive_height_limit) || null; // accepts 90% or 90
-    if (heightLimit > 100 || heightLimit < 0) {
-      error('responsive_height_limit must be between 0 and 100.');
-    }
-  }
-
   var opts = {
     namespace: nameSpace,
     environment: scriptEnvironment,
     responsiveness: settings.responsiveness,
-    responsive_height_limit: settings.use_responsive_height == 'yes' ? heightLimit : null
+    responsive_height_limit: null
   };
-  var resizerJs = '(' +
-    trim(resizer.toString().replace(/  /g, '\t')) + // indent with tabs
-    ')(' + JSON.stringify(opts) + ');';
-  return '<script type="text/javascript">\r\t' + resizerJs + '\r</script>\r';
+  var heightLimit;
+
+  if (isTrue(settings.use_responsive_height)) {
+    // validate setting for responsive height
+    heightLimit = parseFloat(settings.responsive_height_limit); // accepts 90% or 90
+    if ((heightLimit <= 150 && heightLimit >= 50) == false) {
+      error('responsive_height_limit must be between 50% and 150%.');
+    }
+    opts.responsive_height_limit = heightLimit;
+  }
+
+  return '<script type="text/javascript">\r(function() {\r' +
+      'ArtboardSwitcher(' + JSON.stringify(opts) + ');\r' +
+      trim(findVisibleArtboard.toString()) + '\r' + // convert functions to JS strings
+      trim(ArtboardSwitcher.toString()) + '\r' +
+      '}());\r</script>\r';
+}
+
+// Part of the embedded resizer function, placed here to allow testing.
+// Returns an object containing metadata for the visible artboard, or null if
+//   no artboard fits in the available width.
+function findVisibleArtboard(candidates, containerWidth, windowHeight, opts) {
+  // sort by ascending min width
+  candidates.sort(function(a, b) {return a.min_width - b.min_width;});
+
+  // pick the largest artboard that fits in the available width
+  return candidates.reduce(function(memo, data) {
+    var heightLimit, restrictedWidth;
+
+    // reject this artboard if min width is larger than container width
+    if (data.min_width > containerWidth) return memo;
+
+    // handle responsive height
+    if (opts.responsive_height_limit) {
+      // calculate restricted width (in pixels)
+      heightLimit = windowHeight * opts.responsive_height_limit / 100;
+      restrictedWidth = Math.min(containerWidth, data.aspect_ratio * heightLimit);
+
+      // handle vertical overflow caused by min width exceeding limit from responsive height
+      if (data.min_width > restrictedWidth) {
+        data.vertical_overflow = Math.round((data.min_width - restrictedWidth) / data.aspect_ratio);
+
+        // reject this artboard if a previous candidate has a smaller overflow
+        if (memo && (memo.vertical_overflow || 0) < data.vertical_overflow) return memo;
+      }
+
+      // calculate display width of height-restricted dynamic artboard
+      // (don't scale artboards to be narrower than their minimum widths, even if
+      // this violates the height limit)
+      if (opts.responsiveness == 'dynamic') {
+        data.display_width = Math.max(restrictedWidth, data.min_width);
+      }
+    }
+
+    // use this artboard (replacing any previous candidate)
+    // because artboards are sorted, wider artboards replace narrower ones
+    return data;
+  }, null);
+}
+
+// The resizer function runs on the rendered HTML page -- it is unable to
+// access functions or data in the ai2html program scope.
+function ArtboardSwitcher(opts) {
+  var nameSpace = opts.namespace;
+  // Use a sentinel class to ensure that this version of the resizer only initializes once
+  if (document.documentElement.className.indexOf(nameSpace + "resizer-v6-init") > -1) return;
+  document.documentElement.className += " " + nameSpace + "resizer-v6-init";
+  // requires IE9+
+  if (!("querySelector" in document)) return;
+  var observer = window.IntersectionObserver ? new IntersectionObserver(onIntersectionChange, {}) : null;
+  var visibilityIndex = {}; // visibility of each graphic, indexed by container id (used with InteractionObserver)
+
+  updateAllGraphics();
+  window.addEventListener('nyt:embed:load', updateAllGraphics); // for nyt vi compatibility
+  document.addEventListener("DOMContentLoaded", updateAllGraphics);
+  window.addEventListener("resize", throttle(updateAllGraphics, 200));
+
+  function updateAllGraphics() {
+    selectElements(".ai2html-box-v6").forEach(updateGraphic);
+    if (opts.environment == "nyt-preview") {
+      nytOnResize();
+    }
+  }
+
+  function updateGraphic(container) {
+    var artboards = selectElements("." + nameSpace + "artboard[data-min-width]", container);
+    var id = container.id; // assume container has an id
+    var showImages = !observer || visibilityIndex[id] == 'visible';
+
+    // Pick which artboard to show
+    var artboardData = artboards.map(function(el, i) {
+      return {
+        id: i,
+        min_width: +el.getAttribute('data-min-width'),
+        aspect_ratio: +el.getAttribute('data-aspect-ratio')
+      };
+    });
+    var containerWidth = Math.round(container.getBoundingClientRect().width);
+    var visibleTarget = findVisibleArtboard(artboardData, containerWidth, window.innerHeight, opts);
+
+    // Set artboard visibility
+    artboards.forEach(function(el, i) {
+      if (visibleTarget && visibleTarget.id === i) {
+        if (showImages) {
+          selectElements("." + nameSpace + "aiImg", el).forEach(updateImgSrc);
+        }
+        if (visibleTarget.display_width) {
+          el.style.width = visibleTarget.display_width + "px";
+        }
+        el.style.display = "block";
+      } else {
+        el.style.display = "none";
+      }
+    });
+
+    // Initialize lazy loading on first call, if IntersectionObserver is available
+    if (observer && !visibilityIndex[id]) {
+      if (containerIsVisible(container)) {
+        // Skip IntersectionObserver if graphic is initially visible
+        // Note: We're doing this after artboard visibility is first calculated
+        //   (above) -- otherwise all artboard images are display:block and the
+        //   calculated height of the graphic is huge.
+        // TODO: Consider making artboard images position:absolute and setting
+        //   height as a padding % (calculated from the aspect ratio of the graphic).
+        //   This will correctly set the initial height of the graphic before
+        //   an image is loaded.
+        visibilityIndex[id] = 'visible';
+        updateGraphic(container); // Call again to start loading right away
+      } else {
+        visibilityIndex[id] = 'hidden';
+        observer.observe(container);
+      }
+    }
+  }
+
+  function containerIsVisible(container) {
+    var bounds = container.getBoundingClientRect();
+    return bounds.top < window.innerHeight && bounds.bottom > 0;
+  }
+
+  // Replace blank placeholder image with actual image
+  // (only relevant if use_lazy_loader option is true)
+  function updateImgSrc(img) {
+    var src = img.getAttribute("data-src");
+    if (src && img.getAttribute("src") != src) {
+      img.setAttribute("src", src);
+    }
+  }
+
+  function onIntersectionChange(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        visibilityIndex[entry.target.id] = 'visible';
+        observer.unobserve(entry.target);
+        updateGraphic(entry.target);
+      }
+    });
+  }
+
+  function selectElements(selector, parent) {
+    var selection = (parent || document).querySelectorAll(selector);
+    return Array.prototype.slice.call(selection);
+  }
+
+  function nytOnResize() {
+    // TODO: add comments
+    try {
+      if (window.parent && window.parent.$) {
+        window.parent.$("body").trigger("resizedcontent", [window]);
+      }
+      document.documentElement.dispatchEvent(new Event("resizedcontent"));
+      if (window.require && document.querySelector("meta[name=sourceApp]") && document.querySelector("meta[name=sourceApp]").content == "nyt-v5") {
+        require(["foundation/main"], function() {
+          require(["shared/interactive/instances/app-communicator"], function(AppCommunicator) {
+            AppCommunicator.triggerResize();
+          });
+        });
+      }
+    } catch(e) { console.log(e); }
+  }
+
+  // based on underscore.js
+  function throttle(func, wait) {
+    var _now = Date.now || function() { return +new Date(); },
+        timeout = null, previous = 0;
+    var run = function() {
+        previous = _now();
+        timeout = null;
+        func();
+    };
+    return function() {
+      var remaining = wait - (_now() - previous);
+      if (remaining <= 0 || remaining > wait) {
+        if (timeout) {
+          clearTimeout(timeout);
+        }
+        run();
+      } else if (!timeout) {
+        timeout = setTimeout(run, remaining);
+      }
+    };
+  }
 }
 
 // Write an HTML page to a file for NYT Preview
@@ -3868,7 +3890,7 @@ function generateOutputHtml(content, pageName, settings) {
   }
 
   // HTML
-  html = '<div id="' + containerId + '" class="ai2html ai2html-box-v5">\r';
+  html = '<div id="' + containerId + '" class="ai2html ai2html-box-v6">\r';
   if (linkSrc) {
     // optional link around content
     html += "\t<a class='" + nameSpace + "ai2htmlLink' href='" + linkSrc + "'>\r";
