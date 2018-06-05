@@ -1133,7 +1133,7 @@ function exportFunctionsForTesting() {
     initDocumentSettings,
     uniqAssetName,
     replaceSvgIds,
-    findVisibleArtboard
+    findVisibleArtboards
   ].forEach(function(f) {
     module.exports[f.name] = f;
   });
@@ -3639,51 +3639,69 @@ function getResizerScript(settings) {
 
   return '<script type="text/javascript">\r(function() {\r' +
       'ArtboardSwitcher(' + JSON.stringify(opts) + ');\r' +
-      trim(findVisibleArtboard.toString()) + '\r' + // convert functions to JS strings
+      trim(findVisibleArtboards.toString()) + '\r' + // convert functions to JS strings
       trim(ArtboardSwitcher.toString()) + '\r' +
       '}());\r</script>\r';
 }
 
 // Part of the embedded resizer function, placed here to allow testing.
-// Returns an object containing metadata for the visible artboard, or null if
-//   no artboard fits in the available width.
-function findVisibleArtboard(candidates, containerWidth, windowHeight, opts) {
-  // sort by ascending min width
-  candidates.sort(function(a, b) {return a.min_width - b.min_width;});
+// Returns an object with data about the visible artboard(s), or null
+//   if no artboard fits in the available width.
+function findVisibleArtboards(candidates, containerWidth, windowHeight, opts) {
+  var heightLimit = null;
+  if (opts.responsive_height_limit) {
+    // calc height limit in pixels
+    heightLimit = windowHeight * opts.responsive_height_limit / 100;
+  }
 
-  // pick the largest artboard that fits in the available width
-  return candidates.reduce(function(memo, data) {
-    var heightLimit, restrictedWidth;
+  // reject artboards whose min width is larger than container width
+  candidates = candidates.filter(function(ab) {return ab.min_width <= containerWidth;});
 
-    // reject this artboard if min width is larger than container width
-    if (data.min_width > containerWidth) return memo;
+  // sort artboards by ascending min width, then by ascending aspect ratio
+  candidates.sort(function(a, b) {return a.min_width - b.min_width || a.aspect_ratio - b.aspect_ratio;});
+
+  // pick the best-fit group of same-width artboards to show
+  return groupByMinWidth(candidates).reduce(function(memo, group) {
+    var firstMember = group[0];
+    var groupData = {
+      ids: group.map(function(item) {return item.id;}),
+      min_width: firstMember.min_width
+    };
+    var restrictedWidth;
 
     // handle responsive height
-    if (opts.responsive_height_limit) {
-      // calculate restricted width (in pixels)
-      heightLimit = windowHeight * opts.responsive_height_limit / 100;
-      restrictedWidth = Math.min(containerWidth, data.aspect_ratio * heightLimit);
-
-      // handle vertical overflow caused by min width exceeding limit from responsive height
-      if (data.min_width > restrictedWidth) {
-        data.vertical_overflow = Math.round((data.min_width - restrictedWidth) / data.aspect_ratio);
-
-        // reject this artboard if a previous candidate has a smaller overflow
-        if (memo && (memo.vertical_overflow || 0) < data.vertical_overflow) return memo;
+    if (heightLimit) {
+      // calculate restricted width of group, based on aspect ratio of first member
+      // (group members are sorted with tallest ab first)
+      restrictedWidth = Math.min(containerWidth, firstMember.aspect_ratio * heightLimit);
+      if (firstMember.min_width > restrictedWidth) {
+        groupData.vertical_overflow = Math.round((firstMember.min_width - restrictedWidth) / firstMember.aspect_ratio);
+        // reject this group if previous group has a smaller overflow
+        if (memo && (memo.vertical_overflow || 0) < groupData.vertical_overflow) {
+          return memo;
+        }
       }
 
       // calculate display width of height-restricted dynamic artboard
       // (don't scale artboards to be narrower than their minimum widths, even if
       // this violates the height limit)
       if (opts.responsiveness == 'dynamic') {
-        data.display_width = Math.max(restrictedWidth, data.min_width);
+        groupData.display_width = Math.max(restrictedWidth, firstMember.min_width);
       }
     }
 
-    // use this artboard (replacing any previous candidate)
-    // because artboards are sorted, wider artboards replace narrower ones
-    return data;
+    // use this group (wider groups replace narrower ones)
+    return groupData;
   }, null);
+
+  function groupByMinWidth(arr) {
+    return arr.reduce(function(memo, a, i) {
+      var group = i > 0 && arr[i-1].min_width == a.min_width ? memo.pop() : [];
+      group.push(a);
+      memo.push(group);
+      return memo;
+    }, []);
+  }
 }
 
 // The resizer function runs on the rendered HTML page -- it is unable to
@@ -3724,16 +3742,16 @@ function ArtboardSwitcher(opts) {
       };
     });
     var containerWidth = Math.round(container.getBoundingClientRect().width);
-    var visibleTarget = findVisibleArtboard(artboardData, containerWidth, window.innerHeight, opts);
+    var target = findVisibleArtboards(artboardData, containerWidth, window.innerHeight, opts);
 
     // Set artboard visibility
     artboards.forEach(function(el, i) {
-      if (visibleTarget && visibleTarget.id === i) {
+      if (target && target.ids.indexOf(i) > -1) {
         if (showImages) {
           selectElements("." + nameSpace + "aiImg", el).forEach(updateImgSrc);
         }
-        if (visibleTarget.display_width) {
-          el.style.width = visibleTarget.display_width + "px";
+        if (target.display_width) {
+          el.style.width = target.display_width + "px";
         }
         el.style.display = "block";
       } else {
