@@ -1283,6 +1283,11 @@ function initDocumentSettings(textBlockSettings) {
       settings.create_config_file = true;
       settings.create_promo_image = true;
     }
+  } else { // local config.yml file options loader
+    var yaml = readYamlConfigFile(docPath + "config.yml") || {};
+    forEachProperty(yaml, function(v, k){
+      settings[k] = v;
+    });
   }
 
   // merge settings from text block
