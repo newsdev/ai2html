@@ -3835,18 +3835,8 @@ function generateOutputHtml(content, pageName, settings) {
   // JS
   js = content.js + responsiveJs;
 
-  if (scriptEnvironment == "nyt-preview") {
-    html = '<!-- SCOOP HTML -->\r' + commentBlock + html;
-    css = '<!-- SCOOP CSS -->\r' + commentBlock + css;
-    if (js) js ='<!-- SCOOP JS -->\r' + commentBlock + js;
-  }
-
-  textForFile = css + '\r' + html + '\r' + js;
-
-  if (scriptEnvironment != "nyt-preview") {
-    textForFile = commentBlock + textForFile +
-        "<!-- End ai2html" + " - " + getDateTimeStamp() + " -->\r";
-  }
+  textForFile =  '\r' + commentBlock + css + '\r' + html + '\r' + js +
+     "<!-- End ai2html" + " - " + getDateTimeStamp() + " -->\r";
 
   textForFile = applyTemplate(textForFile, settings);
   htmlFileDestinationFolder = docPath + settings.html_output_path;
