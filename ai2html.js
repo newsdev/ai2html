@@ -99,7 +99,7 @@ var nytBaseSettings = {
   notes: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true},
   sources: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true},
   credit: {defaultValue: "By The New York Times", includeInSettingsBlock: true, includeInConfigFile: true},
-  page_template: {defaultValue: "nyt5-article-embed", includeInSettingsBlock: true, includeInConfigFile: true},
+  page_template: {defaultValue: "vi-article-embed", includeInSettingsBlock: true, includeInConfigFile: true},
   publish_system: {defaultValue: "scoop", includeInSettingsBlock: false, includeInConfigFile: true},
   environment: {defaultValue: "production", includeInSettingsBlock: false, includeInConfigFile: true},
   show_in_compatible_apps: {defaultValue: "yes", includeInSettingsBlock: true, includeInConfigFile: true},
