@@ -44,8 +44,8 @@ function main() {
 //      or increment final digit for simple bug fixes or other minor changes.
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
-// - Run the release.sh script to create a new GitHub release
-var scriptVersion = "0.73.0";
+// - Run 'npm publish' to create a new GitHub release
+var scriptVersion = "0.74.0";
 
 // ================================================
 // ai2html and config settings
