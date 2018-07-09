@@ -109,7 +109,8 @@ var nytBaseSettings = {
   scoop_asset_id: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true},
   scoop_username: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true},
   scoop_slug: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true},
-  scoop_external_edit_key: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true}
+  scoop_external_edit_key: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true},
+  compatibility: {defaultValue: "inline", includeInSettingsBlock: false, includeInConfigFile: true}
 };
 
 var defaultBaseSettings = {
@@ -165,7 +166,8 @@ var defaultBaseSettings = {
   scoop_asset_id: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
   scoop_username: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
   scoop_slug: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
-  scoop_external_edit_key: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false}
+  scoop_external_edit_key: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
+  compatibility: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false}
 };
 
 // End of settings blocks copied from Google Spreadsheet.
