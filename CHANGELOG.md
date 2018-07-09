@@ -1,3 +1,5 @@
+### v0.74.0
+- Minor NYT-specific output changes.
 
 ### v0.73.0
 - Add data-name= properties to div symbols if they are named in Illustrator.
