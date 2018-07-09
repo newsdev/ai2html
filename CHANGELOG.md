@@ -1,3 +1,7 @@
+### v0.75.0
+- Set the dimensions of each artboard using CSS, so the graphic has the correct size even before the artboard image loads.
+- Added NYT-specify interactive_size setting.
+
 ### v0.74.0
 - Minor NYT-specific output changes.
 
