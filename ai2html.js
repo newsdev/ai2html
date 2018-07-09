@@ -99,7 +99,7 @@ var nytBaseSettings = {
   notes: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true},
   sources: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true},
   credit: {defaultValue: "By The New York Times", includeInSettingsBlock: true, includeInConfigFile: true},
-  page_template: {defaultValue: "vi-article-embed", includeInSettingsBlock: true, includeInConfigFile: true},
+  page_template: {defaultValue: "vi-article-embed", includeInSettingsBlock: false, includeInConfigFile: true},
   publish_system: {defaultValue: "scoop", includeInSettingsBlock: false, includeInConfigFile: true},
   environment: {defaultValue: "production", includeInSettingsBlock: false, includeInConfigFile: true},
   show_in_compatible_apps: {defaultValue: "yes", includeInSettingsBlock: true, includeInConfigFile: true},
@@ -110,7 +110,8 @@ var nytBaseSettings = {
   scoop_username: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true},
   scoop_slug: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true},
   scoop_external_edit_key: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true},
-  compatibility: {defaultValue: "inline", includeInSettingsBlock: false, includeInConfigFile: true}
+  compatibility: {defaultValue: "inline", includeInSettingsBlock: false, includeInConfigFile: true},
+  interactive_size: {defaultValue: "medium", includeInSettingsBlock: true, includeInConfigFile: true}
 };
 
 var defaultBaseSettings = {
@@ -167,7 +168,9 @@ var defaultBaseSettings = {
   scoop_username: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
   scoop_slug: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
   scoop_external_edit_key: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
-  compatibility: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false}
+  compatibility: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
+  interactive_size: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false}
+
 };
 
 // End of settings blocks copied from Google Spreadsheet.
@@ -3057,9 +3060,10 @@ function exportImage(imgName, format, ab, masks, layers, settings) {
   var imgFile = getImageFileName(imgName, format);
   var outputPath = pathJoin(getImageFolder(settings), imgFile);
   var imgId = getImageId(imgName);
-  var imgClass = nameSpace + 'aiImg';
+  // all images are now absolutely positioned (before, artboard images were
+  // position:static to set the artboard height)
+  var imgClass = nameSpace + 'aiImg ' + nameSpace + 'aiAbs';
   var created, html;
-
   if (format == 'svg') {
     created = exportSVG(outputPath, ab, masks, layers, settings);
     if (!created) {
@@ -3068,8 +3072,7 @@ function exportImage(imgName, format, ab, masks, layers, settings) {
     rewriteSVGFile(outputPath, imgId);
 
     if (layers) {
-      // layer images are absolutely positioned
-      imgClass += ' ' + nameSpace + 'aiAbs';
+
       message('Exported a layer as ' + outputPath.replace(/.*\//, ''));
     }
 
@@ -3180,7 +3183,8 @@ function generateImageHtml(imgFile, imgId, imgClass, ab, settings) {
   html = '\t\t<img id="' + imgId + '" class="' + imgClass + '"';
   if (isTrue(settings.use_lazy_loader)) {
     html += ' data-src="' + src + '"';
-    // spaceholder while image loads
+    // placeholder while image loads
+    // (<img> element requires a src attribute, according to spec.)
     src = 'data:image/gif;base64,R0lGODlhCgAKAIAAAB8fHwAAACH5BAEAAAAALAAAAAAKAAoAAAIIhI+py+0PYysAOw==';
   }
   html += ' src="' + src + '"/>\r';
@@ -3472,7 +3476,6 @@ function injectCSSinSVG(content, css) {
   return content.replace('</svg>', style + '\n</svg>');
 }
 
-
 // ===================================
 // ai2html output generation functions
 // ===================================
@@ -3481,13 +3484,22 @@ function generateArtboardDiv(ab, breakpoints, settings) {
   var divId = nameSpace + getArtboardFullName(ab);
   var classnames = nameSpace + "artboard";
   var widthRange = getArtboardWidthRange(ab);
-  var abPos = convertAiBounds(ab.artboardRect);
+  var abBox = convertAiBounds(ab.artboardRect);
+  var inlineStyle = "";
   var html = "";
   if (!isFalse(settings.include_resizer_classes)) {
     classnames += " " + findShowClassesForArtboard(ab, breakpoints);
   }
-  html += '\t<div id="' + divId + '" class="' + classnames + '"';
-  html += ' data-aspect-ratio="' + roundTo(abPos.width / abPos.height, 3) + '"';
+  // Set size of graphic using inline CSS
+  if (settings.responsiveness == "fixed") {
+    inlineStyle = "width:" + abBox.width + "px; height:" + abBox.height + "px;";
+  } else {
+    // Adding bottom padding as a percentage of container width to set the artboard
+    // height for dynamic artboards.
+    inlineStyle = "padding: 0 0 " + formatCssPct(abBox.height, abBox.width) + " 0;";
+  }
+  html += '\t<div id="' + divId + '" class="' + classnames + '" style="' + inlineStyle + '"';
+  html += ' data-aspect-ratio="' + roundTo(abBox.width / abBox.height, 3) + '"';
   if (isTrue(settings.include_resizer_widths)) {
     // add data-min/max-width attributes
     // TODO: see if we can use breakpoint data to set min and max widths
@@ -3519,9 +3531,6 @@ function generateArtboardCss(ab, textClasses, settings) {
   css += t3 + abId + " {\r";
   css += t4 + "position:relative;\r";
   css += t4 + "overflow:hidden;\r";
-  if (settings.responsiveness=="fixed") {
-    css += t4 + "width:"  + convertAiBounds(ab.artboardRect).width + "px;\r";
-  }
   css += t3 + "}\r";
 
   // classes for paragraph and character styles
