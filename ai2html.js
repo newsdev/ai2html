@@ -3003,7 +3003,7 @@ function convertArtItems(activeArtboard, textFrames, masks, settings) {
     svgNames = [];
     forEach(svgLayers, function(lyr) {
       var svgName = uniqAssetName(getLayerImageName(lyr, activeArtboard), svgNames);
-      var svgHtml = exportImage(svgName, 'svg', activeArtboard, masks, [lyr], settings);
+      var svgHtml = exportImage(svgName, 'svg', activeArtboard, masks, lyr, settings);
       if (svgHtml) {
         svgNames.push(svgName);
         html += svgHtml;
@@ -3055,24 +3055,33 @@ function getImageFileName(name, fmt) {
   return name + '.' + fmt.substring(0, 3);
 }
 
+function getLayerOpacityCSS(layer) {
+  var o = getComputedOpacity(layer);
+  return o < 100 ? 'opacity:' + roundTo(o / 100, 2) + ';' : '';
+}
+
 // Capture and save an image to the filesystem and return html embed code
 //
-function exportImage(imgName, format, ab, masks, layers, settings) {
+function exportImage(imgName, format, ab, masks, layer, settings) {
   var imgFile = getImageFileName(imgName, format);
   var outputPath = pathJoin(getImageFolder(settings), imgFile);
   var imgId = getImageId(imgName);
   // all images are now absolutely positioned (before, artboard images were
   // position:static to set the artboard height)
   var imgClass = nameSpace + 'aiImg ' + nameSpace + 'aiAbs';
+  var imgStyle = '';
   var created, html;
   if (format == 'svg') {
-    created = exportSVG(outputPath, ab, masks, layers, settings);
+    if (layer) {
+      imgStyle = getLayerOpacityCSS(layer);
+    }
+    created = exportSVG(outputPath, ab, masks, [layer], settings);
     if (!created) {
       return ''; // no image was created
     }
     rewriteSVGFile(outputPath, imgId);
 
-    if (layers) {
+    if (layer) {
       message('Exported a layer as ' + outputPath.replace(/.*\//, ''));
     }
 
@@ -3081,17 +3090,21 @@ function exportImage(imgName, format, ab, masks, layers, settings) {
   }
 
   if (format == 'svg' && settings.inline_svg) {
-    html = generateInlineSvg(outputPath, imgClass, settings);
+    html = generateInlineSvg(outputPath, imgClass, imgStyle, settings);
   } else {
-    html = generateImageHtml(imgFile, imgId, imgClass, ab, settings);
+    html = generateImageHtml(imgFile, imgId, imgClass, imgStyle, ab, settings);
   }
   return html;
 }
 
-function generateInlineSvg(imgPath, imgClass, settings) {
+function generateInlineSvg(imgPath, imgClass, imgStyle, settings) {
   var svg = readFile(imgPath) || '';
+  var attr = ' class="' + imgClass + '"';
+  if (imgStyle) {
+    attr += ' style="' + imgStyle + '"';
+  }
   svg = svg.replace(/<\?xml.*?\?>/, '');
-  svg = svg.replace('<svg', '<svg class="' + imgClass + '"');
+  svg = svg.replace('<svg', '<svg' + attr);
   svg = replaceSvgIds(svg, settings.svg_id_prefix);
   return svg;
 }
@@ -3169,7 +3182,7 @@ function captureArtboardImage(imgName, ab, masks, settings) {
 
 
 // Create an <img> tag for the artboard image
-function generateImageHtml(imgFile, imgId, imgClass, ab, settings) {
+function generateImageHtml(imgFile, imgId, imgClass, imgStyle, ab, settings) {
   var abPos = convertAiBounds(ab.artboardRect),
       imgDir = settings.image_source_path,
       html, src;
@@ -3181,6 +3194,9 @@ function generateImageHtml(imgFile, imgId, imgClass, ab, settings) {
     src += '?v=' + settings.cache_bust_token;
   }
   html = '\t\t<img id="' + imgId + '" class="' + imgClass + '"';
+  if (imgStyle) {
+    html += ' style="' + imgStyle + '"';
+  }
   if (isTrue(settings.use_lazy_loader)) {
     html += ' data-src="' + src + '"';
     // placeholder while image loads
