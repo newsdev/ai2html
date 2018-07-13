@@ -2753,10 +2753,10 @@ function exportSymbols(lyr, ab, masks, opts) {
 
   function forPageItem(item) {
     var singleGeom, geometries;
-    if (item.typename != 'PathItem') return;
     if (item.hidden || !testBoundsIntersection(item.visibleBounds, ab.artboardRect)) return;
     // try to convert to circle or rectangle
     // note: filled shapes aren't necessarily closed
+    if (item.typename != 'PathItem') return;
     singleGeom = getRectangleData(item.pathPoints) || getCircleData(item.pathPoints);
     if (singleGeom) {
       geometries = [singleGeom];
@@ -3016,7 +3016,8 @@ function convertArtItems(activeArtboard, textFrames, masks, settings) {
     });
   }
 
-  html += captureArtboardImage(imgName, activeArtboard, masks, settings);
+  // placing ab image before other elements
+  html = captureArtboardImage(imgName, activeArtboard, masks, settings) + html;
 
   // unhide svg export layers (if any)
   forEach(svgLayers, function(lyr) {
@@ -3072,7 +3073,6 @@ function exportImage(imgName, format, ab, masks, layers, settings) {
     rewriteSVGFile(outputPath, imgId);
 
     if (layers) {
-
       message('Exported a layer as ' + outputPath.replace(/.*\//, ''));
     }
 
