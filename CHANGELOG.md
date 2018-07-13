@@ -1,3 +1,7 @@
+### v0.76.0
+- Opacity applied to :svg layers is reflected in the HTML output.
+- Fix for a layer stacking bug introduced in v0.75.0 (symbol/div layers were hidden behind artboard images).
+
 ### v0.75.0
 - Set the dimensions of each artboard using CSS, so the graphic has the correct size even before the artboard image loads.
 - Added NYT-specify interactive_size setting.
