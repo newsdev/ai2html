@@ -45,7 +45,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = "0.76.0";
+var scriptVersion = "0.76.1";
 
 // ================================================
 // ai2html and config settings
@@ -3070,12 +3070,14 @@ function exportImage(imgName, format, ab, masks, layer, settings) {
   // position:static to set the artboard height)
   var imgClass = nameSpace + 'aiImg ' + nameSpace + 'aiAbs';
   var imgStyle = '';
+  var layers = null;
   var created, html;
   if (format == 'svg') {
     if (layer) {
       imgStyle = getLayerOpacityCSS(layer);
+      layers = [layer];
     }
-    created = exportSVG(outputPath, ab, masks, [layer], settings);
+    created = exportSVG(outputPath, ab, masks, layers, settings);
     if (!created) {
       return ''; // no image was created
     }

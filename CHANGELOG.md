@@ -1,3 +1,6 @@
+### v0.76.1
+- Fix for error when exporting artboards as SVG.
+
 ### v0.76.0
 - Opacity applied to :svg layers is reflected in the HTML output.
 - Fix for a layer stacking bug introduced in v0.75.0 (symbol/div layers were hidden behind artboard images).
