@@ -45,7 +45,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = "0.76.1";
+var scriptVersion = "0.77.0";
 
 // ================================================
 // ai2html and config settings
@@ -939,20 +939,10 @@ function readFile(path) {
   return content;
 }
 
-// TODO: switch to readFile() or explain why we would want to read a text file this way
 function readTextFile(path) {
-  var outputText = "";
-  var file = new File(path);
-  if (file.exists) {
-    file.open("r");
-    while (!file.eof) {
-      outputText += file.readln() + "\n";
-    }
-    file.close();
-  } else {
-    warn(path + " could not be found.");
-  }
-  return outputText;
+  // This function used to use File#eof and File#readln(), but
+  // that failed to read the last line when missing a final newline.
+  return readFile(path) || '';
 }
 
 function saveTextFile(dest, contents) {
@@ -1238,6 +1228,7 @@ function initSpecialTextBlocks() {
 
 // Derive ai2html program settings by combining default settings and optional overrides.
 function initDocumentSettings(textBlockSettings) {
+  var externalSettings = readExternalSettings();
   var settings = {};
   var yamlConfig;
   var baseSettings;
@@ -1290,6 +1281,12 @@ function initDocumentSettings(textBlockSettings) {
     }
   }
 
+  // merge external settings
+  extend(settings, externalSettings);
+  if (externalSettings.fonts) {
+    extendFontList(fonts, externalSettings.fonts);
+  }
+
   // merge settings from text block
   if (textBlockSettings) {
     for (key in textBlockSettings) {
@@ -1299,8 +1296,49 @@ function initDocumentSettings(textBlockSettings) {
       settings[key] = textBlockSettings[key];
     }
   }
-
   return settings;
+}
+
+// Looks for settings file in the ai2html script directory and/or the .ai document directory
+function readExternalSettings() {
+  var settingsFile = 'ai2html-config.json';
+  var globalPath = pathJoin(getScriptDirectory(), settingsFile);
+  var localPath = pathJoin(docPath, settingsFile);
+  var globalSettings = fileExists(globalPath) ? readSettingsFile(globalPath) : {};
+  var localSettings = fileExists(localPath) ? readSettingsFile(localPath) : {};
+  return extend({}, globalSettings, localSettings);
+}
+
+function stripSettingsFileComments(str) {
+  var rxp = /\/\/.*/g;
+  return str.replace(rxp, '');
+}
+
+// Expects that @path points to a text file containing a JavaScript object
+// with settings to override the default ai2html settings.
+function readSettingsFile(path) {
+  var o = {}, str;
+  try {
+    str = stripSettingsFileComments(readTextFile(path));
+    o = JSON.parse(str);
+  } catch(e) {
+    warn('[' + e.message + '] Error reading settings file ' + path);
+  }
+  return o;
+}
+
+function extendFontList(a, b) {
+  var index = {};
+  forEach(a, function(o, i) {
+    index[o.aifont] = i;
+  });
+  forEach(b, function(o, i) {
+    if (o.aifont && o.aifont in index) {
+      a[index[o.aifont]] = o; // replace
+    } else {
+      a.push(o); // add
+    }
+  });
 }
 
 

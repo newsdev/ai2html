@@ -1,3 +1,6 @@
+### v0.77.0
+- Read settings from config file named "ai2html-config.json", if present in the script directory and/or the .ai document directory.
+
 ### v0.76.1
 - Fix for error when exporting artboards as SVG.
 
