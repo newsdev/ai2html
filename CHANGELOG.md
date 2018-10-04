@@ -1,3 +1,6 @@
+### v0.78.0
+- Fix a crash when the document contains an opacity mask created from a linked raster.
+
 ### v0.77.0
 - Read settings from config file named "ai2html-config.json", if present in the script directory and/or the .ai document directory.
 

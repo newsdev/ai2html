@@ -45,7 +45,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = "0.77.0";
+var scriptVersion = "0.78.0";
 
 // ================================================
 // ai2html and config settings
@@ -1820,6 +1820,9 @@ function objectIsHidden(obj) {
     } else {
       hidden = obj.hidden;
     }
+    // The following line used to throw an MRAP error if the document
+    // contained a raster opacity mask... please file a GitHub issue if the
+    // problem recurs.
     obj = obj.parent;
   }
   return hidden;
@@ -2996,9 +2999,21 @@ function resolveArtboardImageFormat(setting, ab) {
   return fmt;
 }
 
+function objectHasLayer(obj) {
+  var hasLayer = false;
+  try {
+    hasLayer = !!obj.layer;
+  } catch(e) {
+    // trying to access the layer property of a placed item that is used as an opacity mask
+    // throws an error (as of Illustrator 2018)
+  }
+  return hasLayer;
+}
+
 function artboardContainsVisibleRasterImage(ab) {
   function test(item) {
-    return objectOverlapsArtboard(item, ab) && !objectIsHidden(item);
+    // Calling objectHasLayer() prevents a crash caused by opacity masks created from linked rasters.
+    return objectHasLayer(item) && objectOverlapsArtboard(item, ab) && !objectIsHidden(item);
   }
   // TODO: verify that placed items are rasters
   return contains(doc.placedItems, test) || contains(doc.rasterItems, test);
