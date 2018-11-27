@@ -1,3 +1,6 @@
+### v0.78.1
+- Change sort order of option fields.
+
 ### v0.78.0
 - Fix a crash when the document contains an opacity mask created from a linked raster.
 

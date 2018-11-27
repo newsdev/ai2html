@@ -45,7 +45,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = "0.78.0";
+var scriptVersion = "0.78.1";
 
 // ================================================
 // ai2html and config settings
@@ -105,13 +105,13 @@ var nytBaseSettings = {
   show_in_compatible_apps: {defaultValue: "yes", includeInSettingsBlock: true, includeInConfigFile: true},
   display_for_promotion_only: {defaultValue: "false", includeInSettingsBlock: true, includeInConfigFile: true},
   constrain_width_to_text_column: {defaultValue: "false", includeInSettingsBlock: true, includeInConfigFile: true},
+  compatibility: {defaultValue: "inline", includeInSettingsBlock: false, includeInConfigFile: true},
+  interactive_size: {defaultValue: "medium", includeInSettingsBlock: true, includeInConfigFile: true},
   scoop_publish_fields: {defaultValue: "true", includeInSettingsBlock: false, includeInConfigFile: true},
   scoop_asset_id: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true},
   scoop_username: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true},
   scoop_slug: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true},
-  scoop_external_edit_key: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true},
-  compatibility: {defaultValue: "inline", includeInSettingsBlock: false, includeInConfigFile: true},
-  interactive_size: {defaultValue: "medium", includeInSettingsBlock: true, includeInConfigFile: true}
+  scoop_external_edit_key: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: true}
 };
 
 var defaultBaseSettings = {
@@ -163,14 +163,13 @@ var defaultBaseSettings = {
   show_in_compatible_apps: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
   display_for_promotion_only: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
   constrain_width_to_text_column: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
+  compatibility: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
+  interactive_size: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
   scoop_publish_fields: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
   scoop_asset_id: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
   scoop_username: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
   scoop_slug: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
-  scoop_external_edit_key: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
-  compatibility: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
-  interactive_size: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false}
-
+  scoop_external_edit_key: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false}
 };
 
 // End of settings blocks copied from Google Spreadsheet.
