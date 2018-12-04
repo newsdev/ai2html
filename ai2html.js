@@ -3257,7 +3257,7 @@ function generateImageHtml(imgFile, imgId, imgClass, imgStyle, ab, settings) {
     // (<img> element requires a src attribute, according to spec.)
     src = 'data:image/gif;base64,R0lGODlhCgAKAIAAAB8fHwAAACH5BAEAAAAALAAAAAAKAAoAAAIIhI+py+0PYysAOw==';
   }
-  html += ' src="' + src + '"/>\r';
+  html += ' src="' + src + '" alt="" />\r';
   return html;
 }
 
