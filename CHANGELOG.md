@@ -1,3 +1,6 @@
+### v0.79.0
+- Add alt attribute to artboard images.
+
 ### v0.78.1
 - Change sort order of option fields.
 

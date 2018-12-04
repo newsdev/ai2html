@@ -50,6 +50,11 @@ function _File(path) {
     return match ? match[1] : "";
   };
 
+  this.read = function() {
+    this.open('r');
+    return content;
+  };
+
   this.close = function() {
     reset();
   };

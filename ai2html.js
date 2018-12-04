@@ -45,7 +45,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = "0.78.1";
+var scriptVersion = "0.79.0";
 
 // ================================================
 // ai2html and config settings
@@ -71,6 +71,7 @@ var nytBaseSettings = {
   html_output_extension: {defaultValue: ".html", includeInSettingsBlock: false, includeInConfigFile: false},
   image_output_path: {defaultValue: "../public/_assets/", includeInSettingsBlock: false, includeInConfigFile: false},
   image_source_path: {defaultValue: null, includeInSettingsBlock: false, includeInConfigFile: false},
+  image_alt_text: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
   cache_bust_token: {defaultValue: null, includeInSettingsBlock: false, includeInConfigFile: false},
   create_config_file: {defaultValue: "false", includeInSettingsBlock: false, includeInConfigFile: false},
   config_file_path: {defaultValue: "../config.yml", includeInSettingsBlock: false, includeInConfigFile: false},
@@ -129,6 +130,7 @@ var defaultBaseSettings = {
   html_output_extension: {defaultValue: ".html", includeInSettingsBlock: true, includeInConfigFile: false},
   image_output_path: {defaultValue: "", includeInSettingsBlock: true, includeInConfigFile: false},
   image_source_path: {defaultValue: null, includeInSettingsBlock: false, includeInConfigFile: false},
+  image_alt_text: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
   cache_bust_token: {defaultValue: null, includeInSettingsBlock: false, includeInConfigFile: false},
   create_config_file: {defaultValue: "false", includeInSettingsBlock: false, includeInConfigFile: false},
   config_file_path: {defaultValue: "", includeInSettingsBlock: false, includeInConfigFile: false},
@@ -179,8 +181,8 @@ var defaultBaseSettings = {
 // ================================================
 
 // html entity substitution
-// not used ==> ["\x22","&quot;"], ["\x3C","&lt;"], ["\x3E","&gt;"], ["\x26","&amp;"],
-var htmlCharacterCodes = [["\xA0","&nbsp;"], ["\xA1","&iexcl;"], ["\xA2","&cent;"], ["\xA3","&pound;"], ["\xA4","&curren;"], ["\xA5","&yen;"], ["\xA6","&brvbar;"], ["\xA7","&sect;"], ["\xA8","&uml;"], ["\xA9","&copy;"], ["\xAA","&ordf;"], ["\xAB","&laquo;"], ["\xAC","&not;"], ["\xAD","&shy;"], ["\xAE","&reg;"], ["\xAF","&macr;"], ["\xB0","&deg;"], ["\xB1","&plusmn;"], ["\xB2","&sup2;"], ["\xB3","&sup3;"], ["\xB4","&acute;"], ["\xB5","&micro;"], ["\xB6","&para;"], ["\xB7","&middot;"], ["\xB8","&cedil;"], ["\xB9","&sup1;"], ["\xBA","&ordm;"], ["\xBB","&raquo;"], ["\xBC","&frac14;"], ["\xBD","&frac12;"], ["\xBE","&frac34;"], ["\xBF","&iquest;"], ["\xD7","&times;"], ["\xF7","&divide;"], ["\u0192","&fnof;"], ["\u02C6","&circ;"], ["\u02DC","&tilde;"], ["\u2002","&ensp;"], ["\u2003","&emsp;"], ["\u2009","&thinsp;"], ["\u200C","&zwnj;"], ["\u200D","&zwj;"], ["\u200E","&lrm;"], ["\u200F","&rlm;"], ["\u2013","&ndash;"], ["\u2014","&mdash;"], ["\u2018","&lsquo;"], ["\u2019","&rsquo;"], ["\u201A","&sbquo;"], ["\u201C","&ldquo;"], ["\u201D","&rdquo;"], ["\u201E","&bdquo;"], ["\u2020","&dagger;"], ["\u2021","&Dagger;"], ["\u2022","&bull;"], ["\u2026","&hellip;"], ["\u2030","&permil;"], ["\u2032","&prime;"], ["\u2033","&Prime;"], ["\u2039","&lsaquo;"], ["\u203A","&rsaquo;"], ["\u203E","&oline;"], ["\u2044","&frasl;"], ["\u20AC","&euro;"], ["\u2111","&image;"], ["\u2113",""], ["\u2116",""], ["\u2118","&weierp;"], ["\u211C","&real;"], ["\u2122","&trade;"], ["\u2135","&alefsym;"], ["\u2190","&larr;"], ["\u2191","&uarr;"], ["\u2192","&rarr;"], ["\u2193","&darr;"], ["\u2194","&harr;"], ["\u21B5","&crarr;"], ["\u21D0","&lArr;"], ["\u21D1","&uArr;"], ["\u21D2","&rArr;"], ["\u21D3","&dArr;"], ["\u21D4","&hArr;"], ["\u2200","&forall;"], ["\u2202","&part;"], ["\u2203","&exist;"], ["\u2205","&empty;"], ["\u2207","&nabla;"], ["\u2208","&isin;"], ["\u2209","&notin;"], ["\u220B","&ni;"], ["\u220F","&prod;"], ["\u2211","&sum;"], ["\u2212","&minus;"], ["\u2217","&lowast;"], ["\u221A","&radic;"], ["\u221D","&prop;"], ["\u221E","&infin;"], ["\u2220","&ang;"], ["\u2227","&and;"], ["\u2228","&or;"], ["\u2229","&cap;"], ["\u222A","&cup;"], ["\u222B","&int;"], ["\u2234","&there4;"], ["\u223C","&sim;"], ["\u2245","&cong;"], ["\u2248","&asymp;"], ["\u2260","&ne;"], ["\u2261","&equiv;"], ["\u2264","&le;"], ["\u2265","&ge;"], ["\u2282","&sub;"], ["\u2283","&sup;"], ["\u2284","&nsub;"], ["\u2286","&sube;"], ["\u2287","&supe;"], ["\u2295","&oplus;"], ["\u2297","&otimes;"], ["\u22A5","&perp;"], ["\u22C5","&sdot;"], ["\u2308","&lceil;"], ["\u2309","&rceil;"], ["\u230A","&lfloor;"], ["\u230B","&rfloor;"], ["\u2329","&lang;"], ["\u232A","&rang;"], ["\u25CA","&loz;"], ["\u2660","&spades;"], ["\u2663","&clubs;"], ["\u2665","&hearts;"], ["\u2666","&diams;"]];
+var basicCharacterReplacements = [["\x26","&amp;"], ["\x22","&quot;"], ["\x3C","&lt;"], ["\x3E","&gt;"]];
+var extraCharacterReplacements = [["\xA0","&nbsp;"], ["\xA1","&iexcl;"], ["\xA2","&cent;"], ["\xA3","&pound;"], ["\xA4","&curren;"], ["\xA5","&yen;"], ["\xA6","&brvbar;"], ["\xA7","&sect;"], ["\xA8","&uml;"], ["\xA9","&copy;"], ["\xAA","&ordf;"], ["\xAB","&laquo;"], ["\xAC","&not;"], ["\xAD","&shy;"], ["\xAE","&reg;"], ["\xAF","&macr;"], ["\xB0","&deg;"], ["\xB1","&plusmn;"], ["\xB2","&sup2;"], ["\xB3","&sup3;"], ["\xB4","&acute;"], ["\xB5","&micro;"], ["\xB6","&para;"], ["\xB7","&middot;"], ["\xB8","&cedil;"], ["\xB9","&sup1;"], ["\xBA","&ordm;"], ["\xBB","&raquo;"], ["\xBC","&frac14;"], ["\xBD","&frac12;"], ["\xBE","&frac34;"], ["\xBF","&iquest;"], ["\xD7","&times;"], ["\xF7","&divide;"], ["\u0192","&fnof;"], ["\u02C6","&circ;"], ["\u02DC","&tilde;"], ["\u2002","&ensp;"], ["\u2003","&emsp;"], ["\u2009","&thinsp;"], ["\u200C","&zwnj;"], ["\u200D","&zwj;"], ["\u200E","&lrm;"], ["\u200F","&rlm;"], ["\u2013","&ndash;"], ["\u2014","&mdash;"], ["\u2018","&lsquo;"], ["\u2019","&rsquo;"], ["\u201A","&sbquo;"], ["\u201C","&ldquo;"], ["\u201D","&rdquo;"], ["\u201E","&bdquo;"], ["\u2020","&dagger;"], ["\u2021","&Dagger;"], ["\u2022","&bull;"], ["\u2026","&hellip;"], ["\u2030","&permil;"], ["\u2032","&prime;"], ["\u2033","&Prime;"], ["\u2039","&lsaquo;"], ["\u203A","&rsaquo;"], ["\u203E","&oline;"], ["\u2044","&frasl;"], ["\u20AC","&euro;"], ["\u2111","&image;"], ["\u2113",""], ["\u2116",""], ["\u2118","&weierp;"], ["\u211C","&real;"], ["\u2122","&trade;"], ["\u2135","&alefsym;"], ["\u2190","&larr;"], ["\u2191","&uarr;"], ["\u2192","&rarr;"], ["\u2193","&darr;"], ["\u2194","&harr;"], ["\u21B5","&crarr;"], ["\u21D0","&lArr;"], ["\u21D1","&uArr;"], ["\u21D2","&rArr;"], ["\u21D3","&dArr;"], ["\u21D4","&hArr;"], ["\u2200","&forall;"], ["\u2202","&part;"], ["\u2203","&exist;"], ["\u2205","&empty;"], ["\u2207","&nabla;"], ["\u2208","&isin;"], ["\u2209","&notin;"], ["\u220B","&ni;"], ["\u220F","&prod;"], ["\u2211","&sum;"], ["\u2212","&minus;"], ["\u2217","&lowast;"], ["\u221A","&radic;"], ["\u221D","&prop;"], ["\u221E","&infin;"], ["\u2220","&ang;"], ["\u2227","&and;"], ["\u2228","&or;"], ["\u2229","&cap;"], ["\u222A","&cup;"], ["\u222B","&int;"], ["\u2234","&there4;"], ["\u223C","&sim;"], ["\u2245","&cong;"], ["\u2248","&asymp;"], ["\u2260","&ne;"], ["\u2261","&equiv;"], ["\u2264","&le;"], ["\u2265","&ge;"], ["\u2282","&sub;"], ["\u2283","&sup;"], ["\u2284","&nsub;"], ["\u2286","&sube;"], ["\u2287","&supe;"], ["\u2295","&oplus;"], ["\u2297","&otimes;"], ["\u22A5","&perp;"], ["\u22C5","&sdot;"], ["\u2308","&lceil;"], ["\u2309","&rceil;"], ["\u230A","&lfloor;"], ["\u230B","&rfloor;"], ["\u2329","&lang;"], ["\u232A","&rang;"], ["\u25CA","&loz;"], ["\u2660","&spades;"], ["\u2663","&clubs;"], ["\u2665","&hearts;"], ["\u2666","&diams;"]];
 
 // Add to the fonts array to make the script work with your own custom fonts.
 // To make it easier to add to this array, use the "fonts" worksheet of this Google Spreadsheet:
@@ -699,14 +701,25 @@ function makeKeyword(text) {
   return text.replace( /[^A-Za-z0-9_\-]+/g , "_" );
 }
 
+// TODO: don't convert ampersand in pre-existing entities (e.g. "&quot;" -> "&amp;quot;")
+function encodeHtmlEntities(text) {
+  return replaceChars(text, basicCharacterReplacements.concat(extraCharacterReplacements));
+}
+
 function cleanHtmlText(text) {
-  for (var i=0; i < htmlCharacterCodes.length; i++) {
-    var charCode = htmlCharacterCodes[i];
-    if (text.indexOf(charCode[0]) > -1) {
-      text = text.replace(new RegExp(charCode[0],'g'), charCode[1]);
+  // Characters "<>& are not replaced
+  return replaceChars(text, extraCharacterReplacements);
+}
+
+function replaceChars(str, replacements) {
+  var charCode;
+  for (var i=0, n=replacements.length; i < n; i++) {
+    charCode = replacements[i];
+    if (str.indexOf(charCode[0]) > -1) {
+      str = str.replace(new RegExp(charCode[0],'g'), charCode[1]);
     }
   }
-  return text;
+  return str;
 }
 
 function straightenCurlyQuotesInsideAngleBrackets(text) {
@@ -1110,6 +1123,7 @@ function exportFunctionsForTesting() {
     readYamlConfigFile,
     applyTemplate,
     cleanHtmlText,
+    encodeHtmlEntities,
     addEnclosingTag,
     stripTag,
     cleanCodeBlock,
@@ -3239,6 +3253,7 @@ function captureArtboardImage(imgName, ab, masks, settings) {
 function generateImageHtml(imgFile, imgId, imgClass, imgStyle, ab, settings) {
   var abPos = convertAiBounds(ab.artboardRect),
       imgDir = settings.image_source_path,
+      imgAlt = encodeHtmlEntities(settings.image_alt_text || ''),
       html, src;
   if (imgDir === null) {
     imgDir = settings.image_output_path;
@@ -3247,7 +3262,7 @@ function generateImageHtml(imgFile, imgId, imgClass, imgStyle, ab, settings) {
   if (settings.cache_bust_token) {
     src += '?v=' + settings.cache_bust_token;
   }
-  html = '\t\t<img id="' + imgId + '" class="' + imgClass + '"';
+  html = '\t\t<img id="' + imgId + '" class="' + imgClass + '" alt="' + imgAlt + '"';
   if (imgStyle) {
     html += ' style="' + imgStyle + '"';
   }

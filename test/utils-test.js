@@ -146,6 +146,12 @@ describe('Utility function tests', function() {
     });
   });
 
+  describe('encodeHtmlEntities()', function() {
+    it('Replaces some chars with HTML entities', function() {
+      assert.equal(lib.encodeHtmlEntities('A & B "go" <together>'), 'A &amp; B &quot;go&quot; &lt;together&gt;');
+    });
+  });
+
   describe('pathJoin()', function() {
     it('Adds fwd slash to separate directories', function() {
       assert.equal(lib.pathJoin('ai', 'output'), 'ai/output');
