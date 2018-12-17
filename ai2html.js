@@ -45,7 +45,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = "0.79.0";
+var scriptVersion = "0.80.0";
 
 // ================================================
 // ai2html and config settings
@@ -103,7 +103,7 @@ var defaultSettings = {
   //   compatibility, interactive_size, scoop_publish_fields, scoop_asset_id,
   //   scoop_username, scoop_slug, scoop_external_edit_key
 
-  // List of settings to include in the .ai file text block
+  // List of settings to include in the "ai2html-settings" text block
   "settings_block": [
     "settings_version",
     "image_format",

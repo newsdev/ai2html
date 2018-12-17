@@ -1,3 +1,6 @@
+### v0.80.0
+- Changed the format of the program settings object in ai2html.js to match the format of external ai2html-config.json config files.
+
 ### v0.79.0
 - Add alt attribute to artboard images.
 
