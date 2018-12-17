@@ -45,7 +45,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = "0.80.0";
+var scriptVersion = "0.80.1";
 
 // ================================================
 // ai2html and config settings
@@ -57,7 +57,7 @@ var defaultSettings = {
   "settings_version": scriptVersion,
   "create_promo_image": false,
   "promo_image_width": 1024,
-  "image_format": "auto",    // Options: auto, png, png24, jpg, svg
+  "image_format": ["auto"],  // Options: auto, png, png24, jpg, svg
   "write_image_files": true,
   "responsiveness": "fixed", // Options: fixed, dynamic
   "max_width": "",
