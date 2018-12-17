@@ -61,6 +61,7 @@ Move the `ai2html.js` file into the Illustrator folder where scripts are located
 
 There are several ways of customizing the output of the script:
 
+- [Config files](#config-files)
 - [Special text blocks](#special-text-blocks)
   - [ai2html-settings](#ai2html-settings)
   - [ai2html-css](#ai2html-css)
@@ -71,6 +72,9 @@ There are several ways of customizing the output of the script:
 - [Artboards palette](#artboards-palette)
 - [Attributes palette](#attributes-palette)
 
+#### Config files
+
+The script will look for files named `ai2html-config.json` in two locations: the Illustrator scripts folder where the `ai2html.js` file is located and the folder containing your `.ai` file. Any settings contained in these files will override the default program settings, and will be overridden by any settings contained in the `.ai` file (see "Special text blocks" below). Configuration data should match the format of the `defaultSettings` object near the top of the `ai2html.js` file.
 
 #### Special text blocks
 
@@ -78,7 +82,7 @@ The script recognizes five special types of text blocks. The first line of the t
 
 ##### `ai2html-settings`
 
-Most of the script’s options are set in the settings text block. When you run ai2html for the first time in your ai file, the script will place a settings text block to the upper left of all your artboards. Here is a description of the settings:
+When you run ai2html for the first time in your ai file, the script will place a settings text block to the upper left of all your artboards. Here is a description of the settings:
 
 *Options that are included in the settings text block by default:*
 
@@ -164,8 +168,6 @@ Most of the script’s options are set in the settings text block. When you run 
   - <span style="font-variant: small-caps">Possible values</span>: Any string
   - <span style="font-variant: small-caps">Default</span>: `[ai file name]`
   - By default ai2html will use the filename of your Illustrator document as the project name but you can specify a `project_name` to overwrite this. The project name will be used to name the exported HTML and image files.
-
-*If you want to edit the script to change the default settings, you may find it helpful to make a copy of this [Google spreadsheet](http://bit.ly/1BP86RH) which makes it easier to view and edit the settings.*
 
 ##### `ai2html-css`
 
@@ -287,7 +289,7 @@ Paragraphs are styled using css classes that are consolidated across each artboa
 
 ## Using fonts other than Arial and Georgia
 
-If you want to use fonts other than Arial and Georgia, you can add them to the `fonts` array in the `constants` section of the script. You will need to know how Illustrator refers to the font. Enter this name as the `aifont` property.
+If you want to use fonts other than Arial and Georgia, you can add them to a `fonts` array in an `ai2html-config.json` config file (see above). You will need to know how Illustrator refers to the font. Enter this name as the `aifont` property.
 
 You can find the names that Illustrator uses for all the fonts used in your document by choosing `Find Font…` from the `Type` menu. You can also use the [aifontname script](https://raw.githubusercontent.com/newsdev/ai2html/master/utilities/aifontname.js), which will tell you the fonts used for selected text blocks.
 
@@ -297,8 +299,6 @@ font-family: arial,helvetica,sans-serif;
 font-weight: bold;
 font-style: italic;
 ```
-
-You may find it helpful to make a copy of this [Google spreadsheet](http://bit.ly/1BP86RH). The `fonts` worksheet can make it easier to create additional font objects to add to the array.
 
 
 ## Contributing to this project
