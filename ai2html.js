@@ -45,7 +45,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = "0.80.1";
+var scriptVersion = "0.81.0";
 
 // ================================================
 // ai2html and config settings
@@ -418,9 +418,6 @@ try {
     createSettingsBlock(docSettings);
   }
 
-  // warn about duplicate artboard names
-  validateArtboardNames();
-
   // render the document
   render(docSettings, textBlockData.code);
 } catch(e) {
@@ -465,6 +462,9 @@ if (errors.length > 0) {
 // =================================
 
 function render(settings, customBlocks) {
+  // warn about duplicate artboard names
+  validateArtboardNames(docSettings);
+
   // Fix for issue #50
   // If a text range is selected when the script runs, it interferes
   // with script-driven selection. The fix is to clear this kind of selection.
@@ -494,12 +494,14 @@ function render(settings, customBlocks) {
   progressBar = new ProgressBar({name: "Ai2html progress", steps: calcProgressBarSteps()});
   unlockObjects(); // Unlock containers and clipping masks
   var masks = findMasks(); // identify all clipping masks and their contents
-  var artboardContent = {html: "", css: "", js: ""};
+  var fileContentArr = [];
 
   forEachUsableArtboard(function(activeArtboard, abIndex) {
     var abSettings = getArtboardSettings(activeArtboard);
-    var docArtboardName = getArtboardFullName(activeArtboard);
+    var docArtboardName = getDocumentArtboardName(activeArtboard);
     var textFrames, textData, imageData;
+    var artboardContent = {html: "", css: "", js: ""};
+
     doc.artboards.setActiveArtboardIndex(abIndex);
 
     // ========================
@@ -539,26 +541,21 @@ function render(settings, customBlocks) {
        "\t</div>\r";
     artboardContent.css += generateArtboardCss(activeArtboard, textData.styles, settings);
 
-    //=====================================
-    // Output html file here if doing a file for every artboard
-    //=====================================
-
-    if (settings.output=="multiple-files") {
-      addCustomContent(artboardContent, customBlocks);
-      generateOutputHtml(artboardContent, docArtboardName, settings);
-      artboardContent = {html: "", css: "", js: ""};
-    }
+    assignArtboardContentToFile(
+        settings.output == "one-file" ? getDocumentName() : docArtboardName,
+        artboardContent,
+        fileContentArr);
 
   }); // end artboard loop
 
   //=====================================
-  // Output html file here if doing one file for all artboards
+  // Output html file(s)
   //=====================================
 
-  if (settings.output=="one-file") {
-    addCustomContent(artboardContent, customBlocks);
-    generateOutputHtml(artboardContent, getDocumentName(), settings);
-  }
+  forEach(fileContentArr, function(fileContent) {
+    addCustomContent(fileContent, customBlocks);
+    generateOutputHtml(fileContent, fileContent.name, settings);
+  });
 
   //=====================================
   // Post-output operations
@@ -577,7 +574,6 @@ function render(settings, customBlocks) {
   }
 
 } // end render()
-
 
 // =================================
 // JS utility functions
@@ -1185,12 +1181,21 @@ function isTestedIllustratorVersion(version) {
   return majorNum >= 18 && majorNum <= 22; // Illustrator CC 2014 through 2018
 }
 
-function validateArtboardNames() {
+function validateArtboardNames(settings) {
   var names = [];
   forEachUsableArtboard(function(ab) {
     var name = getArtboardName(ab);
-    if (contains(names, name)) {
-      warnOnce("Artboards should have unique names. \"" + name + "\" is duplicated.");
+    var isDupe = contains(names, name);
+    if (isDupe) {
+      // kludge: modify settings if same-name artboards are found
+      // (used to prevent duplicate image names)
+      settings.grouped_artboards = true;
+      if (settings.output == 'one-file') {
+        warnOnce("Artboards should have unique names. \"" + name + "\" is duplicated.");
+      } else {
+        warnOnce("Found a group of artboards named \"" + name + "\".");
+      }
+
     }
     names.push(name);
   });
@@ -1658,7 +1663,15 @@ function getDocumentName(customName) {
   return makeKeyword(name);
 }
 
-function getArtboardFullName(ab) {
+function getArtboardFullName(ab, settings) {
+  var suffix = '';
+  if (settings.grouped_artboards) {
+    suffix = "-" + Math.round(convertAiBounds(ab.artboardRect).width);
+  }
+  return getDocumentArtboardName(ab) + suffix;
+}
+
+function getDocumentArtboardName(ab) {
   return getDocumentName() + "-" + getArtboardName(ab);
 }
 
@@ -3011,12 +3024,12 @@ function getCircleData(points) {
 // ai2html image functions
 // =================================
 
-function getArtboardImageName(ab) {
-  return getArtboardFullName(ab);
+function getArtboardImageName(ab, settings) {
+  return getArtboardFullName(ab, settings);
 }
 
-function getLayerImageName(lyr, ab) {
-  return getArtboardImageName(ab) + "-" + getLayerName(lyr);
+function getLayerImageName(lyr, ab, settings) {
+  return getArtboardImageName(ab, settings) + "-" + getLayerName(lyr);
 }
 
 function getImageId(imgName) {
@@ -3076,7 +3089,7 @@ function artboardContainsVisibleRasterImage(ab) {
 
 // Generate images and return HTML embed code
 function convertArtItems(activeArtboard, textFrames, masks, settings) {
-  var imgName = getArtboardImageName(activeArtboard);
+  var imgName = getArtboardImageName(activeArtboard, settings);
   var hideTextFrames = !isTrue(settings.testing_mode);
   var textFrameCount = textFrames.length;
   var html = "";
@@ -3110,7 +3123,7 @@ function convertArtItems(activeArtboard, textFrames, masks, settings) {
   if (svgLayers.length > 0) {
     svgNames = [];
     forEach(svgLayers, function(lyr) {
-      var svgName = uniqAssetName(getLayerImageName(lyr, activeArtboard), svgNames);
+      var svgName = uniqAssetName(getLayerImageName(lyr, activeArtboard, settings), svgNames);
       var svgHtml = exportImage(svgName, 'svg', activeArtboard, masks, lyr, settings);
       if (svgHtml) {
         svgNames.push(svgName);
@@ -3607,8 +3620,20 @@ function injectCSSinSVG(content, css) {
 // ai2html output generation functions
 // ===================================
 
+// Add ab content to an output
+function assignArtboardContentToFile(name, abData, outputArr) {
+  var obj = find(outputArr, function(o) {return o.name == name;});
+  if (!obj) {
+    obj = {name: name, html: "", js: "", css: ""};
+    outputArr.push(obj);
+  }
+  obj.html += abData.html;
+  obj.js += abData.js;
+  obj.css += abData.css;
+}
+
 function generateArtboardDiv(ab, breakpoints, settings) {
-  var divId = nameSpace + getArtboardFullName(ab);
+  var divId = nameSpace + getArtboardFullName(ab, settings);
   var classnames = nameSpace + "artboard";
   var widthRange = getArtboardWidthRange(ab);
   var abBox = convertAiBounds(ab.artboardRect);
@@ -3653,7 +3678,7 @@ function findShowClassesForArtboard(ab, breakpoints) {
 function generateArtboardCss(ab, textClasses, settings) {
   var t3 = '\t',
       t4 = t3 + '\t',
-      abId = "#" + nameSpace + getArtboardFullName(ab),
+      abId = "#" + nameSpace + getArtboardFullName(ab, settings),
       css = "";
   css += t3 + abId + " {\r";
   css += t4 + "position:relative;\r";
@@ -3786,6 +3811,7 @@ function getResizerScript() {
       artboards.forEach(function(el) {
         var minwidth = el.getAttribute("data-min-width"),
             maxwidth = el.getAttribute("data-max-width");
+        console.log(id, minwidth, maxwidth, 'container width:', width);
         if (+minwidth <= width && (+maxwidth >= width || maxwidth === null)) {
           if (showImages) {
             selectElements("." + nameSpace + "aiImg", el).forEach(updateImgSrc);

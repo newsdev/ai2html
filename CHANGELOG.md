@@ -1,3 +1,6 @@
+### v0.81.0
+- Group same-named together; keep groups together when "out" setting is "multiple-files".
+
 ### v0.80.1
 - Fix for image_format setting error.
 
