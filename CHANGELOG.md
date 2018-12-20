@@ -1,3 +1,6 @@
+### v0.81.1
+- Fix settings bug causing some images to be low-res.
+
 ### v0.81.0
 - Group same-named together; keep groups together when "out" setting is "multiple-files".
 

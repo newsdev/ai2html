@@ -45,7 +45,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = "0.81.0";
+var scriptVersion = "0.81.1";
 
 // ================================================
 // ai2html and config settings
@@ -3366,12 +3366,14 @@ function createPromoImage(settings) {
 function getOutputImagePixelRatio(width, height, format, doubleres) {
   // Maximum pixel sizes are based on mobile Safari limits
   // TODO: check to see if these numbers are still relevant
+  var forceDouble = doubleres == "always";
+  var preferDouble = isTrue(doubleres);
   var maxPngSize = 3*1024*1024;
   var maxJpgSize = 32*1024*1024;
-  var k = (doubleres == "always" || doubleres == "yes") ? 2 : 1;
+  var k = preferDouble || forceDouble ? 2 : 1;
   var pixels = width * height * k * k;
 
-  if (doubleres == "yes" && width < 945) { // assume wide images are desktop-only
+  if (preferDouble && width < 945) { // assume wide images are desktop-only
     // use single res if image might run into mobile browser limits
     if (((format == "png" || format == "png24") && pixels > maxPngSize) ||
         (format == "jpg" && pixels > maxJpgSize)) {
