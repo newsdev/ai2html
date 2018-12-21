@@ -1,3 +1,6 @@
+### v0.82.2
+- NYT bug fix: show_in_compatible apps should be exported as "yes" or "no"
+
 ### v0.81.1
 - Fix settings bug causing some images to be low-res.
 

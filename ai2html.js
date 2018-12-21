@@ -45,7 +45,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = "0.81.1";
+var scriptVersion = "0.81.2";
 
 // ================================================
 // ai2html and config settings
@@ -3767,6 +3767,7 @@ function convertSettingsToYaml(settings) {
     if (key == "show_in_compatible_apps") {
       // special case: this setting takes quoted "yes" or "no"
       useQuotes = true; // assuming value is 'yes' or 'no';
+      value = isTrue(value) ? "yes" : "no";
     }
     if (useQuotes) {
       value = JSON.stringify(value); // wrap in quotes and escape internal quotes
