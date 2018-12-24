@@ -1,3 +1,6 @@
+### v0.81.4
+- NYT bug fix: image output directory
+
 ### v0.81.3
 - NYT bug fix: fixed html output directory
 
