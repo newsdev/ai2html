@@ -45,7 +45,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = "0.81.2";
+var scriptVersion = "0.81.3";
 
 // ================================================
 // ai2html and config settings
@@ -149,7 +149,6 @@ var defaultSettings = {
 // These settings override the default settings in NYT mode
 var nytOverrideSettings = {
   "html_output_path": "../src/",
-  "html_output_path": "/ai2html-output/",
   "config_file_path": "../config.yml",
   "use_lazy_loader": true,
   "include_resizer_css_js": true,

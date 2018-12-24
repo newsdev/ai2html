@@ -1,4 +1,7 @@
-### v0.82.2
+### v0.81.3
+- NYT bug fix: fixed html output directory
+
+### v0.81.2
 - NYT bug fix: show_in_compatible apps should be exported as "yes" or "no"
 
 ### v0.81.1
