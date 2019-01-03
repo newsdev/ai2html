@@ -7,7 +7,7 @@
     "test": "mocha --check-leaks",
     "prepublishOnly": "./prepublish.sh",
     "lint": "eslint ai2html*.js test/**/*js",
-    "lintFix": "eslint ai2html*.js test/**/*js --fix"
+    "lintFix": "eslint ai2html.js test/**/*js --fix"
   },
   "repository": {
     "type": "git",
