@@ -14,7 +14,7 @@
     "confirm": true,
     "Folder": true,
     "File": true,
-    "DocumentColorspace": true,
+    "DocumentColorSpace": true,
     "IllustratorSaveOptions": true,
     "ZOrderMethod": true,
     "TextType": true,
@@ -26,12 +26,15 @@
     "ExportOptionsPNG8": true,
     "ExportOptionsPNG24": true,
     "ExportOptionsJPEG": true,
+    "ExportOptionsSVG": true,
     "SVGFontSubsetting": true,
     "SVGDocumentEncoding": true,
     "SVGDTDVersion": true,
     "SVGCSSPropertyLocation": true,
     "SaveOptions": true,
     "Event": true,
-    "$": true
+    "$": true,
+    "it": true,
+    "describe": true
   }
 }
