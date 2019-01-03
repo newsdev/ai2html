@@ -1,0 +1,7 @@
+{
+  "extends": ["eslint:recommended", "plugin:es5/no-es2015"],
+  "rules": {
+    "semi": ["error", "always"],
+    "quotes": ["error", "double"]
+  }
+}
