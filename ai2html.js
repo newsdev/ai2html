@@ -32,6 +32,9 @@
 // - Go to the folder containing your Illustrator file. Inside will be a folder called ai2html-output.
 // - Open the html files in your browser to preview your output.
 
+// Globals available from Illustrator
+// https://www.adobe.com/devnet/illustrator/scripting.html
+
 function main() {
 // Enclosing scripts in a named function (and not an anonymous, self-executing
 // function) has been recommended as a way to minimise intermittent "MRAP" errors.
