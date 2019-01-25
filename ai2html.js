@@ -45,7 +45,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = "0.81.4";
+var scriptVersion = "0.81.5";
 
 // ================================================
 // ai2html and config settings
@@ -363,6 +363,7 @@ var nameSpace = "g-"; // TODO: add to settings
 var feedback = [];
 var warnings = [];
 var errors   = [];
+var oneTimeWarnings = [];
 var startTime = +new Date();
 
 var textFramesToUnhide = [];
@@ -1038,9 +1039,21 @@ function formatError(e) {
 // display debugging message in completion alert box
 // (in debug mode)
 function message() {
+  feedback.push(concatMessages(arguments));
+}
+
+function messageOnce() {
+  var msg = concatMessages(arguments);
+  if (!contains(oneTimeWarnings, msg)) {
+    message(msg);
+    oneTimeWarnings.push(id);
+  }
+}
+
+function concatMessages(args) {
   var msg = "", arg;
-  for (var i=0; i<arguments.length; i++) {
-    arg = arguments[i];
+  for (var i=0; i<args.length; i++) {
+    arg = args[i];
     if (msg.length > 0) msg += ' ';
     if (typeof arg == 'object') {
       try {
@@ -1054,8 +1067,9 @@ function message() {
       msg += arg;
     }
   }
-  feedback.push(msg);
+  return msg;
 }
+
 
 function warn(msg) {
   warnings.push(msg);
@@ -1067,11 +1081,9 @@ function error(msg) {
   throw e;
 }
 
-var oneTimeWarnings;
 // id: optional identifier, for cases when the text for this type of warning may vary.
 function warnOnce(msg, id) {
   id = id || msg;
-  oneTimeWarnings = oneTimeWarnings || [];
   if (!contains(oneTimeWarnings, id)) {
     warn(msg);
     oneTimeWarnings.push(id);
@@ -1178,7 +1190,7 @@ function exportFunctionsForTesting() {
 
 function isTestedIllustratorVersion(version) {
   var majorNum = parseInt(version);
-  return majorNum >= 18 && majorNum <= 22; // Illustrator CC 2014 through 2018
+  return majorNum >= 18 && majorNum <= 23; // Illustrator CC 2014 through 2019
 }
 
 function validateArtboardNames(settings) {
@@ -3814,7 +3826,6 @@ function getResizerScript() {
       artboards.forEach(function(el) {
         var minwidth = el.getAttribute("data-min-width"),
             maxwidth = el.getAttribute("data-max-width");
-        console.log(id, minwidth, maxwidth, 'container width:', width);
         if (+minwidth <= width && (+maxwidth >= width || maxwidth === null)) {
           if (showImages) {
             selectElements("." + nameSpace + "aiImg", el).forEach(updateImgSrc);

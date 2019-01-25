@@ -1,3 +1,7 @@
+### v0.81.5
+- Removed log message from resizer function
+- Removed "not tested" message for AI 2019
+
 ### v0.81.4
 - NYT bug fix: image output directory
 
