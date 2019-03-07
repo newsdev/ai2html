@@ -1,8 +1,10 @@
 test
 release.sh
+prepublish.sh
 sample files
 utilities
 \#*#
 *~
 __*
 .DS_Store
+.eslintrc.json

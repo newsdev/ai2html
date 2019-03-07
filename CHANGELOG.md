@@ -1,3 +1,6 @@
+### v0.81.6
+- Fixed misleading output message for inline SVG layer output
+
 ### v0.81.5
 - Removed log message from resizer function
 - Removed "not tested" message for AI 2019

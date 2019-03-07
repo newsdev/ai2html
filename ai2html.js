@@ -45,7 +45,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = "0.81.5";
+var scriptVersion = "0.81.6";
 
 // ================================================
 // ai2html and config settings
@@ -1308,10 +1308,11 @@ function initDocumentSettings(textBlockSettings) {
   extendSettings(settings, readExternalSettings());
 
   // merge settings from text block
+  // TODO: consider parsing strings to booleans when relevant, (e.g. "false" -> false)
   if (textBlockSettings) {
     for (var key in textBlockSettings) {
       if (key in settings === false) {
-        warn("Settings block contains an unsupported parameter: " + key);
+        warn("Settings block contains an unused parameter: " + key);
       }
       settings[key] = textBlockSettings[key];
     }
@@ -1320,7 +1321,7 @@ function initDocumentSettings(textBlockSettings) {
 }
 
 function importNewYorkTimesSettings(settings) {
-  var configFilePath = docPath + '../config.yml'
+  var configFilePath = docPath + '../config.yml';
 
   // Check that we are in an NYT Preview project
   // If not, give NYT users the option of continuing with non-NYT settings
@@ -3202,33 +3203,39 @@ function exportImage(imgName, format, ab, masks, layer, settings) {
   // all images are now absolutely positioned (before, artboard images were
   // position:static to set the artboard height)
   var imgClass = nameSpace + 'aiImg ' + nameSpace + 'aiAbs';
-  var imgStyle = '';
-  var layers = null;
+  var svgInlineStyle, svgLayersArg;
   var created, html;
+
   if (format == 'svg') {
     if (layer) {
-      imgStyle = getLayerOpacityCSS(layer);
-      layers = [layer];
+      svgInlineStyle = getLayerOpacityCSS(layer);
+      svgLayersArg = [layer];
     }
-    created = exportSVG(outputPath, ab, masks, layers, settings);
+    created = exportSVG(outputPath, ab, masks, svgLayersArg, settings);
     if (!created) {
       return ''; // no image was created
     }
     rewriteSVGFile(outputPath, imgId);
 
-    if (layer) {
-      message('Exported a layer as ' + outputPath.replace(/.*\//, ''));
+    if (isTrue(settings.inline_svg)) {
+      html = generateInlineSvg(outputPath, imgClass, svgInlineStyle, settings);
+      if (layer) {
+        message('Generated inline SVG for layer [' + getLayerName(layer) + ']');
+      }
+    } else {
+      // generate link to external SVG file
+      html = generateImageHtml(imgFile, imgId, imgClass, svgInlineStyle, ab, settings);
+      if (layer) {
+        message('Exported an SVG layer as ' + outputPath.replace(/.*\//, ''));
+      }
     }
 
   } else {
+    // export raster image & generate link
     exportRasterImage(outputPath, ab, format, settings);
+    html = generateImageHtml(imgFile, imgId, imgClass, null, ab, settings);
   }
 
-  if (format == 'svg' && settings.inline_svg) {
-    html = generateInlineSvg(outputPath, imgClass, imgStyle, settings);
-  } else {
-    html = generateImageHtml(imgFile, imgId, imgClass, imgStyle, ab, settings);
-  }
   return html;
 }
 
