@@ -1270,6 +1270,10 @@ function initSpecialTextBlocks() {
     if (!type) return; // not a special block
     lines = stringToLines(thisFrame.contents);
     lines.shift(); // remove header
+    // Reset the name of any non-settings text boxes with name ai2html-settings
+    if (type != 'settings' && thisFrame.name == 'ai2html-settings') {
+      thisFrame.name = '';
+    }
     if (type == 'settings' || type == 'text') {
       settings = settings || {};
       if (type == 'settings') {
