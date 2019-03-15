@@ -1,3 +1,6 @@
+### v0.82.0
+- Added "render_text_as" setting, which takes "html" (the default) or "image"
+
 ### v0.81.6
 - Fixed misleading output message for inline SVG layer output
 
@@ -27,7 +30,7 @@
 - Changed the format of the program settings object in ai2html.js to match the format of external ai2html-config.json config files.
 
 ### v0.79.0
-- Add alt attribute to artboard images.
+- Added alt attribute to artboard images.
 
 ### v0.78.1
 - Change sort order of option fields.
@@ -53,14 +56,14 @@
 - Minor NYT-specific output changes.
 
 ### v0.73.0
-- Add data-name= properties to div symbols if they are named in Illustrator.
+- Added data-name= properties to div symbols if they are named in Illustrator.
 
 ### v0.72.3
-- Add class containing layer name to symbol layer containers.
+- Added class containing layer name to symbol layer containers.
 
 ### v0.72.2
 - Fix glitches with rendering to divs (flickering lines, rectangle detection).
-- Add support for npm publish
+- Added support for npm publish
 
 ### v0.72.1
 - Load artboard image immediately if it intersects the browser viewport.

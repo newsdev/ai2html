@@ -45,7 +45,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = "0.81.6";
+var scriptVersion = "0.82.0";
 
 // ================================================
 // ai2html and config settings
@@ -86,10 +86,11 @@ var defaultSettings = {
   "inline_svg": false, // Embed background image SVG in HTML instead of loading a file
   "svg_id_prefix": "", // Prefix SVG ids with a string to disambiguate from other ids on the page
   "svg_embed_images": false,
+  "render_text_as": "html", // Options: html, image
   "render_rotated_skewed_text_as": "html", // Options: html, image
+  "testing_mode": false,  // Render text in both bg image and HTML to test HTML text placement
   "show_completion_dialog_box": true,
   "clickable_link": "",  // Add a URL to make the entire graphic a clickable link
-  "testing_mode": false, // Render text in bg image to test HTML text placement
   "last_updated_text": "",
   "headline": "",
   "leadin": "",
@@ -509,7 +510,8 @@ function render(settings, customBlocks) {
     // Convert text objects
     // ========================
 
-    if (abSettings.image_only) {
+    if (abSettings.image_only || settings.render_text_as == 'image') {
+      // don't convert text objects to HTML
       textFrames = [];
       textData = {html: "", styles: []};
     } else {
@@ -1277,7 +1279,7 @@ function initSpecialTextBlocks() {
     if (type == 'settings' || type == 'text') {
       settings = settings || {};
       if (type == 'settings') {
-        // set name of settings block, so it can be found later using getName()
+        // set name of settings block, so it can be found later using getByName()
         thisFrame.name = 'ai2html-settings';
       }
       parseSettingsEntries(lines, settings);
@@ -1459,6 +1461,7 @@ function createSettingsBlock(settings) {
 
   try {
     layer = doc.layers.getByName("ai2html-settings");
+    layer.locked = false;
   } catch(e) {
     layer = doc.layers.add();
     layer.zOrder(ZOrderMethod.BRINGTOFRONT);
@@ -3107,7 +3110,7 @@ function artboardContainsVisibleRasterImage(ab) {
 // Generate images and return HTML embed code
 function convertArtItems(activeArtboard, textFrames, masks, settings) {
   var imgName = getArtboardImageName(activeArtboard, settings);
-  var hideTextFrames = !isTrue(settings.testing_mode);
+  var hideTextFrames = !isTrue(settings.testing_mode) && settings.render_text_as != 'image';
   var textFrameCount = textFrames.length;
   var html = "";
   var svgLayers, svgNames;
