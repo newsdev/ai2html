@@ -10,7 +10,7 @@
                 widthById = {};
             elements.forEach(function(el) {
                 var parent = el.parentNode,
-                    width = widthById[parent.id] || parent.getBoundingClientRect().width,
+                    width = widthById[parent.id] || (parent.getBoundingClientRect().right - parent.getBoundingClientRect().left),
                     minwidth = el.getAttribute("data-min-width"),
                     maxwidth = el.getAttribute("data-max-width");
                 widthById[parent.id] = width;
