@@ -1,3 +1,6 @@
+### v0.82.1
+- Added "size: full" setting to NYT settings to work around a sizing issue in Scoop.
+
 ### v0.82.0
 - Added "render_text_as" setting, which takes "html" (the default) or "image"
 

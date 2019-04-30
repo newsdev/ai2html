@@ -45,7 +45,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = "0.82.0";
+var scriptVersion = "0.82.1";
 
 // ================================================
 // ai2html and config settings
@@ -165,7 +165,7 @@ var nytOverrideSettings = {
   "display_for_promotion_only": false,
   "constrain_width_to_text_column": false,
   "compatibility": "inline",
-  "interactive_size": "medium",
+  "size": "full", // changed from "medium" to "full"
   "scoop_publish_fields": true,
   "scoop_asset_id": "",
   "scoop_username": "",
@@ -193,7 +193,7 @@ var nytOverrideSettings = {
     "show_in_compatible_apps",
     "display_for_promotion_only",
     "constrain_width_to_text_column",
-    "interactive_size",
+    "size",
     "scoop_asset_id",
     "scoop_username",
     "scoop_slug",
@@ -215,7 +215,7 @@ var nytOverrideSettings = {
     "display_for_promotion_only",
     "constrain_width_to_text_column",
     "compatibility",
-    "interactive_size",
+    "size",
     "scoop_publish_fields",
     "scoop_asset_id",
     "scoop_username",
