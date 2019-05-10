@@ -26,7 +26,6 @@
 // - Create your Illustrator artwork.
 // - Size the artboard to the dimensions that you want the div to appear on the web page.
 // - Make sure your Document Color Mode is set to RGB.
-// - Make sure your document is saved.
 // - Use Arial or Georgia unless you have added your own fonts to the fonts array in the script.
 // - Run the script by choosing: File > Scripts > ai2html
 // - Go to the folder containing your Illustrator file. Inside will be a folder called ai2html-output.
@@ -45,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = "0.82.1";
+var scriptVersion = "0.83.0";
 
 // ================================================
 // ai2html and config settings
@@ -79,7 +78,6 @@ var defaultSettings = {
   "center_html_output": true,
   "use_2x_images_if_possible": true,
   "use_lazy_loader": false,
-  "include_resizer_css_js": false,
   "include_resizer_classes": false,
   "include_resizer_widths": true,
   "include_resizer_script": false,
@@ -153,7 +151,6 @@ var nytOverrideSettings = {
   "image_output_path": "../public/_assets/",
   "config_file_path": "../config.yml",
   "use_lazy_loader": true,
-  "include_resizer_css_js": true,
   "include_resizer_script": true,
   "credit": "By The New York Times",
   "page_template": "vi-article-embed",
@@ -3557,6 +3554,32 @@ function copyArtboardForImageExport(ab, masks, layers) {
     }
   }
 
+  // Remove opacity and multiply from an item and add to the item's
+  // name property (exported as an SVG id). This prevents AI's SVG exporter
+  // from converting these items to images. The styles are later parsed out
+  // of the SVG id in reapplyEffectsInSVG().
+  // Example names: Z--opacity50  Z--multiply--original-name
+  // TODO: handle other styles that cause image conversion
+  // (This trick does not work for many other effects, like drop shadows and
+  //  styles added via the Appearance panel).
+  function handleEffects(item) {
+    var name = "";
+    if (item.opacity && item.opacity < 100) {
+      name += "-opacity" + item.opacity;
+      item.opacity = 100;
+    }
+    if (item.blendingMode == BlendModes.MULTIPLY) {
+      item.blendingMode = BlendModes.NORMAL;
+      name += '-multiply';
+    }
+    if (name) {
+      if (item.name) {
+        name += '--' + item.name;
+      }
+      item.name = 'Z-' + name;
+    }
+  }
+
   function findLayerMask(lyr) {
     return find(layerMasks, function(o) {return o.layer == lyr;});
   }
@@ -3569,6 +3592,7 @@ function copyArtboardForImageExport(ab, masks, layers) {
     var copy;
     if (!excluded) {
       copy = item.duplicate(dest, ElementPlacement.PLACEATEND); //  duplicateItem(item, dest);
+      handleEffects(copy);
       itemCount++;
       if (copy.typename == 'GroupItem') {
         removeHiddenItems(copy);
@@ -3612,6 +3636,8 @@ function rewriteSVGFile(path, id) {
   if (!svg) return;
   // replace id created by Illustrator (relevant for inline SVG)
   svg = svg.replace(/id="[^"]*"/, 'id="' + id + '"');
+  // reapply opacity and multiply effects
+  svg = reapplyEffectsInSVG(svg);
   // prevent SVG strokes from scaling
   // (add element id to selector to prevent inline SVG from affecting other SVG on the page)
   selector = map('rect,circle,path,line,polyline'.split(','), function(name) {
@@ -3621,6 +3647,35 @@ function rewriteSVGFile(path, id) {
   // remove images from filesystem and SVG file
   svg = removeImagesInSVG(svg, path);
   saveTextFile(path, svg);
+}
+
+function reapplyEffectsInSVG(svg) {
+  var rxp = /id="Z-(-[^"]+)"/g;
+  var opacityRxp = /-opacity([0-9]+)/;
+  var multiplyRxp = /-multiply/;
+  function replace(a, b) {
+    var style = '', retn;
+    if (multiplyRxp.test(b)) {
+      style += 'mix-blend-mode:multiply;';
+      b = b.replace(multiplyRxp, '');
+    }
+    if (opacityRxp.test(b)) {
+      style += 'opacity:' + parseOpacity(b) + ';';
+      b = b.replace(opacityRxp, '');
+    }
+    retn = 'style="' + style + '"';
+    if (b.indexOf('--') === 0) {
+      // restore original id
+      retn = 'id="' + b.substr(2) + '" ' + retn;
+    }
+    return retn;
+  }
+
+  function parseOpacity(str) {
+    var found = str.match(opacityRxp);
+    return parseInt(found[1]) / 100;
+  }
+  return svg.replace(rxp, replace);
 }
 
 function removeImagesInSVG(content, path) {
@@ -3906,7 +3961,8 @@ function getResizerScript() {
           window.parent.$("body").trigger("resizedcontent", [window]);
         }
         document.documentElement.dispatchEvent(new Event("resizedcontent"));
-        if (window.require && document.querySelector("meta[name=sourceApp]") && document.querySelector("meta[name=sourceApp]").content == "nyt-v5") {
+        if (window.require && document.querySelector("meta[name=sourceApp]") &&
+          document.querySelector("meta[name=sourceApp]").content == "nyt-v5") {
           require(["foundation/main"], function() {
             require(["shared/interactive/instances/app-communicator"], function(AppCommunicator) {
               AppCommunicator.triggerResize();
@@ -3975,7 +4031,6 @@ function addCustomContent(content, customBlocks) {
 // Wrap content HTML in a <div>, add styles and resizer script, write to a file
 function generateOutputHtml(content, pageName, settings) {
   var linkSrc = settings.clickable_link || "";
-  var responsiveCss = "";
   var responsiveJs = "";
   var containerId = nameSpace + pageName + "-box";
   var textForFile, html, js, css, commentBlock;
@@ -3983,15 +4038,8 @@ function generateOutputHtml(content, pageName, settings) {
 
   progressBar.setTitle('Writing HTML output...');
 
-  if (scriptEnvironment == "nyt-preview" && !isFalse(settings.include_resizer_css_js)) {
-    responsiveJs = '\t<script src="_assets/resizerScript.js"></script>' + "\n";
-    if (settings.project_type == "ai2html") {
-      responsiveCss = '\t<link rel="stylesheet" href="_assets/resizerStyle.css">' + "\n";
-    }
-  }
   if (isTrue(settings.include_resizer_script)) {
     responsiveJs  = getResizerScript();
-    responsiveCss = "";
   }
 
   // comments
@@ -4021,7 +4069,7 @@ function generateOutputHtml(content, pageName, settings) {
   css = "<style type='text/css' media='screen,print'>\r" +
     generatePageCss(containerId, settings) +
     content.css +
-    "\r</style>\r" + responsiveCss;
+    "\r</style>\r";
 
   // JS
   js = content.js + responsiveJs;

@@ -1,3 +1,6 @@
+### v0.83.0
+- Support alpha transparency and multiply in exported SVG. 
+
 ### v0.82.1
 - Added "size: full" setting to NYT settings to work around a sizing issue in Scoop.
 
