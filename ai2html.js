@@ -3729,9 +3729,10 @@ function generateArtboardDiv(ab, breakpoints, settings) {
   var responsiveness = settings.responsiveness;
   // If artboard name begins with "f-" (fixed) or "d-" (dynamic), override
   // responsiveness setting
-  if (/^f-/.test(getArtboardFullName(ab))) {
+  var artboardName = getArtboardName(ab);
+  if (/^f-/.test(artboardName)) {
     responsiveness = "fixed";
-  } else if (/^d-/.test(getArtboardFullName(ab))) {
+  } else if (/^d-/.test(artboardName)) {
     responsiveness = "dynamic";
   }
   // Set size of graphic using inline CSS
