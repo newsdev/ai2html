@@ -3725,8 +3725,17 @@ function generateArtboardDiv(ab, breakpoints, settings) {
   if (!isFalse(settings.include_resizer_classes)) {
     classnames += " " + findShowClassesForArtboard(ab, breakpoints);
   }
+  // Default to document's responsiveness setting
+  var responsiveness = settings.responsiveness;
+  // If artboard name begins with "f-" (fixed) or "d-" (dynamic), override
+  // responsiveness setting
+  if (/^f-/.test(getArtboardFullName(ab))) {
+    responsiveness = "fixed";
+  } else if (/^d-/.test(getArtboardFullName(ab))) {
+    responsiveness = "dynamic";
+  }
   // Set size of graphic using inline CSS
-  if (settings.responsiveness == "fixed") {
+  if (responsiveness == "fixed") {
     inlineStyle = "width:" + abBox.width + "px; height:" + abBox.height + "px;";
   } else {
     // Adding bottom padding as a percentage of container width to set the artboard
