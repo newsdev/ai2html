@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = "0.83.0";
+var scriptVersion = "0.84.0";
 
 // ================================================
 // ai2html and config settings
@@ -221,20 +221,24 @@ var nytOverrideSettings = {
   ],
 
   "fonts": [
-    {"aifont":"NYTFranklin-Light","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"300","style":""},
-    {"aifont":"NYTFranklin-Medium","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"500","style":""},
-    {"aifont":"NYTFranklin-SemiBold","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"600","style":""},
-    {"aifont":"NYTFranklin-Semibold","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"600","style":""},
-    {"aifont":"NYTFranklinSemiBold-Regular","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"600","style":""},
-    {"aifont":"NYTFranklin-SemiboldItalic","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"600","style":"italic"},
-    {"aifont":"NYTFranklin-Bold","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"700","style":""},
-    {"aifont":"NYTFranklin-LightItalic","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"300","style":"italic"},
-    {"aifont":"NYTFranklin-MediumItalic","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"500","style":"italic"},
-    {"aifont":"NYTFranklin-BoldItalic","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"700","style":"italic"},
-    {"aifont":"NYTFranklin-ExtraBold","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"800","style":""},
-    {"aifont":"NYTFranklin-ExtraBoldItalic","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"800","style":"italic"},
-    {"aifont":"NYTFranklin-Headline","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"bold","style":""},
-    {"aifont":"NYTFranklin-HeadlineItalic","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"bold","style":"italic"},
+    // vshift shifts text vertically, to compensate for vertical misalignment caused
+    // by a difference between vertical placement in Illustrator (of a system font) and
+    // browsers (of the web font equivalent). vshift values are percentage of font size. Positive
+    // values correspond to a downward shift.
+    {"aifont":"NYTFranklin-Light","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"300","style":"", "vshift": "8%"},
+    {"aifont":"NYTFranklin-Medium","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"500","style":"", "vshift": "8%"},
+    {"aifont":"NYTFranklin-SemiBold","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"600","style":"", "vshift": "8%"},
+    {"aifont":"NYTFranklin-Semibold","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"600","style":"", "vshift": "8%"},
+    {"aifont":"NYTFranklinSemiBold-Regular","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"600","style":"", "vshift": "8%"},
+    {"aifont":"NYTFranklin-SemiboldItalic","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"600","style":"italic", "vshift": "8%"},
+    {"aifont":"NYTFranklin-Bold","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"700","style":"", "vshift": "8%"},
+    {"aifont":"NYTFranklin-LightItalic","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"300","style":"italic", "vshift": "8%"},
+    {"aifont":"NYTFranklin-MediumItalic","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"500","style":"italic", "vshift": "8%"},
+    {"aifont":"NYTFranklin-BoldItalic","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"700","style":"italic", "vshift": "8%"},
+    {"aifont":"NYTFranklin-ExtraBold","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"800","style":"", "vshift": "8%"},
+    {"aifont":"NYTFranklin-ExtraBoldItalic","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"800","style":"italic", "vshift": "8%"},
+    {"aifont":"NYTFranklin-Headline","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"bold","style":"", "vshift": "8%"},
+    {"aifont":"NYTFranklin-HeadlineItalic","family":"nyt-franklin,arial,helvetica,sans-serif","weight":"bold","style":"italic", "vshift": "8%"},
     {"aifont":"NYTCheltenham-ExtraLight","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"200","style":""},
     {"aifont":"NYTCheltenhamExtLt-Regular","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"200","style":""},
     {"aifont":"NYTCheltenham-Light","family":"nyt-cheltenham,georgia,'times new roman',times,serif","weight":"300","style":""},
@@ -323,6 +327,7 @@ var blendModes = [
 // list of CSS properties used for translating AI text styles
 // (used for creating a unique identifier for each style)
 var cssTextStyleProperties = [
+  //'top', 'position' // used with vshift; not independent of other properties
   'font-family',
   'font-size',
   'font-weight',
@@ -2297,7 +2302,8 @@ function deriveCssStyles(frameData) {
     'padding-top': 0,
     'mix-blend-mode': 'normal',
     'font-style': 'normal',
-    'height': 'auto'
+    'height': 'auto',
+    'position': 'static' // 'relative' also used (to correct baseline misalignment)
   };
   var defaultAiStyle = {
     opacity: 100 // given as AI style because opacity is converted to several CSS properties
@@ -2496,7 +2502,19 @@ function convertAiTextStyle(aiStyle) {
   if (aiStyle.color) {
     cssStyle.color = aiStyle.color;
   }
+  if (aiStyle.size > 0 && fontInfo.vshift) {
+    cssStyle.top = vshiftToPixels(fontInfo.vshift, aiStyle.size);
+    cssStyle.position = "relative";
+  }
   return cssStyle;
+}
+
+function vshiftToPixels(vshift, fontSize) {
+  var i = vshift.indexOf('%');
+  var pct = parseFloat(vshift);
+  var px = fontSize * pct / 100;
+  if (!px || i==-1) return '0';
+  return roundTo(px, 1) + 'px';
 }
 
 function textFrameIsRenderable(frame, artboardRect) {
@@ -3797,7 +3815,7 @@ function generatePageCss(containerId, settings) {
     css += t2 + "}\r";
   }
   // default <p> styles
-  css += t2 + "#" + containerId + " ." + nameSpace + "artboard p {\r";
+  css += t2 + "#" + containerId + " p {\r";
   css += t3 + "margin:0;\r";
   if (isTrue(settings.testing_mode)) {
     css += t3 + "color: rgba(209, 0, 0, 0.5) !important;\r";

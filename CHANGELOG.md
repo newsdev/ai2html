@@ -1,3 +1,6 @@
+### v0.84.0
+- Add 'vshift' option for font table entries, to correct for differences in vertical placement between fonts in Illustrator and their web font equivalents.
+
 ### v0.83.0
 - Support alpha transparency and multiply in exported SVG. 
 
