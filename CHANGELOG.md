@@ -1,3 +1,6 @@
+### v0.85.0
+- Fixed a problem where rotated text would shift away from its anchor point in dynamic layouts.
+
 ### v0.84.0
 - Add 'vshift' option for font table entries, to correct for differences in vertical placement between fonts in Illustrator and their web font equivalents.
 
