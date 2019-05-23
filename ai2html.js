@@ -1666,6 +1666,7 @@ function getArtboardId(ab) {
   return id;
 }
 
+// Remove any annotations and colon separator from an object name
 function cleanObjectName(name) {
   return makeKeyword(name.replace( /^(.+):.*$/, "$1"));
 }
@@ -1735,7 +1736,7 @@ function getArtboardWidthRange(ab) {
   return [minw, maxw ? maxw - 1 : Infinity];
 }
 
-// Parse data that is encoded in a name
+// Parse data that is encoded in a name (preceded by a colon)
 function parseObjectName(name) {
   // capture portion of name after colon
   var settingsStr = (/:(.*)/.exec(name) || [])[1] || "";
@@ -1747,6 +1748,7 @@ function parseObjectName(name) {
   }
   // remove suffixes added by copying
   settingsStr = settingsStr.replace(/ copy.*/i, '');
+  // parse comma-delimited variables
   forEach(settingsStr.split(','), function(part) {
     var eq = part.indexOf('=');
     var name, value;
