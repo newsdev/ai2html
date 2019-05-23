@@ -327,7 +327,8 @@ var blendModes = [
 // list of CSS properties used for translating AI text styles
 // (used for creating a unique identifier for each style)
 var cssTextStyleProperties = [
-  //'top', 'position' // used with vshift; not independent of other properties
+  //'top' // used with vshift; not independent of other properties
+  'position',
   'font-family',
   'font-size',
   'font-weight',
@@ -2053,7 +2054,7 @@ function findMasks() {
 // ai2html text functions
 // ==============================
 
-function textIsTransformed(textFrame) {
+function textIsRotated(textFrame) {
   var m = textFrame.matrix;
   return !(m.mValueA == 1 && m.mValueB === 0 && m.mValueC === 0 && m.mValueD == 1);
 }
@@ -2181,6 +2182,7 @@ function importTextFrameParagraphs(textFrame) {
   var opacity = getComputedOpacity(textFrame);
   var blendMode = getBlendMode(textFrame);
   var charsLeft = textFrame.characters.length;
+  var rotated = textIsRotated(textFrame);
   var data = [];
   var p, plen, d;
   for (var k=0, n=textFrame.paragraphs.length; k<n && charsLeft > 0; k++) {
@@ -2200,6 +2202,7 @@ function importTextFrameParagraphs(textFrame) {
         aiStyle: getParagraphStyle(p),
         ranges: getParagraphRanges(p)
       };
+      d.aiStyle.rotated = rotated;
       d.aiStyle.opacity = opacity;
       d.aiStyle.blendMode = blendMode;
       d.aiStyle.frameType = textFrame.kind == TextType.POINTTEXT ? 'point' : 'area';
@@ -2264,7 +2267,7 @@ function convertTextFrames(textFrames, ab) {
   });
   var pgStyles = [];
   var charStyles = [];
-  var baseStyle = deriveCssStyles(frameData);
+  var baseStyle = deriveTextStyleCss(frameData);
   var idPrefix = nameSpace + "ai" + getArtboardId(ab) + "-";
   var abBox = convertAiBounds(ab.artboardRect);
   var divs = map(frameData, function(obj, i) {
@@ -2293,7 +2296,7 @@ function convertTextFrames(textFrames, ab) {
 // Side effect: adds cssStyle object alongside each aiStyle object
 // frameData: Array of data objects parsed from a collection of TextFrames
 // Returns object containing css text style properties of base pg style
-function deriveCssStyles(frameData) {
+function deriveTextStyleCss(frameData) {
   var pgStyles = [];
   var baseStyle = {};
   // override detected settings with these style properties
@@ -2328,7 +2331,6 @@ function deriveCssStyles(frameData) {
   function compareCharCount(a, b) {
     return b.count - a.count;
   }
-
   function analyzeParagraphStyle(pdata) {
     currCharStyles = [];
     forEach(pdata.ranges, convertRangeStyle);
@@ -2495,7 +2497,10 @@ function convertAiTextStyle(aiStyle) {
   if ('tracking' in aiStyle) {
     cssStyle["letter-spacing"] = roundTo(aiStyle.tracking / 1000, cssPrecision) + "em";
   }
-  if (aiStyle.justification && (tmp = getJustificationCss(aiStyle.justification))) {
+  // kludge: text-align of rotated text is handled as a special case (see also getTextFrameCss())
+  if (aiStyle.rotated && aiStyle.frameType == 'point') {
+    cssStyle["text-align"] = "center";
+  } else if (aiStyle.justification && (tmp = getJustificationCss(aiStyle.justification))) {
     cssStyle["text-align"] = tmp;
   }
   if (aiStyle.capitalization && (tmp = getCapitalizationCss(aiStyle.capitalization))) {
@@ -2504,7 +2509,9 @@ function convertAiTextStyle(aiStyle) {
   if (aiStyle.color) {
     cssStyle.color = aiStyle.color;
   }
-  if (aiStyle.size > 0 && fontInfo.vshift) {
+  // applying vshift only to point text
+  // (based on experience with NYTFranklin)
+  if (aiStyle.size > 0 && fontInfo.vshift && aiStyle.frameType == 'point') {
     cssStyle.top = vshiftToPixels(fontInfo.vshift, aiStyle.size);
     cssStyle.position = "relative";
   }
@@ -2583,7 +2590,7 @@ function getTextFramesByArtboard(ab, masks, settings) {
   var excludedFrames = getClippedTextFramesByArtboard(ab, masks);
   candidateFrames = arraySubtract(candidateFrames, excludedFrames);
   if (settings.render_rotated_skewed_text_as == "image") {
-    excludedFrames = filter(candidateFrames, textIsTransformed);
+    excludedFrames = filter(candidateFrames, textIsRotated);
     candidateFrames = arraySubtract(candidateFrames, excludedFrames);
   }
   return candidateFrames;
@@ -2672,20 +2679,21 @@ function getTransformationCss(textFrame, vertAnchorPct) {
     "-ms-transform: " + transform + "-ms-transform-origin: " + transformOrigin;
 }
 
-// Create class="" and style="" CSS for positioning a text div
+// Create class="" and style="" CSS for positioning the label container div
+// (This container wraps one or more <p> tags)
 function getTextFrameCss(thisFrame, abBox, pgData) {
   var styles = "";
   var classes = "";
-  var isTransformed = textIsTransformed(thisFrame);
-  var aiBounds = isTransformed ? getUntransformedTextBounds(thisFrame) : thisFrame.geometricBounds;
-  var htmlBox = convertAiBounds(shiftBounds(aiBounds, -abBox.left, abBox.top));
-  var thisFrameAttributes = parseDataAttributes(thisFrame.note);
   // Using AI style of first paragraph in TextFrame to get information about
   // tracking, justification and top padding
   // TODO: consider positioning paragraphs separately, to handle pgs with different
   //   justification in the same text block
   var firstPgStyle = pgData[0].aiStyle;
   var lastPgStyle = pgData[pgData.length - 1].aiStyle;
+  var isRotated = firstPgStyle.rotated;
+  var aiBounds = isRotated ? getUntransformedTextBounds(thisFrame) : thisFrame.geometricBounds;
+  var htmlBox = convertAiBounds(shiftBounds(aiBounds, -abBox.left, abBox.top));
+  var thisFrameAttributes = parseDataAttributes(thisFrame.note);
   // estimated space between top of HTML container and character glyphs
   // (related to differences in AI and CSS vertical positioning of text blocks)
   var marginTopPx = (firstPgStyle.leading - firstPgStyle.size) / 2 + firstPgStyle.spaceBefore;
@@ -2706,11 +2714,6 @@ function getTextFrameCss(thisFrame, abBox, pgData) {
     alignment = "center";
   }
 
-  if (isTransformed) {
-    vertAnchorPct = (marginTopPx + htmlBox.height * 0.5 + 1) / (htmlH) * 100; // TODO: de-kludge
-    styles += getTransformationCss(thisFrame, vertAnchorPct);
-  }
-
   if (thisFrame.kind == TextType.AREATEXT) {
     v_align = "top"; // area text aligned to top by default
     // EXPERIMENTAL feature
@@ -2722,12 +2725,22 @@ function getTextFrameCss(thisFrame, abBox, pgData) {
     htmlW += 22; // add a bit of extra width to try to prevent overflow
   }
 
-  if (thisFrameAttributes.valign) {
-    // override default vertical alignment
+  if (thisFrameAttributes.valign && !isRotated) {
+    // override default vertical alignment, unless text is rotated (TODO: support other )
     v_align = thisFrameAttributes.valign;
     if (v_align == "center") {
       v_align = "middle";
     }
+  }
+
+  if (isRotated) {
+    vertAnchorPct = (marginTopPx + htmlBox.height * 0.5 + 1) / (htmlH) * 100; // TODO: de-kludge
+    styles += getTransformationCss(thisFrame, vertAnchorPct);
+    // Only center alignment currently works well with rotated text
+    // TODO: simplify alignment of rotated text (some logic is in convertAiTextStyle())
+    v_align = "middle";
+    alignment = "center";
+    // text-align of point text set to "center" in convertAiTextStyle()
   }
 
   if (v_align == "bottom") {
