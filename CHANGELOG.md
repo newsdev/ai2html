@@ -1,3 +1,6 @@
+### v0.86.0
+- Refactored the resizer/lazy loader.
+
 ### v0.85.0
 - Fixed a problem where rotated text would shift away from its anchor point in dynamic layouts.
 
