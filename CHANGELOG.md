@@ -1,3 +1,6 @@
+### v0.87.0
+- Fixed center alignment of area text
+
 ### v0.86.0
 - Refactored the resizer/lazy loader.
 

@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = "0.86.0";
+var scriptVersion = "0.87.0";
 
 // ================================================
 // ai2html and config settings
@@ -2758,9 +2758,13 @@ function getTextFrameCss(thisFrame, abBox, pgData) {
     styles += "right:" + formatCssPct(abBox.width - (htmlL + htmlBox.width), abBox.width) + ';';
   } else if (alignment == "center") {
     styles += "left:" + formatCssPct(htmlL + htmlBox.width / 2, abBox.width) + ';';
-    // using pct margin causes problems in a dynamic layout, switching to pixels
-    // styles += "margin-left:" + formatCssPct(-htmlW / 2, abBox.width);
-    styles += "margin-left:-" + roundTo(htmlW / 2, 1) + 'px;';
+    // setting a negative left margin for horizontal placement of centered text
+    // using percent for area text (because area text width uses percent) and pixels for point text
+    if (thisFrame.kind == TextType.POINTTEXT) {
+      styles += "margin-left:-" + roundTo(htmlW / 2, 1) + 'px;';
+    } else {
+      styles += "margin-left:" + formatCssPct(-htmlW / 2, abBox.width )+ ';';
+    }
   } else {
     styles += "left:" + formatCssPct(htmlL, abBox.width) + ';';
   }
