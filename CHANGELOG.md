@@ -1,3 +1,6 @@
+### v0.88.0
+- Added NYTImperial to NYT font list
+
 ### v0.87.0
 - Fixed center alignment of area text
 
