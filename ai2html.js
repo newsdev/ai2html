@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = "0.88.0";
+var scriptVersion = "0.89.0";
 
 // ================================================
 // ai2html and config settings
@@ -2059,14 +2059,18 @@ function findMasks() {
 
 
 
-
 // ==============================
 // ai2html text functions
 // ==============================
 
 function textIsRotated(textFrame) {
   var m = textFrame.matrix;
-  return !(m.mValueA == 1 && m.mValueB === 0 && m.mValueC === 0 && m.mValueD == 1);
+  var angle;
+  if (m.mValueA == 1 && m.mValueB === 0 && m.mValueC === 0 && m.mValueD == 1) return false;
+  angle = Math.atan2(m.mValueB, m.mValueA) * 180 / Math.PI;
+  // Treat text rotated by < 1 degree as unrotated.
+  // (It's common to accidentally rotate text and then try to unrotate manually).
+  return Math.abs(angle) > 1;
 }
 
 function hideTextFrame(textFrame) {
@@ -3917,15 +3921,10 @@ function getResizerScript(containerId) {
   //   This will correctly set the initial height of the graphic before
   //   an image is loaded.
   //
-  // TODO: Add cleanup function once we have a way to call it:
-  // function cleanup() {
-  //   document.removeEventListener("DOMContentLoaded", update);
-  //   window.removeEventListener("resize", onResize);
-  //   if (observer) observer.disconnect();
-  // }
-  //
-  var resizer = function (containerId, nameSpace) {
+  var resizer = function (containerId, opts) {
     if (!("querySelector" in document)) return;
+    var container = document.getElementById(containerId);
+    var nameSpace = opts.namespace || '';
     var onResize = throttle(update, 200);
     var waiting = !!window.IntersectionObserver;
     var observer;
@@ -3934,9 +3933,19 @@ function getResizerScript(containerId) {
     document.addEventListener("DOMContentLoaded", update);
     window.addEventListener("resize", onResize);
 
+    // NYT Scoop-specific code
+    if (opts.setup) {
+      opts.setup(container).on('cleanup', cleanup);
+    }
+
+    function cleanup() {
+      document.removeEventListener("DOMContentLoaded", update);
+      window.removeEventListener("resize", onResize);
+      if (observer) observer.disconnect();
+    }
+
     function update() {
-      var container = document.getElementById(containerId),
-          artboards = selectChildren("." + nameSpace + "artboard[data-min-width]", container),
+      var artboards = selectChildren("." + nameSpace + "artboard[data-min-width]", container),
           width = Math.round(container.getBoundingClientRect().width);
 
       // Set artboard visibility based on container width
@@ -4011,10 +4020,12 @@ function getResizerScript(containerId) {
     }
   };
 
-  // convert function to JS source code
+  var optStr = '{namespace: "' + nameSpace + '", setup: window.setupInteractive || window.getComponent}';
+
+  // convert resizer function to JS source code
   var resizerJs = '(' +
     trim(resizer.toString().replace(/  /g, '\t')) + // indent with tabs
-    ')("' + containerId + '", "' + nameSpace + '");';
+    ')("' + containerId + '", ' + optStr + ');';
   return '<script type="text/javascript">\r\t' + resizerJs + '\r</script>\r';
 }
 

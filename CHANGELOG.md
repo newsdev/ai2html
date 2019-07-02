@@ -1,8 +1,12 @@
+### v0.89.0
+- Added NYT Scoop-specific cleanup code to resizer function.
+- Text rotated < 1 degree is treated as unrotated.
+
 ### v0.88.0
-- Added NYTImperial to NYT font list
+- Added NYTImperial to NYT font list.
 
 ### v0.87.0
-- Fixed center alignment of area text
+- Fixed center alignment of area text.
 
 ### v0.86.0
 - Refactored the resizer/lazy loader.
