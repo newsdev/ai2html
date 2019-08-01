@@ -711,14 +711,6 @@ function firstBy(f1, f2) {
   return compare;
 }
 
-function keys(obj) {
-  var keys = [];
-  for (var k in obj) {
-    keys.push(k);
-  }
-  return keys;
-}
-
 // Remove whitespace from beginning and end of a string
 function trim(s) {
   return s.replace(/^[\s\uFEFF\xA0\x03]+|[\s\uFEFF\xA0\x03]+$/g, '');
@@ -748,7 +740,7 @@ function truncateString(str, maxlen, useEllipsis) {
 }
 
 function makeKeyword(text) {
-  return text.replace( /[^A-Za-z0-9_\-]+/g , "_" );
+  return text.replace( /[^A-Za-z0-9_-]+/g , "_" );
 }
 
 // TODO: don't convert ampersand in pre-existing entities (e.g. "&quot;" -> "&amp;quot;")
@@ -1057,14 +1049,6 @@ function message() {
   feedback.push(concatMessages(arguments));
 }
 
-function messageOnce() {
-  var msg = concatMessages(arguments);
-  if (!contains(oneTimeWarnings, msg)) {
-    message(msg);
-    oneTimeWarnings.push(id);
-  }
-}
-
 function concatMessages(args) {
   var msg = "", arg;
   for (var i=0; i<args.length; i++) {
@@ -1226,33 +1210,6 @@ function validateArtboardNames(settings) {
     }
     names.push(name);
   });
-}
-
-function showEngineInfo() {
-  var lines = map($.summary().split('\n'), function(line) {
-    var parts = trim(line).split(/[\s]+/);
-    if (parts.length == 2) {
-      line = parts[1] + ' ' + parts[0];
-    }
-    return line;
-  }).sort();
-  var msg = lines.join('  ');
-  // msg = $.list().split('\n').length;
-  // msg = truncateString($.listLO(), 300);
-  alert('Info:\n' + msg);
-}
-
-function detectScriptEnvironment() {
-  var env = detectTimesFonts() ? 'nyt' : '';
-  // Handle case where user seems to be at NYT but is running ai2html outside of Preview
-  if (env == 'nyt' && !fileExists(docPath + "../config.yml")) {
-    if(confirm("You seem to be running ai2html outside of NYT Preview.\nContinue in non-Preview mode?", true)) {
-      env = ''; // switch to non-nyt context
-    } else {
-      error("Ai2html should be run inside a Preview project.");
-    }
-  }
-  return env;
 }
 
 function detectTimesFonts() {
@@ -1424,7 +1381,7 @@ function extendFontList(a, b) {
   forEach(a, function(o, i) {
     index[o.aifont] = i;
   });
-  forEach(b, function(o, i) {
+  forEach(b, function(o) {
     if (o.aifont && o.aifont in index) {
       a[index[o.aifont]] = o; // replace
     } else {
@@ -1437,6 +1394,7 @@ function extendFontList(a, b) {
 function initJSON() {
   // Minified json2.js from https://github.com/douglascrockford/JSON-js
   // This code is in the public domain.
+  // eslint-disable-next-line
   if(typeof JSON!=="object"){JSON={}}(function(){"use strict";var rx_one=/^[\],:{}\s]*$/;var rx_two=/\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g;var rx_three=/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g;var rx_four=/(?:^|:|,)(?:\s*\[)+/g;var rx_escapable=/[\\"\u0000-\u001f\u007f-\u009f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;var rx_dangerous=/[\u0000\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;function f(n){return n<10?"0"+n:n}function this_value(){return this.valueOf()}if(typeof Date.prototype.toJSON!=="function"){Date.prototype.toJSON=function(){return isFinite(this.valueOf())?this.getUTCFullYear()+"-"+f(this.getUTCMonth()+1)+"-"+f(this.getUTCDate())+"T"+f(this.getUTCHours())+":"+f(this.getUTCMinutes())+":"+f(this.getUTCSeconds())+"Z":null};Boolean.prototype.toJSON=this_value;Number.prototype.toJSON=this_value;String.prototype.toJSON=this_value}var gap;var indent;var meta;var rep;function quote(string){rx_escapable.lastIndex=0;return rx_escapable.test(string)?'"'+string.replace(rx_escapable,function(a){var c=meta[a];return typeof c==="string"?c:"\\u"+("0000"+a.charCodeAt(0).toString(16)).slice(-4)})+'"':'"'+string+'"'}function str(key,holder){var i;var k;var v;var length;var mind=gap;var partial;var value=holder[key];if(value&&typeof value==="object"&&typeof value.toJSON==="function"){value=value.toJSON(key)}if(typeof rep==="function"){value=rep.call(holder,key,value)}switch(typeof value){case"string":return quote(value);case"number":return isFinite(value)?String(value):"null";case"boolean":case"null":return String(value);case"object":if(!value){return"null"}gap+=indent;partial=[];if(Object.prototype.toString.apply(value)==="[object Array]"){length=value.length;for(i=0;i<length;i+=1){partial[i]=str(i,value)||"null"}v=partial.length===0?"[]":gap?"[\n"+gap+partial.join(",\n"+gap)+"\n"+mind+"]":"["+partial.join(",")+"]";gap=mind;return v}if(rep&&typeof rep==="object"){length=rep.length;for(i=0;i<length;i+=1){if(typeof rep[i]==="string"){k=rep[i];v=str(k,value);if(v){partial.push(quote(k)+(gap?": ":":")+v)}}}}else{for(k in value){if(Object.prototype.hasOwnProperty.call(value,k)){v=str(k,value);if(v){partial.push(quote(k)+(gap?": ":":")+v)}}}}v=partial.length===0?"{}":gap?"{\n"+gap+partial.join(",\n"+gap)+"\n"+mind+"}":"{"+partial.join(",")+"}";gap=mind;return v}}if(typeof JSON.stringify!=="function"){meta={"\b":"\\b","\t":"\\t","\n":"\\n","\f":"\\f","\r":"\\r",'"':'\\"',"\\":"\\\\"};JSON.stringify=function(value,replacer,space){var i;gap="";indent="";if(typeof space==="number"){for(i=0;i<space;i+=1){indent+=" "}}else if(typeof space==="string"){indent=space}rep=replacer;if(replacer&&typeof replacer!=="function"&&(typeof replacer!=="object"||typeof replacer.length!=="number")){throw new Error("JSON.stringify")}return str("",{"":value})}}if(typeof JSON.parse!=="function"){JSON.parse=function(text,reviver){var j;function walk(holder,key){var k;var v;var value=holder[key];if(value&&typeof value==="object"){for(k in value){if(Object.prototype.hasOwnProperty.call(value,k)){v=walk(value,k);if(v!==undefined){value[k]=v}else{delete value[k]}}}}return reviver.call(holder,key,value)}text=String(text);rx_dangerous.lastIndex=0;if(rx_dangerous.test(text)){text=text.replace(rx_dangerous,function(a){return"\\u"+("0000"+a.charCodeAt(0).toString(16)).slice(-4)})}if(rx_one.test(text.replace(rx_two,"@").replace(rx_three,"]").replace(rx_four,""))){j=eval("("+text+")");return typeof reviver==="function"?walk({"":j},""):j}throw new SyntaxError("JSON.parse")}}})(); // jshint ignore:line
 }
 
@@ -1617,9 +1575,9 @@ function ProgressBar(opts) {
   win.pnl.progBarLabel = win.pnl.add("statictext", [20, 20, 320, 35], "0%");
   win.show();
 
-  function getProgress() {
-    return win.pnl.progBar.value/win.pnl.progBar.maxvalue;
-  }
+  // function getProgress() {
+  //   return win.pnl.progBar.value/win.pnl.progBar.maxvalue;
+  // }
 
   function update() {
     win.update();
@@ -2274,7 +2232,7 @@ function generateTextFrameHtml(paragraphs, baseStyle, pStyles, cStyles) {
 
 // Convert a collection of TextFrames to HTML and CSS
 function convertTextFrames(textFrames, ab) {
-  var frameData = map(textFrames, function(frame, i) {
+  var frameData = map(textFrames, function(frame) {
     return {
       paragraphs: importTextFrameParagraphs(frame)
     };
@@ -2628,7 +2586,7 @@ function findTextFramesToRender(frames, artboardRect) {
 // Extract key: value pairs from the contents of a note attribute
 function parseDataAttributes(note) {
   var o = {};
-  var parts, part;
+  var parts;
   if (note) {
     parts = note.split(/[\r\n;,]+/);
     for (var i = 0; i < parts.length; i++) {
@@ -2713,7 +2671,7 @@ function getTextFrameCss(thisFrame, abBox, pgData) {
   var marginTopPx = (firstPgStyle.leading - firstPgStyle.size) / 2 + firstPgStyle.spaceBefore;
   // estimated space between bottom of HTML container and character glyphs
   var marginBottomPx = (lastPgStyle.leading - lastPgStyle.size) / 2 + lastPgStyle.spaceAfter;
-  var trackingPx = firstPgStyle.size * firstPgStyle.tracking / 1000;
+  // var trackingPx = firstPgStyle.size * firstPgStyle.tracking / 1000;
   var htmlL = htmlBox.left;
   var htmlT = Math.round(htmlBox.top - marginTopPx);
   var htmlW = htmlBox.width;
@@ -2909,7 +2867,6 @@ function exportSymbolAsHtml(item, geometries, abBox, opts) {
 
 // Convert paths representing simple shapes to HTML and hide them
 function exportSymbols(lyr, ab, masks, opts) {
-  var divs = [];
   var items = [];
   var abBox = convertAiBounds(ab.artboardRect);
   var html = '';
@@ -3010,7 +2967,6 @@ function getLineGeometry(points) {
     h = bbox[3] - bbox[1];
     if (w < 1 && h < 1) continue; // double vertex = skip
     if (w > 1 && h > 1) return null; // diagonal line = fail
-    c =
     lines.push({
       type: 'line',
       center: getBBoxCenter(bbox),
@@ -3380,8 +3336,7 @@ function captureArtboardImage(imgName, ab, masks, settings) {
 
 // Create an <img> tag for the artboard image
 function generateImageHtml(imgFile, imgId, imgClass, imgStyle, ab, settings) {
-  var abPos = convertAiBounds(ab.artboardRect),
-      imgDir = settings.image_source_path,
+  var imgDir = settings.image_source_path,
       imgAlt = encodeHtmlEntities(settings.image_alt_text || ''),
       html, src;
   if (imgDir === null) {
@@ -3832,7 +3787,7 @@ function generatePageCss(containerId, settings) {
   var t2 = '\t';
   var t3 = '\t\t';
 
-  if (!!settings.max_width) {
+  if (settings.max_width) {
     css += t2 + "#" + containerId + " {\r";
     css += t3 + "max-width:" + settings.max_width + "px;\r";
     css += t2 + "}\r";
@@ -3879,7 +3834,7 @@ function generateYamlFileContent(breakpoints, settings) {
   lines.push("project_type: " + settings.project_type);
   lines.push("tags: ai2html");
   lines.push("min_width: " + breakpoints[0].upperLimit); // TODO: ask why upperLimit
-  if (!!settings.max_width) {
+  if (settings.max_width) {
     lines.push("max_width: " + settings.max_width);
   } else if (settings.responsiveness != "fixed" && scriptEnvironment == "nyt-preview") {
     lines.push("max_width: " + breakpoints[breakpoints.length-1].upperLimit);
@@ -4024,28 +3979,10 @@ function getResizerScript(containerId) {
 
   // convert resizer function to JS source code
   var resizerJs = '(' +
-    trim(resizer.toString().replace(/  /g, '\t')) + // indent with tabs
+    trim(resizer.toString().replace(/ {2}/g, '\t')) + // indent with tabs
     ')("' + containerId + '", ' + optStr + ');';
   return '<script type="text/javascript">\r\t' + resizerJs + '\r</script>\r';
 }
-
-// // Cut from resizer
-// function nytOnResize() {
-//   try {
-//     if (window.parent && window.parent.$) {
-//       window.parent.$("body").trigger("resizedcontent", [window]);
-//     }
-//     document.documentElement.dispatchEvent(new Event("resizedcontent"));
-//     if (window.require && document.querySelector("meta[name=sourceApp]") &&
-//       document.querySelector("meta[name=sourceApp]").content == "nyt-v5") {
-//       require(["foundation/main"], function() {
-//         require(["shared/interactive/instances/app-communicator"], function(AppCommunicator) {
-//           AppCommunicator.triggerResize();
-//         });
-//       });
-//     }
-//   } catch(e) { console.log(e); }
-// }
 
 // Write an HTML page to a file for NYT Preview
 function outputLocalPreviewPage(textForFile, localPreviewDestination, settings) {
@@ -4079,7 +4016,7 @@ function generateOutputHtml(content, pageName, settings) {
   var responsiveJs = "";
   var containerId = nameSpace + pageName + "-box";
   var textForFile, html, js, css, commentBlock;
-  var htmlFileDestinationFolder;
+  var htmlFileDestinationFolder, htmlFileDestination;
 
   progressBar.setTitle('Writing HTML output...');
 

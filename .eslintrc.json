@@ -1,0 +1,45 @@
+{
+    "env": {
+      "browser": true,
+      "node": true
+    },
+    "extends": "eslint:recommended",
+    "parserOptions": {
+        "ecmaVersion": 3
+    },
+    "globals": {
+        "app": "readonly",
+        "alert": "readonly",
+        "confirm": "readonly",
+        "Folder": "readonly",
+        "File": "readonly",
+        "DocumentColorSpace": "readonly",
+        "IllustratorSaveOptions": "readonly",
+        "ZOrderMethod": "readonly",
+        "TextType": "readonly",
+        "Window": "readonly",
+        "BlendModes": "readonly",
+        "ElementPlacement": "readonly",
+        "PointType": "readonly",
+        "ExportType": "readonly",
+        "ExportOptionsPNG8": "readonly",
+        "ExportOptionsPNG24": "readonly",
+        "ExportOptionsJPEG": "readonly",
+        "ExportOptionsSVG": "readonly",
+        "SVGFontSubsetting": "readonly",
+        "SVGDocumentEncoding": "readonly",
+        "SVGDTDVersion": "readonly",
+        "SVGCSSPropertyLocation": "readonly",
+        "SaveOptions": "readonly",
+        "it": "readonly",
+        "describe": "readonly",
+        "$": "readonly"
+      },
+    "rules": {
+      "semi": ["error", "always"],
+      "no-control-regex": "off",
+      "no-empty": "off",
+      "no-useless-escape": "off",
+      "no-prototype-builtins": "off"
+    }
+}
