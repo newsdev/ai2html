@@ -1,0 +1,40 @@
+{
+  "extends": ["eslint:recommended", "plugin:es5/no-es2015"],
+  "env": {
+    "browser": true,
+    "node": true
+},
+  "rules": {
+    "semi": ["error", "always"],
+    "quotes": ["error", "double"]
+  },
+  "globals": {
+    "app": true,
+    "alert": true,
+    "confirm": true,
+    "Folder": true,
+    "File": true,
+    "DocumentColorSpace": true,
+    "IllustratorSaveOptions": true,
+    "ZOrderMethod": true,
+    "TextType": true,
+    "Window": true,
+    "BlendModes": true,
+    "ElementPlacement": true,
+    "PointType": true,
+    "ExportType": true,
+    "ExportOptionsPNG8": true,
+    "ExportOptionsPNG24": true,
+    "ExportOptionsJPEG": true,
+    "ExportOptionsSVG": true,
+    "SVGFontSubsetting": true,
+    "SVGDocumentEncoding": true,
+    "SVGDTDVersion": true,
+    "SVGCSSPropertyLocation": true,
+    "SaveOptions": true,
+    "Event": true,
+    "$": true,
+    "it": true,
+    "describe": true
+  }
+}
