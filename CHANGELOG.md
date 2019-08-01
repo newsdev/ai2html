@@ -1,3 +1,7 @@
+### v0.90.0
+- Added .eslintrc.json file
+- Added the ability to export a layer as a transparent 8-bit png by appending :png to the layer name.
+
 ### v0.89.0
 - Added NYT Scoop-specific cleanup code to resizer function.
 - Text rotated < 1 degree is treated as unrotated.

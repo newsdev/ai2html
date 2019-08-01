@@ -1838,7 +1838,7 @@ function findLayers(layers, test) {
     var found = null;
     if (objectIsHidden(lyr)) {
       // skip
-    } else if (test(lyr)) {
+    } else if (!test || test(lyr)) {
       found = [lyr];
     } else if (lyr.layers.length > 0) {
       // examine sublayers (only if layer didn't test positive)
@@ -1849,6 +1849,21 @@ function findLayers(layers, test) {
     }
   });
   return retn;
+}
+
+function unhideLayer(lyr) {
+  while(lyr.typename == "Layer") {
+    lyr.visible = true;
+    lyr = lyr.parent;
+  }
+}
+
+function layerIsChildOf(lyr, lyr2) {
+  while (lyr.typename == 'Layer') {
+    if (lyr == lyr2) return true;
+    lyr = lyr.parent;
+  }
+  return false;
 }
 
 function clearSelection() {
@@ -3119,6 +3134,7 @@ function convertArtItems(activeArtboard, textFrames, masks, settings) {
   var html = "";
   var svgLayers, svgNames;
   var hiddenItems = [];
+  var hiddenLayers = [];
   var i;
 
   checkForOutputFolder(getImageFolder(settings), "image_output_path");
@@ -3158,14 +3174,24 @@ function convertArtItems(activeArtboard, textFrames, masks, settings) {
     // hide all svg Layers
     forEach(svgLayers, function(lyr) {
       lyr.visible = false;
+      hiddenLayers.push(lyr);
     });
   }
+
+  // Embed images tagged :png as separate images
+  // Inside this function, layers are hidden and unhidden as needed
+  forEachImageLayer('png', function(lyr) {
+    var opts = extend({}, settings, {png_transparent: true});
+    var name = getLayerImageName(lyr, activeArtboard, settings);
+    html = exportImage(name, 'png', activeArtboard, null, null, opts) + html;
+    hiddenLayers.push(lyr); // need to unhide this layer later, after base image is captured
+  });
 
   // placing ab image before other elements
   html = captureArtboardImage(imgName, activeArtboard, masks, settings) + html;
 
-  // unhide svg export layers (if any)
-  forEach(svgLayers, function(lyr) {
+  // unhide hidden layers (if any)
+  forEach(hiddenLayers, function(lyr) {
     lyr.visible = true;
   });
 
@@ -3304,6 +3330,38 @@ function replaceSvgIds(svg, prefix) {
     svgIds[id] = true;
     return id;
   }
+}
+
+
+function forEachImageLayer(imageType, callback) {
+  var targetLayers = findTaggedLayers(imageType); // only finds visible layers with a tag
+  var hiddenLayers = [];
+  if (targetLayers.length === 0) return;
+
+  // Hide all visible layers (image export captures entire artboard)
+  forEach(findLayers(doc.layers), function(lyr) {
+    // Except: don't hide layers that are children of a targeted layer
+    // (inconvenient to unhide these selectively later)
+    if (find(targetLayers, function(target) {
+      return layerIsChildOf(lyr, target);
+    })) return;
+    lyr.visible = false;
+    hiddenLayers.push(lyr);
+  });
+
+  forEach(targetLayers, function(lyr) {
+    // show layer (and any hidden parent layers)
+    unhideLayer(lyr);
+    callback(lyr);
+    lyr.visible = false; // hide again
+  });
+
+  // Re-show all layers except image layers
+  forEach(hiddenLayers, function(lyr) {
+    if (indexOf(targetLayers, lyr) == -1) {
+      lyr.visible = true;
+    }
+  });
 }
 
 // ab: artboard (assumed to be the active artboard)
