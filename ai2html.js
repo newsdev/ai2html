@@ -78,7 +78,7 @@ var defaultSettings = {
   "center_html_output": true,
   "use_2x_images_if_possible": true,
   "use_lazy_loader": false,
-  "include_resizer_classes": false,
+  // "include_resizer_classes": false,  // obsolete NYT resizing method -- removed
   "include_resizer_widths": true,
   "include_resizer_script": false,
   "inline_svg": false, // Embed background image SVG in HTML instead of loading a file
@@ -3332,7 +3332,10 @@ function replaceSvgIds(svg, prefix) {
   }
 }
 
-
+// Finds layers that have an image type annotation in their names (e.g. :png)
+//   and passes each tagged layer to a callback, after hiding all other content
+// Side effect: Tagged layers remain hidden after the function completes
+//   (they have to be unhidden later)
 function forEachImageLayer(imageType, callback) {
   var targetLayers = findTaggedLayers(imageType); // only finds visible layers with a tag
   var hiddenLayers = [];
@@ -3786,9 +3789,7 @@ function generateArtboardDiv(ab, breakpoints, settings) {
   var abBox = convertAiBounds(ab.artboardRect);
   var inlineStyle = "";
   var html = "";
-  if (!isFalse(settings.include_resizer_classes)) {
-    classnames += " " + findShowClassesForArtboard(ab, breakpoints);
-  }
+
   // Set size of graphic using inline CSS
   if (settings.responsiveness == "fixed") {
     inlineStyle = "width:" + abBox.width + "px; height:" + abBox.height + "px;";
@@ -3809,17 +3810,6 @@ function generateArtboardDiv(ab, breakpoints, settings) {
   }
   html += ">\r";
   return html;
-}
-
-function findShowClassesForArtboard(ab, breakpoints) {
-  var classes = [];
-  var id = getArtboardId(ab);
-  forEach(breakpoints, function(bp) {
-    if (contains(bp.artboards, id)) {
-      classes.push(nameSpace + 'show-' + bp.name);
-    }
-  });
-  return classes.join(' ');
 }
 
 function generateArtboardCss(ab, textClasses, settings) {
