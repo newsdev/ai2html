@@ -355,17 +355,6 @@ var cssTextStyleProperties = [
   'mix-blend-mode'
 ];
 
-var nyt5Breakpoints = [
-  { name:"xsmall"    , lowerLimit:   0, upperLimit: 180 },
-  { name:"small"     , lowerLimit: 180, upperLimit: 300 },
-  { name:"smallplus" , lowerLimit: 300, upperLimit: 460 },
-  { name:"submedium" , lowerLimit: 460, upperLimit: 600 },
-  { name:"medium"    , lowerLimit: 600, upperLimit: 720 },
-  { name:"large"     , lowerLimit: 720, upperLimit: 945 },
-  { name:"xlarge"    , lowerLimit: 945, upperLimit:1050 },
-  { name:"xxlarge"   , lowerLimit:1050, upperLimit:1600 }
-];
-
 var cssPrecision = 4;
 
 // ================================
@@ -487,22 +476,6 @@ function render(settings, customBlocks) {
     clearSelection();
   }
 
-  // ========================
-  // Initialize breakpoints
-  // ========================
-  // (can have more than one artboard per breakpoint)
-  // TODO: remove nyt-specific breakpoint code, generalize breakpoints for all environments
-  var breakpoints = assignBreakpointsToArtboards(nyt5Breakpoints);
-
-  if (scriptEnvironment == "nyt-preview") {
-    if (settings.max_width && !contains(breakpoints, function(bp) {
-      return +settings.max_width == bp.upperLimit;
-    })) {
-      warn('The max_width setting of "' + settings.max_width +
-        '" is not a valid breakpoint and will create an error when you "preview publish."');
-    }
-  }
-
   // ================================================
   // Generate HTML, CSS and images for each artboard
   // ================================================
@@ -551,7 +524,7 @@ function render(settings, customBlocks) {
     //=====================================
 
     artboardContent.html += "\r\t<!-- Artboard: " + getArtboardName(activeArtboard) + " -->\r" +
-       generateArtboardDiv(activeArtboard, breakpoints, settings) +
+       generateArtboardDiv(activeArtboard, settings) +
        imageData.html +
        textData.html +
        "\t</div>\r";
@@ -580,7 +553,7 @@ function render(settings, customBlocks) {
   if (isTrue(settings.create_config_file)) {
     // Write configuration file with graphic metadata
     var yamlPath = docPath + (settings.config_file_path || 'config.yml'),
-        yamlStr = generateYamlFileContent(breakpoints, settings);
+        yamlStr = generateYamlFileContent(settings);
     checkForOutputFolder(yamlPath.replace(/[^\/]+$/, ""), "configFileFolder");
     saveTextFile(yamlPath, yamlStr);
   }
@@ -1769,42 +1742,6 @@ function getArtboardInfo() {
   });
   artboards.sort(function(a, b) {return a.effectiveWidth - b.effectiveWidth;});
   return artboards;
-}
-
-// Get array of data records for breakpoints that have artboards assigned to them
-// (sorted from narrow to wide)
-// breakpoints: Array of data about all possible breakpoints
-function assignBreakpointsToArtboards(breakpoints) {
-  var abArr = getArtboardInfo(); // get data records for each artboard
-  var bpArr = [];
-  forEach(breakpoints, function(breakpoint) {
-    var bpPrev = bpArr[bpArr.length - 1],
-        bpInfo = {
-          name: breakpoint.name,
-          lowerLimit: breakpoint.lowerLimit,
-          upperLimit: breakpoint.upperLimit,
-          artboards: []
-        },
-        abInfo;
-    for (var i=0; i<abArr.length; i++) {
-      abInfo = abArr[i];
-      if (abInfo.effectiveWidth <= breakpoint.upperLimit &&
-          abInfo.effectiveWidth > breakpoint.lowerLimit) {
-        bpInfo.artboards.push(abInfo.id);
-      }
-    }
-    if (bpInfo.artboards.length > 1 && scriptEnvironment == "nyt-preview") {
-      warn('The ' + breakpoint.upperLimit + "px breakpoint has " + bpInfo.artboards.length +
-          " artboards. You probably want only one artboard per breakpoint.");
-    }
-    if (bpInfo.artboards.length === 0 && bpPrev) {
-      bpInfo.artboards = bpPrev.artboards.concat();
-    }
-    if (bpInfo.artboards.length > 0) {
-      bpArr.push(bpInfo);
-    }
-  });
-  return bpArr;
 }
 
 function forEachUsableArtboard(cb) {
@@ -3782,7 +3719,7 @@ function assignArtboardContentToFile(name, abData, outputArr) {
   obj.css += abData.css;
 }
 
-function generateArtboardDiv(ab, breakpoints, settings) {
+function generateArtboardDiv(ab, settings) {
   var divId = nameSpace + getArtboardFullName(ab, settings);
   var classnames = nameSpace + "artboard";
   var widthRange = getArtboardWidthRange(ab);
@@ -3802,7 +3739,6 @@ function generateArtboardDiv(ab, breakpoints, settings) {
   html += ' data-aspect-ratio="' + roundTo(abBox.width / abBox.height, 3) + '"';
   if (isTrue(settings.include_resizer_widths)) {
     // add data-min/max-width attributes
-    // TODO: see if we can use breakpoint data to set min and max widths
     html += ' data-min-width="' + widthRange[0] + '"';
     if (widthRange[1] < Infinity) {
       html +=  ' data-max-width="' + widthRange[1] + '"';
@@ -3876,21 +3812,14 @@ function generatePageCss(containerId, settings) {
   return css;
 }
 
-function generateYamlFileContent(breakpoints, settings) {
+function generateYamlFileContent(settings) {
   var lines = [];
   lines.push("ai2html_version: " + scriptVersion);
   lines.push("project_type: " + settings.project_type);
   lines.push("tags: ai2html");
-  lines.push("min_width: " + breakpoints[0].upperLimit); // TODO: ask why upperLimit
+  lines.push("min_width: " + getArtboardInfo()[0].effectiveWidth);
   if (settings.max_width) {
     lines.push("max_width: " + settings.max_width);
-  } else if (settings.responsiveness != "fixed" && scriptEnvironment == "nyt-preview") {
-    lines.push("max_width: " + breakpoints[breakpoints.length-1].upperLimit);
-  } else if (settings.responsiveness != "fixed" && scriptEnvironment != "nyt-preview") {
-    // don't write a max_width setting as there should be no max width in this case
-  } else {
-    // this is the case of fixed responsiveness
-    lines.push("max_width: " + getArtboardInfo().pop().effectiveWidth);
   }
   return lines.join('\n') + '\n' + convertSettingsToYaml(settings) + '\n';
 }
