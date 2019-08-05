@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = "0.91.1";
+var scriptVersion = "0.91.2";
 
 // ================================================
 // ai2html and config settings
@@ -490,15 +490,6 @@ function render(settings, customBlocks) {
   // with script-driven selection. The fix is to clear this kind of selection.
   if (doc.selection && doc.selection.typename) {
     clearSelection();
-  }
-
-  if (scriptEnvironment == "nyt-preview") {
-    if (settings.max_width && !contains(breakpoints, function(bp) {
-      return +settings.max_width == bp.upperLimit;
-    })) {
-      warn('The max_width setting of "' + settings.max_width +
-        '" is not a valid breakpoint and will create an error when you "preview publish."');
-    }
   }
 
   // ================================================
@@ -1172,7 +1163,6 @@ function exportFunctionsForTesting() {
     cleanCodeBlock,
     findHtmlTag,
     cleanHtmlTags,
-    convertSettingsToYaml,
     parseDataAttributes,
     parseObjectName,
     cleanObjectName,

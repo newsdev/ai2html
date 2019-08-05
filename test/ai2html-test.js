@@ -1,4 +1,3 @@
-var env = require('./ai-env');
 var lib = require('../');
 var assert = require('assert');
 
@@ -16,7 +15,6 @@ describe('Ai2html-specific functions', function () {
         var settings = lib.parseObjectName("ai2html-700");
         assert.deepEqual(settings, {width: 700});
       })
-
 
     it('extract flags, numbers and strings', function () {
       var settings = lib.parseObjectName("Layer 7:600,svg,label=Text Layer,height=400");
@@ -48,7 +46,6 @@ describe('Ai2html-specific functions', function () {
       assert.equal(lib.addEnclosingTag('script', '</script>'), '<script>\r</script>');
       assert.equal(lib.addEnclosingTag('script', ''), '<script>\r\r</script>');
       assert.equal(lib.addEnclosingTag('style', ''), '<style>\r\r</style>');
-
     })
   })
 
@@ -94,42 +91,6 @@ describe('Ai2html-specific functions', function () {
       assert.deepEqual(lib.parseDataAttributes(note), {valign:'top', align: 'left', name: 'foo', id: 'bar'});
     })
   })
-
-  /*
-  describe('convertSettingsToYaml()', function () {
-    it('ignores settings that are not explicitly included in default environment', function() {
-      lib.initDocumentSettings('');
-      var settings = {
-        dummy_setting: "true",
-        image_format: "png",
-        publish_system: "scoop"
-      };
-      assert.equal(lib.convertSettingsToYaml(settings), "");
-    })
-
-    it('ignores settings that are not explicitly included in nyt environment', function() {
-      lib.initDocumentSettings('nyt');
-      var settings = {
-        dummy_setting: "true",
-        image_format: "png",
-        publish_system: "scoop"
-      };
-      assert.equal(lib.convertSettingsToYaml(settings), "publish_system: scoop");
-    })
-
-    it('converts NYT Preview settings correctly', function () {
-      lib.initDocumentSettings('nyt');
-      var settings = {
-        show_in_compatible_apps: "no", // special case -- needs to be quoted
-        headline: "Breaking \"News\"",
-        leadin: "",  // empty strings are quoted
-        display_for_promotion_only: false
-      };
-      var expected = 'show_in_compatible_apps: "no"\nheadline: "Breaking \\"News\\""\nleadin: ""\ndisplay_for_promotion_only: false';
-      assert.equal(lib.convertSettingsToYaml(settings), expected);
-    })
-  })
-  */
 
   describe('replaceSvgIds()', function() {
     it ('tests', function() {
