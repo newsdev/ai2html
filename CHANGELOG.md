@@ -1,3 +1,6 @@
+### v0.91.1
+- Bug fix
+
 ### v0.91.0
 - Added support for per-artboard responsiveness by appending :dynamic and :fixed to the artboard name.
 - Removed "include_resizer_classes" option.
