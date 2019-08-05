@@ -1,3 +1,7 @@
+### v0.91.0
+- Added support for per-artboard responsiveness by appending :dynamic and :fixed to the artboard name.
+- Removed "include_resizer_classes" option.
+
 ### v0.90.0
 - Added .eslintrc.json file
 - Added the ability to export a layer as a transparent 8-bit png by appending :png to the layer name.
