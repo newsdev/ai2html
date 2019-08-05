@@ -1703,9 +1703,10 @@ function getArtboardWidthRange(ab) {
 
 function getProjectWidthRange(settings) {
   var info = getArtboardInfo();
+  var maxAB = info.pop();
   var min = info[0].effectiveWidth;
-  var max = settings.max_width || info.pop().effectiveWidth;
-  if (settings.responsiveness == 'dynamic') {
+  var max = settings.max_width || maxAB.effectiveWidth;
+  if (maxAB.responsiveness == 'dynamic') {
     max = Math.max(max, 1600); // TODO: avoid magic number
   }
   return [min, max];
@@ -1754,6 +1755,14 @@ function parseObjectName(name) {
 // (e.g.  Artboard_1:responsive)
 function getArtboardSettings(ab) {
   return parseObjectName(ab.name);
+}
+
+function getArtboardResponsiveness(ab, settings) {
+  var opts = getArtboardSettings(ab);
+  var r = settings.responsiveness; // Default to document's responsiveness setting
+  if (opts.dynamic) r = 'dynamic'; // ab name has ":dynamic" appended
+  if (opts.fixed) r = 'fixed';     // ab name has ":fixed" appended
+  return r;
 }
 
 // return array of data records about each usable artboard, sorted from narrow to wide
@@ -3753,17 +3762,19 @@ function generateArtboardDiv(ab, settings) {
   var classnames = nameSpace + "artboard";
   var widthRange = getArtboardWidthRange(ab);
   var abBox = convertAiBounds(ab.artboardRect);
+  var responsiveness = getArtboardResponsiveness(ab, settings);
   var inlineStyle = "";
   var html = "";
 
   // Set size of graphic using inline CSS
-  if (settings.responsiveness == "fixed") {
+  if (responsiveness == "fixed") {
     inlineStyle = "width:" + abBox.width + "px; height:" + abBox.height + "px;";
   } else {
     // Adding bottom padding as a percentage of container width to set the artboard
     // height for dynamic artboards.
     inlineStyle = "padding: 0 0 " + formatCssPct(abBox.height, abBox.width) + " 0;";
   }
+
   html += '\t<div id="' + divId + '" class="' + classnames + '" style="' + inlineStyle + '"';
   html += ' data-aspect-ratio="' + roundTo(abBox.width / abBox.height, 3) + '"';
   if (isTrue(settings.include_resizer_widths)) {
