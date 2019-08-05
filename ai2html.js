@@ -78,7 +78,7 @@ var defaultSettings = {
   "center_html_output": true,
   "use_2x_images_if_possible": true,
   "use_lazy_loader": false,
-  // "include_resizer_classes": false,  // obsolete NYT resizing method -- removed
+  "include_resizer_classes": false, // Triggers an error (feature was removed)
   "include_resizer_widths": true,
   "include_resizer_script": false,
   "inline_svg": false, // Embed background image SVG in HTML instead of loading a file
@@ -142,6 +142,18 @@ var defaultSettings = {
     {"aifont":"Georgia-Bold","family":"georgia,'times new roman',times,serif","weight":"bold","style":""},
     {"aifont":"Georgia-Italic","family":"georgia,'times new roman',times,serif","weight":"","style":"italic"},
     {"aifont":"Georgia-BoldItalic","family":"georgia,'times new roman',times,serif","weight":"bold","style":"italic"}
+  ],
+
+  // Width ranges for responsive breakpoints (obsolete, will be removed)
+  "breakpoints": [
+    { name:"xsmall"    , lowerLimit:   0, upperLimit: 180 },
+    { name:"small"     , lowerLimit: 180, upperLimit: 300 },
+    { name:"smallplus" , lowerLimit: 300, upperLimit: 460 },
+    { name:"submedium" , lowerLimit: 460, upperLimit: 600 },
+    { name:"medium"    , lowerLimit: 600, upperLimit: 720 },
+    { name:"large"     , lowerLimit: 720, upperLimit: 945 },
+    { name:"xlarge"    , lowerLimit: 945, upperLimit:1050 },
+    { name:"xxlarge"   , lowerLimit:1050, upperLimit:1600 }
   ]
 };
 
@@ -418,6 +430,10 @@ try {
   docName = getDocumentName(docSettings.project_name);
   fonts = docSettings.fonts; // set global variable
 
+  if (isTrue(docSettings.include_resizer_classes)) {
+    error("The include_resizer_classes option was removed. Please file a GitHub issue if you need this feature.");
+  }
+
   if (!textBlockData.settings) {
     createSettingsBlock(docSettings);
   }
@@ -474,6 +490,15 @@ function render(settings, customBlocks) {
   // with script-driven selection. The fix is to clear this kind of selection.
   if (doc.selection && doc.selection.typename) {
     clearSelection();
+  }
+
+  if (scriptEnvironment == "nyt-preview") {
+    if (settings.max_width && !contains(breakpoints, function(bp) {
+      return +settings.max_width == bp.upperLimit;
+    })) {
+      warn('The max_width setting of "' + settings.max_width +
+        '" is not a valid breakpoint and will create an error when you "preview publish."');
+    }
   }
 
   // ================================================
@@ -1149,7 +1174,6 @@ function exportFunctionsForTesting() {
     cleanHtmlTags,
     convertSettingsToYaml,
     parseDataAttributes,
-    parseArtboardName,
     parseObjectName,
     cleanObjectName,
     // initDocumentSettings,
@@ -1580,7 +1604,6 @@ function ProgressBar(opts) {
   };
 }
 
-
 // ======================================
 // ai2html AI document reading functions
 // ======================================
@@ -1678,6 +1701,16 @@ function getArtboardWidthRange(ab) {
   return [minw, maxw ? maxw - 1 : Infinity];
 }
 
+function getProjectWidthRange(settings) {
+  var info = getArtboardInfo();
+  var min = info[0].effectiveWidth;
+  var max = settings.max_width || info.pop().effectiveWidth;
+  if (settings.responsiveness == 'dynamic') {
+    max = Math.max(max, 1600); // TODO: avoid magic number
+  }
+  return [min, max];
+}
+
 // Parse data that is encoded in a name (preceded by a colon)
 function parseObjectName(name) {
   // capture portion of name after colon
@@ -1717,14 +1750,10 @@ function parseObjectName(name) {
   return settings;
 }
 
-// TODO: redundant -- remove
-function parseArtboardName(name) {
-  return parseObjectName(name);
-}
-
+// Get artboard-specific settings by parsing the artboard name
+// (e.g.  Artboard_1:responsive)
 function getArtboardSettings(ab) {
-  // currently, artboard-specific settings are all stashed in the artboard name
-  return parseArtboardName(ab.name);
+  return parseObjectName(ab.name);
 }
 
 // return array of data records about each usable artboard, sorted from narrow to wide
@@ -3812,20 +3841,17 @@ function generatePageCss(containerId, settings) {
   return css;
 }
 
+// Create a settings file (optimized for the NYT Scoop CMS)
 function generateYamlFileContent(settings) {
+  var range = getProjectWidthRange(settings);
   var lines = [];
   lines.push("ai2html_version: " + scriptVersion);
   lines.push("project_type: " + settings.project_type);
   lines.push("tags: ai2html");
-  lines.push("min_width: " + getArtboardInfo()[0].effectiveWidth);
-  if (settings.max_width) {
-    lines.push("max_width: " + settings.max_width);
-  }
-  return lines.join('\n') + '\n' + convertSettingsToYaml(settings) + '\n';
-}
+  lines.push("min_width: " + range[0]);
+  lines.push("max_width: " + range[1]);
 
-function convertSettingsToYaml(settings) {
-  var lines = map(settings.config_file, function(key) {
+  forEach(settings.config_file, function(key) {
     var value = trim(String(settings[key]));
     var useQuotes = value === "" || /\s/.test(value);
     if (key == "show_in_compatible_apps") {
@@ -3839,7 +3865,7 @@ function convertSettingsToYaml(settings) {
       // use standard values for boolean settings
       value = isTrue(value) ? "true" : "false";
     }
-    return key + ': ' + value;
+    lines.push(key + ': ' + value);
   });
   return lines.join('\n');
 }
