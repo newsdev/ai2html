@@ -1680,9 +1680,9 @@ function getAllArtboardBounds() {
 }
 
 // return responsive artboard widths as an array [minw, maxw]
-function getArtboardWidthRange(ab) {
+function getArtboardWidthRange(ab, settings) {
   var id = getArtboardId(ab);
-  var infoArr = getArtboardInfo();
+  var infoArr = getArtboardInfo(settings);
   var minw, maxw;
   // find min width, which is the artboard's own effective width
   forEach(infoArr, function(info) {
@@ -1702,7 +1702,7 @@ function getArtboardWidthRange(ab) {
 }
 
 function getProjectWidthRange(settings) {
-  var info = getArtboardInfo();
+  var info = getArtboardInfo(settings);
   var maxAB = info.pop();
   var min = info[0].effectiveWidth;
   var max = settings.max_width || maxAB.effectiveWidth;
@@ -1766,7 +1766,7 @@ function getArtboardResponsiveness(ab, settings) {
 }
 
 // return array of data records about each usable artboard, sorted from narrow to wide
-function getArtboardInfo() {
+function getArtboardInfo(settings) {
   var artboards = [];
   forEachUsableArtboard(function(ab, i) {
     var pos = convertAiBounds(ab.artboardRect);
@@ -1775,6 +1775,7 @@ function getArtboardInfo() {
       name: ab.name || "",
       width: pos.width,
       effectiveWidth: abSettings.width || pos.width,
+      responsiveness: getArtboardResponsiveness(ab, settings),
       id: i
     });
   });
@@ -3758,11 +3759,11 @@ function assignArtboardContentToFile(name, abData, outputArr) {
 }
 
 function generateArtboardDiv(ab, settings) {
-  var divId = nameSpace + getArtboardFullName(ab, settings);
-  var classnames = nameSpace + "artboard";
-  var widthRange = getArtboardWidthRange(ab);
-  var abBox = convertAiBounds(ab.artboardRect);
+  var id = nameSpace + getArtboardFullName(ab, settings);
+  var classname = nameSpace + "artboard";
+  var widthRange = getArtboardWidthRange(ab, settings);
   var responsiveness = getArtboardResponsiveness(ab, settings);
+  var abBox = convertAiBounds(ab.artboardRect);
   var inlineStyle = "";
   var html = "";
 
@@ -3775,10 +3776,9 @@ function generateArtboardDiv(ab, settings) {
     inlineStyle = "padding: 0 0 " + formatCssPct(abBox.height, abBox.width) + " 0;";
   }
 
-  html += '\t<div id="' + divId + '" class="' + classnames + '" style="' + inlineStyle + '"';
+  html += '\t<div id="' + id + '" class="' + classname + '" style="' + inlineStyle + '"';
   html += ' data-aspect-ratio="' + roundTo(abBox.width / abBox.height, 3) + '"';
   if (isTrue(settings.include_resizer_widths)) {
-    // add data-min/max-width attributes
     html += ' data-min-width="' + widthRange[0] + '"';
     if (widthRange[1] < Infinity) {
       html +=  ' data-max-width="' + widthRange[1] + '"';
