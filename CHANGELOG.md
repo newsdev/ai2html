@@ -1,3 +1,7 @@
+### v0.92.0
+- The resize function now displays the narrowest artboard when the graphic is displayed at an even narrower width.
+- Fix for issue #120
+
 ### v0.91.2
 - Bug fix
 

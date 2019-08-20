@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = "0.91.2";
+var scriptVersion = "0.92.0";
 
 // ================================================
 // ai2html and config settings
@@ -552,6 +552,10 @@ function render(settings, customBlocks) {
         fileContentArr);
 
   }); // end artboard loop
+
+  if (fileContentArr.length === 0) {
+    error('No usable artboards were found');
+  }
 
   //=====================================
   // Output html file(s)
@@ -1669,33 +1673,44 @@ function getAllArtboardBounds() {
   return bounds;
 }
 
-// return responsive artboard widths as an array [minw, maxw]
-function getArtboardWidthRange(ab, settings) {
-  var id = getArtboardId(ab);
-  var infoArr = getArtboardInfo(settings);
-  var minw, maxw;
-  // find min width, which is the artboard's own effective width
-  forEach(infoArr, function(info) {
-    if (info.id == id) {
-      minw = info.effectiveWidth;
-    }
-  });
-  // find max width, which is the effective width of the next widest
-  // artboard (if any), minus one pixel
-  forEach(infoArr, function(info) {
+// return the effective width of an artboard (the actual width, overridden by optional setting)
+function getArtboardWidth(ab) {
+  var abSettings = getArtboardSettings(ab);
+  return abSettings.width || convertAiBounds(ab.artboardRect).width;
+}
+
+// get range of container widths that an ab is visible
+function getArtboardVisibilityRange(ab, settings) {
+  var thisWidth = getArtboardWidth(ab);
+  var minWidth, nextWidth;
+  // find widths of smallest ab and next widest ab (if any)
+  forEach(getArtboardInfo(settings), function(info) {
     var w = info.effectiveWidth;
-    if (w > minw && (!maxw || w < maxw)) {
-      maxw = w;
+    if (w > thisWidth && (!nextWidth || w < nextWidth)) {
+      nextWidth = w;
     }
+    minWidth = Math.min(w, minWidth || Infinity);
   });
-  return [minw, maxw ? maxw - 1 : Infinity];
+  return [thisWidth == minWidth ? 0 : thisWidth, nextWidth ? nextWidth - 1 : Infinity];
+}
+
+// Get range of widths that an ab can be sized
+function getArtboardWidthRange(ab, settings) {
+  var responsiveness = getArtboardResponsiveness(ab, settings);
+  var w = getArtboardWidth(ab);
+  var visibleRange = getArtboardVisibilityRange(ab, settings);
+  if (responsiveness == 'fixed') {
+    return [visibleRange[0] === 0 ? 0 : w, w];
+  }
+  return visibleRange;
 }
 
 function getProjectWidthRange(settings) {
   var info = getArtboardInfo(settings);
-  var maxAB = info.pop();
-  var min = info[0].effectiveWidth;
-  var max = settings.max_width || maxAB.effectiveWidth;
+  var minAB = info[0];
+  var maxAB = info[info.length - 1];
+  var min = minAB ? minAB.effectiveWidth : 0;
+  var max = settings.max_width || (maxAB ? maxAB.effectiveWidth : 0);
   if (maxAB.responsiveness == 'dynamic') {
     max = Math.max(max, 1600); // TODO: avoid magic number
   }
@@ -1759,12 +1774,8 @@ function getArtboardResponsiveness(ab, settings) {
 function getArtboardInfo(settings) {
   var artboards = [];
   forEachUsableArtboard(function(ab, i) {
-    var pos = convertAiBounds(ab.artboardRect);
-    var abSettings = getArtboardSettings(ab);
     artboards.push({
-      name: ab.name || "",
-      width: pos.width,
-      effectiveWidth: abSettings.width || pos.width,
+      effectiveWidth: getArtboardWidth(ab),
       responsiveness: getArtboardResponsiveness(ab, settings),
       id: i
     });
@@ -3205,7 +3216,7 @@ function exportImage(imgName, format, ab, masks, layer, settings) {
   var imgId = getImageId(imgName);
   // all images are now absolutely positioned (before, artboard images were
   // position:static to set the artboard height)
-  var imgClass = nameSpace + 'aiImg ' + nameSpace + 'aiAbs';
+  var imgClass = nameSpace + 'aiImg';
   var svgInlineStyle, svgLayersArg;
   var created, html;
 
@@ -3752,29 +3763,40 @@ function generateArtboardDiv(ab, settings) {
   var id = nameSpace + getArtboardFullName(ab, settings);
   var classname = nameSpace + "artboard";
   var widthRange = getArtboardWidthRange(ab, settings);
-  var responsiveness = getArtboardResponsiveness(ab, settings);
+  var visibleRange = getArtboardVisibilityRange(ab, settings);
   var abBox = convertAiBounds(ab.artboardRect);
+  var aspectRatio = abBox.width / abBox.height;
   var inlineStyle = "";
+  var inlineSpacerStyle = "";
   var html = "";
 
   // Set size of graphic using inline CSS
-  if (responsiveness == "fixed") {
-    inlineStyle = "width:" + abBox.width + "px; height:" + abBox.height + "px;";
+  if (widthRange[0] == widthRange[1]) {
+    // fixed width
+    inlineSpacerStyle = "width:" + abBox.width + "px; height:" + abBox.height + "px;";
   } else {
-    // Adding bottom padding as a percentage of container width to set the artboard
-    // height for dynamic artboards.
-    inlineStyle = "padding: 0 0 " + formatCssPct(abBox.height, abBox.width) + " 0;";
+    // Set height of dynamic artboards using vertical padding as a %, to preserve aspect ratio.
+    inlineSpacerStyle = "padding: 0 0 " + formatCssPct(abBox.height, abBox.width) + " 0;";
+    if (widthRange[0] > 0) {
+      inlineStyle += "min-width: " + widthRange[0] + "px;";
+    }
+    if (widthRange[1] < Infinity) {
+      inlineStyle += "max-width: " + widthRange[1] + "px;";
+      inlineStyle += "max-height: " + Math.round(widthRange[1] / aspectRatio) + "px";
+    }
   }
 
   html += '\t<div id="' + id + '" class="' + classname + '" style="' + inlineStyle + '"';
-  html += ' data-aspect-ratio="' + roundTo(abBox.width / abBox.height, 3) + '"';
+  html += ' data-aspect-ratio="' + roundTo(aspectRatio, 3) + '"';
   if (isTrue(settings.include_resizer_widths)) {
-    html += ' data-min-width="' + widthRange[0] + '"';
-    if (widthRange[1] < Infinity) {
-      html +=  ' data-max-width="' + widthRange[1] + '"';
+    html += ' data-min-width="' + visibleRange[0] + '"';
+    if (visibleRange[1] < Infinity) {
+      html +=  ' data-max-width="' + visibleRange[1] + '"';
     }
   }
   html += ">\r";
+  // add spacer div
+  html += '<div style="' + inlineSpacerStyle + '"></div>\n';
   return html;
 }
 
@@ -3829,6 +3851,8 @@ function generatePageCss(containerId, settings) {
   css += t2 + "}\r";
 
   css += t2 + "." + nameSpace + "aiImg {\r";
+  css += t3 + "position:absolute;\r";
+  css += t3 + "top:0;\r";
   css += t3 + "display:block;\r";
   css += t3 + "width:100% !important;\r";
   css += t2 + "}\r";
