@@ -3829,6 +3829,7 @@ function generatePageCss(containerId, settings) {
     css += t2 + "}\r";
   }
   if (isTrue(settings.center_html_output)) {
+    css += t2 + "#" + containerId + ",\r";
     css += t2 + "#" + containerId + " ." + nameSpace + "artboard {\r";
     css += t3 + "margin:0 auto;\r";
     css += t2 + "}\r";
