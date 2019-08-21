@@ -1,3 +1,6 @@
+### v0.93.0
+- Fixed a centering bug when both max_width and center_html_output options were set.
+
 ### v0.92.0
 - The resize function now displays the narrowest artboard when the graphic is displayed at an even narrower width.
 - Fix for issue #120
