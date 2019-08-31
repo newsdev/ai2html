@@ -1,3 +1,6 @@
+### v0.93.0
+- Fix for a bug that caused fixed artboards to scale.
+
 ### v0.92.0
 - The resize function now displays the narrowest artboard when the graphic is displayed at an even narrower width.
 - Fix for issue #120

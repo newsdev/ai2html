@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = "0.92.0";
+var scriptVersion = "0.93.0";
 
 // ================================================
 // ai2html and config settings
@@ -3773,7 +3773,8 @@ function generateArtboardDiv(ab, settings) {
   // Set size of graphic using inline CSS
   if (widthRange[0] == widthRange[1]) {
     // fixed width
-    inlineSpacerStyle = "width:" + abBox.width + "px; height:" + abBox.height + "px;";
+    // inlineSpacerStyle += "width:" + abBox.width + "px; height:" + abBox.height + "px;";
+    inlineStyle += "width:" + abBox.width + "px; height:" + abBox.height + "px;";
   } else {
     // Set height of dynamic artboards using vertical padding as a %, to preserve aspect ratio.
     inlineSpacerStyle = "padding: 0 0 " + formatCssPct(abBox.height, abBox.width) + " 0;";
