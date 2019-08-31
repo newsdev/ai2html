@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = "0.93.0";
+var scriptVersion = "0.94.0";
 
 // ================================================
 // ai2html and config settings
@@ -3830,6 +3830,7 @@ function generatePageCss(containerId, settings) {
     css += t2 + "}\r";
   }
   if (isTrue(settings.center_html_output)) {
+    css += t2 + "#" + containerId + ",\r";
     css += t2 + "#" + containerId + " ." + nameSpace + "artboard {\r";
     css += t3 + "margin:0 auto;\r";
     css += t2 + "}\r";
