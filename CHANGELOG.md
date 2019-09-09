@@ -1,5 +1,9 @@
+### v0.94.1
+- Scope all CSS classes to the outermost container (only a few weren't before).
+- Fix for max_width setting in generated config.yml file
+
 ### v0.94.0
-- Fix for a bug that caused fixed artboards to scale.
+- Fix for a bug that caused fixed artboards to scale
 
 ### v0.93.0
 - Fixed a centering bug when both max_width and center_html_output options were set.

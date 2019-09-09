@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.94.0';
+var scriptVersion = '0.94.1';
 
 // ================================================
 // ai2html and config settings
@@ -1714,14 +1714,18 @@ function getArtboardWidthRange(ab, settings) {
   return visibleRange;
 }
 
-function getProjectWidthRange(settings) {
+// Get [min, max] width range for the graphic (for optional config.yml output)
+function getWidthRangeForConfig(settings) {
   var info = getArtboardInfo(settings);
   var minAB = info[0];
   var maxAB = info[info.length - 1];
-  var min = minAB ? minAB.effectiveWidth : 0;
-  var max = settings.max_width || (maxAB ? maxAB.effectiveWidth : 0);
+  var min, max;
+  if (!minAB || !maxAB) return [0, 0];
+  min = minAB.effectiveWidth;
   if (maxAB.responsiveness == 'dynamic') {
-    max = Math.max(max, 1600); // TODO: avoid magic number
+    max = settings.max_width || Math.max(maxAB.effectiveWidth, 1600);
+  } else {
+    max = maxAB.effectiveWidth;
   }
   return [min, max];
 }
@@ -3880,7 +3884,7 @@ function generatePageCss(containerId, settings) {
 
 // Create a settings file (optimized for the NYT Scoop CMS)
 function generateYamlFileContent(settings) {
-  var range = getProjectWidthRange(settings);
+  var range = getWidthRangeForConfig(settings);
   var lines = [];
   lines.push('ai2html_version: ' + scriptVersion);
   lines.push('project_type: ' + settings.project_type);

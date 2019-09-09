@@ -6,11 +6,9 @@ Here are [examples of how we’ve used the script](https://del.icio.us/archietse
 
 For documentation and examples on [how to use ai2html](http://ai2html.org), please visit [ai2html.org](http://ai2html.org).
 
-
 ## Contributing to this project
 
 The Github repository for this site is available at [newsdev/ai2html](https://github.com/newsdev/ai2html).
-
 
 ## Thanks
 
