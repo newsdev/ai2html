@@ -1730,7 +1730,9 @@ function getWidthRangeForConfig(settings) {
   return [min, max];
 }
 
-// Parse data that is encoded in a name (preceded by a colon)
+// Parse data that is encoded in a name
+// This data is appended to the name of an object (layer or artboard).
+// Examples: Artboard1:600,fixed  Layer1:svg  Layer2:png
 function parseObjectName(name) {
   // capture portion of name after colon
   var settingsStr = (/:(.*)/.exec(name) || [])[1] || "";
