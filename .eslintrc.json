@@ -29,6 +29,7 @@
         "SVGFontSubsetting": "readonly",
         "SVGDocumentEncoding": "readonly",
         "SVGDTDVersion": "readonly",
+        "FontBaselineOption": "readonly",
         "SVGCSSPropertyLocation": "readonly",
         "SaveOptions": "readonly",
         "it": "readonly",

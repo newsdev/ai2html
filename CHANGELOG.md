@@ -1,3 +1,6 @@
+### v0.95.0
+- Detect superscript text.
+
 ### v0.94.1
 - Scope all CSS classes to the outermost container (only a few weren't before).
 - Fix for max_width setting in generated config.yml file

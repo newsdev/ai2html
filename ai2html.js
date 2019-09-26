@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.94.1';
+var scriptVersion = '0.95.0';
 
 // ================================================
 // ai2html and config settings
@@ -364,7 +364,8 @@ var cssTextStyleProperties = [
   'padding-bottom',
   'text-align',
   'text-transform',
-  'mix-blend-mode'
+  'mix-blend-mode',
+  'vertical-align' // for superscript
 ];
 
 var cssPrecision = 4;
@@ -2084,6 +2085,7 @@ function getCharStyle(c) {
   o.size = Math.round(c.size);
   o.capitalization = caps == 'FontCapsOption.NORMALCAPS' ? '' : caps;
   o.tracking = c.tracking;
+  o.superscript = c.baselinePosition == FontBaselineOption.SUPERSCRIPT;
   return o;
 }
 
@@ -2433,6 +2435,7 @@ function getBlendMode(obj) {
 // convert an object containing parsed AI text styles to an object containing CSS style properties
 function convertAiTextStyle(aiStyle) {
   var cssStyle = {};
+  var fontSize = aiStyle.size;
   var fontInfo, tmp;
   if (aiStyle.aifont) {
     fontInfo = findFontInfo(aiStyle.aifont);
@@ -2445,9 +2448,6 @@ function convertAiTextStyle(aiStyle) {
     if (fontInfo.style) {
       cssStyle['font-style'] = fontInfo.style;
     }
-  }
-  if (aiStyle.size > 0) {
-    cssStyle['font-size'] = aiStyle.size + 'px';
   }
   if ('leading' in aiStyle) {
     cssStyle['line-height'] = aiStyle.leading + 'px';
@@ -2475,6 +2475,13 @@ function convertAiTextStyle(aiStyle) {
   }
   if ('tracking' in aiStyle) {
     cssStyle['letter-spacing'] = roundTo(aiStyle.tracking / 1000, cssPrecision) + 'em';
+  }
+  if (aiStyle.superscript) {
+    fontSize = roundTo(fontSize * 0.7, 1);
+    cssStyle['vertical-align'] = 'super';
+  }
+  if (fontSize > 0) {
+    cssStyle['font-size'] = fontSize + 'px';
   }
   // kludge: text-align of rotated text is handled as a special case (see also getTextFrameCss())
   if (aiStyle.rotated && aiStyle.frameType == 'point') {
