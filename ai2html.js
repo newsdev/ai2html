@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.95.0';
+var scriptVersion = '0.96.0';
 
 // ================================================
 // ai2html and config settings
@@ -175,6 +175,7 @@ var nytOverrideSettings = {
   "constrain_width_to_text_column": false,
   "compatibility": "inline",
   "size": "full", // changed from "medium" to "full"
+  "min_width": 280, // added as workaround for a scoop bug affecting ai2html-type graphics
   "scoop_publish_fields": true,
   "scoop_asset_id": "",
   "scoop_username": "",
@@ -1722,7 +1723,7 @@ function getWidthRangeForConfig(settings) {
   var maxAB = info[info.length - 1];
   var min, max;
   if (!minAB || !maxAB) return [0, 0];
-  min = minAB.effectiveWidth;
+  min = settings.min_width || minAB.effectiveWidth;
   if (maxAB.responsiveness == 'dynamic') {
     max = settings.max_width || Math.max(maxAB.effectiveWidth, 1600);
   } else {

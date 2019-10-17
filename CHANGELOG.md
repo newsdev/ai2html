@@ -1,3 +1,6 @@
+### v0.96.0
+- Add fix for NYT Scoop min-width problem.
+
 ### v0.95.0
 - Detect superscript text.
 
