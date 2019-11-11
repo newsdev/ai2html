@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.96.0';
+var scriptVersion = '0.96.1';
 
 // ================================================
 // ai2html and config settings
@@ -3997,7 +3997,12 @@ function getResizerScript(containerId) {
     }
 
     function onIntersectionChange(entries) {
-      if (entries.length && entries[0].isIntersecting) {
+      // There may be multiple entries relating to the same container
+      // (captured at different times)
+      var isIntersecting = entries.reduce(function(memo, entry) {
+        return memo || entry.isIntersecting;
+      }, false);
+      if (isIntersecting) {
         waiting = false;
         observer.disconnect();
         observer = null;

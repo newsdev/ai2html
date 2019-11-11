@@ -1,3 +1,6 @@
+### v0.96.1
+- Fixed bug causing image lazy-loading to occasionally fail.
+
 ### v0.96.0
 - Add fix for NYT Scoop min-width problem.
 
