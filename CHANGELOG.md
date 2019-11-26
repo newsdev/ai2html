@@ -1,3 +1,6 @@
+### v0.97.0
+- Remove untested warning for Illustrator 2020 (v24)
+
 ### v0.96.1
 - Fixed bug causing image lazy-loading to occasionally fail.
 
