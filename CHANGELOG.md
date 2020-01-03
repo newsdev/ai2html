@@ -1,3 +1,6 @@
+### v0.98.1
+- More performance improvements.
+
 ### v0.98.0
 - Improve performance with documents containing many masked art objects.
 

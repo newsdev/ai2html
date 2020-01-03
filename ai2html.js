@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.98.0';
+var scriptVersion = '0.98.1';
 
 // ================================================
 // ai2html and config settings
@@ -399,7 +399,7 @@ initJSON();
 // Simple interface to help find performance bottlenecks. Usage:
 // T.start('<label>');
 // ...
-// message(T.stop('<label>'));
+// T.stop('<label>'); // prints a message in the final popup window
 //
 var T = {
   times: {},
@@ -411,7 +411,7 @@ var T = {
     var startTime = T.times[key];
     var elapsed = roundTo((+new Date() - startTime) / 1000, 1);
     delete T.times[key];
-    return key + ' - ' + elapsed + 's';
+    message(key + ' - ' + elapsed + 's');
   }
 };
 
@@ -2006,6 +2006,7 @@ function findMasks() {
   forEach(allMasks, function(mask) {mask.locked = true;});
   forEach(relevantMasks, function(mask) {
     var obj = {mask: mask};
+    var selection, item;
 
     // Select items in this mask
     mask.locked = false;
@@ -2016,7 +2017,10 @@ function findMasks() {
     // Switch selection to all masked items using a menu command
     app.executeMenuCommand('editMask'); // Object > Clipping Mask > Edit Contents
 
-    obj.items = toArray(doc.selection || []); // Stash masked items
+    // stash both objects and textframes
+    // (optimization -- addresses poor performance when many objects are masked)
+    // //  obj.items = toArray(doc.selection || []); // Stash masked items
+    storeSelectedItems(obj, doc.selection || []);
 
     if (mask.parent.typename == "GroupItem") {
       obj.group = mask.parent; // Group mask -- stash the group
@@ -2046,7 +2050,18 @@ function findMasks() {
   return found;
 }
 
-
+function storeSelectedItems(obj, selection) {
+  var items = obj.items = [];
+  var texts = obj.textframes = [];
+  var item;
+  for (var i=0, n=selection.length; i<n; i++) {
+    item = selection[i];
+    items[i] = item; // faster than push() in this JS engine
+    if (item.typename == 'TextFrame') {
+      texts.push(item);
+    }
+  }
+}
 
 // ==============================
 // ai2html text functions
@@ -2558,7 +2573,7 @@ function textFrameIsRenderable(frame, artboardRect) {
 function selectMaskedItems(items, clipRect, abRect) {
   var found = [];
   var itemRect, itemInArtboard, itemInMask, maskInArtboard;
-  for (var i=0; i<items.length; i++) {
+  for (var i=0, n=items.length; i<n; i++) {
     itemRect = items[i].geometricBounds;
     // capture items that intersect the artboard but are masked...
     itemInArtboard = testBoundsIntersection(abRect, itemRect);
@@ -2580,10 +2595,13 @@ function getClippedTextFramesByArtboard(ab, masks) {
     var clipRect = o.mask.geometricBounds;
     if (testSimilarBounds(abRect, clipRect, 5)) {
       // if clip path is masking the current artboard, skip the test
-      // (optimization)
       return;
     }
-    var texts = filter(o.items, function(item) {return item.typename == 'TextFrame';});
+    if (!testBoundsIntersection(abRect, clipRect)) {
+      return; // ignore masks in other artboards
+    }
+    var texts = o.textframes;
+    // var texts = filter(o.items, function(item) {return item.typename == 'TextFrame';});
     texts = selectMaskedItems(texts, clipRect, abRect);
     if (texts.length > 0) {
       frames = frames.concat(texts);
