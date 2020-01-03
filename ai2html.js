@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.97.0';
+var scriptVersion = '0.98.0';
 
 // ================================================
 // ai2html and config settings
@@ -396,6 +396,25 @@ var JSON;
 
 initJSON();
 
+// Simple interface to help find performance bottlenecks. Usage:
+// T.start('<label>');
+// ...
+// message(T.stop('<label>'));
+//
+var T = {
+  times: {},
+  start: function(key) {
+    if (key in T.times) return;
+    T.times[key] = +new Date();
+  },
+  stop: function(key) {
+    var startTime = T.times[key];
+    var elapsed = roundTo((+new Date() - startTime) / 1000, 1);
+    delete T.times[key];
+    return key + ' - ' + elapsed + 's';
+  }
+};
+
 // If running in Node.js, export functions for testing and exit
 if (runningInNode()) {
   exportFunctionsForTesting();
@@ -684,7 +703,8 @@ function arraySubtract(a, b) {
 function toArray(obj) {
   var arr = [];
   for (var i=0, n=obj.length; i<n; i++) {
-    arr[i] = obj[i];
+    arr[i] = obj[i]; // about 2x faster than push() (apparently)
+    // arr.push(obj[i]);
   }
   return arr;
 }
@@ -1971,56 +1991,58 @@ function maskIsRelevant(mask) {
   return true;
 }
 
+// Get information about masks in the document
+// (Used when identifying visible text fields and also when exporting SVG)
 function findMasks() {
   var found = [],
-      masks, relevantMasks;
-  // assumes clipping paths have been unlocked
+      allMasks, relevantMasks;
+  // JS API does not support finding masks -- need to call a menu command for this
+  // Assumes clipping paths have been unlocked
   app.executeMenuCommand('Clipping Masks menu item');
-  masks = toArray(doc.selection);
+  allMasks = toArray(doc.selection);
   clearSelection();
-  relevantMasks = filter(masks, maskIsRelevant);
-  forEach(masks, function(mask) {mask.locked = true;});
+  relevantMasks = filter(allMasks, maskIsRelevant);
+  // Lock all masks; then unlock each mask in turn and identify its contents.
+  forEach(allMasks, function(mask) {mask.locked = true;});
   forEach(relevantMasks, function(mask) {
-    var items, obj;
+    var obj = {mask: mask};
+
+    // Select items in this mask
     mask.locked = false;
-    // select a single mask
-    // some time ago, executeMenuCommand() was more reliable than assigning to
-    // selection... no longer, apparently
+    // In earlier AI versions, executeMenuCommand() was more reliable
+    // than assigning to a selection... this problem has apparently been fixed
     // app.executeMenuCommand('Clipping Masks menu item');
     doc.selection = [mask];
-    // switch selection to all masked items
+    // Switch selection to all masked items using a menu command
     app.executeMenuCommand('editMask'); // Object > Clipping Mask > Edit Contents
-    items = toArray(doc.selection || []);
-    // oddly, 'deselectall' sometimes fails here
-    // app.executeMenuCommand('deselectall');
-    doc.selection = null;
-    mask.locked = true;
-    obj = {
-      mask: mask,
-      items: items
-    };
+
+    obj.items = toArray(doc.selection || []); // Stash masked items
+
     if (mask.parent.typename == "GroupItem") {
-      // Group mask
-      obj.group = mask.parent;
+      obj.group = mask.parent; // Group mask -- stash the group
 
     } else if (mask.parent.typename == "Layer") {
-      // Layer mask -- common ancestor layer of all masked items is assumed
+      // Find masking layer -- the common ancestor layer of all masked items is assumed
       // to be the masked layer
-      obj.layer = findCommonAncestorLayer(items);
-
+      // passing in doc.selection is _much_ faster than obj.items (why?)
+      obj.layer = findCommonAncestorLayer(doc.selection || []);
     } else {
       message("Unknown mask type in findMasks()");
     }
 
-    if (items.length > 0 && (obj.group || obj.layer)) {
+    // Clear selection and re-lock mask
+    // oddly, 'deselectall' sometimes fails here -- using alternate method
+    // for clearing the selection
+    // app.executeMenuCommand('deselectall');
+    mask.locked = true;
+    doc.selection = null;
+
+    if (obj.items.length > 0 && (obj.group || obj.layer)) {
       found.push(obj);
     }
-
-    if (items.length === 0) {
-      // message("Unable to select masked items");
-    }
   });
-  forEach(masks, function(mask) {mask.locked = false;});
+  // restore masks to unlocked state
+  forEach(allMasks, function(mask) {mask.locked = false;});
   return found;
 }
 

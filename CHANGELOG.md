@@ -1,3 +1,6 @@
+### v0.98.0
+- Improve performance with documents containing many masked art objects.
+
 ### v0.97.0
 - Remove untested warning for Illustrator 2020 (v24)
 
