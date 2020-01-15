@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.98.1';
+var scriptVersion = '0.99.0';
 
 // ================================================
 // ai2html and config settings
@@ -428,6 +428,11 @@ try {
   if (!app.documents.length) {
     error('No documents are open');
   }
+
+  if (!String(app.activeDocument.fullName)) {
+    error('Ai2html is unable to run because Illustrator is confused by this document\'s file path.' +
+      ' Does the path contain any forward slashes or other unusual characters?');
+  }
   if (!String(app.activeDocument.path)) {
     error('You need to save your Illustrator file before running this script');
   }
@@ -477,6 +482,7 @@ if (docIsSaved) {
   var saveOptions = new IllustratorSaveOptions();
   saveOptions.pdfCompatible = false;
   doc.saveAs(new File(docPath + doc.name), saveOptions);
+  // doc.save(); // why not do this? (why set pdfCompatible = false?)
   message('Your Illustrator file was saved.');
 }
 

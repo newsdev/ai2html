@@ -1,3 +1,6 @@
+### v0.99.0
+- Show an appropriate error if Illustrator is confused by the document's file path (the scripting API is unable to read the document path if it contains a forward slash, preventing ai2html from saving any files).
+
 ### v0.98.1
 - More performance improvements.
 
