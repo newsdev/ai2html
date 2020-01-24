@@ -1,3 +1,7 @@
+### v0.99.1
+- Fix an issue causing a graphic sometimes not to resize after becoming visible by
+to user interaction (e.g. if the graphic is on a tab or in an accordion).
+
 ### v0.99.0
 - Show an appropriate error if Illustrator is confused by the document's file path (the scripting API is unable to read the document path if it contains a forward slash, preventing ai2html from saving any files).
 

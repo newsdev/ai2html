@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.99.0';
+var scriptVersion = '0.99.1';
 
 // ================================================
 // ai2html and config settings
@@ -4050,8 +4050,11 @@ function getResizerScript(containerId) {
       }, false);
       if (isIntersecting) {
         waiting = false;
-        observer.disconnect();
-        observer = null;
+        // update: don't remove -- we need the observer to trigger an update
+        // when a hidden map becomes visible after user interaction
+        // (e.g. when an accordion menu or tab opens)
+        // observer.disconnect();
+        // observer = null;
         update();
       }
     }
