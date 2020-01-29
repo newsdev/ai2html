@@ -1,3 +1,6 @@
+### v0.99.2
+- Fix for guide shapes being rendered in :div and :symbol layers.
+
 ### v0.99.1
 - Fix an issue causing a graphic sometimes not to resize after becoming visible by
 to user interaction (e.g. if the graphic is on a tab or in an accordion).

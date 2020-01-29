@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.99.1';
+var scriptVersion = '0.99.2';
 
 // ================================================
 // ai2html and config settings
@@ -2948,7 +2948,7 @@ function exportSymbols(lyr, ab, masks, opts) {
 
   function forPageItem(item) {
     var singleGeom, geometries;
-    if (item.hidden || !testBoundsIntersection(item.visibleBounds, ab.artboardRect)) return;
+    if (item.hidden || item.guides || !testBoundsIntersection(item.visibleBounds, ab.artboardRect)) return;
     // try to convert to circle or rectangle
     // note: filled shapes aren't necessarily closed
     if (item.typename != 'PathItem') return;
