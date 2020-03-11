@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.99.2';
+var scriptVersion = '0.100.0';
 
 // ================================================
 // ai2html and config settings
@@ -3497,28 +3497,20 @@ function createPromoImage(settings) {
 
 // Returns 1 or 2 (corresponding to standard pixel scale and 'retina' pixel scale)
 // format: png, png24 or jpg
-// doubleres: yes, always or no (no is default)
-//    yes may be overridden for large images on mobile
+// doubleres: true/false ('always' option has been removed)
+// NOTE: this function used to force single-res for png images > 3 megapixels,
+//   because of resource limits on early iphones. This rule has been changed
+//   to a warning and the limit increased.
 function getOutputImagePixelRatio(width, height, format, doubleres) {
-  // Maximum pixel sizes are based on mobile Safari limits
-  // TODO: check to see if these numbers are still relevant
-  var forceDouble = doubleres == 'always';
-  var preferDouble = isTrue(doubleres);
-  var maxPngSize = 3*1024*1024;
-  var maxJpgSize = 32*1024*1024;
-  var k = preferDouble || forceDouble ? 2 : 1;
+  var k = isTrue(doubleres) ? 2 : 1;
+  // thresholds may be obsolete
+  var warnThreshold = format == 'jpg' ? 32*1024*1024 : 5*1024*1024; // jpg and png
   var pixels = width * height * k * k;
-
-  if (preferDouble && width < 945) { // assume wide images are desktop-only
-    // use single res if image might run into mobile browser limits
-    if (((format == 'png' || format == 'png24') && pixels > maxPngSize) ||
-        (format == 'jpg' && pixels > maxJpgSize)) {
-      k = 1;
-    }
+  if (pixels > warnThreshold) {
+    warn('An output image contains ~' + Math.round(pixels / 1e6) + ' million pixels -- this may cause problems on mobile devices');
   }
   return k;
 }
-
 
 // Exports contents of active artboard as an image (without text, unless in test mode)
 // imgPath: full path of output file

@@ -1,3 +1,6 @@
+### v0.100.0
+- Remove image size limits related to obsolete resource limits in IOS.
+
 ### v0.99.2
 - Fix for guide shapes being rendered in :div and :symbol layers.
 
