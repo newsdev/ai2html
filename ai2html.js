@@ -374,7 +374,7 @@ var cssPrecision = 4;
 // ================================
 // Global variable declarations
 // ================================
-var nameSpace = 'g-'; // TODO: add to settings
+var nameSpace = "dvz-"; // TODO: add to settings
 
 // vars to hold warnings and informational messages at the end
 var feedback = [];
@@ -468,6 +468,18 @@ try {
 
 restoreDocumentState();
 if (progressBar) progressBar.close();
+
+function pathResolve (outPath) {
+  var parts = outPath.split('/');
+  var index = indexOf(parts, '..');
+  while (index > -1) {
+    if (index <= 1) parts.splice(index, 1);
+    else parts.splice(index - 1, 2);
+
+    index = indexOf(parts, '..');
+  }
+  return pathJoin.apply(null, parts);
+}
 
 // ==========================================
 // Save the AI document (if needed)
@@ -588,6 +600,13 @@ function render(settings, customBlocks) {
     addCustomContent(fileContent, customBlocks);
     generateOutputHtml(fileContent, fileContent.name, settings);
   });
+
+  //=====================================
+  // save feedback for image destination folders
+  //=====================================
+
+  var imageDestinationFolder = docPath + docSettings.html_output_path + docSettings.image_output_path;
+  feedback.push("Your images were saved to `" + pathResolve(imageDestinationFolder) + "`");
 
   //=====================================
   // Post-output operations
@@ -1177,6 +1196,7 @@ function exportFunctionsForTesting() {
     zeroPad,
     roundTo,
     pathJoin,
+    pathResolve,
     pathSplit,
     folderExists,
     formatCss,
@@ -4216,6 +4236,7 @@ function generateOutputHtml(content, pageName, settings) {
 
   // write file
   saveTextFile(htmlFileDestination, textForFile);
+  feedback.push("Your HTML was saved to `" + pathResolve(htmlFileDestination) + "`");
 
   // process local preview template if appropriate
   if (settings.local_preview_template !== '') {

@@ -175,4 +175,15 @@ describe('Utility function tests', function() {
       assert.deepEqual(lib.pathSplit('image.svg'), ['', 'image.svg']);
     })
   })
+
+  describe('pathResolve()', function() {
+    it('prints out paths correctly', function() {
+      assert.equal(lib.pathResolve('~/*/a/bad/../b/c'), '~/*/a/b/c')
+      assert.equal(lib.pathResolve('~/*/a/b/c'), '~/*/a/b/c')
+      assert.equal(lib.pathResolve('~/*/a///b/c'), '~/*/a/b/c')
+      assert.equal(lib.pathResolve('~/*/a/extra/bad/../../b/c'), '~/*/a/b/c')
+      assert.equal(lib.pathResolve('~/*/../../a/b/c'), '~/a/b/c')
+    })
+  })
+
 });
