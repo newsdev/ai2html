@@ -1,3 +1,7 @@
+### v0.101.0
+- Remove "untested" warning for Illustrator 2021.
+
+
 ### v0.100.0
 - Remove image size limits related to obsolete resource limits in IOS.
 
