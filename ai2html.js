@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.101.0';
+var scriptVersion = '0.102.0';
 
 // ================================================
 // ai2html and config settings
@@ -1290,9 +1290,9 @@ function initSpecialTextBlocks() {
 function initDocumentSettings(textBlockSettings) {
   var settings = extend({}, defaultSettings); // copy default settings
 
-  // Apply NYT settings if applicable
-  if (detectTimesFonts()) {
-    importNewYorkTimesSettings(settings);
+  if (wantTimesPreviewSettings(textBlockSettings)) {
+    // NYT settings are only applied in an NYT Preview context
+    applyTimesSettings(settings);
   }
 
   // merge external settings into @settings
@@ -1324,7 +1324,38 @@ function validateDocumentSettings(settings) {
   }
 }
 
-function importNewYorkTimesSettings(settings) {
+function detectUnTimesianSettings(o) {
+  return o.html_output_path == defaultSettings.html_output_path;
+}
+
+function wantTimesPreviewSettings(blockSettings) {
+  var foundTimesFonts = detectTimesFonts();
+  var foundPreviewEnv = fileExists(docPath + '../config.yml');
+  var yes = foundTimesFonts && foundPreviewEnv;
+
+  if (foundTimesFonts && !foundPreviewEnv) {
+    if (confirm("You seem to be running ai2html outside of NYT Preview.\nContinue in non-Preview mode?", true)) {
+      yes = false;
+    } else {
+      error("Make sure your Illustrator file is inside the \u201Cai\u201D folder of a Preview project.");
+    }
+  }
+
+  if (!foundTimesFonts && foundPreviewEnv) {
+    yes = confirm("You seem to be running ai2html in Preview, but your system is missing the NYT fonts.\nContinue in NYT Preview mode?", true);
+  }
+
+  if (blockSettings) {
+    // detect incompatibility between text block settings and current context
+    if (yes && detectUnTimesianSettings(blockSettings)) {
+      error('The settings block is incompatible with NYT Preview. Delete it and re-run ai2html.');
+    }
+  }
+
+  return yes;
+}
+
+function applyTimesSettings(settings) {
   var configFilePath = docPath + '../config.yml';
 
   // Check that we are in an NYT Preview project

@@ -1,6 +1,9 @@
+### v0.102.0
+- Detect if the settings block is incompatible with NYT Preview.
+- Detect if an NYTimes user is missing the required fonts.
+
 ### v0.101.0
 - Remove "untested" warning for Illustrator 2021.
-
 
 ### v0.100.0
 - Remove image size limits related to obsolete resource limits in IOS.
