@@ -1350,6 +1350,11 @@ function wantTimesPreviewSettings(blockSettings) {
     if (yes && detectUnTimesianSettings(blockSettings)) {
       error('The settings block is incompatible with NYT Preview. Delete it and re-run ai2html.');
     }
+  } else { // local config.yml file options loader
+    var yaml = readYamlConfigFile(docPath + "config.yml") || {};
+    forEachProperty(yaml, function(v, k){
+      settings[k] = v;
+    });
   }
 
   return yes;
