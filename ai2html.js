@@ -1596,7 +1596,7 @@ function showCompletionAlert(showPrompt) {
     // confirm(<msg>, false) makes "Yes" the default (at Baden's request).
     makePromo = confirm(alertHed  + alertText, false);
   } else {
-    alertText += rule + "ai2html-nyt5 v" + scriptVersion;
+    alertText += rule + "ai2html v" + scriptVersion;
     alert(alertHed + alertText);
     makePromo = false;
   }
