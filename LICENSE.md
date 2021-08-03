@@ -1,4 +1,4 @@
-Copyright (c) 2011-2015 The New York Times Company
+Copyright (c) 2011-2021 The New York Times Company
  
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this library except in compliance with the License.
