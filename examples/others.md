@@ -68,8 +68,6 @@
 
 [Zika virus: Latest STD worry for millennials, same-sex couples | Miami Herald](https://www.miamiherald.com/news/health-care/article95330072.html)
 
-[The Carving Out of the Urban Middle Class - WSJ.com](https://graphics.wsj.com/urban-income-polarization/%3Fmod%3De2twg)
-
 [Rio 2016 visualized: The Olympics in charts and graphics - Washington Post](https://www.washingtonpost.com/graphics/sports/olympics/olympics-collection/when-women-started-participating-in-the-olympics.html)
 
 [De geboorte van een Olympisch Park](https://multimedia.tijd.be/rio/)
