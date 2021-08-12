@@ -2,7 +2,7 @@
 
 > ai2html is an open-source script for Adobe Illustrator that converts your Illustrator documents into html and css.
 
-Here are [examples of how we’ve used the script](https://del.icio.us/archietse/ai2html,nyt) at The New York Times and [examples of how others](https://del.icio.us/archietse/ai2html,others) have used it. Share your ai2html projects on Twitter, Delicious, etc. using #ai2html.
+Here are [examples of how we’ve used the script](examples/nyt.md) at The New York Times and [examples of how others](examples/others.md) have used it. Share your ai2html projects on Twitter, Delicious, etc. using #ai2html.
 
 For documentation and examples on [how to use ai2html](http://ai2html.org), please visit [ai2html.org](http://ai2html.org).
 
@@ -21,6 +21,3 @@ If you’re learning to write Javascript for Adobe Illustrator, [John Wundes](ht
 <p style="font-size:.8em;opacity:0.5;">Created by <a href="https://twitter.com/archietse">Archie Tse</a> / <a href="https://github.com/newsdev">The New York Times</a></p>
 
 <p style="font-size:.8em;opacity:0.7;">Copyright (c) 2011-2015 The New York Times Company</p>
-
-
-
