@@ -1,3 +1,7 @@
+### v0.102.1
+- Round fixed-size symbol width and height to prevent distortion from pixel snapping.
+- Fix for stroke scaling of SVG polygons.
+
 ### v0.102.0
 - Detect if the settings block is incompatible with NYT Preview.
 - Detect if an NYTimes user is missing the required fonts.
