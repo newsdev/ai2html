@@ -165,7 +165,7 @@ var nytOverrideSettings = {
   "use_lazy_loader": true,
   "include_resizer_script": true,
   "credit": "By The New York Times",
-  "page_template": "vi-article-embed",
+  "page_template": "dolos-vi-article-embed",
   "publish_system": "scoop",
 
   // NYT-specific settings (not present in default settings)
