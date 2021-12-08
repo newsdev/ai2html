@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.102.0';
+var scriptVersion = '0.102.1';
 
 // ================================================
 // ai2html and config settings
@@ -165,7 +165,7 @@ var nytOverrideSettings = {
   "use_lazy_loader": true,
   "include_resizer_script": true,
   "credit": "By The New York Times",
-  "page_template": "vi-article-embed",
+  "page_template": "dolos-vi-article-embed",
   "publish_system": "scoop",
 
   // NYT-specific settings (not present in default settings)
@@ -2876,27 +2876,34 @@ function convertAreaTextPath(frame) {
 function getBasicSymbolCss(geom, style, abBox, opts) {
   var center = geom.center;
   var styles = [];
+  // Round fixed-size symbols to integer size, to prevent pixel-snapping from
+  // changing squares and circles to rectangles and ovals.
+  var precision = opts.scaled ? 1 : 0;
   var width, height;
   var border;
 
   if (geom.type == 'line') {
-    width = roundTo(geom.width, 2);
-    height = roundTo(geom.height, 2);
+    precision = 2;
+    width = geom.width;
+    height = geom.height;
     if (width > height) {
       // kludge to minimize gaps between segments (found using trial and error)
       width += style.strokeWidth * 0.5;
       center[0] += style.strokeWidth * 0.333;
     }
-
   } else if (geom.type == 'rectangle') {
-    width = roundTo(geom.width, 1);
-    height = roundTo(geom.height, 1);
+    width = geom.width;
+    height = geom.height;
   } else if (geom.type == 'circle') {
-    width = roundTo(geom.radius * 2, 1);
+    width = geom.radius * 2;
     height = width;
     // styles.push('border-radius: ' + roundTo(geom.radius, 1) + 'px');
     styles.push('border-radius: 50%');
   }
+
+  width = roundTo(width, precision);
+  height = roundTo(height, precision);
+
   if (opts.scaled) {
     styles.push('width: ' + formatCssPct(width, abBox.width));
     styles.push('height: ' + formatCssPct(height, abBox.height));
@@ -3776,7 +3783,7 @@ function rewriteSVGFile(path, id) {
   svg = reapplyEffectsInSVG(svg);
   // prevent SVG strokes from scaling
   // (add element id to selector to prevent inline SVG from affecting other SVG on the page)
-  selector = map('rect,circle,path,line,polyline'.split(','), function(name) {
+  selector = map('rect,circle,path,line,polyline,polygon'.split(','), function(name) {
       return '#' + id + ' ' + name;
     }).join(', ');
   svg = injectCSSinSVG(svg, selector + ' { vector-effect: non-scaling-stroke; }');
