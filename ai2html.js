@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.102.1';
+var scriptVersion = '0.103.0';
 
 // ================================================
 // ai2html and config settings
@@ -165,7 +165,7 @@ var nytOverrideSettings = {
   "use_lazy_loader": true,
   "include_resizer_script": true,
   "credit": "By The New York Times",
-  "page_template": "dolos-vi-article-embed",
+  "page_template": "vi-article-embed",
   "publish_system": "scoop",
 
   // NYT-specific settings (not present in default settings)
@@ -3974,6 +3974,7 @@ function generateYamlFileContent(settings) {
   var lines = [];
   lines.push('ai2html_version: ' + scriptVersion);
   lines.push('project_type: ' + settings.project_type);
+  lines.push('type: embeddedinteractive');
   lines.push('tags: ai2html');
   lines.push('min_width: ' + range[0]);
   lines.push('max_width: ' + range[1]);

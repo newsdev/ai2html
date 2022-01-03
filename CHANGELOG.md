@@ -1,3 +1,6 @@
+### v0.103.0
+- Added 'type: embeddedinteractive' to relevant NYT config.yml files.
+
 ### v0.102.1
 - Round fixed-size symbol width and height to prevent distortion from pixel snapping.
 - Fix for stroke scaling of SVG polygons.
