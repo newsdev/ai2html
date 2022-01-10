@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.103.0';
+var scriptVersion = '0.104.0';
 
 // ================================================
 // ai2html and config settings
@@ -1204,7 +1204,7 @@ function exportFunctionsForTesting() {
 
 function isTestedIllustratorVersion(version) {
   var majorNum = parseInt(version);
-  return majorNum >= 18 && majorNum <= 25; // Illustrator CC 2014 through 2021
+  return majorNum >= 18 && majorNum <= 26; // Illustrator CC 2014 through 2022
 }
 
 function validateArtboardNames(settings) {

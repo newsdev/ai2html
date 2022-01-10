@@ -1,3 +1,6 @@
+### v0.104.0
+- Remove warning message when using Illustrator 2022 (v26).
+
 ### v0.103.0
 - Added 'type: embeddedinteractive' to relevant NYT config.yml files.
 
