@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.104.0';
+var scriptVersion = '0.105.0';
 
 // ================================================
 // ai2html and config settings
@@ -2533,9 +2533,6 @@ function convertAiTextStyle(aiStyle) {
   }
   // if (('opacity' in aiStyle) && aiStyle.opacity < 100) {
   if ('opacity' in aiStyle) {
-    cssStyle.filter = 'alpha(opacity=' + Math.round(aiStyle.opacity) + ')';
-    cssStyle['-ms-filter'] = 'progid:DXImageTransform.Microsoft.Alpha(Opacity=' +
-        Math.round(aiStyle.opacity) + ')';
     cssStyle.opacity = roundTo(aiStyle.opacity / 100, cssPrecision);
   }
   if (aiStyle.blendMode && (tmp = getBlendModeCss(aiStyle.blendMode))) {

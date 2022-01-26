@@ -1,3 +1,6 @@
+### v0.105.0
+- Remove obsolete IE8 fallback CSS.
+
 ### v0.104.0
 - Remove warning message when using Illustrator 2022 (v26).
 
