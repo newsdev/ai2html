@@ -1,3 +1,6 @@
+### v0.106.0
+- Updated resizer script to support multiple instances of the same graphic on a page.
+
 ### v0.105.0
 - Remove obsolete IE8 fallback CSS.
 

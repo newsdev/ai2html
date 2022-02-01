@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.105.0';
+var scriptVersion = '0.106.0';
 
 // ================================================
 // ai2html and config settings
@@ -4005,61 +4005,86 @@ function getResizerScript(containerId) {
   //   an image is loaded.
   //
   var resizer = function (containerId, opts) {
-    if (!('querySelector' in document)) return;
-    var container = document.getElementById(containerId);
     var nameSpace = opts.namespace || '';
-    var onResize = throttle(update, 200);
-    var waiting = !!window.IntersectionObserver;
-    var observer;
-    update();
+    var containers = findContainers(containerId);
+    containers.forEach(resize);
 
-    document.addEventListener('DOMContentLoaded', update);
-    window.addEventListener('resize', onResize);
+    function resize(container) {
+      var onResize = throttle(update, 200);
+      var waiting = !!window.IntersectionObserver;
+      var observer;
+      update();
 
-    // NYT Scoop-specific code
-    if (opts.setup) {
-      opts.setup(container).on('cleanup', cleanup);
-    }
+      document.addEventListener('DOMContentLoaded', update);
+      window.addEventListener('resize', onResize);
 
-    function cleanup() {
-      document.removeEventListener('DOMContentLoaded', update);
-      window.removeEventListener('resize', onResize);
-      if (observer) observer.disconnect();
-    }
+      // NYT Scoop-specific code
+      if (opts.setup) {
+        opts.setup(container).on('cleanup', cleanup);
+      }
 
-    function update() {
-      var artboards = selectChildren('.' + nameSpace + 'artboard[data-min-width]', container),
-          width = Math.round(container.getBoundingClientRect().width);
+      function cleanup() {
+        document.removeEventListener('DOMContentLoaded', update);
+        window.removeEventListener('resize', onResize);
+        if (observer) observer.disconnect();
+      }
 
-      // Set artboard visibility based on container width
-      artboards.forEach(function(el) {
-        var minwidth = el.getAttribute('data-min-width'),
-            maxwidth = el.getAttribute('data-max-width');
-        if (+minwidth <= width && (+maxwidth >= width || maxwidth === null)) {
-          if (!waiting) {
-            selectChildren('.' + nameSpace + 'aiImg', el).forEach(updateImgSrc);
+      function update() {
+        var artboards = selectChildren('.' + nameSpace + 'artboard[data-min-width]', container),
+            width = Math.round(container.getBoundingClientRect().width);
+
+        // Set artboard visibility based on container width
+        artboards.forEach(function(el) {
+          var minwidth = el.getAttribute('data-min-width'),
+              maxwidth = el.getAttribute('data-max-width');
+          if (+minwidth <= width && (+maxwidth >= width || maxwidth === null)) {
+            if (!waiting) {
+              selectChildren('.' + nameSpace + 'aiImg', el).forEach(updateImgSrc);
+            }
+            el.style.display = 'block';
+          } else {
+            el.style.display = 'none';
           }
-          el.style.display = 'block';
-        } else {
-          el.style.display = 'none';
-        }
-      });
+        });
 
-      // Initialize lazy loading on first call
-      if (waiting && !observer) {
-        if (elementInView(container)) {
+        // Initialize lazy loading on first call
+        if (waiting && !observer) {
+          if (elementInView(container)) {
+            waiting = false;
+            update();
+          } else {
+            observer = new IntersectionObserver(onIntersectionChange, {});
+            observer.observe(container);
+          }
+        }
+      }
+
+      function onIntersectionChange(entries) {
+        // There may be multiple entries relating to the same container
+        // (captured at different times)
+        var isIntersecting = entries.reduce(function(memo, entry) {
+          return memo || entry.isIntersecting;
+        }, false);
+        if (isIntersecting) {
           waiting = false;
+          // update: don't remove -- we need the observer to trigger an update
+          // when a hidden map becomes visible after user interaction
+          // (e.g. when an accordion menu or tab opens)
+          // observer.disconnect();
+          // observer = null;
           update();
-        } else {
-          observer = new IntersectionObserver(onIntersectionChange, {});
-          observer.observe(container);
         }
       }
     }
 
-    function elementInView(el) {
-      var bounds = el.getBoundingClientRect();
-      return bounds.top < window.innerHeight && bounds.bottom > 0;
+    function findContainers(id) {
+      // support duplicate ids on the page
+      return selectChildren('.ai2html-responsive', document).filter(function(el) {
+        if (el.getAttribute('id') != id) return false;
+        if (el.classList.contains('ai2html-resizer')) return false;
+        el.classList.add('ai2html-resizer');
+        return true;
+      });
     }
 
     // Replace blank placeholder image with actual image
@@ -4070,21 +4095,9 @@ function getResizerScript(containerId) {
       }
     }
 
-    function onIntersectionChange(entries) {
-      // There may be multiple entries relating to the same container
-      // (captured at different times)
-      var isIntersecting = entries.reduce(function(memo, entry) {
-        return memo || entry.isIntersecting;
-      }, false);
-      if (isIntersecting) {
-        waiting = false;
-        // update: don't remove -- we need the observer to trigger an update
-        // when a hidden map becomes visible after user interaction
-        // (e.g. when an accordion menu or tab opens)
-        // observer.disconnect();
-        // observer = null;
-        update();
-      }
+    function elementInView(el) {
+      var bounds = el.getBoundingClientRect();
+      return bounds.top < window.innerHeight && bounds.bottom > 0;
     }
 
     function selectChildren(selector, parent) {
@@ -4148,11 +4161,13 @@ function generateOutputHtml(content, pageName, settings) {
   var containerId = nameSpace + pageName + '-box';
   var textForFile, html, js, css, commentBlock;
   var htmlFileDestinationFolder, htmlFileDestination;
+  var containerClasses = 'ai2html';
 
   progressBar.setTitle('Writing HTML output...');
 
   if (isTrue(settings.include_resizer_script)) {
     responsiveJs  = getResizerScript(containerId);
+    containerClasses += ' ai2html-responsive';
   }
 
   // comments
@@ -4167,7 +4182,7 @@ function generateOutputHtml(content, pageName, settings) {
   }
 
   // HTML
-  html = '<div id="' + containerId + '" class="ai2html">\r';
+  html = '<div id="' + containerId + '" class="' + containerClasses + '">\r';
   if (linkSrc) {
     // optional link around content
     html += '\t<a class="' + nameSpace + 'ai2htmlLink" href="' + linkSrc + '">\r';
