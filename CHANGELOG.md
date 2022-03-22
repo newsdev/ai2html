@@ -1,3 +1,6 @@
+### v0.107.0
+- Fixed a bug affecting image generation from layers tagged with :png
+
 ### v0.106.0
 - Updated resizer script to support multiple instances of the same graphic on a page.
 

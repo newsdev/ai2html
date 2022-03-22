@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.106.0';
+var scriptVersion = '0.107.0';
 
 // ================================================
 // ai2html and config settings
@@ -1910,6 +1910,7 @@ function unhideLayer(lyr) {
 }
 
 function layerIsChildOf(lyr, lyr2) {
+  if (lyr == lyr2) return false;
   while (lyr.typename == 'Layer') {
     if (lyr == lyr2) return true;
     lyr = lyr.parent;
