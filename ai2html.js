@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.107.0';
+var scriptVersion = '0.108.0';
 
 // ================================================
 // ai2html and config settings
@@ -3319,12 +3319,14 @@ function exportImage(imgName, format, ab, masks, layer, settings) {
   var imgFile = getImageFileName(imgName, format);
   var outputPath = pathJoin(getImageFolder(settings), imgFile);
   var imgId = getImageId(imgName);
+  // imgClass: // remove artboard size (careful not to remove deduplication annotations)
+  var imgClass = imgId.replace(/-[1-9][0-9]+-/, '-');
   // all images are now absolutely positioned (before, artboard images were
   // position:static to set the artboard height)
-  var imgClass = nameSpace + 'aiImg';
   var svgInlineStyle, svgLayersArg;
   var created, html;
 
+  imgClass += ' ' + nameSpace + 'aiImg';
   if (format == 'svg') {
     if (layer) {
       svgInlineStyle = getLayerOpacityCSS(layer);

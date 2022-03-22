@@ -1,3 +1,6 @@
+### v0.108.0
+- Added a targetable classname to images.
+
 ### v0.107.0
 - Fixed a bug affecting image generation from layers tagged with :png
 
