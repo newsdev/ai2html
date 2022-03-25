@@ -1,3 +1,6 @@
+### v0.108.1
+- Individual layers tagged :png are now exported as 24-bit pngs if the image_format setting is "png24"
+
 ### v0.108.0
 - Added a targetable classname to images.
 

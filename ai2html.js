@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.108.0';
+var scriptVersion = '0.108.1';
 
 // ================================================
 // ai2html and config settings
@@ -3265,7 +3265,8 @@ function convertArtItems(activeArtboard, textFrames, masks, settings) {
   forEachImageLayer('png', function(lyr) {
     var opts = extend({}, settings, {png_transparent: true});
     var name = getLayerImageName(lyr, activeArtboard, settings);
-    html = exportImage(name, 'png', activeArtboard, null, null, opts) + html;
+    var fmt = contains(settings.image_format || [], 'png24') ? 'png24' : 'png';
+    html = exportImage(name, fmt, activeArtboard, null, null, opts) + html;
     hiddenLayers.push(lyr); // need to unhide this layer later, after base image is captured
   });
 
