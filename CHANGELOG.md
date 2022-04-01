@@ -1,4 +1,4 @@
-### v0.108.2
+### v0.109.0
 - Detect and convert subscripted text.
 
 ### v0.108.1
