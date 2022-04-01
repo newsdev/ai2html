@@ -1,3 +1,6 @@
+### v0.108.2
+- Detect and convert subscripted text.
+
 ### v0.108.1
 - Individual layers tagged :png are now exported as 24-bit pngs if the image_format setting is "png24"
 

@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.108.1';
+var scriptVersion = '0.108.2';
 
 // ================================================
 // ai2html and config settings
@@ -2162,6 +2162,7 @@ function getCharStyle(c) {
   o.capitalization = caps == 'FontCapsOption.NORMALCAPS' ? '' : caps;
   o.tracking = c.tracking;
   o.superscript = c.baselinePosition == FontBaselineOption.SUPERSCRIPT;
+  o.subscript = c.baselinePosition == FontBaselineOption.SUBSCRIPT;
   return o;
 }
 
@@ -2552,6 +2553,10 @@ function convertAiTextStyle(aiStyle) {
   if (aiStyle.superscript) {
     fontSize = roundTo(fontSize * 0.7, 1);
     cssStyle['vertical-align'] = 'super';
+  }
+  if (aiStyle.subscript) {
+    fontSize = roundTo(fontSize * 0.7, 1);
+    cssStyle['vertical-align'] = 'sub';
   }
   if (fontSize > 0) {
     cssStyle['font-size'] = fontSize + 'px';
