@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.109.0';
+var scriptVersion = '0.110.0';
 
 // ================================================
 // ai2html and config settings
@@ -653,6 +653,11 @@ function find(arr, obj) {
 
 function contains(arr, obj) {
   return indexOf(arr, obj) >= 0;
+}
+
+// alias for contains() with function arg
+function some(arr, cb) {
+  return indexOf(arr, cb) >= 0;
 }
 
 function extend(o) {
@@ -2967,6 +2972,36 @@ function exportSymbolAsHtml(item, geometries, abBox, opts) {
   return html;
 }
 
+function testEmptyArtboard(ab) {
+  return !testLayerArtboardIntersection(null, ab);
+}
+
+function testLayerArtboardIntersection(lyr, ab) {
+  if (lyr) {
+    return layerIsVisible(lyr);
+  } else {
+    return some(doc.layers, layerIsVisible);
+  }
+
+  function layerIsVisible(lyr) {
+    if (objectIsHidden(lyr)) return false;
+    return some(lyr.layers, layerIsVisible) ||
+      some(lyr.pageItems, itemIsVisible) ||
+      some(lyr.groupItems, groupIsVisible);
+  }
+
+  function itemIsVisible(item) {
+    if (item.hidden || item.guides || item.typename == "GroupItem") return false;
+    return testBoundsIntersection(item.visibleBounds, ab.artboardRect);
+  }
+
+  function groupIsVisible(group) {
+    if (group.hidden) return;
+    return some(group.pageItems, itemIsVisible) ||
+      some(group.groupItems, groupIsVisible);
+  }
+}
+
 // Convert paths representing simple shapes to HTML and hide them
 function exportSymbols(lyr, ab, masks, opts) {
   var items = [];
@@ -2975,7 +3010,8 @@ function exportSymbols(lyr, ab, masks, opts) {
   forLayer(lyr);
 
   function forLayer(lyr) {
-    if (lyr.hidden) return;
+    // if (lyr.hidden) return; // bug -- layers use visible property, not hidden
+    if (objectIsHidden(lyr)) return;
     forEach(lyr.pageItems, forPageItem);
     forEach(lyr.layers, forLayer);
     forEach(lyr.groupItems, forGroup);
@@ -3271,7 +3307,9 @@ function convertArtItems(activeArtboard, textFrames, masks, settings) {
     var opts = extend({}, settings, {png_transparent: true});
     var name = getLayerImageName(lyr, activeArtboard, settings);
     var fmt = contains(settings.image_format || [], 'png24') ? 'png24' : 'png';
-    html = exportImage(name, fmt, activeArtboard, null, null, opts) + html;
+    if (testLayerArtboardIntersection(lyr, activeArtboard)) {
+      html = exportImage(name, fmt, activeArtboard, null, null, opts) + html;
+    }
     hiddenLayers.push(lyr); // need to unhide this layer later, after base image is captured
   });
 
@@ -3461,6 +3499,9 @@ function forEachImageLayer(imageType, callback) {
 function captureArtboardImage(imgName, ab, masks, settings) {
   var formats = settings.image_format;
   var imgHtml;
+
+
+  if (testEmptyArtboard(ab)) return '';
 
   if (!formats.length) {
     warnOnce('No images were created because no image formats were specified.');

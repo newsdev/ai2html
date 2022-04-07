@@ -1,3 +1,6 @@
+### v0.110.0
+- Avoid generating empty background images and single-layer images.
+
 ### v0.109.0
 - Detect and convert subscripted text.
 
