@@ -1,3 +1,6 @@
+### v0.111.0
+- Remove test to check for empty background images (too expensive on large complex files).
+
 ### v0.110.0
 - Avoid generating empty background images and single-layer images.
 

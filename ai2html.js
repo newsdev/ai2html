@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.110.0';
+var scriptVersion = '0.111.0';
 
 // ================================================
 // ai2html and config settings
@@ -2983,6 +2983,7 @@ function testLayerArtboardIntersection(lyr, ab) {
     return some(doc.layers, layerIsVisible);
   }
 
+
   function layerIsVisible(lyr) {
     if (objectIsHidden(lyr)) return false;
     return some(lyr.layers, layerIsVisible) ||
@@ -3307,15 +3308,15 @@ function convertArtItems(activeArtboard, textFrames, masks, settings) {
     var opts = extend({}, settings, {png_transparent: true});
     var name = getLayerImageName(lyr, activeArtboard, settings);
     var fmt = contains(settings.image_format || [], 'png24') ? 'png24' : 'png';
+    // This test prevents empty images, but is expensive when a layer contains many art objects...
+    // consider only testing if an option is set by the user.
     if (testLayerArtboardIntersection(lyr, activeArtboard)) {
       html = exportImage(name, fmt, activeArtboard, null, null, opts) + html;
     }
     hiddenLayers.push(lyr); // need to unhide this layer later, after base image is captured
   });
-
   // placing ab image before other elements
   html = captureArtboardImage(imgName, activeArtboard, masks, settings) + html;
-
   // unhide hidden layers (if any)
   forEach(hiddenLayers, function(lyr) {
     lyr.visible = true;
@@ -3500,8 +3501,8 @@ function captureArtboardImage(imgName, ab, masks, settings) {
   var formats = settings.image_format;
   var imgHtml;
 
-
-  if (testEmptyArtboard(ab)) return '';
+  // This test can be expensive... consider enabling the empty artboard test only if an option is set.
+  // if (testEmptyArtboard(ab)) return '';
 
   if (!formats.length) {
     warnOnce('No images were created because no image formats were specified.');

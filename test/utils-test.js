@@ -51,6 +51,7 @@ describe('Utility function tests', function() {
     });
   });
 
+
   describe('stringToLines()', function() {
     it('removes empty lines', function() {
       assert.deepEqual(lib.stringToLines('\n'), []);
