@@ -63,8 +63,12 @@ var defaultSettings = {
   "output": "one-file",      // Options: one-file, multiple-files
   "project_name": "",        // Defaults to the name of the AI file
   "project_type": "",
+  "generate_html": true,  // allow html output to be enabled/disabled
+  "generate_json": true, // allow json output to be enabled/disabled
   "html_output_path": "/ai2html-output/",
   "html_output_extension": ".html",
+  "json_output_path": "/ai2html-output/",
+  "json_output_extension": ".json",
   "image_output_path": "",
   "image_source_path": null,
   "image_alt_text": "",
@@ -539,7 +543,13 @@ function render(settings, customBlocks) {
     var abSettings = getArtboardSettings(activeArtboard);
     var docArtboardName = getDocumentArtboardName(activeArtboard);
     var textFrames, textData, imageData;
-    var artboardContent = {html: '', css: '', js: ''};
+    var artboardContent = {
+      html: '',
+      css: '',
+      js: '',
+      settings: abSettings,
+      name: docArtboardName
+    };
 
     doc.artboards.setActiveArtboardIndex(abIndex);
 
@@ -597,8 +607,18 @@ function render(settings, customBlocks) {
   //=====================================
 
   forEach(fileContentArr, function(fileContent) {
-    addCustomContent(fileContent, customBlocks);
-    generateOutputHtml(fileContent, fileContent.name, settings);
+    if (isTrue(settings.generate_html)) {
+      addCustomContent(fileContent, customBlocks);
+      generateOutputHtml(fileContent, fileContent.name, settings);
+    }
+    if (isTrue(settings.generate_json)) {
+      var serializedObject = {
+        name: fileContent.name,
+        artboards: fileContent.artboards,
+        customBlocks: customBlocks
+      }
+      generateOutputJson(serializedObject, settings);
+    }
   });
 
   //=====================================
@@ -3867,12 +3887,13 @@ function injectCSSinSVG(content, css) {
 function assignArtboardContentToFile(name, abData, outputArr) {
   var obj = find(outputArr, function(o) {return o.name == name;});
   if (!obj) {
-    obj = {name: name, html: '', js: '', css: ''};
+    obj = {name: name, html: '', js: '', css: '', artboards: []};
     outputArr.push(obj);
   }
   obj.html += abData.html;
   obj.js += abData.js;
   obj.css += abData.css;
+  obj.artboards.push(abData);
 }
 
 function generateArtboardDiv(ab, settings) {
@@ -4172,6 +4193,27 @@ function addCustomContent(content, customBlocks) {
   if (customBlocks.js) {
     content.js += '\r<!-- Custom JS -->\r' + customBlocks.js.join('\r') + '\r';
   }
+}
+
+// Wrap content HTML in a <div>, add styles and resizer script, write to a file
+function generateOutputJson(content, settings) {
+  var pageName = content.name;
+  var textForFile;
+
+  progressBar.setTitle('Writing JSON output...');
+
+  textForFile = JSON.stringify(content);
+  jsonFileDestinationFolder = docPath + settings.json_output_path;
+  checkForOutputFolder(jsonFileDestinationFolder, 'json_output_path');
+  jsonFileDestination = jsonFileDestinationFolder + pageName + settings.json_output_extension;
+
+  if (settings.output == 'one-file' && settings.project_type == 'ai2html') {
+    jsonFileDestination = jsonFileDestinationFolder + 'index' + settings.json_output_extension;
+  }
+
+  // write file
+  saveTextFile(jsonFileDestination, textForFile);
+  feedback.push("Your JSON was saved to `" + pathResolve(jsonFileDestination) + "`");
 }
 
 // Wrap content HTML in a <div>, add styles and resizer script, write to a file
