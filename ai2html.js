@@ -374,7 +374,8 @@ var cssPrecision = 4;
 // ================================
 // Global variable declarations
 // ================================
-var nameSpace = 'g-'; // TODO: add to settings
+// This can be overridden by settings
+var nameSpace = 'g-';
 
 // vars to hold warnings and informational messages at the end
 var feedback = [];
@@ -455,6 +456,8 @@ try {
   docSettings = initDocumentSettings(textBlockData.settings);
   docName = getDocumentName(docSettings.project_name);
   fonts = docSettings.fonts; // set global variable
+
+  nameSpace = docSettings.nameSpace || nameSpace;
 
   if (!textBlockData.settings) {
     createSettingsBlock(docSettings);
