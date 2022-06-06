@@ -12,10 +12,14 @@ console.log(`Running ai2html on: ${file_name}`, file_path);
 
 const ai2html_path = path.resolve(`./ai2html.js`);
 
+const open_line = `tell application "Adobe Illustrator" to open "${file_path}"`
+
+const should_open = process.env.NO_OPEN ? false : true;
+
 // Run applescript
 const applescript = `
 tell application "Adobe Illustrator" to activate
-tell application "Adobe Illustrator" to open "${file_path}"
+${should_open ? open_line : ``}
 tell application "Adobe Illustrator" to do javascript "// @include ${ai2html_path}"
 `;
 const spawned = spawn(`osascript`, [`-`], { cwd: process.cwd() });
