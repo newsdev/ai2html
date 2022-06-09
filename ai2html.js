@@ -457,7 +457,7 @@ try {
   docName = getDocumentName(docSettings.project_name);
   fonts = docSettings.fonts; // set global variable
 
-  nameSpace = docSettings.nameSpace || nameSpace;
+  nameSpace = docSettings.namespace || nameSpace;
 
   if (!textBlockData.settings) {
     createSettingsBlock(docSettings);
