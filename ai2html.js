@@ -53,6 +53,7 @@ var scriptVersion = '0.112.0';
 // These are base settings that are overridden by text block settings in
 // the .ai document and settings containing in ai2html-config.json files
 var defaultSettings = {
+  "namespace": "g-",
   "settings_version": scriptVersion,
   "create_promo_image": false,
   "promo_image_width": 1024,
