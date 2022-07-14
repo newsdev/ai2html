@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.111.0';
+var scriptVersion = '0.112.0';
 
 // ================================================
 // ai2html and config settings
@@ -155,6 +155,39 @@ var defaultSettings = {
     { name:"xlarge"    , lowerLimit: 945, upperLimit:1050 },
     { name:"xxlarge"   , lowerLimit:1050, upperLimit:1600 }
   ]
+};
+
+// Override settings for simple NYT ai2html embed graphics
+var nytEmbedOverrideSettings = {
+  "dark_mode_incompatible": true,
+  "settings_block": [
+    "settings_version",
+    "image_format",
+    "write_image_files",
+    "responsiveness",
+    "max_width",
+    "output",
+    "png_number_of_colors",
+    "jpg_quality",
+    "use_lazy_loader",
+    // "show_completion_dialog_box",
+    "last_updated_text",
+    "headline",
+    "leadin",
+    "summary",
+    "notes",
+    "sources",
+    "credit",
+    "show_in_compatible_apps",
+    "display_for_promotion_only",
+    "constrain_width_to_text_column",
+    "dark_mode_incompatible",
+    "size",
+    "scoop_asset_id",
+    "scoop_username",
+    "scoop_slug",
+    "scoop_external_edit_key"
+  ],
 };
 
 // These settings override the default settings in NYT mode
@@ -971,7 +1004,8 @@ function parseKeyValueString(str, o) {
   }
 }
 
-// Very simple Yaml parsing. Does not implement nested properties and other features
+// Very simple Yaml parsing. Does not implement nested properties, arrays and other features
+// (This is adequate for reading a few top-level properties from NYT's config.yml file)
 function parseYaml(str) {
   // TODO: strip comments // var comment = /\s*/
   var o = {};
@@ -1374,17 +1408,19 @@ function applyTimesSettings(settings) {
 
   // TODO: consider applying in non-Preview mode
   extendSettings(settings, nytOverrideSettings);
-
   scriptEnvironment = 'nyt-preview';
+
   var yamlConfig = readYamlConfigFile(configFilePath) || {};
-  settings.project_type = yamlConfig.project_type == 'ai2html' ? 'ai2html' : '';
+  if (yamlConfig.project_type == 'ai2html') {
+    extendSettings(settings, nytEmbedOverrideSettings);
+    settings.project_type = 'ai2html';
+  }
+  if (yamlConfig.scoop_slug) {
+    settings.scoop_slug_from_config_yml = yamlConfig.scoop_slug;
+  }
   if (!folderExists(docPath + '../public/') ||
       (settings.project_type != 'ai2html' && !folderExists(docPath + '../src/'))) {
     error("Your Preview project may be missing a \u201Cpublic\u201D or a \u201Csrc\u201D folder.");
-  }
-
-  if (yamlConfig.scoop_slug) {
-    settings.scoop_slug_from_config_yml = yamlConfig.scoop_slug;
   }
 
   // Read .git/config file to get preview slug
@@ -4026,6 +4062,10 @@ function generateYamlFileContent(settings) {
   lines.push('tags: ai2html');
   lines.push('min_width: ' + range[0]);
   lines.push('max_width: ' + range[1]);
+  if (isTrue(settings.dark_mode_incompatible)) {
+    // kludge to output YAML array value for one setting
+    lines.push('display_overrides:\n  - DARK_MODE_INCOMPATIBLE');
+  }
 
   forEach(settings.config_file, function(key) {
     var value = trim(String(settings[key]));
