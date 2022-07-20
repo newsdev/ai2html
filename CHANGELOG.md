@@ -1,3 +1,7 @@
+### v0.113.0
+- Added support for ai2html-html-before and ai2html-html-after text blocks in the AI doc.
+- Deprecated ai2html-html text blocks.
+
 ### v0.112.0
 - Added DARK_MODE_INCOMPATIBLE setting to NYT embedded ai2html type graphics.
 - Added "namespace" option, to support overriding the default g- prefix used for naming CSS classes and ids.

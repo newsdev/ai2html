@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.112.0';
+var scriptVersion = '0.113.0';
 
 // ================================================
 // ai2html and config settings
@@ -1285,7 +1285,7 @@ function getScriptDirectory() {
 // Import program settings and custom html, css and js code from specially
 //   formatted text blocks
 function initSpecialTextBlocks() {
-  var rxp = /^ai2html-(css|js|html|settings|text)\s*$/;
+  var rxp = /^ai2html-(css|js|html|settings|text|html-before|html-after)\s*$/;
   var settings = null;
   var code = {};
 
@@ -1321,8 +1321,11 @@ function initSpecialTextBlocks() {
     }
   });
 
+  var htmlBlockCount = (code.html || []).length + (code['html-before'] || []).length +
+    (code['html-after'] || []).length;
   if (code.css)  {message("Custom CSS blocks: " + code.css.length);}
-  if (code.html) {message("Custom HTML blocks: " + code.html.length);}
+  // if (code.html) {message("Custom HTML blocks: " + code.html.length);}
+  if (htmlBlockCount > 0) {message("Custom HTML blocks: " + htmlBlockCount);}
   if (code.js)   {message("Custom JS blocks: " + code.js.length);}
 
   return {code: code, settings: settings};
@@ -1506,7 +1509,7 @@ function initJSON() {
 // (e.g. undo Illustrator's automatic quote conversion, where applicable)
 function cleanCodeBlock(type, raw) {
   var clean = '';
-  if (type == 'html') {
+  if (type.indexOf('html') >= 0) {
     clean = cleanHtmlText(straightenCurlyQuotesInsideAngleBrackets(raw));
   } else if (type == 'js' ) {
     // TODO: consider preserving curly quotes inside quoted strings
@@ -4240,6 +4243,13 @@ function addCustomContent(content, customBlocks) {
   if (customBlocks.css) {
     content.css += '\r\t/* Custom CSS */\r\t' + customBlocks.css.join('\r\t') + '\r';
   }
+  if (customBlocks['html-before']) {
+    content.html = '<!-- Custom HTML -->\r' + customBlocks['html-before'].join('\r') + '\r' + content.html + '\r';
+  }
+  if (customBlocks['html-after']) {
+    content.html += '\r<!-- Custom HTML -->\r' + customBlocks['html-after'].join('\r') + '\r';
+  }
+  // deprecated
   if (customBlocks.html) {
     content.html += '\r<!-- Custom HTML -->\r' + customBlocks.html.join('\r') + '\r';
   }
