@@ -1,3 +1,6 @@
+### v0.114.0
+- Change a setting name for NYT embedded ai2html graphics from DARK_MODE_INCOMPATIBLE to DARK_MODE_COMPATIBLE.
+
 ### v0.113.0
 - Added support for ai2html-html-before and ai2html-html-after text blocks in the AI doc.
 - Deprecated ai2html-html text blocks.

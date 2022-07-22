@@ -160,7 +160,7 @@ var defaultSettings = {
 
 // Override settings for simple NYT ai2html embed graphics
 var nytEmbedOverrideSettings = {
-  "dark_mode_incompatible": true,
+  "dark_mode_compatible": false,
   "settings_block": [
     "settings_version",
     "image_format",
@@ -182,7 +182,7 @@ var nytEmbedOverrideSettings = {
     "show_in_compatible_apps",
     "display_for_promotion_only",
     "constrain_width_to_text_column",
-    "dark_mode_incompatible",
+    "dark_mode_compatible",
     "size",
     "scoop_asset_id",
     "scoop_username",
@@ -4069,9 +4069,9 @@ function generateYamlFileContent(settings) {
   lines.push('tags: ai2html');
   lines.push('min_width: ' + range[0]);
   lines.push('max_width: ' + range[1]);
-  if (isTrue(settings.dark_mode_incompatible)) {
+  if (isTrue(settings.dark_mode_compatible)) {
     // kludge to output YAML array value for one setting
-    lines.push('display_overrides:\n  - DARK_MODE_INCOMPATIBLE');
+    lines.push('display_overrides:\n  - DARK_MODE_COMPATIBLE');
   }
 
   forEach(settings.config_file, function(key) {
