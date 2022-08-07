@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.114.0';
+var scriptVersion = '0.115.0';
 
 // ================================================
 // ai2html and config settings
@@ -563,10 +563,18 @@ function render(settings, customBlocks) {
   forEachUsableArtboard(function(activeArtboard, abIndex) {
     var abSettings = getArtboardSettings(activeArtboard);
     var docArtboardName = getDocumentArtboardName(activeArtboard);
-    var textFrames, textData, imageData;
+    var textFrames, textData, imageData, specialData;
     var artboardContent = {html: '', css: '', js: ''};
 
     doc.artboards.setActiveArtboardIndex(abIndex);
+
+    // detect videos and other special layers
+    specialData = convertSpecialLayers(activeArtboard);
+    if (specialData) {
+      forEach(specialData.layers, function(lyr) {
+        lyr.visible = false;
+      });
+    }
 
     // ========================
     // Convert text objects
@@ -581,6 +589,7 @@ function render(settings, customBlocks) {
       textFrames = getTextFramesByArtboard(activeArtboard, masks, settings);
       textData = convertTextFrames(textFrames, activeArtboard);
     }
+
     progressBar.step();
 
     // ==========================
@@ -593,6 +602,18 @@ function render(settings, customBlocks) {
     } else {
       imageData = {html: ''};
     }
+
+    if (specialData) {
+      imageData.html = specialData.video + specialData.html_before +
+        imageData.html + specialData.html_after;
+      forEach(specialData.layers, function(lyr) {
+        lyr.visible = true;
+      });
+      if (specialData.video && !isTrue(settings.png_transparent)) {
+        warn('Background videos may be covered up without png_transparent:true');
+      }
+    }
+
     progressBar.step();
 
     //=====================================
@@ -3046,6 +3067,7 @@ function testLayerArtboardIntersection(lyr, ab) {
   }
 }
 
+
 // Convert paths representing simple shapes to HTML and hide them
 function exportSymbols(lyr, ab, masks, opts) {
   var items = [];
@@ -3291,6 +3313,60 @@ function artboardContainsVisibleRasterImage(ab) {
   }
   // TODO: verify that placed items are rasters
   return contains(doc.placedItems, test) || contains(doc.rasterItems, test);
+}
+
+function convertSpecialLayers(activeArtboard) {
+  var data = {
+    layers: [],
+    html_before: '',
+    html_after: '',
+    video: ''
+  };
+  forEach(findTaggedLayers('video'), function(lyr) {
+    if (objectIsHidden(lyr)) return;
+    var str = getSpecialLayerText(lyr, activeArtboard);
+    if (!str) return;
+    var html = makeVideoHtml(str);
+    if (!html) {
+      warn('Invalid video URL: ' + str);
+    } else {
+      data.video = html;
+    }
+    data.layers.push(lyr);
+  });
+  forEach(findTaggedLayers('html-before'), function(lyr) {
+    if (objectIsHidden(lyr)) return;
+    var str = getSpecialLayerText(lyr, activeArtboard);
+    if (!str) return;
+    data.layers.push(lyr);
+    data.html_before = str;
+  });
+  forEach(findTaggedLayers('html-after'), function(lyr) {
+    if (objectIsHidden(lyr)) return;
+    var str = getSpecialLayerText(lyr, activeArtboard);
+    if (!str) return;
+    data.layers.push(lyr);
+    data.html_after = str;
+  });
+  return data.layers.length === 0 ? null : data;
+}
+
+function makeVideoHtml(url) {
+  if (!/^https:/.test(url) || !/\.mp4$/.test(url)) {
+    return '';
+  }
+  return '<video src="' + url + '" autoplay muted loop style="top:0; width:100%; object-fit:fill; position:absolute"></video>';
+}
+
+function getSpecialLayerText(lyr, ab) {
+  var text = '';
+  forEach(lyr.textFrames, eachFrame);
+  function eachFrame(frame) {
+    if (testBoundsIntersection(frame.visibleBounds, ab.artboardRect)) {
+      text = frame.contents;
+    }
+  }
+  return text;
 }
 
 // Generate images and return HTML embed code
