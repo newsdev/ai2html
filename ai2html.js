@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.115.0';
+var scriptVersion = '0.115.1';
 
 // ================================================
 // ai2html and config settings
@@ -3355,7 +3355,7 @@ function makeVideoHtml(url) {
   if (!/^https:/.test(url) || !/\.mp4$/.test(url)) {
     return '';
   }
-  return '<video src="' + url + '" autoplay muted loop style="top:0; width:100%; object-fit:fill; position:absolute"></video>';
+  return '<video src="' + url + '" autoplay muted loop playsinline style="top:0; width:100%; object-fit:fill; position:absolute"></video>';
 }
 
 function getSpecialLayerText(lyr, ab) {

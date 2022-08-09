@@ -1,3 +1,6 @@
+### v0.115.1
+- Added "playsinline" attribute to video underlays, to fix a mobile Safari issue.
+
 ### v0.115.0
 - Added :video :html-before and :html-after annotations for layer names. These special layers should have a single text object over one or more artboards, containing either the URL of a video (for video layers) or freeform HTML (for html-before and html-after layers).
 
