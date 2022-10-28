@@ -88,6 +88,7 @@ var defaultSettings = {
   "render_text_as": "html", // Options: html, image
   "render_rotated_skewed_text_as": "html", // Options: html, image
   "testing_mode": false,  // Render text in both bg image and HTML to test HTML text placement
+  "write_settings_block": true, //Add settings block to ai file
   "show_completion_dialog_box": true,
   "clickable_link": "",  // Add a URL to make the entire graphic a clickable link
   "last_updated_text": "",
@@ -493,7 +494,7 @@ try {
 
   nameSpace = docSettings.namespace || nameSpace;
 
-  if (!textBlockData.settings) {
+  if (!textBlockData.settings && docSettings.write_settings_block) {
     createSettingsBlock(docSettings);
   }
 
