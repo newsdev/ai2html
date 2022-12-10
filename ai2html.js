@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.115.1';
+var scriptVersion = '0.115.2';
 
 // ================================================
 // ai2html and config settings
@@ -1268,7 +1268,7 @@ function exportFunctionsForTesting() {
 
 function isTestedIllustratorVersion(version) {
   var majorNum = parseInt(version);
-  return majorNum >= 18 && majorNum <= 26; // Illustrator CC 2014 through 2022
+  return majorNum >= 18 && majorNum <= 27; // Illustrator CC 2014 through 2023
 }
 
 function validateArtboardNames(settings) {
@@ -1309,7 +1309,6 @@ function initSpecialTextBlocks() {
   var rxp = /^ai2html-(css|js|html|settings|text|html-before|html-after)\s*$/;
   var settings = null;
   var code = {};
-
   forEach(doc.textFrames, function(thisFrame) {
     // var contents = thisFrame.contents; // caused MRAP error in AI 2017
     var type = null;
@@ -1319,6 +1318,13 @@ function initSpecialTextBlocks() {
       type = match ? match[1] : null;
     }
     if (!type) return; // not a special block
+    if (objectIsHidden(thisFrame)) {
+      if (type == 'settings') {
+        error('Found a hidden ai2html-settings text block. Either delete or hide this settings block.');
+      }
+      warn('Skipping a hidden ' +  match[0] + ' settings block.');
+      return;
+    }
     lines = stringToLines(thisFrame.contents);
     lines.shift(); // remove header
     // Reset the name of any non-settings text boxes with name ai2html-settings
@@ -1338,6 +1344,11 @@ function initSpecialTextBlocks() {
       code[type].push(cleanCodeBlock(type, lines.join('\r')));
     }
     if (objectOverlapsAnArtboard(thisFrame)) {
+      // An error will be thrown if trying to hide a text frame inside a
+      // locked layer. Solution: unlock any locked parent layers.
+      if (objectIsLocked(thisFrame)) {
+        unlockObject(thisFrame);
+      }
       hideTextFrame(thisFrame);
     }
   });
@@ -1996,7 +2007,6 @@ function clearSelection() {
   app.executeMenuCommand('deselectall');
 }
 
-
 function objectOverlapsAnArtboard(obj) {
   var hit = false;
   forEachUsableArtboard(function(ab) {
@@ -2023,6 +2033,24 @@ function objectIsHidden(obj) {
     obj = obj.parent;
   }
   return hidden;
+}
+
+function objectIsLocked(obj) {
+  while (obj && obj.typename != "Document") {
+    if (obj.locked) {
+      return true;
+    }
+    obj = obj.parent;
+  }
+  return false;
+}
+
+function unlockObject(obj) {
+  // unlock parent first, to avoid "cannot be modified" error
+  if (obj && obj.typename != "Document") {
+    unlockObject(obj.parent);
+    obj.locked = false;
+  }
 }
 
 function getComputedOpacity(obj) {
@@ -3352,6 +3380,7 @@ function convertSpecialLayers(activeArtboard) {
 }
 
 function makeVideoHtml(url) {
+  url = trim(url);
   if (!/^https:/.test(url) || !/\.mp4$/.test(url)) {
     return '';
   }
