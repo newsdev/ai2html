@@ -344,8 +344,8 @@ var nytOverrideSettings = {
     {"aifont":"StymieBT-ExtraBold","family":"nyt-stymie,arial,helvetica,sans-serif","weight":"700","style":""},
     {"aifont":"Stymie-Thin","family":"nyt-stymie,arial,helvetica,sans-serif","weight":"300","style":""},
     {"aifont":"Stymie-UltraLight","family":"nyt-stymie,arial,helvetica,sans-serif","weight":"300","style":""},
-    {"aifont":"NYTMagSans-Regular","family":"'nyt-mag-sans',arial,helvetica,sans-serif","weight":"500","style":""},
-    {"aifont":"NYTMagSans-Bold","family":"'nyt-mag-sans',arial,helvetica,sans-serif","weight":"700","style":""}
+    {"aifont":"NYTMagSans-Regular","family":"'nyt-magsans',arial,helvetica,sans-serif","weight":"500","style":""},
+    {"aifont":"NYTMagSans-Bold","family":"'nyt-magsans',arial,helvetica,sans-serif","weight":"700","style":""}
   ]
 };
 
