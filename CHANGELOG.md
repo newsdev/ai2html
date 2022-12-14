@@ -1,3 +1,6 @@
+### v0.115.3
+- Fixed the webfont name of an NYT font (nyt-magsans).
+
 ### v0.115.2
 - Removed the untested version warning for AI 2023.
 - Addressed a run-time error thrown when trying to modify a settings text block that is hidden or locked.
