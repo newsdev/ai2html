@@ -569,7 +569,7 @@ function render(settings, customBlocks) {
     doc.artboards.setActiveArtboardIndex(abIndex);
 
     // detect videos and other special layers
-    specialData = convertSpecialLayers(activeArtboard);
+    specialData = convertSpecialLayers(activeArtboard, settings);
     if (specialData) {
       forEach(specialData.layers, function(lyr) {
         lyr.visible = false;
@@ -625,7 +625,13 @@ function render(settings, customBlocks) {
        imageData.html +
        textData.html +
        '\t</div>\r';
-    artboardContent.css += generateArtboardCss(activeArtboard, textData.styles, settings);
+
+    var abStyles = textData.styles;
+    if (specialData.video) {
+      abStyles.push('> div { pointer-events: none; }\r');
+      abStyles.push('> img { pointer-events: none; }\r');
+    }
+    artboardContent.css += generateArtboardCss(activeArtboard, abStyles, settings);
 
     assignArtboardContentToFile(
         settings.output == 'one-file' ? getDocumentName() : docArtboardName,
@@ -3343,7 +3349,7 @@ function artboardContainsVisibleRasterImage(ab) {
   return contains(doc.placedItems, test) || contains(doc.rasterItems, test);
 }
 
-function convertSpecialLayers(activeArtboard) {
+function convertSpecialLayers(activeArtboard, settings) {
   var data = {
     layers: [],
     html_before: '',
@@ -3354,7 +3360,7 @@ function convertSpecialLayers(activeArtboard) {
     if (objectIsHidden(lyr)) return;
     var str = getSpecialLayerText(lyr, activeArtboard);
     if (!str) return;
-    var html = makeVideoHtml(str);
+    var html = makeVideoHtml(str, settings);
     if (!html) {
       warn('Invalid video URL: ' + str);
     } else {
@@ -3379,12 +3385,13 @@ function convertSpecialLayers(activeArtboard) {
   return data.layers.length === 0 ? null : data;
 }
 
-function makeVideoHtml(url) {
+function makeVideoHtml(url, settings) {
   url = trim(url);
   if (!/^https:/.test(url) || !/\.mp4$/.test(url)) {
     return '';
   }
-  return '<video src="' + url + '" autoplay muted loop playsinline style="top:0; width:100%; object-fit:fill; position:absolute"></video>';
+  var srcName = isTrue(settings.use_lazy_loader) ? 'data-src' : 'src';
+  return '<video ' + srcName + '="' + url + '" autoplay muted loop playsinline style="top:0; width:100%; object-fit:fill; position:absolute"></video>';
 }
 
 function getSpecialLayerText(lyr, ab) {
@@ -4096,7 +4103,7 @@ function generateArtboardDiv(ab, settings) {
   return html;
 }
 
-function generateArtboardCss(ab, textClasses, settings) {
+function generateArtboardCss(ab, cssRules, settings) {
   var t3 = '\t',
       t4 = t3 + '\t',
       abId = '#' + nameSpace + getArtboardFullName(ab, settings),
@@ -4106,8 +4113,14 @@ function generateArtboardCss(ab, textClasses, settings) {
   css += t4 + 'overflow:hidden;\r';
   css += t3 + '}\r';
 
+  // make overlay non-clickable
+  // TODO: only if there is a video and the ab is for mobile
+  css += t3 + abId + ' > div, ' + abId + ' > img {\r';
+  css += t4 + 'pointer-events: none;\r';
+  css += t3 + '}\r';
+
   // classes for paragraph and character styles
-  forEach(textClasses, function(cssBlock) {
+  forEach(cssRules, function(cssBlock) {
     css += t3 + abId + ' ' + cssBlock;
   });
   return css;
@@ -4243,6 +4256,7 @@ function getResizerScript(containerId) {
           if (+minwidth <= width && (+maxwidth >= width || maxwidth === null)) {
             if (!waiting) {
               selectChildren('.' + nameSpace + 'aiImg', el).forEach(updateImgSrc);
+              selectChildren('video', el).forEach(updateVideoSrc);
             }
             el.style.display = 'block';
           } else {
@@ -4295,6 +4309,13 @@ function getResizerScript(containerId) {
       var src = img.getAttribute('data-src');
       if (src && img.getAttribute('src') != src) {
         img.setAttribute('src', src);
+      }
+    }
+
+    function updateVideoSrc(el) {
+      var src = el.getAttribute('data-src');
+      if (src && !el.hasAttribute('src')) {
+        el.setAttribute('src', src);
       }
     }
 
