@@ -628,6 +628,8 @@ function render(settings, customBlocks) {
 
     var abStyles = textData.styles;
     if (specialData.video) {
+      // make videos tap/clickable (so they can be played manually if autoplay
+      // is disabled, e.g. in mobile low-power mode).
       abStyles.push('> div { pointer-events: none; }\r');
       abStyles.push('> img { pointer-events: none; }\r');
     }
@@ -4111,12 +4113,6 @@ function generateArtboardCss(ab, cssRules, settings) {
   css += t3 + abId + ' {\r';
   css += t4 + 'position:relative;\r';
   css += t4 + 'overflow:hidden;\r';
-  css += t3 + '}\r';
-
-  // make overlay non-clickable
-  // TODO: only if there is a video and the ab is for mobile
-  css += t3 + abId + ' > div, ' + abId + ' > img {\r';
-  css += t4 + 'pointer-events: none;\r';
   css += t3 + '}\r';
 
   // classes for paragraph and character styles
