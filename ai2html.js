@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.115.4';
+var scriptVersion = '0.115.5';
 
 // ================================================
 // ai2html and config settings
@@ -627,7 +627,7 @@ function render(settings, customBlocks) {
        '\t</div>\r';
 
     var abStyles = textData.styles;
-    if (specialData.video) {
+    if (specialData && specialData.video) {
       // make videos tap/clickable (so they can be played manually if autoplay
       // is disabled, e.g. in mobile low-power mode).
       abStyles.push('> div { pointer-events: none; }\r');

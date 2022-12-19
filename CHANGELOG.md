@@ -1,3 +1,6 @@
+### v0.115.5
+- Bug fix.
+
 ### v0.115.4
 - Added lazy loading for videos. (Videos are added by putting a single text field containing the video URL in a layer with a ":video" suffix appended to the layer name.)
 - Made videos tappable on mobile devices.
