@@ -64,9 +64,9 @@ var defaultSettings = {
   "output": "one-file",      // Options: one-file, multiple-files
   "project_name": "",        // Defaults to the name of the AI file
   "project_type": "",
-  "html_output_path": "/ai2html-output/",
+  "html_output_path": "ai2html-output/",
   "html_output_extension": ".html",
-  "image_output_path": "",
+  "image_output_path": "ai2html-output/",
   "image_source_path": null,
   "image_alt_text": "",
   "cache_bust_token": null,  // Append a token to the url of image urls: ?v=<cache_bust_token>
@@ -110,7 +110,7 @@ var defaultSettings = {
     "responsiveness",
     "output",
     "html_output_path",
-    "html_output_extension",
+    // "html_output_extension", // removed v0.115.6
     "image_output_path",
     "local_preview_template",
     "png_number_of_colors",
@@ -1376,13 +1376,16 @@ function initSpecialTextBlocks() {
 function initDocumentSettings(textBlockSettings) {
   var settings = extend({}, defaultSettings); // copy default settings
 
-  if (wantTimesPreviewSettings(textBlockSettings)) {
-    // NYT settings are only applied in an NYT Preview context
+  if (detectTimesEnv(textBlockSettings)) {
+    // NYT settings are only applied in an NYTimes CMS context
     applyTimesSettings(settings);
   }
 
-  // merge external settings into @settings
-  extendSettings(settings, readExternalSettings());
+  // merge config file settings into @settings
+  // TODO: handle inconsistent settings in text block and local config file
+  // (currently the text block settings override config file settings... but
+  //  this could result in default settings overriding custom settings)
+  extendSettings(settings, readConfigFileSettings());
 
   // merge settings from text block
   // TODO: consider parsing strings to booleans when relevant, (e.g. "false" -> false)
@@ -1399,6 +1402,7 @@ function initDocumentSettings(textBlockSettings) {
   return settings;
 }
 
+
 // Trigger errors and warnings for some common problems
 function validateDocumentSettings(settings) {
   if (isTrue(settings.include_resizer_classes)) {
@@ -1410,64 +1414,69 @@ function validateDocumentSettings(settings) {
   }
 }
 
-function detectUnTimesianSettings(o) {
-  return o.html_output_path == defaultSettings.html_output_path;
-}
+function detectTimesEnv(blockSettings) {
+  var fonts = detectTimesFonts();
+  var configs = fileExists(docPath + '../birdkit.config.js') || fileExists(docPath + '../config.yml');
+  var detected = fonts && configs;
 
-function wantTimesPreviewSettings(blockSettings) {
-  var foundTimesFonts = detectTimesFonts();
-  var foundPreviewEnv = fileExists(docPath + '../config.yml');
-  var yes = foundTimesFonts && foundPreviewEnv;
-
-  if (foundTimesFonts && !foundPreviewEnv) {
+  if (fonts && !configs) {
     if (confirm("You seem to be running ai2html outside of NYT Preview.\nContinue in non-Preview mode?", true)) {
-      yes = false;
+      detected = false;
     } else {
       error("Make sure your Illustrator file is inside the \u201Cai\u201D folder of a Preview project.");
     }
   }
 
-  if (!foundTimesFonts && foundPreviewEnv) {
-    yes = confirm("You seem to be running ai2html in Preview, but your system is missing the NYT fonts.\nContinue in NYT Preview mode?", true);
+  if (!fonts && configs) {
+    detected = confirm("You seem to be running ai2html in NYT Preview, but your system is missing the NYT fonts.\nContinue in Preview mode?", true);
   }
 
-  if (blockSettings) {
-    // detect incompatibility between text block settings and current context
-    if (yes && detectUnTimesianSettings(blockSettings)) {
-      error('The settings block is incompatible with NYT Preview. Delete it and re-run ai2html.');
-    }
+  // detect incompatibility between text block settings and current context
+  if (detected && blockSettings && detectUnTimesianSettings(blockSettings)) {
+    error('The settings block is incompatible with NYT Preview. Delete it and re-run ai2html.');
   }
 
-  return yes;
+  return detected;
+}
+
+function detectBirdkitEnv() {
+  return fileExists(docPath + '../birdkit.config.js');
+}
+
+function detectPreviewEnv() {
+  return fileExists(docPath + '../config.yml');
+}
+
+function detectUnTimesianSettings(o) {
+  return o.html_output_path == defaultSettings.html_output_path;
 }
 
 function applyTimesSettings(settings) {
-  var configFilePath = docPath + '../config.yml';
-
-  // Check that we are in an NYT Preview project
-  // If not, give NYT users the option of continuing with non-NYT settings
-  if (!fileExists(configFilePath)) {
-    if (!confirm("You seem to be running ai2html outside of NYT Preview.\nContinue in non-Preview mode?", true)) {
-      error("Make sure your Illustrator file is inside the \u201Cai\u201D folder of a Preview project.");
-    }
-    return;
-  }
+  var foundPreview = detectPreviewEnv();
+  var foundBirdkit = detectBirdkitEnv();
+  var yamlConfig = foundPreview && readYamlConfigFile(docPath + '../config.yml') || {};
 
   // TODO: consider applying in non-Preview mode
   extendSettings(settings, nytOverrideSettings);
-  scriptEnvironment = 'nyt-preview';
 
-  var yamlConfig = readYamlConfigFile(configFilePath) || {};
-  if (yamlConfig.project_type == 'ai2html') {
-    extendSettings(settings, nytEmbedOverrideSettings);
-    settings.project_type = 'ai2html';
+  if (foundPreview) {
+    scriptEnvironment = 'nyt-preview';
+    // TODO: support simple ai2html embeds in birdkit too
+    if (yamlConfig.project_type == 'ai2html') {
+      extendSettings(settings, nytEmbedOverrideSettings);
+      settings.project_type = 'ai2html';
+    }
+    if (yamlConfig.scoop_slug) {
+      settings.scoop_slug_from_config_yml = yamlConfig.scoop_slug;
+    }
+  } else if (foundBirdkit) {
+
+    scriptEnvironment = 'nyt-birdkit';
   }
-  if (yamlConfig.scoop_slug) {
-    settings.scoop_slug_from_config_yml = yamlConfig.scoop_slug;
-  }
+
   if (!folderExists(docPath + '../public/') ||
       (settings.project_type != 'ai2html' && !folderExists(docPath + '../src/'))) {
-    error("Your Preview project may be missing a \u201Cpublic\u201D or a \u201Csrc\u201D folder.");
+    error("Your project may be missing a \u201Cpublic\u201D or a \u201Csrc\u201D folder.");
   }
 
   // Read .git/config file to get preview slug
@@ -1478,10 +1487,14 @@ function applyTimesSettings(settings) {
 
   settings.image_source_path = "_assets/";
   if (settings.project_type == "ai2html") {
-    settings.html_output_path = "/../public/";
-    settings.image_output_path = "_assets/";
+    settings.html_output_path = "../public/";
+    settings.image_output_path = "../public/_assets/";
     settings.create_config_file = true;
     settings.create_promo_image = true;
+  } else if (scriptEnvironment == 'nyt-birdkit') {
+    // NOTE: these settings were moved to ai2html-config.json
+    // settings.html_output_path = "../src/lib/graphics/";
+    // settings.image_output_path = "../public/_assets/"
   }
 }
 
@@ -1496,7 +1509,7 @@ function extendSettings(settings, moreSettings) {
 }
 
 // Looks for settings file in the ai2html script directory and/or the .ai document directory
-function readExternalSettings() {
+function readConfigFileSettings() {
   var settingsFile = 'ai2html-config.json';
   var globalPath = pathJoin(getScriptDirectory(), settingsFile);
   var localPath = pathJoin(docPath, settingsFile);
@@ -1972,7 +1985,7 @@ function findLargestArtboard() {
 }
 
 function findLayers(layers, test) {
-  var retn = null;
+  var retn = [];
   forEach(layers, function(lyr) {
     var found = null;
     if (objectIsHidden(lyr)) {
@@ -1987,6 +2000,11 @@ function findLayers(layers, test) {
       retn = retn ? retn.concat(found) : found;
     }
   });
+  // Reverse the order of found layers:
+  // Layers seem to be fetched from top to bottom in the AI layer stack...
+  // We want separately-rendered layers (like :svg or :symbol) to be
+  // converted to HTML from bottom to top
+  retn.reverse();
   return retn;
 }
 
@@ -3502,7 +3520,8 @@ function findTaggedLayers(tag) {
 }
 
 function getImageFolder(settings) {
-  return pathJoin(docPath, settings.html_output_path, settings.image_output_path);
+  // return pathJoin(docPath, settings.html_output_path, settings.image_output_path);
+  return pathJoin(docPath, settings.image_output_path);
 }
 
 function getImageFileName(name, fmt) {
@@ -3689,10 +3708,8 @@ function generateImageHtml(imgFile, imgId, imgClass, imgStyle, ab, settings) {
   var imgDir = settings.image_source_path,
       imgAlt = encodeHtmlEntities(settings.image_alt_text || ''),
       html, src;
-  if (imgDir === null) {
-    imgDir = settings.image_output_path;
-  }
-  src = pathJoin(imgDir, imgFile);
+
+  src = imgDir ? pathJoin(imgDir, imgFile) : imgFile;
   if (settings.cache_bust_token) {
     src += '?v=' + settings.cache_bust_token;
   }
@@ -4401,7 +4418,7 @@ function generateOutputHtml(content, pageName, settings) {
   commentBlock = '<!-- Generated by ai2html v' + scriptVersion + ' - ' +
     getDateTimeStamp() + ' -->\r' + '<!-- ai file: ' + doc.name + ' -->\r';
 
-  if (scriptEnvironment == 'nyt-preview') {
+  if (scriptEnvironment == 'nyt-preview' || scriptEnvironment == 'nyt-birdkit') {
     commentBlock += '<!-- preview: ' + settings.preview_slug + ' -->\r';
   }
   if (settings.scoop_slug_from_config_yml) {
