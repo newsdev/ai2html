@@ -286,14 +286,14 @@ var nytEmbedSettings = {
 
   "settings_block": [
     "settings_version",
-    "image_format",
-    "write_image_files",
     "responsiveness",
     "max_width",
-    "output",
+    "image_format",
+    // "write_image_files",
+    // "output",
     "png_number_of_colors",
     "jpg_quality",
-    "use_lazy_loader",
+    // "use_lazy_loader",
     // "show_completion_dialog_box",
     "last_updated_text",
     "headline",
@@ -3402,7 +3402,7 @@ function convertArtItems(activeArtboard, textFrames, masks, settings) {
   var hideTextFrames = !isTrue(settings.testing_mode) && settings.render_text_as != 'image';
   var textFrameCount = textFrames.length;
   var html = '';
-  var svgLayers, svgNames;
+  var uniqNames = [];
   var hiddenItems = [];
   var hiddenLayers = [];
   var i;
@@ -3429,24 +3429,16 @@ function convertArtItems(activeArtboard, textFrames, masks, settings) {
     hiddenItems = hiddenItems.concat(obj.items);
   });
 
-  svgLayers = findTaggedLayers('svg');
-  if (svgLayers.length > 0) {
-    svgNames = [];
-    forEach(svgLayers, function(lyr) {
-      var svgName = uniqAssetName(getLayerImageName(lyr, activeArtboard, settings), svgNames);
-      var svgHtml = exportImage(svgName, 'svg', activeArtboard, masks, lyr, settings);
-      if (svgHtml) {
-        svgNames.push(svgName);
-        html += svgHtml;
-      }
-    });
-
-    // hide all svg Layers
-    forEach(svgLayers, function(lyr) {
-      lyr.visible = false;
-      hiddenLayers.push(lyr);
-    });
-  }
+  forEach(findTaggedLayers('svg'), function(lyr) {
+    var uniqName = uniqAssetName(getLayerImageName(lyr, activeArtboard, settings), uniqNames);
+    var layerHtml = exportImage(uniqName, 'svg', activeArtboard, masks, lyr, settings);
+    if (layerHtml) {
+      uniqNames.push(uniqName);
+      html += layerHtml;
+    }
+    lyr.visible = false;
+    hiddenLayers.push(lyr);
+  });
 
   // Embed images tagged :png as separate images
   // Inside this function, layers are hidden and unhidden as needed
@@ -3515,6 +3507,7 @@ function exportImage(imgName, format, ab, masks, layer, settings) {
   var imgClass = imgId.replace(/-[1-9][0-9]+-/, '-');
   // all images are now absolutely positioned (before, artboard images were
   // position:static to set the artboard height)
+  var inlineSvg = isTrue(settings.inline_svg) || layer && parseObjectName(layer.name).inline;
   var svgInlineStyle, svgLayersArg;
   var created, html;
 
@@ -3530,7 +3523,7 @@ function exportImage(imgName, format, ab, masks, layer, settings) {
     }
     rewriteSVGFile(outputPath, imgId);
 
-    if (isTrue(settings.inline_svg)) {
+    if (inlineSvg) {
       html = generateInlineSvg(outputPath, imgClass, svgInlineStyle, settings);
       if (layer) {
         message('Generated inline SVG for layer [' + getLayerName(layer) + ']');
