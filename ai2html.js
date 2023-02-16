@@ -51,7 +51,7 @@ var scriptVersion = '0.115.5';
 // ================================================
 
 // These are base settings that are overridden by text block settings in
-// the .ai document and settings containing in ai2html-config.json files
+// the .ai document and settings contained in ai2html-config.json files
 var defaultSettings = {
   "namespace": "g-",
   "settings_version": scriptVersion,
@@ -63,11 +63,10 @@ var defaultSettings = {
   "max_width": "",
   "output": "one-file",      // Options: one-file, multiple-files
   "project_name": "",        // Defaults to the name of the AI file
-  "project_type": "",
   "html_output_path": "ai2html-output/",
   "html_output_extension": ".html",
   "image_output_path": "ai2html-output/",
-  "image_source_path": null,
+  "image_source_path": "",
   "image_alt_text": "",
   "cache_bust_token": null,  // Append a token to the url of image urls: ?v=<cache_bust_token>
   "create_config_file": false,
@@ -97,11 +96,6 @@ var defaultSettings = {
   "notes": "",
   "sources": "",
   "credit": "",
-  // removed most NYT-specific settings from default settings, including:
-  //   page_template, publish_system, environment, show_in_compatible_apps,
-  //   display_for_promotion_only, constrain_width_to_text_column,
-  //   compatibility, interactive_size, scoop_publish_fields, scoop_asset_id,
-  //   scoop_username, scoop_slug, scoop_external_edit_key
 
   // List of settings to include in the "ai2html-settings" text block
   "settings_block": [
@@ -110,8 +104,9 @@ var defaultSettings = {
     "responsiveness",
     "output",
     "html_output_path",
-    // "html_output_extension", // removed v0.115.6
+    // "html_output_extension", // removed from settings block in v0.115.6
     "image_output_path",
+    "image_source_path",
     "local_preview_template",
     "png_number_of_colors",
     "jpg_quality",
@@ -143,129 +138,34 @@ var defaultSettings = {
     {"aifont":"Georgia-Bold","family":"georgia,'times new roman',times,serif","weight":"bold","style":""},
     {"aifont":"Georgia-Italic","family":"georgia,'times new roman',times,serif","weight":"","style":"italic"},
     {"aifont":"Georgia-BoldItalic","family":"georgia,'times new roman',times,serif","weight":"bold","style":"italic"}
-  ],
-
-  // Width ranges for responsive breakpoints (obsolete, will be removed)
-  "breakpoints": [
-    { name:"xsmall"    , lowerLimit:   0, upperLimit: 180 },
-    { name:"small"     , lowerLimit: 180, upperLimit: 300 },
-    { name:"smallplus" , lowerLimit: 300, upperLimit: 460 },
-    { name:"submedium" , lowerLimit: 460, upperLimit: 600 },
-    { name:"medium"    , lowerLimit: 600, upperLimit: 720 },
-    { name:"large"     , lowerLimit: 720, upperLimit: 945 },
-    { name:"xlarge"    , lowerLimit: 945, upperLimit:1050 },
-    { name:"xxlarge"   , lowerLimit:1050, upperLimit:1600 }
   ]
 };
 
-// Override settings for simple NYT ai2html embed graphics
-var nytEmbedOverrideSettings = {
-  "dark_mode_compatible": false,
-  "settings_block": [
-    "settings_version",
-    "image_format",
-    "write_image_files",
-    "responsiveness",
-    "max_width",
-    "output",
-    "png_number_of_colors",
-    "jpg_quality",
-    "use_lazy_loader",
-    // "show_completion_dialog_box",
-    "last_updated_text",
-    "headline",
-    "leadin",
-    "summary",
-    "notes",
-    "sources",
-    "credit",
-    "show_in_compatible_apps",
-    "display_for_promotion_only",
-    "constrain_width_to_text_column",
-    "dark_mode_compatible",
-    "size",
-    "scoop_asset_id",
-    "scoop_username",
-    "scoop_slug",
-    "scoop_external_edit_key"
-  ],
-};
 
-// These settings override the default settings in NYT mode
+// These settings override the default settings in NYT preview/birdkit projects
 var nytOverrideSettings = {
-  "html_output_path": "../src/",
-  "image_output_path": "../public/_assets/",
+  "image_source_path": "_assets/", // path for <img src="">
   "config_file_path": "../config.yml",
   "use_lazy_loader": true,
   "include_resizer_script": true,
-  "credit": "By The New York Times",
-  "page_template": "vi-article-embed",
-  "publish_system": "scoop",
-
-  // NYT-specific settings (not present in default settings)
-  "environment": "production",
-  "show_in_compatible_apps": true,
-  "display_for_promotion_only": false,
-  "constrain_width_to_text_column": false,
-  "compatibility": "inline",
-  "size": "full", // changed from "medium" to "full"
   "min_width": 280, // added as workaround for a scoop bug affecting ai2html-type graphics
-  "scoop_publish_fields": true,
-  "scoop_asset_id": "",
-  "scoop_username": "",
-  "scoop_slug": "",
-  "scoop_external_edit_key": "",
 
   "settings_block": [
     "settings_version",
-    "image_format",
-    "write_image_files",
     "responsiveness",
-    "max_width",
-    "output",
+    "image_format",
+    // "write_image_files",
+    // "max_width",
+    "png_transparent",
     "png_number_of_colors",
     "jpg_quality",
-    "use_lazy_loader",
-    "show_completion_dialog_box",
-    "last_updated_text",
-    "headline",
-    "leadin",
-    "summary",
-    "notes",
-    "sources",
-    "credit",
-    "show_in_compatible_apps",
-    "display_for_promotion_only",
-    "constrain_width_to_text_column",
-    "size",
-    "scoop_asset_id",
-    "scoop_username",
-    "scoop_slug",
-    "scoop_external_edit_key"
+    // "inline_svg",
+    "output"
+    // "clickable_link"
+    // "use_lazy_loader"
   ],
 
-  "config_file": [
-    "last_updated_text",
-    "headline",
-    "leadin",
-    "summary",
-    "notes",
-    "sources",
-    "credit",
-    "page_template",
-    "publish_system",
-    "environment",
-    "show_in_compatible_apps",
-    "display_for_promotion_only",
-    "constrain_width_to_text_column",
-    "compatibility",
-    "size",
-    "scoop_publish_fields",
-    "scoop_asset_id",
-    "scoop_username",
-    "scoop_slug",
-    "scoop_external_edit_key"
-  ],
+  "config_file": [],
 
   "fonts": [
     // vshift shifts text vertically, to compensate for vertical misalignment caused
@@ -349,6 +249,92 @@ var nytOverrideSettings = {
   ]
 };
 
+var nytPreviewSettings = {
+  "project_type": "nyt-preview",
+  "html_output_path": "../src/",
+  "image_output_path": "../public/_assets/"
+};
+
+var nytBirdkitSettings = {
+  "project_type": "nyt-birdkit",
+  "html_output_path": "../src/lib/graphics/",
+  "image_output_path": "../public/_assets/"
+};
+
+// Override settings for simple NYT ai2html embed graphics
+var nytEmbedSettings = {
+  "project_type": "ai2html",
+  "html_output_path": "../public/",
+  "image_output_path": "../public/_assets/",
+  "dark_mode_compatible": false,
+  "create_config_file": true,
+  "create_promo_image": true,
+  "credit": "By The New York Times",
+  "publish_system": "scoop",
+  "page_template": "vi-article-embed",
+  "environment": "production",
+  "show_in_compatible_apps": true,
+  "display_for_promotion_only": false,
+  "constrain_width_to_text_column": false,
+  "compatibility": "inline",
+  "size": "full", // changed from "medium" to "full"
+  "scoop_publish_fields": true,
+  "scoop_asset_id": "",
+  "scoop_username": "",
+  "scoop_slug": "",
+  "scoop_external_edit_key": "",
+
+  "settings_block": [
+    "settings_version",
+    "image_format",
+    "write_image_files",
+    "responsiveness",
+    "max_width",
+    "output",
+    "png_number_of_colors",
+    "jpg_quality",
+    "use_lazy_loader",
+    // "show_completion_dialog_box",
+    "last_updated_text",
+    "headline",
+    "leadin",
+    "summary",
+    "notes",
+    "sources",
+    "credit",
+    "show_in_compatible_apps",
+    "display_for_promotion_only",
+    "constrain_width_to_text_column",
+    "dark_mode_compatible",
+    "size",
+    "scoop_asset_id",
+    "scoop_username",
+    "scoop_slug",
+    "scoop_external_edit_key"
+  ],
+  "config_file": [
+    "last_updated_text",
+    "headline",
+    "leadin",
+    "summary",
+    "notes",
+    "sources",
+    "credit",
+    "page_template",
+    "publish_system",
+    "environment",
+    "show_in_compatible_apps",
+    "display_for_promotion_only",
+    "constrain_width_to_text_column",
+    "compatibility",
+    "size",
+    "scoop_publish_fields",
+    "scoop_asset_id",
+    "scoop_username",
+    "scoop_slug",
+    "scoop_external_edit_key"
+  ]
+};
 
 // ================================================
 // Constant data
@@ -421,7 +407,6 @@ var startTime = +new Date();
 var textFramesToUnhide = [];
 var objectsToRelock = [];
 
-var scriptEnvironment = '';
 var docSettings;
 var fonts;
 var textBlockData;
@@ -1415,11 +1400,11 @@ function validateDocumentSettings(settings) {
 }
 
 function detectTimesEnv(blockSettings) {
-  var fonts = detectTimesFonts();
-  var configs = fileExists(docPath + '../birdkit.config.js') || fileExists(docPath + '../config.yml');
-  var detected = fonts && configs;
+  var nytFonts = detectTimesFonts();
+  var nytProject = detectPreviewEnv() || detectBirdkitEnv();
+  var detected = nytFonts && nytProject;
 
-  if (fonts && !configs) {
+  if (nytFonts && !nytProject) {
     if (confirm("You seem to be running ai2html outside of NYT Preview.\nContinue in non-Preview mode?", true)) {
       detected = false;
     } else {
@@ -1427,7 +1412,7 @@ function detectTimesEnv(blockSettings) {
     }
   }
 
-  if (!fonts && configs) {
+  if (!nytFonts && nytProject) {
     detected = confirm("You seem to be running ai2html in NYT Preview, but your system is missing the NYT fonts.\nContinue in Preview mode?", true);
   }
 
@@ -1452,49 +1437,35 @@ function detectUnTimesianSettings(o) {
 }
 
 function applyTimesSettings(settings) {
-  var foundPreview = detectPreviewEnv();
-  var foundBirdkit = detectBirdkitEnv();
-  var yamlConfig = foundPreview && readYamlConfigFile(docPath + '../config.yml') || {};
-
-  // TODO: consider applying in non-Preview mode
   extendSettings(settings, nytOverrideSettings);
 
-  if (foundPreview) {
-    scriptEnvironment = 'nyt-preview';
+  if (detectPreviewEnv()) {
     // TODO: support simple ai2html embeds in birdkit too
+    var yamlConfig = readYamlConfigFile(docPath + '../config.yml') || {};
     if (yamlConfig.project_type == 'ai2html') {
-      extendSettings(settings, nytEmbedOverrideSettings);
-      settings.project_type = 'ai2html';
+      extendSettings(settings, nytEmbedSettings);
+    } else {
+      extendSettings(settings, nytPreviewSettings);
     }
     if (yamlConfig.scoop_slug) {
       settings.scoop_slug_from_config_yml = yamlConfig.scoop_slug;
     }
-  } else if (foundBirdkit) {
-
-    scriptEnvironment = 'nyt-birdkit';
+  } else if (detectBirdkitEnv()) {
+    extendSettings(settings, nytBirdkitSettings);
   }
 
-  if (!folderExists(docPath + '../public/') ||
-      (settings.project_type != 'ai2html' && !folderExists(docPath + '../src/'))) {
-    error("Your project may be missing a \u201Cpublic\u201D or a \u201Csrc\u201D folder.");
+  if (!folderExists(docPath + '../public/')) {
+    error("Your project seems to be missing a \u201Cpublic\u201D folder.");
+  }
+
+  if (settings.project_type != 'ai2html' && !folderExists(docPath + '../src/')) {
+    error("Your project may be missing a \u201Csrc\u201D folder.");
   }
 
   // Read .git/config file to get preview slug
   var gitConfig = readGitConfigFile(docPath + "../.git/config") || {};
   if (gitConfig.url) {
     settings.preview_slug = gitConfig.url.replace( /^[^:]+:/ , "" ).replace( /\.git$/ , "");
-  }
-
-  settings.image_source_path = "_assets/";
-  if (settings.project_type == "ai2html") {
-    settings.html_output_path = "../public/";
-    settings.image_output_path = "../public/_assets/";
-    settings.create_config_file = true;
-    settings.create_promo_image = true;
-  } else if (scriptEnvironment == 'nyt-birdkit') {
-    // NOTE: these settings were moved to ai2html-config.json
-    // settings.html_output_path = "../src/lib/graphics/";
-    // settings.image_output_path = "../public/_assets/"
   }
 }
 
@@ -1683,7 +1654,7 @@ function showCompletionAlert(showPrompt) {
 
   if (errors.length > 0) {
     alertHed = "The Script Was Unable to Finish";
-  } else if (scriptEnvironment == "nyt-preview") {
+  } else if (detectTimesFonts()) {
     alertHed = "Actually, that\u2019s not half bad :)"; // &rsquo;
   } else {
     alertHed = "Nice work!";
@@ -4195,7 +4166,9 @@ function generateYamlFileContent(settings) {
   var range = getWidthRangeForConfig(settings);
   var lines = [];
   lines.push('ai2html_version: ' + scriptVersion);
-  lines.push('project_type: ' + settings.project_type);
+  if (settings.project_type) {
+    lines.push('project_type: ' + settings.project_type);
+  }
   lines.push('type: embeddedinteractive');
   lines.push('tags: ai2html');
   lines.push('min_width: ' + range[0]);
@@ -4418,7 +4391,7 @@ function generateOutputHtml(content, pageName, settings) {
   commentBlock = '<!-- Generated by ai2html v' + scriptVersion + ' - ' +
     getDateTimeStamp() + ' -->\r' + '<!-- ai file: ' + doc.name + ' -->\r';
 
-  if (scriptEnvironment == 'nyt-preview' || scriptEnvironment == 'nyt-birdkit') {
+  if (settings.preview_slug) {
     commentBlock += '<!-- preview: ' + settings.preview_slug + ' -->\r';
   }
   if (settings.scoop_slug_from_config_yml) {
