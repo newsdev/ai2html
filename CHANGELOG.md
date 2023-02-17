@@ -1,3 +1,8 @@
+### v0.116.0
+- Updated the list of options displayed in the settings text block.
+- Added support for Layer:svg,inline notation to render an SVG layer as inline SVG (an alternative to setting the inline_svg option).
+- Added support for NYT birdkit.
+
 ### v0.115.5
 - Bug fix.
 
