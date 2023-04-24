@@ -107,6 +107,7 @@ var defaultSettings = {
     // "html_output_extension", // removed from settings block in v0.115.6
     "image_output_path",
     "image_source_path",
+    "image_alt_text",
     "local_preview_template",
     "png_number_of_colors",
     "jpg_quality",
@@ -154,6 +155,7 @@ var nytOverrideSettings = {
     "settings_version",
     "responsiveness",
     "image_format",
+    "image_alt_text",
     // "write_image_files",
     // "max_width",
     "png_transparent",
