@@ -1,3 +1,7 @@
+### v0.117.0
+- Improved support for embedded graphics in NYT Birdkit.
+- More accessibility metadata for NYT graphics.
+
 ### v0.116.0
 - Updated the list of options displayed in the settings text block.
 - Added support for Layer:svg,inline notation to render an SVG layer as inline SVG (an alternative to setting the inline_svg option).

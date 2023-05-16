@@ -149,7 +149,7 @@ var nytOverrideSettings = {
   "use_lazy_loader": true,
   "include_resizer_script": true,
   "min_width": 280, // added as workaround for a scoop bug affecting ai2html-type graphics
-
+  "accessibility": true,
   "settings_block": [
     "settings_version",
     "responsiveness",
@@ -159,7 +159,7 @@ var nytOverrideSettings = {
     "png_transparent",
     "png_number_of_colors",
     "jpg_quality",
-    // "inline_svg",
+    "inline_svg",
     "output"
     // "clickable_link"
     // "use_lazy_loader"
@@ -261,8 +261,58 @@ var nytBirdkitSettings = {
   "image_output_path": "../public/_assets/"
 };
 
-// Override settings for simple NYT ai2html embed graphics
-var nytEmbedSettings = {
+var nytBirdkitEmbedSettings = {
+  "project_type": "ai2html",
+  "html_output_path": "../public/",
+  "image_output_path": "../public/_assets/",
+  "dark_mode_compatible": false,
+  "create_config_file": true,
+  "create_promo_image": false,
+  "credit": "By The New York Times",
+  "aria_role": "figure",
+  "alt_text": "",
+  "page_template": "vi-article-embed",
+  "display_for_promotion_only": false,
+  "section": "",
+  "size": "full", // changed from "medium" to "full"
+
+  "settings_block": [
+    "settings_version",
+    "responsiveness",
+    "alt_text",
+    "max_width",
+    "image_format",
+    "png_number_of_colors",
+    "jpg_quality",
+    "last_updated_text",
+    "section",
+    "headline",
+    "leadin",
+    "summary",
+    "notes",
+    "sources",
+    "credit",
+    "display_for_promotion_only",
+    "dark_mode_compatible",
+    "size"
+  ],
+  "config_file": [
+    "last_updated_text",
+    "section",
+    "headline",
+    "leadin",
+    "summary",
+    "notes",
+    "sources",
+    "credit",
+    "page_template",
+    "display_for_promotion_only",
+    "size"
+  ]
+};
+
+// Override settings for simple NYT Preview ai2html embed graphics
+var nytPreviewEmbedSettings = {
   "project_type": "ai2html",
   "html_output_path": "../public/",
   "image_output_path": "../public/_assets/",
@@ -270,6 +320,8 @@ var nytEmbedSettings = {
   "create_config_file": true,
   "create_promo_image": true,
   "credit": "By The New York Times",
+  "aria_role": "figure",
+  "alt_text": "",
   "publish_system": "scoop",
   "page_template": "vi-article-embed",
   "environment": "production",
@@ -287,6 +339,7 @@ var nytEmbedSettings = {
   "settings_block": [
     "settings_version",
     "responsiveness",
+    "alt_text",
     "max_width",
     "image_format",
     // "write_image_files",
@@ -1428,8 +1481,18 @@ function detectBirdkitEnv() {
   return fileExists(docPath + '../birdkit.config.js');
 }
 
+// legacy preview project type
 function detectPreviewEnv() {
+  return detectConfigYml() && !detectBirdkitEnv();
+}
+
+function detectConfigYml() {
   return fileExists(docPath + '../config.yml');
+}
+
+function detectNYTEmbed() {
+  var yamlConfig = readYamlConfigFile(docPath + '../config.yml');
+  return yamlConfig && yamlConfig.project_type == 'ai2html';
 }
 
 function detectUnTimesianSettings(o) {
@@ -1439,19 +1502,27 @@ function detectUnTimesianSettings(o) {
 function applyTimesSettings(settings) {
   extendSettings(settings, nytOverrideSettings);
 
-  if (detectPreviewEnv()) {
-    // TODO: support simple ai2html embeds in birdkit too
+  if (detectBirdkitEnv()) {
+    if (detectNYTEmbed()) {
+      extendSettings(settings, nytBirdkitEmbedSettings);
+    } else {
+      extendSettings(settings, nytBirdkitSettings);
+    }
+  } else if (detectPreviewEnv()) {
     var yamlConfig = readYamlConfigFile(docPath + '../config.yml') || {};
     if (yamlConfig.project_type == 'ai2html') {
-      extendSettings(settings, nytEmbedSettings);
+      extendSettings(settings, nytPreviewEmbedSettings);
     } else {
       extendSettings(settings, nytPreviewSettings);
     }
     if (yamlConfig.scoop_slug) {
       settings.scoop_slug_from_config_yml = yamlConfig.scoop_slug;
     }
-  } else if (detectBirdkitEnv()) {
-    extendSettings(settings, nytBirdkitSettings);
+    // Read .git/config file to get preview slug
+    var gitConfig = readGitConfigFile(docPath + "../.git/config") || {};
+    if (gitConfig.url) {
+      settings.preview_slug = gitConfig.url.replace( /^[^:]+:/ , "" ).replace( /\.git$/ , "");
+    }
   }
 
   if (!folderExists(docPath + '../public/')) {
@@ -1462,11 +1533,6 @@ function applyTimesSettings(settings) {
     error("Your project may be missing a \u201Csrc\u201D folder.");
   }
 
-  // Read .git/config file to get preview slug
-  var gitConfig = readGitConfigFile(docPath + "../.git/config") || {};
-  if (gitConfig.url) {
-    settings.preview_slug = gitConfig.url.replace( /^[^:]+:/ , "" ).replace( /\.git$/ , "");
-  }
 }
 
 function extendSettings(settings, moreSettings) {
@@ -3061,6 +3127,7 @@ function exportSymbolAsHtml(item, geometries, abBox, opts) {
   return html;
 }
 
+
 function testEmptyArtboard(ab) {
   return !testLayerArtboardIntersection(null, ab);
 }
@@ -3414,6 +3481,13 @@ function convertArtItems(activeArtboard, textFrames, masks, settings) {
       textFrames[i].hidden = true;
     }
   }
+
+  // WIP
+  // forEach(findTaggedLayers('svg-symbol'), function(lyr) {
+  //   var obj = exportSvgSymbols(lyr, activeArtboard, masks);
+  //   html += obj.html;
+  //   hiddenItems = hiddenItems.concat(obj.items);
+  // });
 
   // Symbols in :symbol layers are not scaled
   forEach(findTaggedLayers('symbol'), function(lyr) {
@@ -3786,19 +3860,29 @@ function exportRasterImage(imgPath, ab, format, settings) {
   app.activeDocument.exportFile(new File(imgPath), fileType, exportOptions);
 }
 
+function makeTmpDocument(doc, ab) {
+  // create temp document (pretty slow -- ~1.5s)
+  var doc2 = app.documents.add(DocumentColorSpace.RGB, doc.width, doc.height, 1);
+  var artboardBounds = ab.artboardRect;
+  doc2.pageOrigin = doc.pageOrigin; // not sure if needed
+  doc2.rulerOrigin = doc.rulerOrigin;
+  doc2.artboards[0].artboardRect = ab.artboardRect;
+  return doc2;
+}
+
 
 // Copy contents of an artboard to a temporary document, excluding objects
 //   that are hidden by masks
-// layers Optional argument to copy specific layers (default is all layers)
+// items: Optional argument to copy specific layers or items (default is all layers in the doc)
 // Returns a newly-created document containing artwork to export, or null
 //   if no image should be created.
 //
 // TODO: grouped text is copied (but hidden). Avoid copying text in groups, for
 //   smaller SVG output.
-function copyArtboardForImageExport(ab, masks, layers) {
+function copyArtboardForImageExport(ab, masks, items) {
   var layerMasks = filter(masks, function(o) {return !!o.layer;}),
       artboardBounds = ab.artboardRect,
-      sourceLayers = layers || toArray(doc.layers),
+      sourceItems = items || toArray(doc.layers),
       destLayer = doc.layers.add(),
       destGroup = doc.groupItems.add(),
       itemCount = 0,
@@ -3806,19 +3890,15 @@ function copyArtboardForImageExport(ab, masks, layers) {
 
   destLayer.name = 'ArtboardContent';
   destGroup.move(destLayer, ElementPlacement.PLACEATEND);
-  forEach(sourceLayers, copyLayer);
+  forEach(sourceItems, copyLayerOrItem);
 
-  // kludge: export empty documents iff layers argument is missing (assuming
+  // kludge: export empty documents iff items argument is missing (assuming
   //    this is the main artboard image, which is needed to set the container size)
-  if (itemCount > 0 || !layers) {
+  if (itemCount > 0 || !items) {
     // need to save group position before copying to second document. Oddly,
     // the reported position of the original group changes after duplication
     groupPos = destGroup.position;
-    // create temp document (pretty slow -- ~1.5s)
-    doc2 = app.documents.add(DocumentColorSpace.RGB, doc.width, doc.height, 1);
-    doc2.pageOrigin = doc.pageOrigin; // not sure if needed
-    doc2.rulerOrigin = doc.rulerOrigin;
-    doc2.artboards[0].artboardRect = artboardBounds;
+    doc2 = makeTmpDocument(doc, ab);
     group2 = destGroup.duplicate(doc2.layers[0], ElementPlacement.PLACEATEND);
     group2.position = groupPos;
   }
@@ -3833,7 +3913,7 @@ function copyArtboardForImageExport(ab, masks, layers) {
     if (mask) {
       copyMaskedLayerAsGroup(lyr, mask);
     } else {
-      forEach(getSortedLayerItems(lyr), copyLayerItem);
+      forEach(getSortedLayerItems(lyr), copyLayerOrItem);
     }
   }
 
@@ -3850,7 +3930,7 @@ function copyArtboardForImageExport(ab, masks, layers) {
   }
 
   // Item: Layer (sublayer) or PageItem
-  function copyLayerItem(item) {
+  function copyLayerOrItem(item) {
     if (item.typename == 'Layer') {
       copyLayer(item);
     } else {
@@ -3931,11 +4011,11 @@ function copyArtboardForImageExport(ab, masks, layers) {
 }
 
 // Returns true if a file was created or else false (because svg document was empty);
-function exportSVG(ofile, ab, masks, layers, settings) {
+function exportSVG(ofile, ab, masks, items, settings) {
   // Illustrator's SVG output contains all objects in a document (it doesn't
   //   clip to the current artboard), so we copy artboard objects to a temporary
   //   document for export.
-  var exportDoc = copyArtboardForImageExport(ab, masks, layers);
+  var exportDoc = copyArtboardForImageExport(ab, masks, items);
   var opts = new ExportOptionsSVG();
   if (!exportDoc) return false;
 
@@ -4119,6 +4199,16 @@ function generatePageCss(containerId, settings) {
   if (isTrue(settings.center_html_output)) {
     css += blockStart + ',\r' + blockStart + '.' + nameSpace + 'artboard {';
     css += t3 + 'margin:0 auto;';
+    css += blockEnd;
+  }
+  if (settings.alt_text) {
+    css += blockStart + ' .' + nameSpace + 'aiAltText {';
+    css += t3 + 'position: absolute;';
+    css += t3 + 'left: -10000px;';
+    css += t3 + 'width: 1px;';
+    css += t3 + 'height: 1px;';
+    css += t3 + 'overflow: hidden;';
+    css += t3 + 'white-space: nowrap;';
     css += blockEnd;
   }
   if (settings.clickable_link !== '') {
@@ -4373,6 +4463,13 @@ function generateOutputHtml(content, pageName, settings) {
   var htmlFileDestinationFolder, htmlFileDestination;
   var containerClasses = 'ai2html';
 
+  // accessibility features
+  var ariaAttrs = '',
+      altTextDiv = '';
+  if (settings.aria_role) {
+    ariaAttrs = ' role="' + settings.aria_role + '"';
+  }
+
   progressBar.setTitle('Writing HTML output...');
 
   if (isTrue(settings.include_resizer_script)) {
@@ -4392,7 +4489,12 @@ function generateOutputHtml(content, pageName, settings) {
   }
 
   // HTML
-  html = '<div id="' + containerId + '" class="' + containerClasses + '">\r';
+  html = '<div id="' + containerId + '" class="' + containerClasses + '"' + ariaAttrs + '>\r';
+
+  if (settings.alt_text) {
+    html += '<div class="' + nameSpace + 'aiAltText">' +
+      encodeHtmlEntities(settings.alt_text) + '</div>';
+  }
   if (linkSrc) {
     // optional link around content
     html += '\t<a class="' + nameSpace + 'ai2htmlLink" href="' + linkSrc + '">\r';
