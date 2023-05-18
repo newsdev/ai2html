@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.117.1';
+var scriptVersion = '0.117.2';
 
 // ================================================
 // ai2html and config settings
@@ -1454,19 +1454,23 @@ function validateDocumentSettings(settings) {
 
 function detectTimesEnv(blockSettings) {
   var nytFonts = detectTimesFonts();
-  var nytProject = detectPreviewEnv() || detectBirdkitEnv();
+  var nytProject = detectConfigYml() || detectBirdkitEnv(); // test for legacy preview or birdkit projects
   var detected = nytFonts && nytProject;
 
   if (nytFonts && !nytProject) {
-    if (confirm("You seem to be running ai2html outside of NYT Preview.\nContinue in non-Preview mode?", true)) {
+    if (confirm("You seem to be running ai2html outside of a NYT graphics project.\nContinue in non-NYT mode?", true)) {
       detected = false;
     } else {
-      error("Make sure your Illustrator file is inside the \u201Cai\u201D folder of a Preview project.");
+      error("Make sure your Illustrator file is inside the \u201Cai\u201D folder of a Preview or Birdkit project.");
     }
   }
 
   if (!nytFonts && nytProject) {
-    detected = confirm("You seem to be running ai2html in NYT Preview, but your system is missing the NYT fonts.\nContinue in Preview mode?", true);
+    if (confirm("Your system is missing the NYT fonts.\nContinue?", true)) {
+      detected = true;
+    } else {
+      error("Install the NYT Fonts and then re-run ai2html.");
+    }
   }
 
   // detect incompatibility between text block settings and current context
@@ -1481,18 +1485,8 @@ function detectBirdkitEnv() {
   return fileExists(docPath + '../birdkit.config.js');
 }
 
-// legacy preview project type
-function detectPreviewEnv() {
-  return detectConfigYml() && !detectBirdkitEnv();
-}
-
 function detectConfigYml() {
   return fileExists(docPath + '../config.yml');
-}
-
-function detectNYTEmbed() {
-  var yamlConfig = readYamlConfigFile(docPath + '../config.yml');
-  return yamlConfig && yamlConfig.project_type == 'ai2html';
 }
 
 function detectUnTimesianSettings(o) {
@@ -1500,16 +1494,21 @@ function detectUnTimesianSettings(o) {
 }
 
 function applyTimesSettings(settings) {
+  var yamlConfig = readYamlConfigFile(docPath + '../config.yml') || {};
   extendSettings(settings, nytOverrideSettings);
 
   if (detectBirdkitEnv()) {
-    if (detectNYTEmbed()) {
+    if (detectConfigYml()) {
+      if (yamlConfig.project_type != 'ai2html') { // sanity check
+        error("Your \u201Cconfig.yml\u201D file is incompatible with a birdkit ai2html project.");
+      }
       extendSettings(settings, nytBirdkitEmbedSettings);
     } else {
       extendSettings(settings, nytBirdkitSettings);
     }
-  } else if (detectPreviewEnv()) {
-    var yamlConfig = readYamlConfigFile(docPath + '../config.yml') || {};
+
+  } else if (detectConfigYml()) {
+    // assume this is a legacy preview project
     if (yamlConfig.project_type == 'ai2html') {
       extendSettings(settings, nytPreviewEmbedSettings);
     } else {
@@ -1529,10 +1528,11 @@ function applyTimesSettings(settings) {
     error("Your project seems to be missing a \u201Cpublic\u201D folder.");
   }
 
-  if (settings.project_type != 'ai2html' && !folderExists(docPath + '../src/')) {
-    error("Your project may be missing a \u201Csrc\u201D folder.");
+  if (!settings.project_type) {
+    error("ai2html is unable to determine the type of this project.");
+  } else if (settings.project_type != 'ai2html' && !folderExists(docPath + '../src/')) {
+    error("This seems to be a " + settings.project_type + " type project, but it is missing the expected \u201Csrc\u201D folder.");
   }
-
 }
 
 function extendSettings(settings, moreSettings) {
