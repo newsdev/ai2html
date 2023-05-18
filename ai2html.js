@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.117.2';
+var scriptVersion = '0.117.3';
 
 // ================================================
 // ai2html and config settings
@@ -1494,14 +1494,16 @@ function detectUnTimesianSettings(o) {
 }
 
 function applyTimesSettings(settings) {
-  var yamlConfig = readYamlConfigFile(docPath + '../config.yml') || {};
+  var yamlConfig = readYamlConfigFile(docPath + '../config.yml') || null;
   extendSettings(settings, nytOverrideSettings);
 
   if (detectBirdkitEnv()) {
     if (detectConfigYml()) {
-      if (yamlConfig.project_type != 'ai2html') { // sanity check
-        error("Your \u201Cconfig.yml\u201D file is incompatible with a birdkit ai2html project.");
-      }
+      // birdkit doesn't need to know the contents of yamlConfig;
+      // skipping this sanity check
+      // if (yamlConfig.project_type != 'ai2html') {
+      //   ("Your \u201Cconfig.yml\u201D file is incompatible with a birdkit ai2html project.");
+      // }
       extendSettings(settings, nytBirdkitEmbedSettings);
     } else {
       extendSettings(settings, nytBirdkitSettings);
@@ -1509,12 +1511,15 @@ function applyTimesSettings(settings) {
 
   } else if (detectConfigYml()) {
     // assume this is a legacy preview project
-    if (yamlConfig.project_type == 'ai2html') {
+    if (!yamlConfig) {
+      error('ai2html is unable to read the contents of config.yml');
+    }
+    if (yamlConfig && yamlConfig.project_type == 'ai2html') {
       extendSettings(settings, nytPreviewEmbedSettings);
     } else {
       extendSettings(settings, nytPreviewSettings);
     }
-    if (yamlConfig.scoop_slug) {
+    if (yamlConfig && yamlConfig.scoop_slug) {
       settings.scoop_slug_from_config_yml = yamlConfig.scoop_slug;
     }
     // Read .git/config file to get preview slug
