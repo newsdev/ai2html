@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.117.4';
+var scriptVersion = '0.117.5';
 
 // ================================================
 // ai2html and config settings
@@ -67,7 +67,7 @@ var defaultSettings = {
   "html_output_extension": ".html",
   "image_output_path": "ai2html-output/",
   "image_source_path": "",
-  "image_alt_text": "",
+  "image_alt_text": "", // Generally, use alt_text instead
   "cache_bust_token": null,  // Append a token to the url of image urls: ?v=<cache_bust_token>
   "create_config_file": false,
   "config_file_path": "",
@@ -206,6 +206,7 @@ var nytBirdkitEmbedSettings = {
   ],
   "config_file": [
     "last_updated_text",
+    "alt_text",
     "section",
     "headline",
     "leadin",
@@ -4468,8 +4469,7 @@ function generateOutputHtml(content, pageName, settings) {
   var containerClasses = 'ai2html';
 
   // accessibility features
-  var ariaAttrs = '',
-      altTextDiv = '';
+  var ariaAttrs = '';
   if (settings.aria_role) {
     ariaAttrs = ' role="' + settings.aria_role + '"';
   }

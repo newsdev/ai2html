@@ -1,3 +1,6 @@
+### v0.117.5
+- Workaround for Safari video bug.
+
 ### v0.117.0
 - Improved support for embedded graphics in NYT Birdkit.
 - More accessibility metadata for NYT graphics.
