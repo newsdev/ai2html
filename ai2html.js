@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.117.5';
+var scriptVersion = '0.117.6';
 
 // ================================================
 // ai2html and config settings
@@ -3454,7 +3454,7 @@ function makeVideoHtml(url, settings) {
     return '';
   }
   var srcName = isTrue(settings.use_lazy_loader) ? 'data-src' : 'src';
-  return '<video ' + srcName + '="' + url + '" autoplay muted loop playsinline style="top:0; width:100%; object-fit:fill; position:absolute"></video>';
+  return '<video ' + srcName + '="' + url + '" autoplay muted loop playsinline style="top:0; width:100%; object-fit:contain; position:absolute"></video>';
 }
 
 function getSpecialLayerText(lyr, ab) {
