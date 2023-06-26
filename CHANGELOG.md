@@ -1,3 +1,6 @@
+### v0.118.0
+- New setting: "create_json_config_files" (alternative to generating config.yml)
+
 ### v0.117.5
 - Workaround for Safari video bug.
 

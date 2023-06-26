@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.117.6';
+var scriptVersion = '0.118.0';
 
 // ================================================
 // ai2html and config settings
@@ -134,7 +134,6 @@ var defaultSettings = {
 // These settings override the default settings in NYT preview/birdkit projects
 var nytOverrideSettings = {
   "image_source_path": "_assets/", // path for <img src="">
-  "config_file_path": "../config.yml",
   "use_lazy_loader": true,
   "include_resizer_script": true,
   "min_width": 280, // added as workaround for a scoop bug affecting ai2html-type graphics
@@ -174,7 +173,7 @@ var nytBirdkitEmbedSettings = {
   "html_output_path": "../public/",
   "image_output_path": "../public/_assets/",
   "dark_mode_compatible": false,
-  "create_config_file": true,
+  "create_json_config_files": false,
   "create_promo_image": false,
   "credit": "By The New York Times",
   "aria_role": "figure",
@@ -227,6 +226,7 @@ var nytPreviewEmbedSettings = {
   "image_output_path": "../public/_assets/",
   "dark_mode_compatible": false,
   "create_config_file": true,
+  "config_file_path": "../config.yml",
   "create_promo_image": true,
   "credit": "By The New York Times",
   "aria_role": "figure",
@@ -670,10 +670,14 @@ function render(settings, customBlocks) {
     }
     artboardContent.css += generateArtboardCss(activeArtboard, abStyles, settings);
 
-    assignArtboardContentToFile(
-        settings.output == 'one-file' ? getDocumentName() : docArtboardName,
-        artboardContent,
-        fileContentArr);
+    var oname = settings.output == 'one-file' ? getDocumentName() : docArtboardName;
+    // kludge to identify legacy embed projects
+    if (settings.output == 'one-file' &&
+        settings.project_type == 'ai2html' &&
+        !settings.create_json_config_files) {
+      oname = 'index';
+    }
+    assignArtboardContentToFile(oname, artboardContent, fileContentArr);
 
   }); // end artboard loop
 
@@ -694,8 +698,14 @@ function render(settings, customBlocks) {
   // Post-output operations
   //=====================================
 
-  if (isTrue(settings.create_config_file)) {
-    // Write configuration file with graphic metadata
+  if (isTrue(settings.create_json_config_files)) {
+    // Create JSON config files, one for each .ai file
+    var jsonStr = generateJsonSettingsFileContent(settings);
+    var jsonPath = docPath + docName + '.json';
+    saveTextFile(jsonPath, jsonStr);
+  } else if (isTrue(settings.create_config_file)) {
+    // Create one top-level config.yml file
+    // (This is being replaced by multiple JSON config files for NYT projects)
     var yamlPath = docPath + (settings.config_file_path || 'config.yml'),
         yamlStr = generateYamlFileContent(settings);
     checkForOutputFolder(yamlPath.replace(/[^\/]+$/, ''), 'configFileFolder');
@@ -1495,15 +1505,14 @@ function detectUnTimesianSettings(o) {
 
 function applyTimesSettings(settings) {
   var yamlConfig = readYamlConfigFile(docPath + '../config.yml') || null;
+  var configSettings = readConfigFileSettings(); // TODO: remove double read
   extendSettings(settings, nytOverrideSettings);
 
   if (detectBirdkitEnv()) {
-    if (detectConfigYml()) {
-      // birdkit doesn't need to know the contents of yamlConfig;
-      // skipping this sanity check
-      // if (yamlConfig.project_type != 'ai2html') {
-      //   ("Your \u201Cconfig.yml\u201D file is incompatible with a birdkit ai2html project.");
-      // }
+    if (configSettings.project_type == 'ai2html') {
+      extendSettings(settings, nytBirdkitEmbedSettings);
+    } else if (detectConfigYml()) {
+      // deprecated
       extendSettings(settings, nytBirdkitEmbedSettings);
     } else {
       extendSettings(settings, nytBirdkitSettings);
@@ -4249,18 +4258,41 @@ function generatePageCss(containerId, settings) {
   return css;
 }
 
+function getCommonOutputSettings(settings) {
+  var range = getWidthRangeForConfig(settings);
+  return {
+    ai2html_version: scriptVersion,
+    project_type: 'ai2html',
+    min_width: range[0],
+    max_width: range[1],
+    tags: 'ai2html',
+    type: 'embeddedinteractive'
+  }
+}
+
+function generateJsonSettingsFileContent(settings) {
+  var o = getCommonOutputSettings(settings);
+  forEach(settings.config_file, function(key) {
+    var val = String(settings[key]);
+    if (isTrue(val)) val = true;
+    else if (isFalse(val)) val = false;
+    o[key] = val;
+  });
+  return JSON.stringify(o, null, 2);
+}
+
 // Create a settings file (optimized for the NYT Scoop CMS)
 function generateYamlFileContent(settings) {
-  var range = getWidthRangeForConfig(settings);
+  var o = getCommonOutputSettings(settings);
   var lines = [];
   lines.push('ai2html_version: ' + scriptVersion);
   if (settings.project_type) {
     lines.push('project_type: ' + settings.project_type);
   }
-  lines.push('type: embeddedinteractive');
-  lines.push('tags: ai2html');
-  lines.push('min_width: ' + range[0]);
-  lines.push('max_width: ' + range[1]);
+  lines.push('type: ' + o.type);
+  lines.push('tags: ' + o.tags);
+  lines.push('min_width: ' + o.min_width);
+  lines.push('max_width: ' + o.max_width);
   if (isTrue(settings.dark_mode_compatible)) {
     // kludge to output YAML array value for one setting
     lines.push('display_overrides:\n  - DARK_MODE_COMPATIBLE');
@@ -4526,9 +4558,10 @@ function generateOutputHtml(content, pageName, settings) {
   checkForOutputFolder(htmlFileDestinationFolder, 'html_output_path');
   htmlFileDestination = htmlFileDestinationFolder + pageName + settings.html_output_extension;
 
-  if (settings.output == 'one-file' && settings.project_type == 'ai2html') {
-    htmlFileDestination = htmlFileDestinationFolder + 'index' + settings.html_output_extension;
-  }
+  // 'index' is assigned upstream now (where applicable)
+  // if (settings.output == 'one-file' && settings.project_type == 'ai2html') {
+  //   htmlFileDestination = htmlFileDestinationFolder + 'index' + settings.html_output_extension;
+  // }
 
   // write file
   saveTextFile(htmlFileDestination, textForFile);
