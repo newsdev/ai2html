@@ -1,3 +1,6 @@
+### v0.118.1
+- New way to detect NYT Birdkit embed projects
+
 ### v0.118.0
 - New setting: "create_json_config_files" (alternative to generating config.yml)
 

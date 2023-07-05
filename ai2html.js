@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.118.0';
+var scriptVersion = '0.118.1';
 
 // ================================================
 // ai2html and config settings
@@ -173,7 +173,7 @@ var nytBirdkitEmbedSettings = {
   "html_output_path": "../public/",
   "image_output_path": "../public/_assets/",
   "dark_mode_compatible": false,
-  "create_json_config_files": false,
+  "create_json_config_files": true,
   "create_promo_image": false,
   "credit": "By The New York Times",
   "aria_role": "figure",
@@ -674,7 +674,7 @@ function render(settings, customBlocks) {
     // kludge to identify legacy embed projects
     if (settings.output == 'one-file' &&
         settings.project_type == 'ai2html' &&
-        !settings.create_json_config_files) {
+        !isTrue(settings.create_json_config_files)) {
       oname = 'index';
     }
     assignArtboardContentToFile(oname, artboardContent, fileContentArr);
@@ -1488,7 +1488,28 @@ function detectTimesEnv(blockSettings) {
 }
 
 function detectBirdkitEnv() {
-  return fileExists(docPath + '../birdkit.config.js');
+  var configPath = docPath + '../birdkit.config.js';
+  return fileExists(configPath);
+}
+
+// Is this a docless birdkit project? (assumes birdkit detected)
+function detectBirdkitEmbed() {
+  // (deprecated) read from local ai2html-config.json file
+  var configSettings = readConfigFileSettings();
+  if (configSettings.project_type == 'ai2html') {
+    return true;
+  }
+  // (deprecated) presence of 'config.yml' file indicates an embed
+  if (detectConfigYml()) {
+    return true;
+  }
+  // new method: look for "projectType" property in package.json
+  var packagePath = pathJoin(docPath, '..', 'package.json');
+  var pkg = fileExists(packagePath) ? JSON.parse(readTextFile(packagePath)) : {};
+  if (pkg.projectType == 'ai2html') {
+    return true;
+  }
+   return false;
 }
 
 function detectAiFolder() {
@@ -1505,14 +1526,10 @@ function detectUnTimesianSettings(o) {
 
 function applyTimesSettings(settings) {
   var yamlConfig = readYamlConfigFile(docPath + '../config.yml') || null;
-  var configSettings = readConfigFileSettings(); // TODO: remove double read
   extendSettings(settings, nytOverrideSettings);
 
   if (detectBirdkitEnv()) {
-    if (configSettings.project_type == 'ai2html') {
-      extendSettings(settings, nytBirdkitEmbedSettings);
-    } else if (detectConfigYml()) {
-      // deprecated
+    if (detectBirdkitEmbed()) {
       extendSettings(settings, nytBirdkitEmbedSettings);
     } else {
       extendSettings(settings, nytBirdkitSettings);
