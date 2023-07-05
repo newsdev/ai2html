@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.118.1';
+var scriptVersion = '0.118.2';
 
 // ================================================
 // ai2html and config settings
@@ -1506,7 +1506,7 @@ function detectBirdkitEmbed() {
   // new method: look for "projectType" property in package.json
   var packagePath = pathJoin(docPath, '..', 'package.json');
   var pkg = fileExists(packagePath) ? JSON.parse(readTextFile(packagePath)) : {};
-  if (pkg.projectType == 'ai2html') {
+  if (pkg.projectTemplate == '@newsdev/template-ai2html') {
     return true;
   }
    return false;
