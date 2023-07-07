@@ -76,6 +76,9 @@ There are several ways of customizing the output of the script:
 
 The script will look for files named `ai2html-config.json` in two locations: the Illustrator scripts folder where the `ai2html.js` file is located and the folder containing your `.ai` file. Any settings contained in these files will override the default program settings, and will be overridden by any settings contained in the `.ai` file (see "Special text blocks" below). Configuration data should match the format of the `defaultSettings` object near the top of the `ai2html.js` file.
 
+**New** If the config file includes `"create_text_block": false`, then ai2html will not create the settings text block described below.
+
+
 #### Special text blocks
 
 The script recognizes five special types of text blocks. The first line of the text block should begin with `ai2html-` followed by one of the following keywords: `settings`, `css`, `js`, `html` or `text`. This should be the only thing on the first line of the text block. The special text blocks can be placed anywhere in your Illustrator document, but note that if you place them on an artboard, their contents will be rendered in your output.
@@ -87,9 +90,9 @@ When you run ai2html for the first time in your ai file, the script will place a
 *Options that are included in the settings text block by default:*
 
 - **image_format**
-  - <span style="font-variant: small-caps">Possible values</span>: `png` `png24` `jpg` `svg`
-  - <span style="font-variant: small-caps">Default</span>: `png`
-  - You can specify more than one image format to be output by listing the desired formats separated by commas. This can be useful if you want to see which image format has the smallest file size. The first format in the list will be the only one referenced in the html. See [example](examples.html#svg-artboards) for SVG output.
+  - <span style="font-variant: small-caps">Possible values</span>: `png` `png24` `jpg` `svg` `auto`
+  - <span style="font-variant: small-caps">Default</span>: `auto`
+  - You can specify more than one image format to be output by listing the desired formats separated by commas. This can be useful if you want to see which image format has the smallest file size. The first format in the list will be the only one referenced in the html. See [example](examples.html#svg-artboards) for SVG output. The `auto` option uses `png` by default, or `jpg` if the graphic includes a raster image, which is likely to be continuous-tone.
 - **responsiveness**
   - <span style="font-variant: small-caps">Possible values</span>: `fixed` `dynamic`
   - <span style="font-variant: small-caps">Default</span>: `fixed`
@@ -127,8 +130,11 @@ When you run ai2html for the first time in your ai file, the script will place a
   - <span style="font-variant: small-caps">Possible values</span>: Text with no line breaks
   - These fields are used to populate fields in the `local_preview_template` and can be written to a “config” text file along with the html. The config file is written in yml can be used to pass parameters to a cms.
 
-*Other options that can be added to the settings text block:*
-
+*Other options that can be added to the settings text block (or an ai2html-config.json file):*
+- **text_responsiveness**
+  - <span style="font-variant: small-caps">Possible values</span>: `fixed` `dynamic`
+  - <span style="font-variant: small-caps">Default</span>: `responsive`
+  - This setting controls whether blocks of HTML text converted from Illustrator "area text" objects have a fixed width or expand and contract in proportion to the width of the graphic.
 - **max_width**
   - <span style="font-variant: small-caps">Possible values</span>: Any positive integer
   - <span style="font-variant: small-caps">Default</span>: `<blank>`
