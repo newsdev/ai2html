@@ -622,7 +622,7 @@ function render(settings, customBlocks) {
     } else {
       progressBar.setTitle(docArtboardName + ': Generating text...');
       textFrames = getTextFramesByArtboard(activeArtboard, masks, settings);
-      textData = convertTextFrames(textFrames, activeArtboard);
+      textData = convertTextFrames(textFrames, activeArtboard, settings);
     }
 
     progressBar.step();
@@ -2508,7 +2508,7 @@ function generateTextFrameHtml(paragraphs, baseStyle, pStyles, cStyles) {
 }
 
 // Convert a collection of TextFrames to HTML and CSS
-function convertTextFrames(textFrames, ab) {
+function convertTextFrames(textFrames, ab, settings) {
   var frameData = map(textFrames, function(frame) {
     return {
       paragraphs: importTextFrameParagraphs(frame)
@@ -2522,7 +2522,7 @@ function convertTextFrames(textFrames, ab) {
   var divs = map(frameData, function(obj, i) {
     var frame = textFrames[i];
     var divId = frame.name ? makeKeyword(frame.name) : idPrefix  + (i + 1);
-    var positionCss = getTextFrameCss(frame, abBox, obj.paragraphs);
+    var positionCss = getTextFrameCss(frame, abBox, obj.paragraphs, settings);
     return '\t\t<div id="' + divId + '" ' + positionCss + '>' +
         generateTextFrameHtml(obj.paragraphs, baseStyle, pgStyles, charStyles) + '\r\t\t</div>\r';
   });
@@ -2939,7 +2939,7 @@ function getTransformationCss(textFrame, vertAnchorPct) {
 
 // Create class='' and style='' CSS for positioning the label container div
 // (This container wraps one or more <p> tags)
-function getTextFrameCss(thisFrame, abBox, pgData) {
+function getTextFrameCss(thisFrame, abBox, pgData, settings) {
   var styles = '';
   var classes = '';
   // Using AI style of first paragraph in TextFrame to get information about
@@ -3032,6 +3032,8 @@ function getTextFrameCss(thisFrame, abBox, pgData) {
     classes += ' ' + nameSpace + 'aiPointText';
     // using pixel width with point text, because pct width causes alignment problems -- see issue #63
     // adding extra pixels in case HTML width is slightly less than AI width (affects alignment of right-aligned text)
+    styles += 'width:' + roundTo(htmlW, cssPrecision) + 'px;';
+  } else if (settings.text_responsiveness == 'fixed') {
     styles += 'width:' + roundTo(htmlW, cssPrecision) + 'px;';
   } else {
     // area text uses pct width, so width of text boxes will scale
