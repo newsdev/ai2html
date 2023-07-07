@@ -70,6 +70,7 @@ var defaultSettings = {
   "image_alt_text": "", // Generally, use alt_text instead
   "cache_bust_token": null,  // Append a token to the url of image urls: ?v=<cache_bust_token>
   "create_config_file": false,
+  "create_settings_block": true, // Create a text block in the AI doc with common settings
   "config_file_path": "",
   "local_preview_template": "",
   "png_transparent": false,
@@ -528,7 +529,9 @@ try {
   nameSpace = docSettings.namespace || nameSpace;
   extendFontList(fonts, docSettings.fonts || []);
 
-  if (!textBlockData.settings) {
+  message(docSettings)
+  message(isFalse(docSettings.create_settings_block))
+  if (!textBlockData.settings && isTrue(docSettings.create_settings_block)) {
     createSettingsBlock(docSettings);
   }
 
