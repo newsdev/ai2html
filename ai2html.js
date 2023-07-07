@@ -1503,7 +1503,7 @@ function detectBirdkitEmbed() {
   if (detectConfigYml()) {
     return true;
   }
-  // new method: look for "projectType" property in package.json
+  // new method: look for "packageType" property in package.json
   var packagePath = pathJoin(docPath, '..', 'package.json');
   var pkg = fileExists(packagePath) ? JSON.parse(readTextFile(packagePath)) : {};
   if (pkg.projectTemplate == '@newsdev/template-ai2html') {
@@ -3612,7 +3612,7 @@ function exportImage(imgName, format, ab, masks, layer, settings) {
   var imgClass = imgId.replace(/-[1-9][0-9]+-/, '-');
   // all images are now absolutely positioned (before, artboard images were
   // position:static to set the artboard height)
-  var inlineSvg = isTrue(settings.inline_svg) || layer && parseObjectName(layer.name).inline;
+  var inlineSvg = isTrue(settings.inline_svg) || (layer && parseObjectName(layer.name).inline);
   var svgInlineStyle, svgLayersArg;
   var created, html;
 
