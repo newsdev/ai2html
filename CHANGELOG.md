@@ -1,3 +1,9 @@
+### v0.119.0
+- Bug fixes
+- Added "create_text_block" option, which prevents creation of a settings text block when set to false in an `ai2html-config.json` settings file.
+- Added "text_responsiveness" setting, to control whether blocks of text expand and contract when the graphic is resized.
+
+
 ### v0.118.1
 - New way to detect NYT Birdkit embed projects
 
