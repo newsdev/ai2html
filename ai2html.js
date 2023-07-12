@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.119.0';
+var scriptVersion = '0.119.1';
 
 // ================================================
 // ai2html and config settings
@@ -529,8 +529,6 @@ try {
   nameSpace = docSettings.namespace || nameSpace;
   extendFontList(fonts, docSettings.fonts || []);
 
-  message(docSettings)
-  message(isFalse(docSettings.create_settings_block))
   if (!textBlockData.settings && isTrue(docSettings.create_settings_block)) {
     createSettingsBlock(docSettings);
   }
