@@ -5,6 +5,16 @@ var assert = require('assert');
 
 describe('Utility function tests', function() {
 
+  it('compareVersions()', function() {
+    assert.equal(lib.compareVersions('0.5.4', '1.4.0'), -1);
+    assert.equal(lib.compareVersions('1.4.0', '1.4.0'), 0);
+    assert.equal(lib.compareVersions('1.4.0', '1.5.0'), -1);
+    assert.equal(lib.compareVersions('1.5.0', '1.4.0'), 1);
+    assert.equal(lib.compareVersions('1.4.0', '1.4.1'), -1);
+    assert.equal(lib.compareVersions('1.4.1', '1.4.0'), 1);
+    assert.equal(lib.compareVersions('1.4.100', '1.4.2'), 1);
+  })
+
   describe('testBoundsIntersection()', function() {
     it('true if bounds overlap', function() {
       assert.equal(lib.testBoundsIntersection([-16,-162,234,-408], [150,-347,400,-593]), true);

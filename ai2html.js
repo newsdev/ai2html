@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.119.1';
+var scriptVersion = '0.119.2';
 
 // ================================================
 // ai2html and config settings
@@ -1314,7 +1314,8 @@ function exportFunctionsForTesting() {
     cleanObjectName,
     // initDocumentSettings,
     uniqAssetName,
-    replaceSvgIds
+    replaceSvgIds,
+    compareVersions
   ].forEach(function(f) {
     module.exports[f.name] = f;
   });
@@ -1493,6 +1494,30 @@ function detectBirdkitEnv() {
   return fileExists(configPath);
 }
 
+function applyBirdkitSettings(settings) {
+  var packagePath = pathJoin(docPath, '..', 'package.json');
+  var pkg = fileExists(packagePath) ? JSON.parse(readTextFile(packagePath)) : {};
+
+  // Is this a docless birdkit project? (assumes birdkit detected)
+  var isEmbed = pkg.projectTemplate == '@newsdev/template-ai2html' ||
+    // (deprecated) read from local ai2html-config.json file
+    readConfigFileSettings().project_type == 'ai2html' ||
+    // (deprecated) presence of 'config.yml' file indicates an embed
+    detectConfigYml();
+
+  if (isEmbed) {
+    extendSettings(settings, nytBirdkitEmbedSettings);
+    // early versions of birdkit still used config.yml for embed settings
+    if (compareVersions(pkg.version, '1.4.0') < 0) {
+      settings.create_json_config_files = false;
+      settings.create_config_file = true;
+      settings.config_file_path = "../config.yml";
+    }
+  } else {
+    extendSettings(settings, nytBirdkitSettings);
+  }
+}
+
 // Is this a docless birdkit project? (assumes birdkit detected)
 function detectBirdkitEmbed() {
   // (deprecated) read from local ai2html-config.json file
@@ -1513,6 +1538,14 @@ function detectBirdkitEmbed() {
    return false;
 }
 
+// assumes three-part version, e.g. 1.5.0
+function compareVersions(a, b) {
+  a = map(a.split('.'), parseFloat);
+  b = map(b.split('.'), parseFloat);
+  var diff = a[0] - b[0] || a[1] - b[1] || a[2] - b[2] || 0;
+  return (diff < 0 && -1) || (diff > 0 && 1) || 0;
+}
+
 function detectAiFolder() {
   return /\/ai\/?$/.test(docPath);
 }
@@ -1530,11 +1563,7 @@ function applyTimesSettings(settings) {
   extendSettings(settings, nytOverrideSettings);
 
   if (detectBirdkitEnv()) {
-    if (detectBirdkitEmbed()) {
-      extendSettings(settings, nytBirdkitEmbedSettings);
-    } else {
-      extendSettings(settings, nytBirdkitSettings);
-    }
+    applyBirdkitSettings(settings);
 
   } else if (detectConfigYml()) {
     // assume this is a legacy preview project
