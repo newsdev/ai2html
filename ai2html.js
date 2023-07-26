@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.119.2';
+var scriptVersion = '0.119.3';
 
 // ================================================
 // ai2html and config settings
@@ -1134,6 +1134,17 @@ function readTextFile(path) {
   return readFile(path) || '';
 }
 
+function readJSONFile(path) {
+  var content = readTextFile(path);
+  var json = null;
+  try {
+    json = JSON.parse(content);
+  } catch(e) {
+    error('Unable to read ' + path + ': [' + e.message + ']');
+  }
+  return json;
+}
+
 function saveTextFile(dest, contents) {
   var fd = new File(dest);
   fd.open('w', 'TEXT', 'TEXT');
@@ -1496,7 +1507,7 @@ function detectBirdkitEnv() {
 
 function applyBirdkitSettings(settings) {
   var packagePath = pathJoin(docPath, '..', 'package.json');
-  var pkg = fileExists(packagePath) ? JSON.parse(readTextFile(packagePath)) : {};
+  var pkg = fileExists(packagePath) ? readJSONFile(packagePath) : {};
 
   // Is this a docless birdkit project? (assumes birdkit detected)
   var isEmbed = pkg.projectTemplate == '@newsdev/template-ai2html' ||
@@ -1531,7 +1542,7 @@ function detectBirdkitEmbed() {
   }
   // new method: look for "packageType" property in package.json
   var packagePath = pathJoin(docPath, '..', 'package.json');
-  var pkg = fileExists(packagePath) ? JSON.parse(readTextFile(packagePath)) : {};
+  var pkg = fileExists(packagePath) ? readJSONFile(packagePath) : {};
   if (pkg.projectTemplate == '@newsdev/template-ai2html') {
     return true;
   }
@@ -1629,7 +1640,7 @@ function readSettingsFile(path) {
     str = stripSettingsFileComments(readTextFile(path));
     o = JSON.parse(str);
   } catch(e) {
-    warn('[' + e.message + '] Error reading settings file ' + path);
+    warn('Error reading settings file ' + path + ': [' + e.message + ']');
   }
   return o;
 }
