@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.119.3';
+var scriptVersion = '0.119.4';
 
 // ================================================
 // ai2html and config settings
@@ -1115,10 +1115,13 @@ function readGitConfigFile(path) {
   return o;
 }
 
-function readFile(path) {
+function readFile(path, enc) {
   var content = null;
   var file = new File(path);
   if (file.exists) {
+    if (enc) {
+      file.encoding = enc;
+    }
     file.open('r');
     content = file.read();
     file.close();
@@ -1131,7 +1134,7 @@ function readFile(path) {
 function readTextFile(path) {
   // This function used to use File#eof and File#readln(), but
   // that failed to read the last line when missing a final newline.
-  return readFile(path) || '';
+  return readFile(path, 'UTF8') || '';
 }
 
 function readJSONFile(path) {
