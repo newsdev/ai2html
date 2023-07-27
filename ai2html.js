@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.119.5';
+var scriptVersion = '0.119.6';
 
 // ================================================
 // ai2html and config settings
@@ -1532,7 +1532,9 @@ function applyBirdkitSettings(settings, projectType) {
     // (deprecated) read from local ai2html-config.json file
     readConfigFileSettings().project_type == 'ai2html' ||
     // (deprecated) presence of 'config.yml' file indicates an embed
-    detectConfigYml();
+    detectConfigYml() ||
+    // another test, to work around permissions issue preventing file reading
+    !folderExists(docPath + '../src/');
 
   if (isEmbed) {
     extendSettings(settings, nytBirdkitEmbedSettings);
