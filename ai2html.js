@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.119.4';
+var scriptVersion = '0.119.5';
 
 // ================================================
 // ai2html and config settings
@@ -164,7 +164,7 @@ var nytPreviewSettings = {
 };
 
 var nytBirdkitSettings = {
-  "project_type": "nyt-birdkit",
+  "project_type": "freebird",
   "html_output_path": "../src/lib/graphics/",
   "image_output_path": "../public/_assets/"
 };
@@ -1115,35 +1115,49 @@ function readGitConfigFile(path) {
   return o;
 }
 
-function readFile(path, enc) {
+function readFile(fpath, enc) {
   var content = null;
-  var file = new File(path);
+  var file = new File(fpath);
   if (file.exists) {
     if (enc) {
       file.encoding = enc;
     }
     file.open('r');
+    if (file.error) {
+      // (on macos) restricted permissions will cause an error here
+      warn('Unable to open ' + file.fsName + ': [' + file.error + ']');
+      return null;
+    }
     content = file.read();
     file.close();
+    // (on macos) 'file.length' triggers a file operation that returns -1 if unable to access file
+    if (!content && (file.length > 0 || file.length == -1)) {
+      warn('Unable to read from ' + file.fsName + ' (reported size: ' + file.length + ' bytes)');
+    }
   } else {
-    warn(path + ' could not be found.');
+    warn(fpath + ' could not be found.');
   }
   return content;
 }
 
-function readTextFile(path) {
+function readTextFile(fpath) {
   // This function used to use File#eof and File#readln(), but
   // that failed to read the last line when missing a final newline.
-  return readFile(path, 'UTF8') || '';
+  return readFile(fpath, 'UTF-8') || '';
 }
 
-function readJSONFile(path) {
-  var content = readTextFile(path);
+function readJSONFile(fpath) {
+  var content = readTextFile(fpath);
   var json = null;
+  if (!content) {
+    // removing for now to avoid double warnings
+    // warn('Unable to read contents of file: ' + fpath);
+    return {};
+  }
   try {
     json = JSON.parse(content);
   } catch(e) {
-    error('Unable to read ' + path + ': [' + e.message + ']');
+    error('Error parsing JSON from ' + fpath + ': [' + e.message + ']');
   }
   return json;
 }
@@ -1438,7 +1452,7 @@ function initDocumentSettings(textBlockSettings) {
 
   if (detectTimesEnv(textBlockSettings)) {
     // NYT settings are only applied in an NYTimes CMS context
-    applyTimesSettings(settings);
+    applyTimesSettings(settings, textBlockSettings);
   }
 
   // merge config file settings into @settings
@@ -1508,12 +1522,13 @@ function detectBirdkitEnv() {
   return fileExists(configPath);
 }
 
-function applyBirdkitSettings(settings) {
+function applyBirdkitSettings(settings, projectType) {
   var packagePath = pathJoin(docPath, '..', 'package.json');
   var pkg = fileExists(packagePath) ? readJSONFile(packagePath) : {};
 
   // Is this a docless birdkit project? (assumes birdkit detected)
-  var isEmbed = pkg.projectTemplate == '@newsdev/template-ai2html' ||
+  var isEmbed = projectType == 'ai2html' || // manual setting from text block
+    pkg.projectTemplate == '@newsdev/template-ai2html' ||
     // (deprecated) read from local ai2html-config.json file
     readConfigFileSettings().project_type == 'ai2html' ||
     // (deprecated) presence of 'config.yml' file indicates an embed
@@ -1522,7 +1537,7 @@ function applyBirdkitSettings(settings) {
   if (isEmbed) {
     extendSettings(settings, nytBirdkitEmbedSettings);
     // early versions of birdkit still used config.yml for embed settings
-    if (compareVersions(pkg.version, '1.4.0') < 0) {
+    if (pkg.version && compareVersions(pkg.version, '1.4.0') < 0) {
       settings.create_json_config_files = false;
       settings.create_config_file = true;
       settings.config_file_path = "../config.yml";
@@ -1530,26 +1545,6 @@ function applyBirdkitSettings(settings) {
   } else {
     extendSettings(settings, nytBirdkitSettings);
   }
-}
-
-// Is this a docless birdkit project? (assumes birdkit detected)
-function detectBirdkitEmbed() {
-  // (deprecated) read from local ai2html-config.json file
-  var configSettings = readConfigFileSettings();
-  if (configSettings.project_type == 'ai2html') {
-    return true;
-  }
-  // (deprecated) presence of 'config.yml' file indicates an embed
-  if (detectConfigYml()) {
-    return true;
-  }
-  // new method: look for "packageType" property in package.json
-  var packagePath = pathJoin(docPath, '..', 'package.json');
-  var pkg = fileExists(packagePath) ? readJSONFile(packagePath) : {};
-  if (pkg.projectTemplate == '@newsdev/template-ai2html') {
-    return true;
-  }
-   return false;
 }
 
 // assumes three-part version, e.g. 1.5.0
@@ -1572,19 +1567,21 @@ function detectUnTimesianSettings(o) {
   return o.html_output_path == defaultSettings.html_output_path;
 }
 
-function applyTimesSettings(settings) {
+function applyTimesSettings(settings, blockSettings) {
   var yamlConfig = readYamlConfigFile(docPath + '../config.yml') || null;
+  // project type can be set manually in the text block settings
+  var projectType = blockSettings && blockSettings.project_type || null;
   extendSettings(settings, nytOverrideSettings);
 
   if (detectBirdkitEnv()) {
-    applyBirdkitSettings(settings);
+    applyBirdkitSettings(settings, projectType);
 
   } else if (detectConfigYml()) {
     // assume this is a legacy preview project
     if (!yamlConfig) {
-      error('ai2html is unable to read the contents of config.yml');
+      warn('ai2html is unable to read the contents of config.yml');
     }
-    if (yamlConfig && yamlConfig.project_type == 'ai2html') {
+    if (projectType == 'ai2html' || (yamlConfig && yamlConfig.project_type == 'ai2html')) {
       extendSettings(settings, nytPreviewEmbedSettings);
     } else {
       extendSettings(settings, nytPreviewSettings);
