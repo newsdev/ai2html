@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.119.6';
+var scriptVersion = '0.119.7';
 
 // ================================================
 // ai2html and config settings
@@ -3938,11 +3938,13 @@ function exportRasterImage(imgPath, ab, format, settings) {
 
 function makeTmpDocument(doc, ab) {
   // create temp document (pretty slow -- ~1.5s)
-  var doc2 = app.documents.add(DocumentColorSpace.RGB, doc.width, doc.height, 1);
   var artboardBounds = ab.artboardRect;
+  var doc2 = app.documents.add(DocumentColorSpace.RGB, doc.width, doc.height, 1);
   doc2.pageOrigin = doc.pageOrigin; // not sure if needed
   doc2.rulerOrigin = doc.rulerOrigin;
-  doc2.artboards[0].artboardRect = ab.artboardRect;
+  // The following caused MRAP
+  // doc2.artboards[0].artboardRect = ab.artboardRect;
+  doc2.artboards[0].artboardRect = artboardBounds;
   return doc2;
 }
 
