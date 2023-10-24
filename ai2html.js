@@ -429,6 +429,7 @@ var cssTextStyleProperties = [
   'font-size',
   'font-weight',
   'font-style',
+  'font-stretch',
   'color',
   'line-height',
   'height', // used for point-type paragraph styles
@@ -2758,6 +2759,9 @@ function convertAiTextStyle(aiStyle) {
     }
     if (fontInfo.style) {
       cssStyle['font-style'] = fontInfo.style;
+    }
+    if (fontInfo.stretch) {
+      cssStyle['font-stretch'] = fontInfo.stretch;
     }
   }
   if ('leading' in aiStyle) {
