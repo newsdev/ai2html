@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.119.7';
+var scriptVersion = '0.120.0';
 
 // ================================================
 // ai2html and config settings
@@ -462,7 +462,7 @@ var objectsToRelock = [];
 
 var docSettings;
 var textBlockData;
-var doc, docPath, docName, docIsSaved;
+var doc, docPath, docSlug, docIsSaved;
 var progressBar;
 var JSON;
 
@@ -525,7 +525,7 @@ try {
   docIsSaved = doc.saved;
   textBlockData = initSpecialTextBlocks();
   docSettings = initDocumentSettings(textBlockData.settings);
-  docName = getDocumentName(docSettings.project_name);
+  docSlug = docSettings.project_name || makeDocumentSlug(getRawDocumentName());
   nameSpace = docSettings.namespace || nameSpace;
   extendFontList(fonts, docSettings.fonts || []);
 
@@ -671,7 +671,7 @@ function render(settings, customBlocks) {
     }
     artboardContent.css += generateArtboardCss(activeArtboard, abStyles, settings);
 
-    var oname = settings.output == 'one-file' ? getDocumentName() : docArtboardName;
+    var oname = settings.output == 'one-file' ? getRawDocumentName() : docArtboardName;
     // kludge to identify legacy embed projects
     if (settings.output == 'one-file' &&
         settings.project_type == 'ai2html' &&
@@ -702,7 +702,7 @@ function render(settings, customBlocks) {
   if (isTrue(settings.create_json_config_files)) {
     // Create JSON config files, one for each .ai file
     var jsonStr = generateJsonSettingsFileContent(settings);
-    var jsonPath = docPath + docName + '.json';
+    var jsonPath = docPath + getRawDocumentName() + '.json';
     saveTextFile(jsonPath, jsonStr);
   } else if (isTrue(settings.create_config_file)) {
     // Create one top-level config.yml file
@@ -1351,7 +1351,7 @@ function exportFunctionsForTesting() {
 
 function isTestedIllustratorVersion(version) {
   var majorNum = parseInt(version);
-  return majorNum >= 18 && majorNum <= 27; // Illustrator CC 2014 through 2023
+  return majorNum >= 18 && majorNum <= 28; // Illustrator CC 2014 through 2024
 }
 
 function validateArtboardNames(settings) {
@@ -1920,9 +1920,16 @@ function getLayerName(lyr) {
   return cleanObjectName(lyr.name);
 }
 
-function getDocumentName(customName) {
-  var name = customName || docName || doc.name.replace(/(.+)\.[aieps]+$/,"$1").replace(/ +/g,"-");
-  return makeKeyword(name);
+function getDocumentSlug() {
+  return docSlug;
+}
+
+function makeDocumentSlug(rawName) {
+  return makeKeyword(rawName.replace(/ +/g,"-"));
+}
+
+function getRawDocumentName() {
+  return doc.name.replace(/(.+)\.[aieps]+$/,"$1");
 }
 
 function getArtboardFullName(ab, settings) {
@@ -1934,7 +1941,7 @@ function getArtboardFullName(ab, settings) {
 }
 
 function getDocumentArtboardName(ab) {
-  return getDocumentName() + "-" + getArtboardName(ab);
+  return getDocumentSlug() + "-" + getArtboardName(ab);
 }
 
 // return coordinates of bounding box of all artboards
@@ -3856,7 +3863,7 @@ function createPromoImage(settings) {
   if (abIndex == -1) return; // TODO: show error
   var ab = doc.artboards[abIndex],
       format = getPromoImageFormat(ab, settings),
-      imgFile = getImageFileName(getDocumentName() + '-promo', format),
+      imgFile = getImageFileName(getDocumentSlug() + '-promo', format),
       outputPath = docPath + imgFile,
       opts = {
         image_width: settings.promo_image_width || 1024,
@@ -4559,7 +4566,7 @@ function addCustomContent(content, customBlocks) {
 function generateOutputHtml(content, pageName, settings) {
   var linkSrc = settings.clickable_link || '';
   var responsiveJs = '';
-  var containerId = nameSpace + pageName + '-box';
+  var containerId = nameSpace + makeDocumentSlug(pageName) + '-box';
   var textForFile, html, js, css, commentBlock;
   var htmlFileDestinationFolder, htmlFileDestination;
   var containerClasses = 'ai2html';

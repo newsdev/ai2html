@@ -1,3 +1,7 @@
+### v0.120.0
+- Use the literal .ai document name as the default HTML output file name (stop replacing spaces and other characters with underscores and hyphens).
+- Mark as tested in Illustrator 2024
+
 ### v0.119.0
 - Bug fixes
 - Added "create_text_block" option, which prevents creation of a settings text block when set to false in an `ai2html-config.json` settings file.
