@@ -177,7 +177,7 @@ var nytBirdkitEmbedSettings = {
   "create_json_config_files": true,
   "create_promo_image": false,
   "credit": "By The New York Times",
-  "aria_role": "figure",
+  "aria_role": "img",
   "alt_text": "",
   "page_template": "vi-article-embed",
   "display_for_promotion_only": false,
@@ -230,7 +230,7 @@ var nytPreviewEmbedSettings = {
   "config_file_path": "../config.yml",
   "create_promo_image": true,
   "credit": "By The New York Times",
-  "aria_role": "figure",
+  "aria_role": "img",
   "alt_text": "",
   "publish_system": "scoop",
   "page_template": "vi-article-embed",
@@ -4567,6 +4567,7 @@ function generateOutputHtml(content, pageName, settings) {
   var linkSrc = settings.clickable_link || '';
   var responsiveJs = '';
   var containerId = nameSpace + makeDocumentSlug(pageName) + '-box';
+  var altTextId = containerId + '-img-desc';
   var textForFile, html, js, css, commentBlock;
   var htmlFileDestinationFolder, htmlFileDestination;
   var containerClasses = 'ai2html';
@@ -4574,7 +4575,10 @@ function generateOutputHtml(content, pageName, settings) {
   // accessibility features
   var ariaAttrs = '';
   if (settings.aria_role) {
-    ariaAttrs = ' role="' + settings.aria_role + '"';
+    ariaAttrs += ' role="' + settings.aria_role + '"';
+  }
+  if (settings.alt_text) {
+    ariaAttrs += ' aria-describedby="' + altTextId + '"';
   }
 
   progressBar.setTitle('Writing HTML output...');
@@ -4599,7 +4603,7 @@ function generateOutputHtml(content, pageName, settings) {
   html = '<div id="' + containerId + '" class="' + containerClasses + '"' + ariaAttrs + '>\r';
 
   if (settings.alt_text) {
-    html += '<div class="' + nameSpace + 'aiAltText">' +
+    html += '<div class="' + nameSpace + 'aiAltText" id="' + altTextId + '">' +
       encodeHtmlEntities(settings.alt_text) + '</div>';
   }
   if (linkSrc) {
