@@ -177,7 +177,7 @@ var nytBirdkitEmbedSettings = {
   "create_json_config_files": true,
   "create_promo_image": false,
   "credit": "By The New York Times",
-  "aria_role": "figure",
+  "aria_role": "img",
   "alt_text": "",
   "page_template": "vi-article-embed",
   "display_for_promotion_only": false,
@@ -230,7 +230,7 @@ var nytPreviewEmbedSettings = {
   "config_file_path": "../config.yml",
   "create_promo_image": true,
   "credit": "By The New York Times",
-  "aria_role": "figure",
+  "aria_role": "img",
   "alt_text": "",
   "publish_system": "scoop",
   "page_template": "vi-article-embed",
@@ -4596,10 +4596,10 @@ function generateOutputHtml(content, pageName, settings) {
   }
 
   // HTML
-  html = '<div id="' + containerId + '" class="' + containerClasses + '"' + ariaAttrs + '>\r';
+  html = '<div id="' + containerId + '" class="' + containerClasses + '"' + ariaAttrs + ' aria-describedby="' + containerId + '-img-desc">\r';
 
   if (settings.alt_text) {
-    html += '<div class="' + nameSpace + 'aiAltText">' +
+    html += '<div class="' + nameSpace + 'aiAltText" id="' + containerId + '-img-desc">' +
       encodeHtmlEntities(settings.alt_text) + '</div>';
   }
   if (linkSrc) {
