@@ -4567,6 +4567,7 @@ function generateOutputHtml(content, pageName, settings) {
   var linkSrc = settings.clickable_link || '';
   var responsiveJs = '';
   var containerId = nameSpace + makeDocumentSlug(pageName) + '-box';
+  var altTextId = containerId + '-img-desc';
   var textForFile, html, js, css, commentBlock;
   var htmlFileDestinationFolder, htmlFileDestination;
   var containerClasses = 'ai2html';
@@ -4574,7 +4575,10 @@ function generateOutputHtml(content, pageName, settings) {
   // accessibility features
   var ariaAttrs = '';
   if (settings.aria_role) {
-    ariaAttrs = ' role="' + settings.aria_role + '"';
+    ariaAttrs += ' role="' + settings.aria_role + '"';
+  }
+  if (settings.alt_text) {
+    ariaAttrs += ' aria-describedby="' + altTextId + '"';
   }
 
   progressBar.setTitle('Writing HTML output...');
@@ -4596,10 +4600,10 @@ function generateOutputHtml(content, pageName, settings) {
   }
 
   // HTML
-  html = '<div id="' + containerId + '" class="' + containerClasses + '"' + ariaAttrs + ' aria-describedby="' + containerId + '-img-desc">\r';
+  html = '<div id="' + containerId + '" class="' + containerClasses + '"' + ariaAttrs + '>\r';
 
   if (settings.alt_text) {
-    html += '<div class="' + nameSpace + 'aiAltText" id="' + containerId + '-img-desc">' +
+    html += '<div class="' + nameSpace + 'aiAltText" id="' + altTextId + '">' +
       encodeHtmlEntities(settings.alt_text) + '</div>';
   }
   if (linkSrc) {
