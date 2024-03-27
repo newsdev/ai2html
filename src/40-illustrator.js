@@ -8,6 +8,8 @@ AI2HTML.ai = AI2HTML.ai || {};
 
 (function() {
 
+  var log = AI2HTML.logger;
+  
   // a, b: coordinate arrays, as from <PathItem>.geometricBounds
   function testBoundsIntersection(a, b) {
     return a[2] >= b[0] && b[2] >= a[0] && a[3] <= b[1] && b[3] <= a[1];
@@ -45,8 +47,8 @@ AI2HTML.ai = AI2HTML.ai || {};
     var parts = str.split(':');
     var k, v;
     if (parts.length > 1) {
-      k = trim(parts.shift());
-      v = trim(parts.join(':'));
+      k = _.trim(parts.shift());
+      v = _.trim(parts.join(':'));
       if (dqRxp.test(v)) {
         v = JSON.parse(v); // use JSON library to parse quoted strings
       }
@@ -59,7 +61,7 @@ AI2HTML.ai = AI2HTML.ai || {};
   function parseYaml(str) {
     // TODO: strip comments // var comment = /\s*/
     var o = {};
-    var lines = stringToLines(str);
+    var lines = _.stringToLines(str);
     for (var i = 0; i < lines.length; i++) {
       parseKeyValueString(lines[i], o);
     }
@@ -78,7 +80,7 @@ AI2HTML.ai = AI2HTML.ai || {};
       while(!file.eof) {
         parts = file.readln().split('=');
         if (parts.length > 1) {
-          o[trim(parts[0])] = trim(parts[1]);
+          o[_.trim(parts[0])] = _.trim(parts[1]);
         }
       }
       file.close();
@@ -326,12 +328,12 @@ AI2HTML.ai = AI2HTML.ai || {};
   }
   
   function cleanHtmlTags(str) {
-    var tagName = findHtmlTag(str);
+    var tagName = _.findHtmlTag(str);
     // only warn for certain tags
-    if (tagName && contains('i,span,b,strong,em'.split(','), tagName.toLowerCase())) {
-      warnOnce('Found a <' + tagName + '> tag. Try using Illustrator formatting instead.');
+    if (tagName && _.contains('i,span,b,strong,em'.split(','), tagName.toLowerCase())) {
+      log.warnOnce('Found a <' + tagName + '> tag. Try using Illustrator formatting instead.');
     }
-    return tagName ? straightenCurlyQuotesInsideAngleBrackets(str) : str;
+    return tagName ? _.straightenCurlyQuotesInsideAngleBrackets(str) : str;
   }
   
   function generateParagraphHtml(pData, baseStyle, pStyles, cStyles) {
@@ -350,7 +352,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     }
     for (var j=0; j<pData.ranges.length; j++) {
       range = pData.ranges[j];
-      rangeHtml = cleanHtmlText(cleanHtmlTags(range.text));
+      rangeHtml = _.cleanHtmlText(cleanHtmlTags(range.text));
       diff = objectDiff(range.cssStyle, pData.cssStyle);
       if (diff) {
         rangeHtml = '<span class="' +
@@ -372,7 +374,7 @@ AI2HTML.ai = AI2HTML.ai || {};
 
 // Convert a collection of TextFrames to HTML and CSS
   function convertTextFrames(textFrames, ab, settings) {
-    var frameData = map(textFrames, function(frame) {
+    var frameData = _.map(textFrames, function(frame) {
       return {
         paragraphs: importTextFrameParagraphs(frame)
       };
@@ -382,16 +384,16 @@ AI2HTML.ai = AI2HTML.ai || {};
     var baseStyle = deriveTextStyleCss(frameData);
     var idPrefix = nameSpace + 'ai' + getArtboardId(ab) + '-';
     var abBox = convertAiBounds(ab.artboardRect);
-    var divs = map(frameData, function(obj, i) {
+    var divs = _.map(frameData, function(obj, i) {
       var frame = textFrames[i];
-      var divId = frame.name ? makeKeyword(frame.name) : idPrefix  + (i + 1);
+      var divId = frame.name ? _.makeKeyword(frame.name) : idPrefix  + (i + 1);
       var positionCss = getTextFrameCss(frame, abBox, obj.paragraphs, settings);
       return '\t\t<div id="' + divId + '" ' + positionCss + '>' +
         generateTextFrameHtml(obj.paragraphs, baseStyle, pgStyles, charStyles) + '\r\t\t</div>\r';
     });
     
     var allStyles = pgStyles.concat(charStyles);
-    var cssBlocks = map(allStyles, function(obj) {
+    var cssBlocks = _.map(allStyles, function(obj) {
       return '.' + obj.classname + ' {' + formatCss(obj.style, '\t\t') + '\t}\r';
     });
     if (divs.length > 0) {
@@ -427,8 +429,8 @@ AI2HTML.ai = AI2HTML.ai || {};
     };
     var currCharStyles;
     
-    forEach(frameData, function(frame) {
-      forEach(frame.paragraphs, analyzeParagraphStyle);
+    _.forEach(frameData, function(frame) {
+      _.forEach(frame.paragraphs, analyzeParagraphStyle);
     });
     
     // initialize the base <p> style to be equal to the most common pg style
@@ -445,7 +447,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     }
     function analyzeParagraphStyle(pdata) {
       currCharStyles = [];
-      forEach(pdata.ranges, convertRangeStyle);
+      _.forEach(pdata.ranges, convertRangeStyle);
       if (currCharStyles.length > 0) {
         // add most common char style to the pg style, to avoid applying
         // <span> tags to all the text in the paragraph
@@ -454,18 +456,18 @@ AI2HTML.ai = AI2HTML.ai || {};
       }
       pdata.cssStyle = analyzeTextStyle(pdata.aiStyle, pdata.text, pgStyles);
       if (pdata.aiStyle.blendMode && !pdata.cssStyle['mix-blend-mode']) {
-        warnOnce('Missing a rule for converting ' + pdata.aiStyle.blendMode + ' to CSS.');
+        log.warnOnce('Missing a rule for converting ' + pdata.aiStyle.blendMode + ' to CSS.');
       }
     }
     
     function convertRangeStyle(range) {
       range.cssStyle = analyzeTextStyle(range.aiStyle, range.text, currCharStyles);
       if (range.warning) {
-        warn(range.warning.replace('%s', truncateString(range.text, 35)));
+        warn(range.warning.replace('%s', _.truncateString(range.text, 35)));
       }
       if (range.aiStyle.aifont && !range.cssStyle['font-family']) {
-        warnOnce('Missing a rule for converting font: ' + range.aiStyle.aifont +
-          '. Sample text: ' + truncateString(range.text, 35), range.aiStyle.aifont);
+        log.warnOnce('Missing a rule for converting font: ' + range.aiStyle.aifont +
+          '. Sample text: ' + _.truncateString(range.text, 35), range.aiStyle.aifont);
       }
     }
     
@@ -685,7 +687,7 @@ AI2HTML.ai = AI2HTML.ai || {};
   function getClippedTextFramesByArtboard(ab, masks) {
     var abRect = ab.artboardRect;
     var frames = [];
-    forEach(masks, function(o) {
+    _.forEach(masks, function(o) {
       var clipRect = o.mask.geometricBounds;
       if (testSimilarBounds(abRect, clipRect, 5)) {
         // if clip path is masking the current artboard, skip the test
@@ -695,7 +697,7 @@ AI2HTML.ai = AI2HTML.ai || {};
         return; // ignore masks in other artboards
       }
       var texts = o.textframes;
-      // var texts = filter(o.items, function(item) {return item.typename == 'TextFrame';});
+      // var texts = _.filter(o.items, function(item) {return item.typename == 'TextFrame';});
       texts = selectMaskedItems(texts, clipRect, abRect);
       if (texts.length > 0) {
         frames = frames.concat(texts);
@@ -711,7 +713,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     var excludedFrames = getClippedTextFramesByArtboard(ab, masks);
     candidateFrames = arraySubtract(candidateFrames, excludedFrames);
     if (settings.render_rotated_skewed_text_as == 'image') {
-      excludedFrames = filter(candidateFrames, textIsRotated);
+      excludedFrames = _.filter(candidateFrames, textIsRotated);
       candidateFrames = arraySubtract(candidateFrames, excludedFrames);
     }
     return candidateFrames;
@@ -792,7 +794,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     var scaleX = charStyle.horizontalScale;
     var scaleY = charStyle.verticalScale;
     if (scaleX != 100 || scaleY != 100) {
-      warn('Vertical or horizontal text scaling will be lost. Affected text: ' + truncateString(textFrame.contents, 35));
+      warn('Vertical or horizontal text scaling will be lost. Affected text: ' + _.truncateString(textFrame.contents, 35));
     }
     
     return 'transform: ' + transform +  'transform-origin: ' + transformOrigin +
@@ -1009,7 +1011,7 @@ AI2HTML.ai = AI2HTML.ai || {};
   function exportSymbolAsHtml(item, geometries, abBox, opts) {
     var html = '';
     var style = getBasicSymbolStyle(item);
-    var properties = item.name ? 'data-name="' + makeKeyword(item.name) + '" ' : '';
+    var properties = item.name ? 'data-name="' + _.makeKeyword(item.name) + '" ' : '';
     var geom, x, y;
     for (var i=0; i<geometries.length; i++) {
       geom = geometries[i];
@@ -1066,15 +1068,15 @@ AI2HTML.ai = AI2HTML.ai || {};
     function forLayer(lyr) {
       // if (lyr.hidden) return; // bug -- layers use visible property, not hidden
       if (objectIsHidden(lyr)) return;
-      forEach(lyr.pageItems, forPageItem);
-      forEach(lyr.layers, forLayer);
-      forEach(lyr.groupItems, forGroup);
+      _.forEach(lyr.pageItems, forPageItem);
+      _.forEach(lyr.layers, forLayer);
+      _.forEach(lyr.groupItems, forGroup);
     }
     
     function forGroup(group) {
       if (group.hidden) return;
-      forEach(group.pageItems, forPageItem);
-      forEach(group.groupItems, forGroup);
+      _.forEach(group.pageItems, forPageItem);
+      _.forEach(group.groupItems, forGroup);
     }
     
     function forPageItem(item) {
@@ -1255,7 +1257,7 @@ AI2HTML.ai = AI2HTML.ai || {};
   function uniqAssetName(name, names) {
     var uniqName = name;
     var num = 2;
-    while (contains(names, uniqName)) {
+    while (_.contains(names, uniqName)) {
       uniqName = name + '-' + num;
       num++;
     }
@@ -1300,7 +1302,7 @@ AI2HTML.ai = AI2HTML.ai || {};
       return objectHasLayer(item) && objectOverlapsArtboard(item, ab) && !objectIsHidden(item);
     }
     // TODO: verify that placed items are rasters
-    return contains(doc.placedItems, test) || contains(doc.rasterItems, test);
+    return _.contains(doc.placedItems, test) || _.contains(doc.rasterItems, test);
   }
   
   function convertSpecialLayers(activeArtboard, settings) {
@@ -1310,7 +1312,7 @@ AI2HTML.ai = AI2HTML.ai || {};
       html_after: '',
       video: ''
     };
-    forEach(findTaggedLayers('video'), function(lyr) {
+    _.forEach(findTaggedLayers('video'), function(lyr) {
       if (objectIsHidden(lyr)) return;
       var str = getSpecialLayerText(lyr, activeArtboard);
       if (!str) return;
@@ -1322,14 +1324,14 @@ AI2HTML.ai = AI2HTML.ai || {};
       }
       data.layers.push(lyr);
     });
-    forEach(findTaggedLayers('html-before'), function(lyr) {
+    _.forEach(findTaggedLayers('html-before'), function(lyr) {
       if (objectIsHidden(lyr)) return;
       var str = getSpecialLayerText(lyr, activeArtboard);
       if (!str) return;
       data.layers.push(lyr);
       data.html_before = str;
     });
-    forEach(findTaggedLayers('html-after'), function(lyr) {
+    _.forEach(findTaggedLayers('html-after'), function(lyr) {
       if (objectIsHidden(lyr)) return;
       var str = getSpecialLayerText(lyr, activeArtboard);
       if (!str) return;
@@ -1340,17 +1342,17 @@ AI2HTML.ai = AI2HTML.ai || {};
   }
   
   function makeVideoHtml(url, settings) {
-    url = trim(url);
+    url = _.trim(url);
     if (!/^https:/.test(url) || !/\.mp4$/.test(url)) {
       return '';
     }
-    var srcName = isTrue(settings.use_lazy_loader) ? 'data-src' : 'src';
+    var srcName = _.isTrue(settings.use_lazy_loader) ? 'data-src' : 'src';
     return '<video ' + srcName + '="' + url + '" autoplay muted loop playsinline style="top:0; width:100%; object-fit:contain; position:absolute"></video>';
   }
   
   function getSpecialLayerText(lyr, ab) {
     var text = '';
-    forEach(lyr.textFrames, eachFrame);
+    _.forEach(lyr.textFrames, eachFrame);
     function eachFrame(frame) {
       if (testBoundsIntersection(frame.visibleBounds, ab.artboardRect)) {
         text = frame.contents;
@@ -1362,7 +1364,7 @@ AI2HTML.ai = AI2HTML.ai || {};
 // Generate images and return HTML embed code
   function convertArtItems(activeArtboard, textFrames, masks, settings) {
     var imgName = getArtboardImageName(activeArtboard, settings);
-    var hideTextFrames = !isTrue(settings.testing_mode) && settings.render_text_as != 'image';
+    var hideTextFrames = !_.isTrue(settings.testing_mode) && settings.render_text_as != 'image';
     var textFrameCount = textFrames.length;
     var html = '';
     var uniqNames = [];
@@ -1379,27 +1381,27 @@ AI2HTML.ai = AI2HTML.ai || {};
     }
     
     // WIP
-    // forEach(findTaggedLayers('svg-symbol'), function(lyr) {
+    // _.forEach(findTaggedLayers('svg-symbol'), function(lyr) {
     //   var obj = exportSvgSymbols(lyr, activeArtboard, masks);
     //   html += obj.html;
     //   hiddenItems = hiddenItems.concat(obj.items);
     // });
     
     // Symbols in :symbol layers are not scaled
-    forEach(findTaggedLayers('symbol'), function(lyr) {
+    _.forEach(findTaggedLayers('symbol'), function(lyr) {
       var obj = exportSymbols(lyr, activeArtboard, masks, {scaled: false});
       html += obj.html;
       hiddenItems = hiddenItems.concat(obj.items);
     });
     
     // Symbols in :div layers are scaled
-    forEach(findTaggedLayers('div'), function(lyr) {
+    _.forEach(findTaggedLayers('div'), function(lyr) {
       var obj = exportSymbols(lyr, activeArtboard, masks, {scaled: true});
       html += obj.html;
       hiddenItems = hiddenItems.concat(obj.items);
     });
     
-    forEach(findTaggedLayers('svg'), function(lyr) {
+    _.forEach(findTaggedLayers('svg'), function(lyr) {
       var uniqName = uniqAssetName(getLayerImageName(lyr, activeArtboard, settings), uniqNames);
       var layerHtml = exportImage(uniqName, 'svg', activeArtboard, masks, lyr, settings);
       if (layerHtml) {
@@ -1415,7 +1417,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     forEachImageLayer('png', function(lyr) {
       var opts = extend({}, settings, {png_transparent: true});
       var name = getLayerImageName(lyr, activeArtboard, settings);
-      var fmt = contains(settings.image_format || [], 'png24') ? 'png24' : 'png';
+      var fmt = _.contains(settings.image_format || [], 'png24') ? 'png24' : 'png';
       // This test prevents empty images, but is expensive when a layer contains many art objects...
       // consider only testing if an option is set by the user.
       if (testLayerArtboardIntersection(lyr, activeArtboard)) {
@@ -1426,7 +1428,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     // placing ab image before other elements
     html = captureArtboardImage(imgName, activeArtboard, masks, settings) + html;
     // unhide hidden layers (if any)
-    forEach(hiddenLayers, function(lyr) {
+    _.forEach(hiddenLayers, function(lyr) {
       lyr.visible = true;
     });
     
@@ -1438,7 +1440,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     }
     
     // unhide items exported as symbols
-    forEach(hiddenItems, function(item) {
+    _.forEach(hiddenItems, function(item) {
       item.hidden = false;
     });
     
@@ -1477,7 +1479,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     var imgClass = imgId.replace(/-[1-9][0-9]+-/, '-');
     // all images are now absolutely positioned (before, artboard images were
     // position:static to set the artboard height)
-    var inlineSvg = isTrue(settings.inline_svg) || (layer && parseObjectName(layer.name).inline);
+    var inlineSvg = _.isTrue(settings.inline_svg) || (layer && parseObjectName(layer.name).inline);
     var svgInlineStyle, svgLayersArg;
     var created, html;
     
@@ -1540,8 +1542,8 @@ AI2HTML.ai = AI2HTML.ai || {};
     svgIds = svgIds || {};
     svg = svg.replace(idRxp, replaceId);
     if (dupes.length > 0) {
-      msg = truncateString(dupes.sort().join(', '), 65, true);
-      warnOnce('Found duplicate SVG ' + (dupes.length == 1 ? 'id' : 'ids') + ': ' + msg);
+      msg = _.truncateString(dupes.sort().join(', '), 65, true);
+      log.warnOnce('Found duplicate SVG ' + (dupes.length == 1 ? 'id' : 'ids') + ': ' + msg);
     }
     return svg;
     
@@ -1581,7 +1583,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     if (targetLayers.length === 0) return;
     
     // Hide all visible layers (image export captures entire artboard)
-    forEach(findLayers(doc.layers), function(lyr) {
+    _.forEach(findLayers(doc.layers), function(lyr) {
       // Except: don't hide layers that are children of a targeted layer
       // (inconvenient to unhide these selectively later)
       if (find(targetLayers, function(target) {
@@ -1591,7 +1593,7 @@ AI2HTML.ai = AI2HTML.ai || {};
       hiddenLayers.push(lyr);
     });
     
-    forEach(targetLayers, function(lyr) {
+    _.forEach(targetLayers, function(lyr) {
       // show layer (and any hidden parent layers)
       unhideLayer(lyr);
       callback(lyr);
@@ -1599,8 +1601,8 @@ AI2HTML.ai = AI2HTML.ai || {};
     });
     
     // Re-show all layers except image layers
-    forEach(hiddenLayers, function(lyr) {
-      if (indexOf(targetLayers, lyr) == -1) {
+    _.forEach(hiddenLayers, function(lyr) {
+      if (_.indexOf(targetLayers, lyr) == -1) {
         lyr.visible = true;
       }
     });
@@ -1615,16 +1617,16 @@ AI2HTML.ai = AI2HTML.ai || {};
     // if (testEmptyArtboard(ab)) return '';
     
     if (!formats.length) {
-      warnOnce('No images were created because no image formats were specified.');
+      log.warnOnce('No images were created because no image formats were specified.');
       return '';
     }
     
     if (formats[0] != 'auto' && formats[0] != 'jpg' && artboardContainsVisibleRasterImage(ab)) {
-      warnOnce('An artboard contains a raster image -- consider exporting to jpg instead of ' +
+      log.warnOnce('An artboard contains a raster image -- consider exporting to jpg instead of ' +
         formats[0] + '.');
     }
     
-    forEach(formats, function(fmt) {
+    _.forEach(formats, function(fmt) {
       var html;
       fmt = resolveArtboardImageFormat(fmt, ab);
       html = exportImage(imgName, fmt, ab, masks, null, settings);
@@ -1651,7 +1653,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     if (imgStyle) {
       html += ' style="' + imgStyle + '"';
     }
-    if (isTrue(settings.use_lazy_loader)) {
+    if (_.isTrue(settings.use_lazy_loader)) {
       html += ' data-src="' + src + '"';
       // placeholder while image loads
       // (<img> element requires a src attribute, according to spec.)
@@ -1696,7 +1698,7 @@ AI2HTML.ai = AI2HTML.ai || {};
 //   because of resource limits on early iphones. This rule has been changed
 //   to a warning and the limit increased.
   function getOutputImagePixelRatio(width, height, format, doubleres) {
-    var k = isTrue(doubleres) ? 2 : 1;
+    var k = _.isTrue(doubleres) ? 2 : 1;
     // thresholds may be obsolete
     var warnThreshold = format == 'jpg' ? 32*1024*1024 : 5*1024*1024; // jpg and png
     var pixels = width * height * k * k;
@@ -1727,12 +1729,12 @@ AI2HTML.ai = AI2HTML.ai || {};
       fileType = ExportType.PNG8;
       exportOptions = new ExportOptionsPNG8();
       exportOptions.colorCount       = settings.png_number_of_colors;
-      exportOptions.transparency     = isTrue(settings.png_transparent);
+      exportOptions.transparency     = _.isTrue(settings.png_transparent);
       
     } else if (format=='png24') {
       fileType = ExportType.PNG24;
       exportOptions = new ExportOptionsPNG24();
-      exportOptions.transparency     = isTrue(settings.png_transparent);
+      exportOptions.transparency     = _.isTrue(settings.png_transparent);
       
     } else if (format=='jpg') {
       if (imageScale > MAX_JPG_SCALE) {
@@ -1778,7 +1780,7 @@ AI2HTML.ai = AI2HTML.ai || {};
 // TODO: grouped text is copied (but hidden). Avoid copying text in groups, for
 //   smaller SVG output.
   function copyArtboardForImageExport(ab, masks, items) {
-    var layerMasks = filter(masks, function(o) {return !!o.layer;}),
+    var layerMasks = _.filter(masks, function(o) {return !!o.layer;}),
       artboardBounds = ab.artboardRect,
       sourceItems = items || toArray(doc.layers),
       destLayer = doc.layers.add(),
@@ -1788,7 +1790,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     
     destLayer.name = 'ArtboardContent';
     destGroup.move(destLayer, ElementPlacement.PLACEATEND);
-    forEach(sourceItems, copyLayerOrItem);
+    _.forEach(sourceItems, copyLayerOrItem);
     
     // kludge: export empty documents iff items argument is missing (assuming
     //    this is the main artboard image, which is needed to set the container size)
@@ -1811,7 +1813,7 @@ AI2HTML.ai = AI2HTML.ai || {};
       if (mask) {
         copyMaskedLayerAsGroup(lyr, mask);
       } else {
-        forEach(getSortedLayerItems(lyr), copyLayerOrItem);
+        _.forEach(getSortedLayerItems(lyr), copyLayerOrItem);
       }
     }
     
@@ -1819,8 +1821,8 @@ AI2HTML.ai = AI2HTML.ai || {};
       // only remove text frames, for performance
       // TODO: consider checking all item types
       // TODO: consider checking subgroups (recursively)
-      // FIX: convert group.textFrames to array to avoid runtime error 'No such element' in forEach()
-      forEach(toArray(group.textFrames), removeItemIfHidden);
+      // FIX: convert group.textFrames to array to avoid runtime error 'No such element' in _.forEach()
+      _.forEach(toArray(group.textFrames), removeItemIfHidden);
     }
     
     function removeItemIfHidden(item) {
@@ -1847,7 +1849,7 @@ AI2HTML.ai = AI2HTML.ai || {};
       }
       newGroup = doc.groupItems.add();
       newGroup.move(destGroup, ElementPlacement.PLACEATEND);
-      forEach(mask.items, function(item) {
+      _.forEach(mask.items, function(item) {
         copyPageItem(item, newGroup);
       });
       if (newGroup.pageItems.length > 0) {
@@ -1921,7 +1923,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     opts.fontSubsetting        = SVGFontSubsetting.None;
     opts.compressed            = false;
     opts.documentEncoding      = SVGDocumentEncoding.UTF8;
-    opts.embedRasterImages     = isTrue(settings.svg_embed_images);
+    opts.embedRasterImages     = _.isTrue(settings.svg_embed_images);
     // opts.DTD                   = SVGDTDVersion.SVG1_1;
     opts.DTD                   = SVGDTDVersion.SVGTINY1_2;
     opts.cssProperties         = SVGCSSPropertyLocation.STYLEATTRIBUTES;
@@ -1947,7 +1949,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     svg = reapplyEffectsInSVG(svg);
     // prevent SVG strokes from scaling
     // (add element id to selector to prevent inline SVG from affecting other SVG on the page)
-    selector = map('rect,circle,path,line,polyline,polygon'.split(','), function(name) {
+    selector = _.map('rect,circle,path,line,polyline,polygon'.split(','), function(name) {
       return '#' + id + ' ' + name;
     }).join(', ');
     svg = injectCSSinSVG(svg, selector + ' { vector-effect: non-scaling-stroke; }');
@@ -1994,7 +1996,7 @@ AI2HTML.ai = AI2HTML.ai || {};
       return '';
     });
     if (count > 0) {
-      warnOnce('This document contains images or effects that can\'t be exported to SVG.');
+      log.warnOnce('This document contains images or effects that can\'t be exported to SVG.');
     }
     return content;
   }
@@ -2052,7 +2054,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     
     html += '\t<div id="' + id + '" class="' + classname + '" style="' + inlineStyle + '"';
     html += ' data-aspect-ratio="' + roundTo(aspectRatio, 3) + '"';
-    if (isTrue(settings.include_resizer_widths)) {
+    if (_.isTrue(settings.include_resizer_widths)) {
       html += ' data-min-width="' + visibleRange[0] + '"';
       if (visibleRange[1] < Infinity) {
         html +=  ' data-max-width="' + visibleRange[1] + '"';
@@ -2075,7 +2077,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     css += t3 + '}\r';
     
     // classes for paragraph and character styles
-    forEach(cssRules, function(cssBlock) {
+    _.forEach(cssRules, function(cssBlock) {
       css += t3 + abId + ' ' + cssBlock;
     });
     return css;
@@ -2094,7 +2096,7 @@ AI2HTML.ai = AI2HTML.ai || {};
       css += t3 + 'max-width:' + settings.max_width + 'px;';
       css += blockEnd;
     }
-    if (isTrue(settings.center_html_output)) {
+    if (_.isTrue(settings.center_html_output)) {
       css += blockStart + ',\r' + blockStart + '.' + nameSpace + 'artboard {';
       css += t3 + 'margin:0 auto;';
       css += blockEnd;
@@ -2117,7 +2119,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     // default <p> styles
     css += blockStart + 'p {';
     css += t3 + 'margin:0;';
-    if (isTrue(settings.testing_mode)) {
+    if (_.isTrue(settings.testing_mode)) {
       css += t3 + 'color: rgba(209, 0, 0, 0.5) !important;';
     }
     css += blockEnd;
@@ -2156,9 +2158,9 @@ AI2HTML.ai = AI2HTML.ai || {};
   
   function generateJsonSettingsFileContent(settings) {
     var o = getCommonOutputSettings(settings);
-    forEach(settings.config_file, function(key) {
+    _.forEach(settings.config_file, function(key) {
       var val = String(settings[key]);
-      if (isTrue(val)) val = true;
+      if (_.isTrue(val)) val = true;
       else if (isFalse(val)) val = false;
       o[key] = val;
     });
@@ -2177,24 +2179,24 @@ AI2HTML.ai = AI2HTML.ai || {};
     lines.push('tags: ' + o.tags);
     lines.push('min_width: ' + o.min_width);
     lines.push('max_width: ' + o.max_width);
-    if (isTrue(settings.dark_mode_compatible)) {
+    if (_.isTrue(settings.dark_mode_compatible)) {
       // kludge to output YAML array value for one setting
       lines.push('display_overrides:\n  - DARK_MODE_COMPATIBLE');
     }
     
-    forEach(settings.config_file, function(key) {
-      var value = trim(String(settings[key]));
+    _.forEach(settings.config_file, function(key) {
+      var value = _.trim(String(settings[key]));
       var useQuotes = value === '' || /\s/.test(value);
       if (key == 'show_in_compatible_apps') {
         // special case: this setting takes quoted 'yes' or 'no'
         useQuotes = true; // assuming value is 'yes' or 'no';
-        value = isTrue(value) ? 'yes' : 'no';
+        value = _.isTrue(value) ? 'yes' : 'no';
       }
       if (useQuotes) {
         value = JSON.stringify(value); // wrap in quotes and escape internal quotes
-      } else if (isTrue(value) || isFalse(value)) {
+      } else if (_.isTrue(value) || isFalse(value)) {
         // use standard values for boolean settings
-        value = isTrue(value) ? 'true' : 'false';
+        value = _.isTrue(value) ? 'true' : 'false';
       }
       lines.push(key + ': ' + value);
     });
@@ -2342,7 +2344,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     
     // convert resizer function to JS source code
     var resizerJs = '(' +
-      trim(resizer.toString().replace(/ {2}/g, '\t')) + // indent with tabs
+      _.trim(resizer.toString().replace(/ {2}/g, '\t')) + // indent with tabs
       ')("' + containerId + '", ' + optStr + ');';
     return '<script type="text/javascript">\r\t' + resizerJs + '\r</script>\r';
   }
@@ -2396,7 +2398,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     
     progressBar.setTitle('Writing HTML output...');
     
-    if (isTrue(settings.include_resizer_script)) {
+    if (_.isTrue(settings.include_resizer_script)) {
       responsiveJs  = getResizerScript(containerId);
       containerClasses += ' ai2html-responsive';
     }
@@ -2492,7 +2494,7 @@ AI2HTML.ai = AI2HTML.ai || {};
 
 // Remove any annotations and colon separator from an object name
   function cleanObjectName(name) {
-    return makeKeyword(name.replace( /^(.+):.*$/, "$1"));
+    return _.makeKeyword(name.replace( /^(.+):.*$/, "$1"));
   }
 
 // TODO: prevent duplicate names? or treat duplicate names an an error condition?
@@ -2510,7 +2512,7 @@ AI2HTML.ai = AI2HTML.ai || {};
   }
   
   function makeDocumentSlug(rawName) {
-    return makeKeyword(rawName.replace(/ +/g,"-"));
+    return _.makeKeyword(rawName.replace(/ +/g,"-"));
   }
   
   function getRawDocumentName() {
@@ -2556,7 +2558,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     var thisWidth = getArtboardWidth(ab);
     var minWidth, nextWidth;
     // find widths of smallest ab and next widest ab (if any)
-    forEach(getArtboardInfo(settings), function(info) {
+    _.forEach(getArtboardInfo(settings), function(info) {
       var w = info.effectiveWidth;
       if (w > thisWidth && (!nextWidth || w < nextWidth)) {
         nextWidth = w;
@@ -2608,7 +2610,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     // remove suffixes added by copying
     settingsStr = settingsStr.replace(/ copy.*/i, '');
     // parse comma-delimited variables
-    forEach(settingsStr.split(','), function(part) {
+    _.forEach(settingsStr.split(','), function(part) {
       var eq = part.indexOf('=');
       var name, value;
       if (/^\d+$/.test(part)) {
@@ -2625,7 +2627,7 @@ AI2HTML.ai = AI2HTML.ai || {};
       if (name && value) {
         if (/^\d+$/.test(value)) {
           value = parseFloat(value);
-        } else if (isTrue(value)) {
+        } else if (_.isTrue(value)) {
           value = true;
         }
         settings[name] = value;
@@ -2689,7 +2691,7 @@ AI2HTML.ai = AI2HTML.ai || {};
   
   function findLayers(layers, test) {
     var retn = [];
-    forEach(layers, function(lyr) {
+    _.forEach(layers, function(lyr) {
       var found = null;
       if (objectIsHidden(lyr)) {
         // skip
@@ -2825,7 +2827,7 @@ AI2HTML.ai = AI2HTML.ai || {};
       item;
     for (var i=0, n=items.length; i<n; i++) {
       item = items[i];
-      if (item.parent.typename != 'Layer' || contains(layers, item.parent)) {
+      if (item.parent.typename != 'Layer' || _.contains(layers, item.parent)) {
         continue;
       }
       // remember layer, to avoid redundant searching (is this worthwhile?)
@@ -2865,10 +2867,10 @@ AI2HTML.ai = AI2HTML.ai || {};
     app.executeMenuCommand('Clipping Masks menu item');
     allMasks = toArray(doc.selection);
     clearSelection();
-    relevantMasks = filter(allMasks, maskIsRelevant);
+    relevantMasks = _.filter(allMasks, maskIsRelevant);
     // Lock all masks; then unlock each mask in turn and identify its contents.
-    forEach(allMasks, function(mask) {mask.locked = true;});
-    forEach(relevantMasks, function(mask) {
+    _.forEach(allMasks, function(mask) {mask.locked = true;});
+    _.forEach(relevantMasks, function(mask) {
       var obj = {mask: mask};
       var selection, item;
       
@@ -2910,7 +2912,7 @@ AI2HTML.ai = AI2HTML.ai || {};
       }
     });
     // restore masks to unlocked state
-    forEach(allMasks, function(mask) {mask.locked = false;});
+    _.forEach(allMasks, function(mask) {mask.locked = false;});
     return found;
   }
   
@@ -2924,6 +2926,50 @@ AI2HTML.ai = AI2HTML.ai || {};
       if (item.typename == 'TextFrame') {
         texts.push(item);
       }
+    }
+  }
+  
+  // uncategorized functions
+  
+  
+  function unlockObjects() {
+    _.forEach(doc.layers, unlockContainer);
+  }
+  
+  function unlockObject(obj) {
+    obj.locked = false;
+    objectsToRelock.push(obj);
+  }
+
+  // Unlock a layer or group if visible and locked, as well as any locked and visible
+  //   clipping masks
+  // o: GroupItem or Layer
+  function unlockContainer(o) {
+    var type = o.typename;
+    var i, item, pathCount;
+    if (o.hidden === true || o.visible === false) return;
+    if (o.locked) {
+      unlockObject(o);
+    }
+    
+    // unlock locked clipping paths (so contents can be selected later)
+    // optimization: Layers containing hundreds or thousands of paths are unlikely
+    //    to contain a clipping mask and are slow to scan -- skip these
+    pathCount = o.pathItems.length;
+    if ((type == 'Layer' && pathCount < 500) || (type == 'GroupItem' && o.clipped)) {
+      for (i=0; i<pathCount; i++) {
+        item = o.pathItems[i];
+        if (!item.hidden && item.clipping && item.locked) {
+          unlockObject(item);
+          break;
+        }
+      }
+    }
+    
+    // recursively unlock sub-layers and groups
+    _.forEach(o.groupItems, unlockContainer);
+    if (o.typename == 'Layer') {
+      _.forEach(o.layers, unlockContainer);
     }
   }
   

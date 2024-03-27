@@ -13,7 +13,6 @@ AI2HTML.testing = AI2HTML.testing || {};
   
   // Add internal functions to module.exports for testing in Node.js
   function exportFunctionsForTesting() {
-    console.log('Exporting functions for testing');
     
     var ai = AI2HTML.ai;
     var settings = AI2HTML.settings;
@@ -48,38 +47,38 @@ AI2HTML.testing = AI2HTML.testing || {};
     var replaceSvgIds = ai.replaceSvgIds;
     var compareVersions = settings.compareVersions;
     
-    [ testBoundsIntersection,
-      trim,
-      stringToLines,
-      contains,
-      arraySubtract,
-      firstBy,
-      zeroPad,
-      roundTo,
-      pathJoin,
-      pathSplit,
-      folderExists,
-      formatCss,
-      getCssColor,
-      readGitConfigFile,
-      readYamlConfigFile,
-      applyTemplate,
-      cleanHtmlText,
-      encodeHtmlEntities,
-      addEnclosingTag,
-      stripTag,
-      cleanCodeBlock,
-      findHtmlTag,
-      cleanHtmlTags,
-      parseDataAttributes,
-      parseObjectName,
-      cleanObjectName,
-      uniqAssetName,
-      replaceSvgIds,
-      compareVersions
-    ].forEach(function(f) {
-      module.exports[f.name] = f;
-    });
+    module.exports = {
+      testBoundsIntersection: testBoundsIntersection,
+      trim: trim,
+      stringToLines: stringToLines,
+      contains: contains,
+      arraySubtract: arraySubtract,
+      firstBy: firstBy,
+      zeroPad: zeroPad,
+      roundTo: roundTo,
+      pathJoin: pathJoin,
+      pathSplit: pathSplit,
+      folderExists: folderExists,
+      formatCss: formatCss,
+      getCssColor: getCssColor,
+      readGitConfigFile: readGitConfigFile,
+      readYamlConfigFile: readYamlConfigFile,
+      applyTemplate: applyTemplate,
+      cleanHtmlText: cleanHtmlText,
+      encodeHtmlEntities: encodeHtmlEntities,
+      addEnclosingTag: addEnclosingTag,
+      stripTag: stripTag,
+      cleanCodeBlock: cleanCodeBlock,
+      findHtmlTag: findHtmlTag,
+      cleanHtmlTags: cleanHtmlTags,
+      parseDataAttributes: parseDataAttributes,
+      parseObjectName: parseObjectName,
+      cleanObjectName: cleanObjectName,
+      uniqAssetName: uniqAssetName,
+      replaceSvgIds: replaceSvgIds,
+      compareVersions: compareVersions
+    };
+    
   }
   
   AI2HTML.testing = {

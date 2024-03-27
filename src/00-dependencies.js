@@ -43,6 +43,11 @@ var T = {
 /** @global */
 var _ = {};
 
+// html entity substitution
+_.basicCharacterReplacements = [["\x26", "&amp;"], ["\x22", "&quot;"], ["\x3C", "&lt;"], ["\x3E", "&gt;"]];
+_.extraCharacterReplacements = [["\xA0", "&nbsp;"], ["\xA1", "&iexcl;"], ["\xA2", "&cent;"], ["\xA3", "&pound;"], ["\xA4", "&curren;"], ["\xA5", "&yen;"], ["\xA6", "&brvbar;"], ["\xA7", "&sect;"], ["\xA8", "&uml;"], ["\xA9", "&copy;"], ["\xAA", "&ordf;"], ["\xAB", "&laquo;"], ["\xAC", "&not;"], ["\xAD", "&shy;"], ["\xAE", "&reg;"], ["\xAF", "&macr;"], ["\xB0", "&deg;"], ["\xB1", "&plusmn;"], ["\xB2", "&sup2;"], ["\xB3", "&sup3;"], ["\xB4", "&acute;"], ["\xB5", "&micro;"], ["\xB6", "&para;"], ["\xB7", "&middot;"], ["\xB8", "&cedil;"], ["\xB9", "&sup1;"], ["\xBA", "&ordm;"], ["\xBB", "&raquo;"], ["\xBC", "&frac14;"], ["\xBD", "&frac12;"], ["\xBE", "&frac34;"], ["\xBF", "&iquest;"], ["\xD7", "&times;"], ["\xF7", "&divide;"], ["\u0192", "&fnof;"], ["\u02C6", "&circ;"], ["\u02DC", "&tilde;"], ["\u2002", "&ensp;"], ["\u2003", "&emsp;"], ["\u2009", "&thinsp;"], ["\u200C", "&zwnj;"], ["\u200D", "&zwj;"], ["\u200E", "&lrm;"], ["\u200F", "&rlm;"], ["\u2013", "&ndash;"], ["\u2014", "&mdash;"], ["\u2018", "&lsquo;"], ["\u2019", "&rsquo;"], ["\u201A", "&sbquo;"], ["\u201C", "&ldquo;"], ["\u201D", "&rdquo;"], ["\u201E", "&bdquo;"], ["\u2020", "&dagger;"], ["\u2021", "&Dagger;"], ["\u2022", "&bull;"], ["\u2026", "&hellip;"], ["\u2030", "&permil;"], ["\u2032", "&prime;"], ["\u2033", "&Prime;"], ["\u2039", "&lsaquo;"], ["\u203A", "&rsaquo;"], ["\u203E", "&oline;"], ["\u2044", "&frasl;"], ["\u20AC", "&euro;"], ["\u2111", "&image;"], ["\u2113", ""], ["\u2116", ""], ["\u2118", "&weierp;"], ["\u211C", "&real;"], ["\u2122", "&trade;"], ["\u2135", "&alefsym;"], ["\u2190", "&larr;"], ["\u2191", "&uarr;"], ["\u2192", "&rarr;"], ["\u2193", "&darr;"], ["\u2194", "&harr;"], ["\u21B5", "&crarr;"], ["\u21D0", "&lArr;"], ["\u21D1", "&uArr;"], ["\u21D2", "&rArr;"], ["\u21D3", "&dArr;"], ["\u21D4", "&hArr;"], ["\u2200", "&forall;"], ["\u2202", "&part;"], ["\u2203", "&exist;"], ["\u2205", "&empty;"], ["\u2207", "&nabla;"], ["\u2208", "&isin;"], ["\u2209", "&notin;"], ["\u220B", "&ni;"], ["\u220F", "&prod;"], ["\u2211", "&sum;"], ["\u2212", "&minus;"], ["\u2217", "&lowast;"], ["\u221A", "&radic;"], ["\u221D", "&prop;"], ["\u221E", "&infin;"], ["\u2220", "&ang;"], ["\u2227", "&and;"], ["\u2228", "&or;"], ["\u2229", "&cap;"], ["\u222A", "&cup;"], ["\u222B", "&int;"], ["\u2234", "&there4;"], ["\u223C", "&sim;"], ["\u2245", "&cong;"], ["\u2248", "&asymp;"], ["\u2260", "&ne;"], ["\u2261", "&equiv;"], ["\u2264", "&le;"], ["\u2265", "&ge;"], ["\u2282", "&sub;"], ["\u2283", "&sup;"], ["\u2284", "&nsub;"], ["\u2286", "&sube;"], ["\u2287", "&supe;"], ["\u2295", "&oplus;"], ["\u2297", "&otimes;"], ["\u22A5", "&perp;"], ["\u22C5", "&sdot;"], ["\u2308", "&lceil;"], ["\u2309", "&rceil;"], ["\u230A", "&lfloor;"], ["\u230B", "&rfloor;"], ["\u2329", "&lang;"], ["\u232A", "&rang;"], ["\u25CA", "&loz;"], ["\u2660", "&spades;"], ["\u2663", "&clubs;"], ["\u2665", "&hearts;"], ["\u2666", "&diams;"]];
+
+
 _.forEach = function(arr, cb) {
   for (var i=0, n=arr.length; i<n; i++) {
     cb(arr[i], i);
@@ -79,17 +84,17 @@ _.indexOf = function(arr, obj) {
 }
 
 _.find = function(arr, obj) {
-  var i = indexOf(arr, obj);
+  var i = _.indexOf(arr, obj);
   return i == -1 ? null : arr[i];
 }
 
 _.contains = function(arr, obj) {
-  return indexOf(arr, obj) >= 0;
+  return _.indexOf(arr, obj) >= 0;
 }
 
 // alias for contains()
 _.some = function(arr, cb) {
-  return indexOf(arr, cb) >= 0;
+  return _.indexOf(arr, cb) >= 0;
 }
 
 _.extend = function(o) {
@@ -173,7 +178,7 @@ _.trim = function(s) {
 // splits a string into non-empty lines
 _.stringToLines = function(str) {
   var empty = /^\s*$/;
-  return filter(str.split(/[\r\n\x03]+/), function(line) {
+  return _.filter(str.split(/[\r\n\x03]+/), function(line) {
     return !empty.test(line);
   });
 }
@@ -199,12 +204,12 @@ _.makeKeyword = function(text) {
 
 // TODO: don't convert ampersand in pre-existing entities (e.g. "&quot;" -> "&amp;quot;")
 _.encodeHtmlEntities = function(text) {
-  return replaceChars(text, basicCharacterReplacements.concat(extraCharacterReplacements));
+  return _.replaceChars(text, _.basicCharacterReplacements.concat(_.extraCharacterReplacements));
 }
 
 _.cleanHtmlText = function(text) {
   // Characters "<>& are not replaced
-  return replaceChars(text, extraCharacterReplacements);
+  return _.replaceChars(text, _.extraCharacterReplacements);
 }
 
 _.replaceChars = function(str, replacements) {
@@ -226,7 +231,7 @@ _.straightenCurlyQuotesInsideAngleBrackets = function(text) {
   // var quoteFinder = /[\u201C‘’\u201D]([^\n]*?)[\u201C‘’\u201D]/g;
   var tagFinder = /<[^\n]+?>/g;
   return text.replace(tagFinder, function(tag){
-    return straightenCurlyQuotes(tag);
+    return _.straightenCurlyQuotes(tag);
   });
 }
 
@@ -333,7 +338,7 @@ _.applyTemplate = function(template, replacements) {
 // Similar to Node.js path.join()
 _.pathJoin = function() {
   var path = '';
-  forEach(arguments, function(arg) {
+  _.forEach(arguments, function(arg) {
     if (!arg) return;
     arg = String(arg);
     arg = arg.replace(/^\/+/, '').replace(/\/+$/, '');
@@ -351,3 +356,16 @@ _.pathSplit = function(path) {
   var filename = parts.pop();
   return [parts.join('/'), filename];
 }
+
+
+
+// accept inconsistent true/yes setting value
+_.isTrue = function(val) {
+  return val == 'true' || val == 'yes' || val === true;
+}
+
+// accept inconsistent false/no setting value
+_.isFalse = function(val) {
+  return val == 'false' || val == 'no' || val === false;
+}
+

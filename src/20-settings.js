@@ -10,6 +10,8 @@ AI2HTML.settings = AI2HTML.settings || {};
 
 (function() {
   
+  var log = AI2HTML.logger;
+  
   function isTestedIllustratorVersion(version) {
     var majorNum = parseInt(version);
     return majorNum >= 18 && majorNum <= 28; // Illustrator CC 2014 through 2024
@@ -19,15 +21,15 @@ AI2HTML.settings = AI2HTML.settings || {};
     var names = [];
     forEachUsableArtboard(function (ab) {
       var name = getArtboardName(ab);
-      var isDupe = contains(names, name);
+      var isDupe = _.contains(names, name);
       if (isDupe) {
         // kludge: modify settings if same-name artboards are found
         // (used to prevent duplicate image names)
         settings.grouped_artboards = true;
         if (settings.output == 'one-file') {
-          warnOnce("Artboards should have unique names. \"" + name + "\" is duplicated.");
+          log.warnOnce("Artboards should have unique names. \"" + name + "\" is duplicated.");
         } else {
-          warnOnce("Found a group of artboards named \"" + name + "\".");
+          log.warnOnce("Found a group of artboards named \"" + name + "\".");
         }
         
       }
@@ -54,7 +56,7 @@ AI2HTML.settings = AI2HTML.settings || {};
     var rxp = /^ai2html-(css|js|html|settings|text|html-before|html-after)\s*$/;
     var settings = null;
     var code = {};
-    forEach(doc.textFrames, function (thisFrame) {
+    _.forEach(doc.textFrames, function (thisFrame) {
       // var contents = thisFrame.contents; // caused MRAP error in AI 2017
       var type = null;
       var match, lines;
@@ -70,7 +72,7 @@ AI2HTML.settings = AI2HTML.settings || {};
         warn('Skipping a hidden ' + match[0] + ' settings block.');
         return;
       }
-      lines = stringToLines(thisFrame.contents);
+      lines = _.stringToLines(thisFrame.contents);
       lines.shift(); // remove header
       // Reset the name of any non-settings text boxes with name ai2html-settings
       if (type != 'settings' && thisFrame.name == 'ai2html-settings') {
@@ -147,7 +149,7 @@ AI2HTML.settings = AI2HTML.settings || {};
   
   // Trigger errors and warnings for some common problems
   function validateDocumentSettings(settings) {
-    if (isTrue(settings.include_resizer_classes)) {
+    if (_.isTrue(settings.include_resizer_classes)) {
       error("The include_resizer_classes option was removed. Please file a GitHub issue if you need this feature.");
     }
     
@@ -219,8 +221,8 @@ AI2HTML.settings = AI2HTML.settings || {};
   
   // assumes three-part version, e.g. 1.5.0
   function compareVersions(a, b) {
-    a = map(a.split('.'), parseFloat);
-    b = map(b.split('.'), parseFloat);
+    a = _.map(a.split('.'), parseFloat);
+    b = _.map(b.split('.'), parseFloat);
     var diff = a[0] - b[0] || a[1] - b[1] || a[2] - b[2] || 0;
     return (diff < 0 && -1) || (diff > 0 && 1) || 0;
   }
@@ -317,10 +319,10 @@ AI2HTML.settings = AI2HTML.settings || {};
   
   function extendFontList(a, b) {
     var index = {};
-    forEach(a, function (o, i) {
+    _.forEach(a, function (o, i) {
       index[o.aifont] = i;
     });
-    forEach(b, function (o) {
+    _.forEach(b, function (o) {
       if (o.aifont && o.aifont in index) {
         a[index[o.aifont]] = o; // replace
       } else {
@@ -335,13 +337,13 @@ AI2HTML.settings = AI2HTML.settings || {};
   function cleanCodeBlock(type, raw) {
     var clean = '';
     if (type.indexOf('html') >= 0) {
-      clean = cleanHtmlText(straightenCurlyQuotesInsideAngleBrackets(raw));
+      clean = _.cleanHtmlText(_.straightenCurlyQuotesInsideAngleBrackets(raw));
     } else if (type == 'js') {
       // TODO: consider preserving curly quotes inside quoted strings
-      clean = straightenCurlyQuotes(raw);
-      clean = addEnclosingTag('script', clean);
+      clean = _.straightenCurlyQuotes(raw);
+      clean = _.addEnclosingTag('script', clean);
     } else if (type == 'css') {
-      clean = straightenCurlyQuotes(raw);
+      clean = _.straightenCurlyQuotes(raw);
       clean = stripTag('style', clean);
     }
     return clean;
@@ -358,7 +360,7 @@ AI2HTML.settings = AI2HTML.settings || {};
     var settingsLines = ["ai2html-settings"];
     var layer, rect, textArea, height;
     
-    forEach(settings.settings_block, function (key) {
+    _.forEach(settings.settings_block, function (key) {
       settingsLines.push(key + ": " + settings[key]);
     });
     
@@ -390,10 +392,10 @@ AI2HTML.settings = AI2HTML.settings || {};
     var updated = false;
     var lines;
     if (!block) return;
-    lines = stringToLines(block.contents);
+    lines = _.stringToLines(block.contents);
     // one alternative to splitting contents into lines is to iterate
     //   over paragraphs, but an error is thrown when accessing an empty pg
-    forEach(lines, function (line, i) {
+    _.forEach(lines, function (line, i) {
       var data = parseSettingsEntry(line);
       if (!updated && data && data[0] == key) {
         lines[i] = entry;
@@ -411,14 +413,14 @@ AI2HTML.settings = AI2HTML.settings || {};
   
   function parseSettingsEntry(str) {
     var entryRxp = /^([\w-]+)\s*:\s*(.*)$/;
-    var match = entryRxp.exec(trim(str));
+    var match = entryRxp.exec(_.trim(str));
     if (!match) return null;
-    return [match[1], straightenCurlyQuotesInsideAngleBrackets(match[2])];
+    return [match[1], _.straightenCurlyQuotesInsideAngleBrackets(match[2])];
   }
   
   // Add ai2html settings from a text block to a settings object
   function parseSettingsEntries(entries, settings) {
-    forEach(entries, function (str) {
+    _.forEach(entries, function (str) {
       var match = parseSettingsEntry(str);
       var key, value;
       if (!match) {
@@ -444,7 +446,7 @@ AI2HTML.settings = AI2HTML.settings || {};
   }
   
   function parseAsArray(str) {
-    str = trim(str).replace(/[\s,]+/g, ',');
+    str = _.trim(str).replace(/[\s,]+/g, ',');
     return str.length === 0 ? [] : str.split(',');
   }
   
@@ -540,6 +542,13 @@ AI2HTML.settings = AI2HTML.settings || {};
     };
   }
   
+  // function calcProgressBarSteps() {
+  //   var n = 0;
+  //   forEachUsableArtboard(function() {
+  //     n += 2;
+  //   });
+  //   return n;
+  // }
   
   
   

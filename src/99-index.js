@@ -24,10 +24,6 @@ function main() {
     // This can be overridden by settings
     nameSpace: nameSpace = 'g-',
     // vars to hold warnings and informational messages at the end
-    feedback: [],
-    warnings: [],
-    errors: [],
-    oneTimeWarnings: [],
     startTime: +new Date(),
     textFramesToUnhide: [],
     objectsToRelock: [],
@@ -79,7 +75,7 @@ function main() {
       this.nameSpace = docSettings.namespace || nameSpace;
       extendFontList(fonts, this.docSettings.fonts || []);
       
-      if (!textBlockData.settings && isTrue(docSettings.create_settings_block)) {
+      if (!textBlockData.settings && _.isTrue(docSettings.create_settings_block)) {
         createSettingsBlock(docSettings);
       }
       
@@ -115,9 +111,9 @@ function main() {
     if (errors.length > 0) {
       showCompletionAlert();
       
-    } else if (isTrue(docSettings.show_completion_dialog_box )) {
+    } else if (_.isTrue(docSettings.show_completion_dialog_box )) {
       message('Script ran in', ((+new Date() - startTime) / 1000).toFixed(1), 'seconds');
-      var promptForPromo = isTrue(docSettings.write_image_files) && isTrue(docSettings.create_promo_image);
+      var promptForPromo = _.isTrue(docSettings.write_image_files) && _.isTrue(docSettings.create_promo_image);
       var showPromo = showCompletionAlert(promptForPromo);
       if (showPromo) createPromoImage(docSettings);
     }
