@@ -1,8 +1,7 @@
-var lib = require('../');
+var lib = require('../build/ai2html.js');
 var assert = require('assert');
 
 // Utility functions that don't depend on Illustrator context
-
 describe('Utility function tests', function() {
 
   it('compareVersions()', function() {

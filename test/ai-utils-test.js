@@ -1,5 +1,5 @@
 var env = require('./ai-env');
-var lib = require('../');
+var lib = require('../build/ai2html.js');
 var assert = require('assert');
 
 

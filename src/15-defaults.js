@@ -1,7 +1,9 @@
-AI2HTML.settings = AI2HTML.settings || {};
+
+AI2HTML = AI2HTML || {};
+/** @global */
+AI2HTML.defaults = AI2HTML.defaults || {};
 
 (function() {
-  
   // How to update the version number:
   // - Increment middle digit for new functionality or breaking changes
   //      or increment final digit for simple bug fixes or other minor changes.

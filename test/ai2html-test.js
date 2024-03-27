@@ -1,4 +1,4 @@
-var lib = require('../');
+var lib = require('../build/ai2html.js');
 var assert = require('assert');
 
 
