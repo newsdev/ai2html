@@ -1,5 +1,40 @@
+// ai2html is a script for Adobe Illustrator that converts your Illustrator document into html and css.
+// Copyright (c) 2011-2018 The New York Times Company
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this library except in compliance with the License.
+// You may obtain a copy of the License at
 
-AI2HTML = AI2HTML || {};
+// http://www.apache.org/licenses/LICENSE-2.0
+
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// =====================================
+// How to install ai2html
+// =====================================
+
+// - Move the ai2html.js file into the Illustrator folder where scripts are located.
+// - For example, on Mac OS X running Adobe Illustrator CC 2014, the path would be: // Adobe Illustrator CC 2014/Presets/en_US/Scripts/ai2html.jsx
+
+// =====================================
+// How to use ai2html
+// =====================================
+
+// - Create your Illustrator artwork.
+// - Size the artboard to the dimensions that you want the div to appear on the web page.
+// - Make sure your Document Color Mode is set to RGB.
+// - Use Arial or Georgia unless you have added your own fonts to the fonts array in the script.
+// - Run the script by choosing: File > Scripts > ai2html
+// - Go to the folder containing your Illustrator file. Inside will be a folder called ai2html-output.
+// - Open the html files in your browser to preview your output.
+
+/** @global */
+var AI2HTML = AI2HTML || {};
+
+
 /** @global */
 AI2HTML.defaults = AI2HTML.defaults || {};
 
@@ -10,8 +45,8 @@ AI2HTML.defaults = AI2HTML.defaults || {};
   // - Update the version number in package.json
   // - Add an entry to CHANGELOG.md
   // - Run 'npm publish' to create a new GitHub release
-  var scriptVersion = '0.120.0';
-
+  var scriptVersion = '0.121.0';
+  
   // ================================================
   // ai2html and config settings
   // ================================================
@@ -96,8 +131,8 @@ AI2HTML.defaults = AI2HTML.defaults || {};
       "credit"
     ]
   };
-
-
+  
+  
   // These settings override the default settings in NYT preview/birdkit projects
   var nytOverrideSettings = {
     "image_source_path": "_assets/", // path for <img src="">
@@ -185,7 +220,7 @@ AI2HTML.defaults = AI2HTML.defaults || {};
       "size"
     ]
   };
-
+  
   // Override settings for simple NYT Preview ai2html embed graphics
   var nytPreviewEmbedSettings = {
     "project_type": "ai2html",
@@ -264,7 +299,7 @@ AI2HTML.defaults = AI2HTML.defaults || {};
       "scoop_external_edit_key"
     ]
   };
-
+  
   // Rules for converting AI fonts to CSS
   // vshift shifts text vertically, to compensate for vertical misalignment caused
   // by a difference between vertical placement in Illustrator (of a system font) and
@@ -558,7 +593,7 @@ AI2HTML.defaults = AI2HTML.defaults || {};
     },
     {"aifont": "NYTMagSans-Bold", "family": "'nyt-magsans',arial,helvetica,sans-serif", "weight": "700", "style": ""}
   ];
-
+  
   // ================================================
   // Constant data
   // ================================================
@@ -569,7 +604,7 @@ AI2HTML.defaults = AI2HTML.defaults || {};
     {"ai": "FontCapsOption.ALLCAPS", "html": "uppercase"},
     {"ai": "FontCapsOption.SMALLCAPS", "html": "uppercase"}
   ];
-
+  
   // CSS text-align equivalents
   var align = [
     {"ai": "Justification.LEFT", "html": "left"},
@@ -584,7 +619,7 @@ AI2HTML.defaults = AI2HTML.defaults || {};
   var blendModes = [
     {ai: "BlendModes.MULTIPLY", html: "multiply"}
   ];
-
+  
   // list of CSS properties used for translating AI text styles
   // (used for creating a unique identifier for each style)
   var cssTextStyleProperties = [
@@ -610,9 +645,20 @@ AI2HTML.defaults = AI2HTML.defaults || {};
   var cssPrecision = 4;
   
   
-  // return settings object
-  
-  
-  
+  AI2HTML.defaults = {
+    scriptVersion: scriptVersion,
+    defaultSettings: defaultSettings,
+    nytOverrideSettings: nytOverrideSettings,
+    nytPreviewSettings: nytPreviewSettings,
+    nytBirdkitSettings: nytBirdkitSettings,
+    nytBirdkitEmbedSettings: nytBirdkitEmbedSettings,
+    nytPreviewEmbedSettings: nytPreviewEmbedSettings,
+    fonts: fonts,
+    caps: caps,
+    align: align,
+    blendModes: blendModes,
+    cssTextStyleProperties: cssTextStyleProperties,
+    cssPrecision: cssPrecision
+  };
   
 })();

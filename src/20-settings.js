@@ -11,6 +11,8 @@ AI2HTML.settings = AI2HTML.settings || {};
 (function() {
   
   var log = AI2HTML.logger;
+  var textFramesToUnhide = [];
+  var objectsToRelock = [];
   
   function isTestedIllustratorVersion(version) {
     var majorNum = parseInt(version);
@@ -48,6 +50,16 @@ AI2HTML.settings = AI2HTML.settings || {};
   
   function getScriptDirectory() {
     return new File($.fileName).parent;
+  }
+  
+  function temporarilyHideTextFrame(textFrame) {
+    textFramesToUnhide.push(textFrame);
+    AI2HTML.ai.hideTextFrame(textFrame);
+  }
+  
+  function temporarilyUnlockObject(obj) {
+    objectsToRelock.push(obj);
+    AI2HTML.ai.unlockObject(obj);
   }
   
   // Import program settings and custom html, css and js code from specially
@@ -94,9 +106,9 @@ AI2HTML.settings = AI2HTML.settings || {};
         // An error will be thrown if trying to hide a text frame inside a
         // locked layer. Solution: unlock any locked parent layers.
         if (objectIsLocked(thisFrame)) {
-          unlockObject(thisFrame);
+          temporarilyUnlockObject(thisFrame);
         }
-        hideTextFrame(thisFrame);
+        temporarilyHideTextFrame(thisFrame);
       }
     });
     
@@ -407,7 +419,7 @@ AI2HTML.settings = AI2HTML.settings || {};
       // so it will be visible if the content overflows the text frame
       lines.splice(1, 0, entry);
     }
-    docIsSaved = false; // doc has changed, need to save
+    AI2HTML.docIsSaved = false; // doc has changed, need to save
     block.contents = lines.join('\n');
   }
   
@@ -450,45 +462,6 @@ AI2HTML.settings = AI2HTML.settings || {};
     return str.length === 0 ? [] : str.split(',');
   }
   
-  // Show alert or prompt; return true if promo image should be generated
-  function showCompletionAlert(showPrompt) {
-    var rule = "\n================\n";
-    var alertText, alertHed, makePromo;
-    
-    if (errors.length > 0) {
-      alertHed = "The Script Was Unable to Finish";
-    } else if (detectTimesFonts()) {
-      alertHed = "Actually, that\u2019s not half bad :)"; // &rsquo;
-    } else {
-      alertHed = "Nice work!";
-    }
-    alertText = makeList(errors, "Error", "Errors");
-    alertText += makeList(warnings, "Warning", "Warnings");
-    alertText += makeList(feedback, "Information", "Information");
-    alertText += "\n";
-    if (showPrompt) {
-      alertText += rule + "Generate promo image?";
-      // confirm(<msg>, false) makes "Yes" the default (at Baden's request).
-      makePromo = confirm(alertHed + alertText, false);
-    } else {
-      alertText += rule + "ai2html v" + scriptVersion;
-      alert(alertHed + alertText);
-      makePromo = false;
-    }
-    
-    function makeList(items, singular, plural) {
-      var list = "";
-      if (items.length > 0) {
-        list += "\r" + (items.length == 1 ? singular : plural) + rule;
-        for (var i = 0; i < items.length; i++) {
-          list += "\u2022 " + items[i] + "\r";
-        }
-      }
-      return list;
-    }
-    
-    return makePromo;
-  }
   
   function restoreDocumentState() {
     var i;
@@ -499,56 +472,8 @@ AI2HTML.settings = AI2HTML.settings || {};
       objectsToRelock[i].locked = true;
     }
   }
-  
-  function ProgressBar(opts) {
-    opts = opts || {};
-    var steps = opts.steps || 0;
-    var step = 0;
-    var win = new Window("palette", opts.name || "Progress", [150, 150, 600, 260]);
-    win.pnl = win.add("panel", [10, 10, 440, 100], "Progress");
-    win.pnl.progBar = win.pnl.add("progressbar", [20, 35, 410, 60], 0, 100);
-    win.pnl.progBarLabel = win.pnl.add("statictext", [20, 20, 320, 35], "0%");
-    win.show();
-    
-    // function getProgress() {
-    //   return win.pnl.progBar.value/win.pnl.progBar.maxvalue;
-    // }
-    
-    function update() {
-      win.update();
-    }
-    
-    this.step = function () {
-      step = Math.min(step + 1, steps);
-      this.setProgress(step / steps);
-    };
-    
-    this.setProgress = function (progress) {
-      var max = win.pnl.progBar.maxvalue;
-      // progress is always 0.0 to 1.0
-      var pct = progress * max;
-      win.pnl.progBar.value = pct;
-      win.pnl.progBarLabel.text = Math.round(pct) + "%";
-      update();
-    };
-    
-    this.setTitle = function (title) {
-      win.pnl.text = title;
-      update();
-    };
-    
-    this.close = function () {
-      win.close();
-    };
-  }
-  
-  // function calcProgressBarSteps() {
-  //   var n = 0;
-  //   forEachUsableArtboard(function() {
-  //     n += 2;
-  //   });
-  //   return n;
-  // }
+
+
   
   
   
@@ -579,9 +504,7 @@ AI2HTML.settings = AI2HTML.settings || {};
     parseSettingsEntry: parseSettingsEntry,
     parseSettingsEntries: parseSettingsEntries,
     parseAsArray: parseAsArray,
-    showCompletionAlert: showCompletionAlert,
-    restoreDocumentState: restoreDocumentState,
-    ProgressBar: ProgressBar,
+    restoreDocumentState: restoreDocumentState
   };
   
 }());

@@ -1,17 +1,679 @@
-// adds Globally namespaced utility functions
+// ai2html is a script for Adobe Illustrator that converts your Illustrator document into html and css.
+// Copyright (c) 2011-2018 The New York Times Company
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this library except in compliance with the License.
+// You may obtain a copy of the License at
+
+// http://www.apache.org/licenses/LICENSE-2.0
+
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// =====================================
+// How to install ai2html
+// =====================================
+
+// - Move the ai2html.js file into the Illustrator folder where scripts are located.
+// - For example, on Mac OS X running Adobe Illustrator CC 2014, the path would be: // Adobe Illustrator CC 2014/Presets/en_US/Scripts/ai2html.jsx
+
+// =====================================
+// How to use ai2html
+// =====================================
+
+// - Create your Illustrator artwork.
+// - Size the artboard to the dimensions that you want the div to appear on the web page.
+// - Make sure your Document Color Mode is set to RGB.
+// - Use Arial or Georgia unless you have added your own fonts to the fonts array in the script.
+// - Run the script by choosing: File > Scripts > ai2html
+// - Go to the folder containing your Illustrator file. Inside will be a folder called ai2html-output.
+// - Open the html files in your browser to preview your output.
+
+/** @global */
+var AI2HTML = AI2HTML || {};
 
 
 /** @global */
-var AI2HTML= {};
+AI2HTML.defaults = AI2HTML.defaults || {};
+
+(function() {
+  // How to update the version number:
+  // - Increment middle digit for new functionality or breaking changes
+  //      or increment final digit for simple bug fixes or other minor changes.
+  // - Update the version number in package.json
+  // - Add an entry to CHANGELOG.md
+  // - Run 'npm publish' to create a new GitHub release
+  var scriptVersion = '0.121.0';
+  
+  // ================================================
+  // ai2html and config settings
+  // ================================================
+  
+  // These are base settings that are overridden by text block settings in
+  // the .ai document and settings contained in ai2html-config.json files
+  var defaultSettings = {
+    "namespace": "g-",
+    "settings_version": scriptVersion,
+    "create_promo_image": false,
+    "promo_image_width": 1024,
+    "image_format": ["auto"],  // Options: auto, png, png24, jpg, svg
+    "write_image_files": true,
+    "responsiveness": "fixed", // Options: fixed, dynamic
+    "max_width": "",
+    "output": "one-file",      // Options: one-file, multiple-files
+    "project_name": "",        // Defaults to the name of the AI file
+    "html_output_path": "ai2html-output/",
+    "html_output_extension": ".html",
+    "image_output_path": "ai2html-output/",
+    "image_source_path": "",
+    "image_alt_text": "", // Generally, use alt_text instead
+    "cache_bust_token": null,  // Append a token to the url of image urls: ?v=<cache_bust_token>
+    "create_config_file": false,
+    "create_settings_block": true, // Create a text block in the AI doc with common settings
+    "config_file_path": "",
+    "local_preview_template": "",
+    "png_transparent": false,
+    "png_number_of_colors": 128, // Number of colors in 8-bit PNG image (1-256)
+    "jpg_quality": 60,
+    "center_html_output": true,
+    "use_2x_images_if_possible": true,
+    "use_lazy_loader": false,
+    "include_resizer_classes": false, // Triggers an error (feature was removed)
+    "include_resizer_widths": true,
+    "include_resizer_script": false,
+    "inline_svg": false, // Embed background image SVG in HTML instead of loading a file
+    "svg_id_prefix": "", // Prefix SVG ids with a string to disambiguate from other ids on the page
+    "svg_embed_images": false,
+    "render_text_as": "html", // Options: html, image
+    "render_rotated_skewed_text_as": "html", // Options: html, image
+    "testing_mode": false,  // Render text in both bg image and HTML to test HTML text placement
+    "show_completion_dialog_box": true,
+    "clickable_link": "",  // Add a URL to make the entire graphic a clickable link
+    "last_updated_text": "",
+    "headline": "",
+    "leadin": "",
+    "summary": "",
+    "notes": "",
+    "sources": "",
+    "credit": "",
+    
+    // List of settings to include in the "ai2html-settings" text block
+    "settings_block": [
+      "settings_version",
+      "image_format",
+      "responsiveness",
+      "include_resizer_script",
+      "use_lazy_loader",
+      "output",
+      "html_output_path",
+      // "html_output_extension", // removed from settings block in v0.115.6
+      "image_output_path",
+      "image_source_path",
+      "local_preview_template",
+      "png_number_of_colors",
+      "jpg_quality",
+      "headline",
+      "leadin",
+      "notes",
+      "sources",
+      "credit"
+    ],
+    
+    // list of settings to include in the config.yml file
+    "config_file": [
+      "headline",
+      "leadin",
+      "summary",
+      "notes",
+      "sources",
+      "credit"
+    ]
+  };
+  
+  
+  // These settings override the default settings in NYT preview/birdkit projects
+  var nytOverrideSettings = {
+    "image_source_path": "_assets/", // path for <img src="">
+    "use_lazy_loader": true,
+    "include_resizer_script": true,
+    "min_width": 280, // added as workaround for a scoop bug affecting ai2html-type graphics
+    "accessibility": true,
+    "settings_block": [
+      "settings_version",
+      "responsiveness",
+      "image_format",
+      // "write_image_files",
+      // "max_width",
+      "png_transparent",
+      "png_number_of_colors",
+      "jpg_quality",
+      "inline_svg",
+      "output"
+      // "clickable_link"
+      // "use_lazy_loader"
+    ],
+    
+    "config_file": []
+  };
+  
+  var nytPreviewSettings = {
+    "project_type": "nyt-preview",
+    "html_output_path": "../src/",
+    "image_output_path": "../public/_assets/"
+  };
+  
+  var nytBirdkitSettings = {
+    "project_type": "freebird",
+    "html_output_path": "../src/lib/graphics/",
+    "image_output_path": "../public/_assets/"
+  };
+  
+  var nytBirdkitEmbedSettings = {
+    "project_type": "ai2html",
+    "html_output_path": "../public/",
+    "image_output_path": "../public/_assets/",
+    "dark_mode_compatible": false,
+    "create_json_config_files": true,
+    "create_promo_image": false,
+    "credit": "By The New York Times",
+    "aria_role": "img",
+    "alt_text": "",
+    "page_template": "vi-article-embed",
+    "display_for_promotion_only": false,
+    "section": "",
+    "size": "full", // changed from "medium" to "full"
+    
+    "settings_block": [
+      "settings_version",
+      "responsiveness",
+      "alt_text",
+      "max_width",
+      "image_format",
+      "png_number_of_colors",
+      "jpg_quality",
+      "last_updated_text",
+      "section",
+      "headline",
+      "leadin",
+      "summary",
+      "notes",
+      "sources",
+      "credit",
+      "display_for_promotion_only",
+      "dark_mode_compatible",
+      "size"
+    ],
+    "config_file": [
+      "last_updated_text",
+      "alt_text",
+      "section",
+      "headline",
+      "leadin",
+      "summary",
+      "notes",
+      "sources",
+      "credit",
+      "page_template",
+      "display_for_promotion_only",
+      "size"
+    ]
+  };
+  
+  // Override settings for simple NYT Preview ai2html embed graphics
+  var nytPreviewEmbedSettings = {
+    "project_type": "ai2html",
+    "html_output_path": "../public/",
+    "image_output_path": "../public/_assets/",
+    "dark_mode_compatible": false,
+    "create_config_file": true,
+    "config_file_path": "../config.yml",
+    "create_promo_image": true,
+    "credit": "By The New York Times",
+    "aria_role": "img",
+    "alt_text": "",
+    "publish_system": "scoop",
+    "page_template": "vi-article-embed",
+    "environment": "production",
+    "show_in_compatible_apps": true,
+    "display_for_promotion_only": false,
+    "constrain_width_to_text_column": false,
+    "compatibility": "inline",
+    "size": "full", // changed from "medium" to "full"
+    "scoop_publish_fields": true,
+    "scoop_asset_id": "",
+    "scoop_username": "",
+    "scoop_slug": "",
+    "scoop_external_edit_key": "",
+    
+    "settings_block": [
+      "settings_version",
+      "responsiveness",
+      "alt_text",
+      "max_width",
+      "image_format",
+      // "write_image_files",
+      // "output",
+      "png_number_of_colors",
+      "jpg_quality",
+      // "use_lazy_loader",
+      // "show_completion_dialog_box",
+      "last_updated_text",
+      "headline",
+      "leadin",
+      "summary",
+      "notes",
+      "sources",
+      "credit",
+      "show_in_compatible_apps",
+      "display_for_promotion_only",
+      "constrain_width_to_text_column",
+      "dark_mode_compatible",
+      "size",
+      "scoop_asset_id",
+      "scoop_username",
+      "scoop_slug",
+      "scoop_external_edit_key"
+    ],
+    "config_file": [
+      "last_updated_text",
+      "headline",
+      "leadin",
+      "summary",
+      "notes",
+      "sources",
+      "credit",
+      "page_template",
+      "publish_system",
+      "environment",
+      "show_in_compatible_apps",
+      "display_for_promotion_only",
+      "constrain_width_to_text_column",
+      "compatibility",
+      "size",
+      "scoop_publish_fields",
+      "scoop_asset_id",
+      "scoop_username",
+      "scoop_slug",
+      "scoop_external_edit_key"
+    ]
+  };
+  
+  // Rules for converting AI fonts to CSS
+  // vshift shifts text vertically, to compensate for vertical misalignment caused
+  // by a difference between vertical placement in Illustrator (of a system font) and
+  // browsers (of the web font equivalent). vshift values are percentage of font size. Positive
+  // values correspond to a downward shift.
+  var fonts = [
+    {"aifont": "ArialMT", "family": "arial,helvetica,sans-serif", "weight": "", "style": ""},
+    {"aifont": "Arial-BoldMT", "family": "arial,helvetica,sans-serif", "weight": "bold", "style": ""},
+    {"aifont": "Arial-ItalicMT", "family": "arial,helvetica,sans-serif", "weight": "", "style": "italic"},
+    {"aifont": "Arial-BoldItalicMT", "family": "arial,helvetica,sans-serif", "weight": "bold", "style": "italic"},
+    {"aifont": "Georgia", "family": "georgia,'times new roman',times,serif", "weight": "", "style": ""},
+    {"aifont": "Georgia-Bold", "family": "georgia,'times new roman',times,serif", "weight": "bold", "style": ""},
+    {"aifont": "Georgia-Italic", "family": "georgia,'times new roman',times,serif", "weight": "", "style": "italic"},
+    {
+      "aifont": "Georgia-BoldItalic",
+      "family": "georgia,'times new roman',times,serif",
+      "weight": "bold",
+      "style": "italic"
+    },
+    // NYT fonts
+    {
+      "aifont": "NYTFranklin-Light",
+      "family": "nyt-franklin,arial,helvetica,sans-serif",
+      "weight": "300",
+      "style": "",
+      "vshift": "8%"
+    },
+    {
+      "aifont": "NYTFranklin-Medium",
+      "family": "nyt-franklin,arial,helvetica,sans-serif",
+      "weight": "500",
+      "style": "",
+      "vshift": "8%"
+    },
+    {
+      "aifont": "NYTFranklin-SemiBold",
+      "family": "nyt-franklin,arial,helvetica,sans-serif",
+      "weight": "600",
+      "style": "",
+      "vshift": "8%"
+    },
+    {
+      "aifont": "NYTFranklin-Semibold",
+      "family": "nyt-franklin,arial,helvetica,sans-serif",
+      "weight": "600",
+      "style": "",
+      "vshift": "8%"
+    },
+    {
+      "aifont": "NYTFranklinSemiBold-Regular",
+      "family": "nyt-franklin,arial,helvetica,sans-serif",
+      "weight": "600",
+      "style": "",
+      "vshift": "8%"
+    },
+    {
+      "aifont": "NYTFranklin-SemiboldItalic",
+      "family": "nyt-franklin,arial,helvetica,sans-serif",
+      "weight": "600",
+      "style": "italic",
+      "vshift": "8%"
+    },
+    {
+      "aifont": "NYTFranklin-Bold",
+      "family": "nyt-franklin,arial,helvetica,sans-serif",
+      "weight": "700",
+      "style": "",
+      "vshift": "8%"
+    },
+    {
+      "aifont": "NYTFranklin-LightItalic",
+      "family": "nyt-franklin,arial,helvetica,sans-serif",
+      "weight": "300",
+      "style": "italic",
+      "vshift": "8%"
+    },
+    {
+      "aifont": "NYTFranklin-MediumItalic",
+      "family": "nyt-franklin,arial,helvetica,sans-serif",
+      "weight": "500",
+      "style": "italic",
+      "vshift": "8%"
+    },
+    {
+      "aifont": "NYTFranklin-BoldItalic",
+      "family": "nyt-franklin,arial,helvetica,sans-serif",
+      "weight": "700",
+      "style": "italic",
+      "vshift": "8%"
+    },
+    {
+      "aifont": "NYTFranklin-ExtraBold",
+      "family": "nyt-franklin,arial,helvetica,sans-serif",
+      "weight": "800",
+      "style": "",
+      "vshift": "8%"
+    },
+    {
+      "aifont": "NYTFranklin-ExtraBoldItalic",
+      "family": "nyt-franklin,arial,helvetica,sans-serif",
+      "weight": "800",
+      "style": "italic",
+      "vshift": "8%"
+    },
+    {
+      "aifont": "NYTFranklin-Headline",
+      "family": "nyt-franklin,arial,helvetica,sans-serif",
+      "weight": "bold",
+      "style": "",
+      "vshift": "8%"
+    },
+    {
+      "aifont": "NYTFranklin-HeadlineItalic",
+      "family": "nyt-franklin,arial,helvetica,sans-serif",
+      "weight": "bold",
+      "style": "italic",
+      "vshift": "8%"
+    },
+    // Chelt.
+    {"aifont": "NYTCheltenham-ExtraLight", "family": "nyt-cheltenham,georgia,serif", "weight": "200", "style": ""},
+    {"aifont": "NYTCheltenhamExtLt-Regular", "family": "nyt-cheltenham,georgia,serif", "weight": "200", "style": ""},
+    {"aifont": "NYTCheltenham-Light", "family": "nyt-cheltenham,georgia,serif", "weight": "300", "style": ""},
+    {"aifont": "NYTCheltenhamLt-Regular", "family": "nyt-cheltenham,georgia,serif", "weight": "300", "style": ""},
+    {"aifont": "NYTCheltenham-LightSC", "family": "nyt-cheltenham,georgia,serif", "weight": "300", "style": ""},
+    {"aifont": "NYTCheltenham-Book", "family": "nyt-cheltenham,georgia,serif", "weight": "400", "style": ""},
+    {"aifont": "NYTCheltenhamBook-Regular", "family": "nyt-cheltenham,georgia,serif", "weight": "400", "style": ""},
+    {"aifont": "NYTCheltenham-Wide", "family": "nyt-cheltenham,georgia,serif", "weight": "", "style": ""},
+    {"aifont": "NYTCheltenhamMedium-Regular", "family": "nyt-cheltenham,georgia,serif", "weight": "500", "style": ""},
+    {"aifont": "NYTCheltenham-Medium", "family": "nyt-cheltenham,georgia,serif", "weight": "500", "style": ""},
+    {"aifont": "NYTCheltenham-Bold", "family": "nyt-cheltenham,georgia,serif", "weight": "700", "style": ""},
+    {"aifont": "NYTCheltenham-BoldCond", "family": "nyt-cheltenham,georgia,serif", "weight": "bold", "style": ""},
+    {
+      "aifont": "NYTCheltenhamCond-BoldXC",
+      "family": "nyt-cheltenham-extra-cn-bd,georgia,serif",
+      "weight": "bold",
+      "style": ""
+    },
+    {"aifont": "NYTCheltenham-BoldExtraCond", "family": "nyt-cheltenham,georgia,serif", "weight": "bold", "style": ""},
+    {"aifont": "NYTCheltenham-ExtraBold", "family": "nyt-cheltenham,georgia,serif", "weight": "bold", "style": ""},
+    {"aifont": "NYTCheltenham-ExtraLightIt", "family": "nyt-cheltenham,georgia,serif", "weight": "", "style": "italic"},
+    {
+      "aifont": "NYTCheltenham-ExtraLightItal",
+      "family": "nyt-cheltenham,georgia,serif",
+      "weight": "",
+      "style": "italic"
+    },
+    {"aifont": "NYTCheltenham-LightItalic", "family": "nyt-cheltenham,georgia,serif", "weight": "", "style": "italic"},
+    {"aifont": "NYTCheltenham-BookItalic", "family": "nyt-cheltenham,georgia,serif", "weight": "", "style": "italic"},
+    {"aifont": "NYTCheltenham-WideItalic", "family": "nyt-cheltenham,georgia,serif", "weight": "", "style": "italic"},
+    {"aifont": "NYTCheltenham-MediumItalic", "family": "nyt-cheltenham,georgia,serif", "weight": "", "style": "italic"},
+    {
+      "aifont": "NYTCheltenham-BoldItalic",
+      "family": "nyt-cheltenham,georgia,serif",
+      "weight": "700",
+      "style": "italic"
+    },
+    {
+      "aifont": "NYTCheltenham-ExtraBoldItal",
+      "family": "nyt-cheltenham,georgia,serif",
+      "weight": "bold",
+      "style": "italic"
+    },
+    {
+      "aifont": "NYTCheltenham-ExtraBoldItalic",
+      "family": "nyt-cheltenham,georgia,serif",
+      "weight": "bold",
+      "style": "italic"
+    },
+    {
+      "aifont": "NYTCheltenhamSH-Regular",
+      "family": "nyt-cheltenham-sh,nyt-cheltenham,georgia,serif",
+      "weight": "400",
+      "style": ""
+    },
+    {
+      "aifont": "NYTCheltenhamSH-Italic",
+      "family": "nyt-cheltenham-sh,nyt-cheltenham,georgia,serif",
+      "weight": "400",
+      "style": "italic"
+    },
+    {
+      "aifont": "NYTCheltenhamSH-Bold",
+      "family": "nyt-cheltenham-sh,nyt-cheltenham,georgia,serif",
+      "weight": "700",
+      "style": ""
+    },
+    {
+      "aifont": "NYTCheltenhamSH-BoldItalic",
+      "family": "nyt-cheltenham-sh,nyt-cheltenham,georgia,serif",
+      "weight": "700",
+      "style": "italic"
+    },
+    {"aifont": "NYTCheltenhamWide-Regular", "family": "nyt-cheltenham,georgia,serif", "weight": "500", "style": ""},
+    {
+      "aifont": "NYTCheltenhamWide-Italic",
+      "family": "nyt-cheltenham,georgia,serif",
+      "weight": "500",
+      "style": "italic"
+    },
+    // Imperial
+    {"aifont": "NYTImperial-Regular", "family": "nyt-imperial,georgia,serif", "weight": "400", "style": ""},
+    {"aifont": "NYTImperial-Italic", "family": "nyt-imperial,georgia,serif", "weight": "400", "style": "italic"},
+    {"aifont": "NYTImperial-Semibold", "family": "nyt-imperial,georgia,serif", "weight": "600", "style": ""},
+    {
+      "aifont": "NYTImperial-SemiboldItalic",
+      "family": "nyt-imperial,georgia,serif",
+      "weight": "600",
+      "style": "italic"
+    },
+    {"aifont": "NYTImperial-Bold", "family": "nyt-imperial,georgia,serif", "weight": "700", "style": ""},
+    {"aifont": "NYTImperial-BoldItalic", "family": "nyt-imperial,georgia,serif", "weight": "700", "style": "italic"},
+    // Others
+    {
+      "aifont": "NYTKarnakText-Regular",
+      "family": "nyt-karnak-display-130124,georgia,serif",
+      "weight": "400",
+      "style": ""
+    },
+    {
+      "aifont": "NYTKarnakDisplay-Regular",
+      "family": "nyt-karnak-display-130124,georgia,serif",
+      "weight": "400",
+      "style": ""
+    },
+    {
+      "aifont": "NYTStymieLight-Regular",
+      "family": "nyt-stymie,arial,helvetica,sans-serif",
+      "weight": "300",
+      "style": ""
+    },
+    {
+      "aifont": "NYTStymieMedium-Regular",
+      "family": "nyt-stymie,arial,helvetica,sans-serif",
+      "weight": "500",
+      "style": ""
+    },
+    {"aifont": "StymieNYT-Light", "family": "nyt-stymie,arial,helvetica,sans-serif", "weight": "300", "style": ""},
+    {
+      "aifont": "StymieNYT-LightPhoenetic",
+      "family": "nyt-stymie,arial,helvetica,sans-serif",
+      "weight": "300",
+      "style": ""
+    },
+    {
+      "aifont": "StymieNYT-Lightitalic",
+      "family": "nyt-stymie,arial,helvetica,sans-serif",
+      "weight": "300",
+      "style": "italic"
+    },
+    {"aifont": "StymieNYT-Medium", "family": "nyt-stymie,arial,helvetica,sans-serif", "weight": "500", "style": ""},
+    {
+      "aifont": "StymieNYT-MediumItalic",
+      "family": "nyt-stymie,arial,helvetica,sans-serif",
+      "weight": "500",
+      "style": "italic"
+    },
+    {"aifont": "StymieNYT-Bold", "family": "nyt-stymie,arial,helvetica,sans-serif", "weight": "700", "style": ""},
+    {
+      "aifont": "StymieNYT-BoldItalic",
+      "family": "nyt-stymie,arial,helvetica,sans-serif",
+      "weight": "700",
+      "style": "italic"
+    },
+    {"aifont": "StymieNYT-ExtraBold", "family": "nyt-stymie,arial,helvetica,sans-serif", "weight": "700", "style": ""},
+    {
+      "aifont": "StymieNYT-ExtraBoldText",
+      "family": "nyt-stymie,arial,helvetica,sans-serif",
+      "weight": "700",
+      "style": ""
+    },
+    {
+      "aifont": "StymieNYT-ExtraBoldTextItal",
+      "family": "nyt-stymie,arial,helvetica,sans-serif",
+      "weight": "700",
+      "style": "italic"
+    },
+    {
+      "aifont": "StymieNYTBlack-Regular",
+      "family": "nyt-stymie,arial,helvetica,sans-serif",
+      "weight": "700",
+      "style": ""
+    },
+    {"aifont": "StymieBT-ExtraBold", "family": "nyt-stymie,arial,helvetica,sans-serif", "weight": "700", "style": ""},
+    {"aifont": "Stymie-Thin", "family": "nyt-stymie,arial,helvetica,sans-serif", "weight": "300", "style": ""},
+    {"aifont": "Stymie-UltraLight", "family": "nyt-stymie,arial,helvetica,sans-serif", "weight": "300", "style": ""},
+    {
+      "aifont": "NYTMagSans-Regular",
+      "family": "'nyt-magsans',arial,helvetica,sans-serif",
+      "weight": "500",
+      "style": ""
+    },
+    {"aifont": "NYTMagSans-Bold", "family": "'nyt-magsans',arial,helvetica,sans-serif", "weight": "700", "style": ""}
+  ];
+  
+  // ================================================
+  // Constant data
+  // ================================================
+  
+  // CSS text-transform equivalents
+  var caps = [
+    {"ai": "FontCapsOption.NORMALCAPS", "html": "none"},
+    {"ai": "FontCapsOption.ALLCAPS", "html": "uppercase"},
+    {"ai": "FontCapsOption.SMALLCAPS", "html": "uppercase"}
+  ];
+  
+  // CSS text-align equivalents
+  var align = [
+    {"ai": "Justification.LEFT", "html": "left"},
+    {"ai": "Justification.RIGHT", "html": "right"},
+    {"ai": "Justification.CENTER", "html": "center"},
+    {"ai": "Justification.FULLJUSTIFY", "html": "justify"},
+    {"ai": "Justification.FULLJUSTIFYLASTLINELEFT", "html": "justify"},
+    {"ai": "Justification.FULLJUSTIFYLASTLINECENTER", "html": "justify"},
+    {"ai": "Justification.FULLJUSTIFYLASTLINERIGHT", "html": "justify"}
+  ];
+  
+  var blendModes = [
+    {ai: "BlendModes.MULTIPLY", html: "multiply"}
+  ];
+  
+  // list of CSS properties used for translating AI text styles
+  // (used for creating a unique identifier for each style)
+  var cssTextStyleProperties = [
+    //'top' // used with vshift; not independent of other properties
+    'position',
+    'font-family',
+    'font-size',
+    'font-weight',
+    'font-style',
+    'color',
+    'line-height',
+    'height', // used for point-type paragraph styles
+    'letter-spacing',
+    'opacity',
+    'padding-top',
+    'padding-bottom',
+    'text-align',
+    'text-transform',
+    'mix-blend-mode',
+    'vertical-align' // for superscript
+  ];
+  
+  var cssPrecision = 4;
+  
+  
+  AI2HTML.defaults = {
+    scriptVersion: scriptVersion,
+    defaultSettings: defaultSettings,
+    nytOverrideSettings: nytOverrideSettings,
+    nytPreviewSettings: nytPreviewSettings,
+    nytBirdkitSettings: nytBirdkitSettings,
+    nytBirdkitEmbedSettings: nytBirdkitEmbedSettings,
+    nytPreviewEmbedSettings: nytPreviewEmbedSettings,
+    fonts: fonts,
+    caps: caps,
+    align: align,
+    blendModes: blendModes,
+    cssTextStyleProperties: cssTextStyleProperties,
+    cssPrecision: cssPrecision
+  };
+  
+})();
+
+// adds Globally namespaced utility functions
 
 // adds JSON.stringify and JSON.parse to the global scope
-function initJSON() {
+/** @global */
+var JSON;
+(function() {
   // Minified json2.js from https://github.com/douglascrockford/JSON-js
   // This code is in the public domain.
   // eslint-disable-next-line
   if(typeof JSON!=="object"){JSON={}}(function(){"use strict";var rx_one=/^[\],:{}\s]*$/;var rx_two=/\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g;var rx_three=/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g;var rx_four=/(?:^|:|,)(?:\s*\[)+/g;var rx_escapable=/[\\"\u0000-\u001f\u007f-\u009f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;var rx_dangerous=/[\u0000\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;function f(n){return n<10?"0"+n:n}function this_value(){return this.valueOf()}if(typeof Date.prototype.toJSON!=="function"){Date.prototype.toJSON=function(){return isFinite(this.valueOf())?this.getUTCFullYear()+"-"+f(this.getUTCMonth()+1)+"-"+f(this.getUTCDate())+"T"+f(this.getUTCHours())+":"+f(this.getUTCMinutes())+":"+f(this.getUTCSeconds())+"Z":null};Boolean.prototype.toJSON=this_value;Number.prototype.toJSON=this_value;String.prototype.toJSON=this_value}var gap;var indent;var meta;var rep;function quote(string){rx_escapable.lastIndex=0;return rx_escapable.test(string)?'"'+string.replace(rx_escapable,function(a){var c=meta[a];return typeof c==="string"?c:"\\u"+("0000"+a.charCodeAt(0).toString(16)).slice(-4)})+'"':'"'+string+'"'}function str(key,holder){var i;var k;var v;var length;var mind=gap;var partial;var value=holder[key];if(value&&typeof value==="object"&&typeof value.toJSON==="function"){value=value.toJSON(key)}if(typeof rep==="function"){value=rep.call(holder,key,value)}switch(typeof value){case"string":return quote(value);case"number":return isFinite(value)?String(value):"null";case"boolean":case"null":return String(value);case"object":if(!value){return"null"}gap+=indent;partial=[];if(Object.prototype.toString.apply(value)==="[object Array]"){length=value.length;for(i=0;i<length;i+=1){partial[i]=str(i,value)||"null"}v=partial.length===0?"[]":gap?"[\n"+gap+partial.join(",\n"+gap)+"\n"+mind+"]":"["+partial.join(",")+"]";gap=mind;return v}if(rep&&typeof rep==="object"){length=rep.length;for(i=0;i<length;i+=1){if(typeof rep[i]==="string"){k=rep[i];v=str(k,value);if(v){partial.push(quote(k)+(gap?": ":":")+v)}}}}else{for(k in value){if(Object.prototype.hasOwnProperty.call(value,k)){v=str(k,value);if(v){partial.push(quote(k)+(gap?": ":":")+v)}}}}v=partial.length===0?"{}":gap?"{\n"+gap+partial.join(",\n"+gap)+"\n"+mind+"}":"{"+partial.join(",")+"}";gap=mind;return v}}if(typeof JSON.stringify!=="function"){meta={"\b":"\\b","\t":"\\t","\n":"\\n","\f":"\\f","\r":"\\r",'"':'\\"',"\\":"\\\\"};JSON.stringify=function(value,replacer,space){var i;gap="";indent="";if(typeof space==="number"){for(i=0;i<space;i+=1){indent+=" "}}else if(typeof space==="string"){indent=space}rep=replacer;if(replacer&&typeof replacer!=="function"&&(typeof replacer!=="object"||typeof replacer.length!=="number")){throw new Error("JSON.stringify")}return str("",{"":value})}}if(typeof JSON.parse!=="function"){JSON.parse=function(text,reviver){var j;function walk(holder,key){var k;var v;var value=holder[key];if(value&&typeof value==="object"){for(k in value){if(Object.prototype.hasOwnProperty.call(value,k)){v=walk(value,k);if(v!==undefined){value[k]=v}else{delete value[k]}}}}return reviver.call(holder,key,value)}text=String(text);rx_dangerous.lastIndex=0;if(rx_dangerous.test(text)){text=text.replace(rx_dangerous,function(a){return"\\u"+("0000"+a.charCodeAt(0).toString(16)).slice(-4)})}if(rx_one.test(text.replace(rx_two,"@").replace(rx_three,"]").replace(rx_four,""))){j=eval("("+text+")");return typeof reviver==="function"?walk({"":j},""):j}throw new SyntaxError("JSON.parse")}}})(); // jshint ignore:line
-}
-initJSON();
+})();
 
 
 // Simple interface to help find performance bottlenecks. Usage:
@@ -370,625 +1032,6 @@ _.isFalse = function(val) {
 }
 
 
-
-AI2HTML = AI2HTML || {};
-/** @global */
-AI2HTML.defaults = AI2HTML.defaults || {};
-
-(function() {
-  // How to update the version number:
-  // - Increment middle digit for new functionality or breaking changes
-  //      or increment final digit for simple bug fixes or other minor changes.
-  // - Update the version number in package.json
-  // - Add an entry to CHANGELOG.md
-  // - Run 'npm publish' to create a new GitHub release
-  var scriptVersion = '0.120.0';
-
-  // ================================================
-  // ai2html and config settings
-  // ================================================
-  
-  // These are base settings that are overridden by text block settings in
-  // the .ai document and settings contained in ai2html-config.json files
-  var defaultSettings = {
-    "namespace": "g-",
-    "settings_version": scriptVersion,
-    "create_promo_image": false,
-    "promo_image_width": 1024,
-    "image_format": ["auto"],  // Options: auto, png, png24, jpg, svg
-    "write_image_files": true,
-    "responsiveness": "fixed", // Options: fixed, dynamic
-    "max_width": "",
-    "output": "one-file",      // Options: one-file, multiple-files
-    "project_name": "",        // Defaults to the name of the AI file
-    "html_output_path": "ai2html-output/",
-    "html_output_extension": ".html",
-    "image_output_path": "ai2html-output/",
-    "image_source_path": "",
-    "image_alt_text": "", // Generally, use alt_text instead
-    "cache_bust_token": null,  // Append a token to the url of image urls: ?v=<cache_bust_token>
-    "create_config_file": false,
-    "create_settings_block": true, // Create a text block in the AI doc with common settings
-    "config_file_path": "",
-    "local_preview_template": "",
-    "png_transparent": false,
-    "png_number_of_colors": 128, // Number of colors in 8-bit PNG image (1-256)
-    "jpg_quality": 60,
-    "center_html_output": true,
-    "use_2x_images_if_possible": true,
-    "use_lazy_loader": false,
-    "include_resizer_classes": false, // Triggers an error (feature was removed)
-    "include_resizer_widths": true,
-    "include_resizer_script": false,
-    "inline_svg": false, // Embed background image SVG in HTML instead of loading a file
-    "svg_id_prefix": "", // Prefix SVG ids with a string to disambiguate from other ids on the page
-    "svg_embed_images": false,
-    "render_text_as": "html", // Options: html, image
-    "render_rotated_skewed_text_as": "html", // Options: html, image
-    "testing_mode": false,  // Render text in both bg image and HTML to test HTML text placement
-    "show_completion_dialog_box": true,
-    "clickable_link": "",  // Add a URL to make the entire graphic a clickable link
-    "last_updated_text": "",
-    "headline": "",
-    "leadin": "",
-    "summary": "",
-    "notes": "",
-    "sources": "",
-    "credit": "",
-    
-    // List of settings to include in the "ai2html-settings" text block
-    "settings_block": [
-      "settings_version",
-      "image_format",
-      "responsiveness",
-      "include_resizer_script",
-      "use_lazy_loader",
-      "output",
-      "html_output_path",
-      // "html_output_extension", // removed from settings block in v0.115.6
-      "image_output_path",
-      "image_source_path",
-      "local_preview_template",
-      "png_number_of_colors",
-      "jpg_quality",
-      "headline",
-      "leadin",
-      "notes",
-      "sources",
-      "credit"
-    ],
-    
-    // list of settings to include in the config.yml file
-    "config_file": [
-      "headline",
-      "leadin",
-      "summary",
-      "notes",
-      "sources",
-      "credit"
-    ]
-  };
-
-
-  // These settings override the default settings in NYT preview/birdkit projects
-  var nytOverrideSettings = {
-    "image_source_path": "_assets/", // path for <img src="">
-    "use_lazy_loader": true,
-    "include_resizer_script": true,
-    "min_width": 280, // added as workaround for a scoop bug affecting ai2html-type graphics
-    "accessibility": true,
-    "settings_block": [
-      "settings_version",
-      "responsiveness",
-      "image_format",
-      // "write_image_files",
-      // "max_width",
-      "png_transparent",
-      "png_number_of_colors",
-      "jpg_quality",
-      "inline_svg",
-      "output"
-      // "clickable_link"
-      // "use_lazy_loader"
-    ],
-    
-    "config_file": []
-  };
-  
-  var nytPreviewSettings = {
-    "project_type": "nyt-preview",
-    "html_output_path": "../src/",
-    "image_output_path": "../public/_assets/"
-  };
-  
-  var nytBirdkitSettings = {
-    "project_type": "freebird",
-    "html_output_path": "../src/lib/graphics/",
-    "image_output_path": "../public/_assets/"
-  };
-  
-  var nytBirdkitEmbedSettings = {
-    "project_type": "ai2html",
-    "html_output_path": "../public/",
-    "image_output_path": "../public/_assets/",
-    "dark_mode_compatible": false,
-    "create_json_config_files": true,
-    "create_promo_image": false,
-    "credit": "By The New York Times",
-    "aria_role": "img",
-    "alt_text": "",
-    "page_template": "vi-article-embed",
-    "display_for_promotion_only": false,
-    "section": "",
-    "size": "full", // changed from "medium" to "full"
-    
-    "settings_block": [
-      "settings_version",
-      "responsiveness",
-      "alt_text",
-      "max_width",
-      "image_format",
-      "png_number_of_colors",
-      "jpg_quality",
-      "last_updated_text",
-      "section",
-      "headline",
-      "leadin",
-      "summary",
-      "notes",
-      "sources",
-      "credit",
-      "display_for_promotion_only",
-      "dark_mode_compatible",
-      "size"
-    ],
-    "config_file": [
-      "last_updated_text",
-      "alt_text",
-      "section",
-      "headline",
-      "leadin",
-      "summary",
-      "notes",
-      "sources",
-      "credit",
-      "page_template",
-      "display_for_promotion_only",
-      "size"
-    ]
-  };
-
-  // Override settings for simple NYT Preview ai2html embed graphics
-  var nytPreviewEmbedSettings = {
-    "project_type": "ai2html",
-    "html_output_path": "../public/",
-    "image_output_path": "../public/_assets/",
-    "dark_mode_compatible": false,
-    "create_config_file": true,
-    "config_file_path": "../config.yml",
-    "create_promo_image": true,
-    "credit": "By The New York Times",
-    "aria_role": "img",
-    "alt_text": "",
-    "publish_system": "scoop",
-    "page_template": "vi-article-embed",
-    "environment": "production",
-    "show_in_compatible_apps": true,
-    "display_for_promotion_only": false,
-    "constrain_width_to_text_column": false,
-    "compatibility": "inline",
-    "size": "full", // changed from "medium" to "full"
-    "scoop_publish_fields": true,
-    "scoop_asset_id": "",
-    "scoop_username": "",
-    "scoop_slug": "",
-    "scoop_external_edit_key": "",
-    
-    "settings_block": [
-      "settings_version",
-      "responsiveness",
-      "alt_text",
-      "max_width",
-      "image_format",
-      // "write_image_files",
-      // "output",
-      "png_number_of_colors",
-      "jpg_quality",
-      // "use_lazy_loader",
-      // "show_completion_dialog_box",
-      "last_updated_text",
-      "headline",
-      "leadin",
-      "summary",
-      "notes",
-      "sources",
-      "credit",
-      "show_in_compatible_apps",
-      "display_for_promotion_only",
-      "constrain_width_to_text_column",
-      "dark_mode_compatible",
-      "size",
-      "scoop_asset_id",
-      "scoop_username",
-      "scoop_slug",
-      "scoop_external_edit_key"
-    ],
-    "config_file": [
-      "last_updated_text",
-      "headline",
-      "leadin",
-      "summary",
-      "notes",
-      "sources",
-      "credit",
-      "page_template",
-      "publish_system",
-      "environment",
-      "show_in_compatible_apps",
-      "display_for_promotion_only",
-      "constrain_width_to_text_column",
-      "compatibility",
-      "size",
-      "scoop_publish_fields",
-      "scoop_asset_id",
-      "scoop_username",
-      "scoop_slug",
-      "scoop_external_edit_key"
-    ]
-  };
-
-  // Rules for converting AI fonts to CSS
-  // vshift shifts text vertically, to compensate for vertical misalignment caused
-  // by a difference between vertical placement in Illustrator (of a system font) and
-  // browsers (of the web font equivalent). vshift values are percentage of font size. Positive
-  // values correspond to a downward shift.
-  var fonts = [
-    {"aifont": "ArialMT", "family": "arial,helvetica,sans-serif", "weight": "", "style": ""},
-    {"aifont": "Arial-BoldMT", "family": "arial,helvetica,sans-serif", "weight": "bold", "style": ""},
-    {"aifont": "Arial-ItalicMT", "family": "arial,helvetica,sans-serif", "weight": "", "style": "italic"},
-    {"aifont": "Arial-BoldItalicMT", "family": "arial,helvetica,sans-serif", "weight": "bold", "style": "italic"},
-    {"aifont": "Georgia", "family": "georgia,'times new roman',times,serif", "weight": "", "style": ""},
-    {"aifont": "Georgia-Bold", "family": "georgia,'times new roman',times,serif", "weight": "bold", "style": ""},
-    {"aifont": "Georgia-Italic", "family": "georgia,'times new roman',times,serif", "weight": "", "style": "italic"},
-    {
-      "aifont": "Georgia-BoldItalic",
-      "family": "georgia,'times new roman',times,serif",
-      "weight": "bold",
-      "style": "italic"
-    },
-    // NYT fonts
-    {
-      "aifont": "NYTFranklin-Light",
-      "family": "nyt-franklin,arial,helvetica,sans-serif",
-      "weight": "300",
-      "style": "",
-      "vshift": "8%"
-    },
-    {
-      "aifont": "NYTFranklin-Medium",
-      "family": "nyt-franklin,arial,helvetica,sans-serif",
-      "weight": "500",
-      "style": "",
-      "vshift": "8%"
-    },
-    {
-      "aifont": "NYTFranklin-SemiBold",
-      "family": "nyt-franklin,arial,helvetica,sans-serif",
-      "weight": "600",
-      "style": "",
-      "vshift": "8%"
-    },
-    {
-      "aifont": "NYTFranklin-Semibold",
-      "family": "nyt-franklin,arial,helvetica,sans-serif",
-      "weight": "600",
-      "style": "",
-      "vshift": "8%"
-    },
-    {
-      "aifont": "NYTFranklinSemiBold-Regular",
-      "family": "nyt-franklin,arial,helvetica,sans-serif",
-      "weight": "600",
-      "style": "",
-      "vshift": "8%"
-    },
-    {
-      "aifont": "NYTFranklin-SemiboldItalic",
-      "family": "nyt-franklin,arial,helvetica,sans-serif",
-      "weight": "600",
-      "style": "italic",
-      "vshift": "8%"
-    },
-    {
-      "aifont": "NYTFranklin-Bold",
-      "family": "nyt-franklin,arial,helvetica,sans-serif",
-      "weight": "700",
-      "style": "",
-      "vshift": "8%"
-    },
-    {
-      "aifont": "NYTFranklin-LightItalic",
-      "family": "nyt-franklin,arial,helvetica,sans-serif",
-      "weight": "300",
-      "style": "italic",
-      "vshift": "8%"
-    },
-    {
-      "aifont": "NYTFranklin-MediumItalic",
-      "family": "nyt-franklin,arial,helvetica,sans-serif",
-      "weight": "500",
-      "style": "italic",
-      "vshift": "8%"
-    },
-    {
-      "aifont": "NYTFranklin-BoldItalic",
-      "family": "nyt-franklin,arial,helvetica,sans-serif",
-      "weight": "700",
-      "style": "italic",
-      "vshift": "8%"
-    },
-    {
-      "aifont": "NYTFranklin-ExtraBold",
-      "family": "nyt-franklin,arial,helvetica,sans-serif",
-      "weight": "800",
-      "style": "",
-      "vshift": "8%"
-    },
-    {
-      "aifont": "NYTFranklin-ExtraBoldItalic",
-      "family": "nyt-franklin,arial,helvetica,sans-serif",
-      "weight": "800",
-      "style": "italic",
-      "vshift": "8%"
-    },
-    {
-      "aifont": "NYTFranklin-Headline",
-      "family": "nyt-franklin,arial,helvetica,sans-serif",
-      "weight": "bold",
-      "style": "",
-      "vshift": "8%"
-    },
-    {
-      "aifont": "NYTFranklin-HeadlineItalic",
-      "family": "nyt-franklin,arial,helvetica,sans-serif",
-      "weight": "bold",
-      "style": "italic",
-      "vshift": "8%"
-    },
-    // Chelt.
-    {"aifont": "NYTCheltenham-ExtraLight", "family": "nyt-cheltenham,georgia,serif", "weight": "200", "style": ""},
-    {"aifont": "NYTCheltenhamExtLt-Regular", "family": "nyt-cheltenham,georgia,serif", "weight": "200", "style": ""},
-    {"aifont": "NYTCheltenham-Light", "family": "nyt-cheltenham,georgia,serif", "weight": "300", "style": ""},
-    {"aifont": "NYTCheltenhamLt-Regular", "family": "nyt-cheltenham,georgia,serif", "weight": "300", "style": ""},
-    {"aifont": "NYTCheltenham-LightSC", "family": "nyt-cheltenham,georgia,serif", "weight": "300", "style": ""},
-    {"aifont": "NYTCheltenham-Book", "family": "nyt-cheltenham,georgia,serif", "weight": "400", "style": ""},
-    {"aifont": "NYTCheltenhamBook-Regular", "family": "nyt-cheltenham,georgia,serif", "weight": "400", "style": ""},
-    {"aifont": "NYTCheltenham-Wide", "family": "nyt-cheltenham,georgia,serif", "weight": "", "style": ""},
-    {"aifont": "NYTCheltenhamMedium-Regular", "family": "nyt-cheltenham,georgia,serif", "weight": "500", "style": ""},
-    {"aifont": "NYTCheltenham-Medium", "family": "nyt-cheltenham,georgia,serif", "weight": "500", "style": ""},
-    {"aifont": "NYTCheltenham-Bold", "family": "nyt-cheltenham,georgia,serif", "weight": "700", "style": ""},
-    {"aifont": "NYTCheltenham-BoldCond", "family": "nyt-cheltenham,georgia,serif", "weight": "bold", "style": ""},
-    {
-      "aifont": "NYTCheltenhamCond-BoldXC",
-      "family": "nyt-cheltenham-extra-cn-bd,georgia,serif",
-      "weight": "bold",
-      "style": ""
-    },
-    {"aifont": "NYTCheltenham-BoldExtraCond", "family": "nyt-cheltenham,georgia,serif", "weight": "bold", "style": ""},
-    {"aifont": "NYTCheltenham-ExtraBold", "family": "nyt-cheltenham,georgia,serif", "weight": "bold", "style": ""},
-    {"aifont": "NYTCheltenham-ExtraLightIt", "family": "nyt-cheltenham,georgia,serif", "weight": "", "style": "italic"},
-    {
-      "aifont": "NYTCheltenham-ExtraLightItal",
-      "family": "nyt-cheltenham,georgia,serif",
-      "weight": "",
-      "style": "italic"
-    },
-    {"aifont": "NYTCheltenham-LightItalic", "family": "nyt-cheltenham,georgia,serif", "weight": "", "style": "italic"},
-    {"aifont": "NYTCheltenham-BookItalic", "family": "nyt-cheltenham,georgia,serif", "weight": "", "style": "italic"},
-    {"aifont": "NYTCheltenham-WideItalic", "family": "nyt-cheltenham,georgia,serif", "weight": "", "style": "italic"},
-    {"aifont": "NYTCheltenham-MediumItalic", "family": "nyt-cheltenham,georgia,serif", "weight": "", "style": "italic"},
-    {
-      "aifont": "NYTCheltenham-BoldItalic",
-      "family": "nyt-cheltenham,georgia,serif",
-      "weight": "700",
-      "style": "italic"
-    },
-    {
-      "aifont": "NYTCheltenham-ExtraBoldItal",
-      "family": "nyt-cheltenham,georgia,serif",
-      "weight": "bold",
-      "style": "italic"
-    },
-    {
-      "aifont": "NYTCheltenham-ExtraBoldItalic",
-      "family": "nyt-cheltenham,georgia,serif",
-      "weight": "bold",
-      "style": "italic"
-    },
-    {
-      "aifont": "NYTCheltenhamSH-Regular",
-      "family": "nyt-cheltenham-sh,nyt-cheltenham,georgia,serif",
-      "weight": "400",
-      "style": ""
-    },
-    {
-      "aifont": "NYTCheltenhamSH-Italic",
-      "family": "nyt-cheltenham-sh,nyt-cheltenham,georgia,serif",
-      "weight": "400",
-      "style": "italic"
-    },
-    {
-      "aifont": "NYTCheltenhamSH-Bold",
-      "family": "nyt-cheltenham-sh,nyt-cheltenham,georgia,serif",
-      "weight": "700",
-      "style": ""
-    },
-    {
-      "aifont": "NYTCheltenhamSH-BoldItalic",
-      "family": "nyt-cheltenham-sh,nyt-cheltenham,georgia,serif",
-      "weight": "700",
-      "style": "italic"
-    },
-    {"aifont": "NYTCheltenhamWide-Regular", "family": "nyt-cheltenham,georgia,serif", "weight": "500", "style": ""},
-    {
-      "aifont": "NYTCheltenhamWide-Italic",
-      "family": "nyt-cheltenham,georgia,serif",
-      "weight": "500",
-      "style": "italic"
-    },
-    // Imperial
-    {"aifont": "NYTImperial-Regular", "family": "nyt-imperial,georgia,serif", "weight": "400", "style": ""},
-    {"aifont": "NYTImperial-Italic", "family": "nyt-imperial,georgia,serif", "weight": "400", "style": "italic"},
-    {"aifont": "NYTImperial-Semibold", "family": "nyt-imperial,georgia,serif", "weight": "600", "style": ""},
-    {
-      "aifont": "NYTImperial-SemiboldItalic",
-      "family": "nyt-imperial,georgia,serif",
-      "weight": "600",
-      "style": "italic"
-    },
-    {"aifont": "NYTImperial-Bold", "family": "nyt-imperial,georgia,serif", "weight": "700", "style": ""},
-    {"aifont": "NYTImperial-BoldItalic", "family": "nyt-imperial,georgia,serif", "weight": "700", "style": "italic"},
-    // Others
-    {
-      "aifont": "NYTKarnakText-Regular",
-      "family": "nyt-karnak-display-130124,georgia,serif",
-      "weight": "400",
-      "style": ""
-    },
-    {
-      "aifont": "NYTKarnakDisplay-Regular",
-      "family": "nyt-karnak-display-130124,georgia,serif",
-      "weight": "400",
-      "style": ""
-    },
-    {
-      "aifont": "NYTStymieLight-Regular",
-      "family": "nyt-stymie,arial,helvetica,sans-serif",
-      "weight": "300",
-      "style": ""
-    },
-    {
-      "aifont": "NYTStymieMedium-Regular",
-      "family": "nyt-stymie,arial,helvetica,sans-serif",
-      "weight": "500",
-      "style": ""
-    },
-    {"aifont": "StymieNYT-Light", "family": "nyt-stymie,arial,helvetica,sans-serif", "weight": "300", "style": ""},
-    {
-      "aifont": "StymieNYT-LightPhoenetic",
-      "family": "nyt-stymie,arial,helvetica,sans-serif",
-      "weight": "300",
-      "style": ""
-    },
-    {
-      "aifont": "StymieNYT-Lightitalic",
-      "family": "nyt-stymie,arial,helvetica,sans-serif",
-      "weight": "300",
-      "style": "italic"
-    },
-    {"aifont": "StymieNYT-Medium", "family": "nyt-stymie,arial,helvetica,sans-serif", "weight": "500", "style": ""},
-    {
-      "aifont": "StymieNYT-MediumItalic",
-      "family": "nyt-stymie,arial,helvetica,sans-serif",
-      "weight": "500",
-      "style": "italic"
-    },
-    {"aifont": "StymieNYT-Bold", "family": "nyt-stymie,arial,helvetica,sans-serif", "weight": "700", "style": ""},
-    {
-      "aifont": "StymieNYT-BoldItalic",
-      "family": "nyt-stymie,arial,helvetica,sans-serif",
-      "weight": "700",
-      "style": "italic"
-    },
-    {"aifont": "StymieNYT-ExtraBold", "family": "nyt-stymie,arial,helvetica,sans-serif", "weight": "700", "style": ""},
-    {
-      "aifont": "StymieNYT-ExtraBoldText",
-      "family": "nyt-stymie,arial,helvetica,sans-serif",
-      "weight": "700",
-      "style": ""
-    },
-    {
-      "aifont": "StymieNYT-ExtraBoldTextItal",
-      "family": "nyt-stymie,arial,helvetica,sans-serif",
-      "weight": "700",
-      "style": "italic"
-    },
-    {
-      "aifont": "StymieNYTBlack-Regular",
-      "family": "nyt-stymie,arial,helvetica,sans-serif",
-      "weight": "700",
-      "style": ""
-    },
-    {"aifont": "StymieBT-ExtraBold", "family": "nyt-stymie,arial,helvetica,sans-serif", "weight": "700", "style": ""},
-    {"aifont": "Stymie-Thin", "family": "nyt-stymie,arial,helvetica,sans-serif", "weight": "300", "style": ""},
-    {"aifont": "Stymie-UltraLight", "family": "nyt-stymie,arial,helvetica,sans-serif", "weight": "300", "style": ""},
-    {
-      "aifont": "NYTMagSans-Regular",
-      "family": "'nyt-magsans',arial,helvetica,sans-serif",
-      "weight": "500",
-      "style": ""
-    },
-    {"aifont": "NYTMagSans-Bold", "family": "'nyt-magsans',arial,helvetica,sans-serif", "weight": "700", "style": ""}
-  ];
-
-  // ================================================
-  // Constant data
-  // ================================================
-  
-  // CSS text-transform equivalents
-  var caps = [
-    {"ai": "FontCapsOption.NORMALCAPS", "html": "none"},
-    {"ai": "FontCapsOption.ALLCAPS", "html": "uppercase"},
-    {"ai": "FontCapsOption.SMALLCAPS", "html": "uppercase"}
-  ];
-
-  // CSS text-align equivalents
-  var align = [
-    {"ai": "Justification.LEFT", "html": "left"},
-    {"ai": "Justification.RIGHT", "html": "right"},
-    {"ai": "Justification.CENTER", "html": "center"},
-    {"ai": "Justification.FULLJUSTIFY", "html": "justify"},
-    {"ai": "Justification.FULLJUSTIFYLASTLINELEFT", "html": "justify"},
-    {"ai": "Justification.FULLJUSTIFYLASTLINECENTER", "html": "justify"},
-    {"ai": "Justification.FULLJUSTIFYLASTLINERIGHT", "html": "justify"}
-  ];
-  
-  var blendModes = [
-    {ai: "BlendModes.MULTIPLY", html: "multiply"}
-  ];
-
-  // list of CSS properties used for translating AI text styles
-  // (used for creating a unique identifier for each style)
-  var cssTextStyleProperties = [
-    //'top' // used with vshift; not independent of other properties
-    'position',
-    'font-family',
-    'font-size',
-    'font-weight',
-    'font-style',
-    'color',
-    'line-height',
-    'height', // used for point-type paragraph styles
-    'letter-spacing',
-    'opacity',
-    'padding-top',
-    'padding-bottom',
-    'text-align',
-    'text-transform',
-    'mix-blend-mode',
-    'vertical-align' // for superscript
-  ];
-  
-  var cssPrecision = 4;
-  
-  
-  // return settings object
-  
-  
-  
-  
-})();
-
 // ==================================
 // ai2html feedback
 // ==================================
@@ -1058,13 +1101,60 @@ AI2HTML.logger = AI2HTML.logger || {};
       oneTimeWarnings.push(id);
     }
   }
+  
+  function hasErrors() {
+    return errors.length > 0;
+  }
+  
+  
+  // Show alert or prompt; return true if promo image should be generated
+  function showCompletionAlert(showPrompt) {
+    var rule = "\n================\n";
+    var alertText, alertHed, makePromo;
+    
+    if (hasErrors()) {
+      alertHed = "The Script Was Unable to Finish";
+    } else if (AI2HTML.isNYT) {
+      alertHed = "Actually, that\u2019s not half bad :)"; // &rsquo;
+    } else {
+      alertHed = "Nice work!";
+    }
+    alertText = makeList(errors, "Error", "Errors");
+    alertText += makeList(warnings, "Warning", "Warnings");
+    alertText += makeList(feedback, "Information", "Information");
+    alertText += "\n";
+    if (showPrompt) {
+      alertText += rule + "Generate promo image?";
+      // confirm(<msg>, false) makes "Yes" the default (at Baden's request).
+      makePromo = confirm(alertHed + alertText, false);
+    } else {
+      alertText += rule + "ai2html v" + AI2HTML.defaults.scriptVersion;
+      alert(alertHed + alertText);
+      makePromo = false;
+    }
+    
+    function makeList(items, singular, plural) {
+      var list = "";
+      if (items.length > 0) {
+        list += "\r" + (items.length == 1 ? singular : plural) + rule;
+        for (var i = 0; i < items.length; i++) {
+          list += "\u2022 " + items[i] + "\r";
+        }
+      }
+      return list;
+    }
+    
+    return makePromo;
+  }
 
   AI2HTML.logger = {
     message: message,
     warn: warn,
     error: error,
     warnOnce: warnOnce,
-    formatError: formatError
+    formatError: formatError,
+    hasErrors: hasErrors,
+    showCompletionAlert: showCompletionAlert
   }
 
 
@@ -1083,6 +1173,8 @@ AI2HTML.settings = AI2HTML.settings || {};
 (function() {
   
   var log = AI2HTML.logger;
+  var textFramesToUnhide = [];
+  var objectsToRelock = [];
   
   function isTestedIllustratorVersion(version) {
     var majorNum = parseInt(version);
@@ -1120,6 +1212,16 @@ AI2HTML.settings = AI2HTML.settings || {};
   
   function getScriptDirectory() {
     return new File($.fileName).parent;
+  }
+  
+  function temporarilyHideTextFrame(textFrame) {
+    textFramesToUnhide.push(textFrame);
+    AI2HTML.ai.hideTextFrame(textFrame);
+  }
+  
+  function temporarilyUnlockObject(obj) {
+    objectsToRelock.push(obj);
+    AI2HTML.ai.unlockObject(obj);
   }
   
   // Import program settings and custom html, css and js code from specially
@@ -1166,9 +1268,9 @@ AI2HTML.settings = AI2HTML.settings || {};
         // An error will be thrown if trying to hide a text frame inside a
         // locked layer. Solution: unlock any locked parent layers.
         if (objectIsLocked(thisFrame)) {
-          unlockObject(thisFrame);
+          temporarilyUnlockObject(thisFrame);
         }
-        hideTextFrame(thisFrame);
+        temporarilyHideTextFrame(thisFrame);
       }
     });
     
@@ -1479,7 +1581,7 @@ AI2HTML.settings = AI2HTML.settings || {};
       // so it will be visible if the content overflows the text frame
       lines.splice(1, 0, entry);
     }
-    docIsSaved = false; // doc has changed, need to save
+    AI2HTML.docIsSaved = false; // doc has changed, need to save
     block.contents = lines.join('\n');
   }
   
@@ -1522,45 +1624,6 @@ AI2HTML.settings = AI2HTML.settings || {};
     return str.length === 0 ? [] : str.split(',');
   }
   
-  // Show alert or prompt; return true if promo image should be generated
-  function showCompletionAlert(showPrompt) {
-    var rule = "\n================\n";
-    var alertText, alertHed, makePromo;
-    
-    if (errors.length > 0) {
-      alertHed = "The Script Was Unable to Finish";
-    } else if (detectTimesFonts()) {
-      alertHed = "Actually, that\u2019s not half bad :)"; // &rsquo;
-    } else {
-      alertHed = "Nice work!";
-    }
-    alertText = makeList(errors, "Error", "Errors");
-    alertText += makeList(warnings, "Warning", "Warnings");
-    alertText += makeList(feedback, "Information", "Information");
-    alertText += "\n";
-    if (showPrompt) {
-      alertText += rule + "Generate promo image?";
-      // confirm(<msg>, false) makes "Yes" the default (at Baden's request).
-      makePromo = confirm(alertHed + alertText, false);
-    } else {
-      alertText += rule + "ai2html v" + scriptVersion;
-      alert(alertHed + alertText);
-      makePromo = false;
-    }
-    
-    function makeList(items, singular, plural) {
-      var list = "";
-      if (items.length > 0) {
-        list += "\r" + (items.length == 1 ? singular : plural) + rule;
-        for (var i = 0; i < items.length; i++) {
-          list += "\u2022 " + items[i] + "\r";
-        }
-      }
-      return list;
-    }
-    
-    return makePromo;
-  }
   
   function restoreDocumentState() {
     var i;
@@ -1571,56 +1634,8 @@ AI2HTML.settings = AI2HTML.settings || {};
       objectsToRelock[i].locked = true;
     }
   }
-  
-  function ProgressBar(opts) {
-    opts = opts || {};
-    var steps = opts.steps || 0;
-    var step = 0;
-    var win = new Window("palette", opts.name || "Progress", [150, 150, 600, 260]);
-    win.pnl = win.add("panel", [10, 10, 440, 100], "Progress");
-    win.pnl.progBar = win.pnl.add("progressbar", [20, 35, 410, 60], 0, 100);
-    win.pnl.progBarLabel = win.pnl.add("statictext", [20, 20, 320, 35], "0%");
-    win.show();
-    
-    // function getProgress() {
-    //   return win.pnl.progBar.value/win.pnl.progBar.maxvalue;
-    // }
-    
-    function update() {
-      win.update();
-    }
-    
-    this.step = function () {
-      step = Math.min(step + 1, steps);
-      this.setProgress(step / steps);
-    };
-    
-    this.setProgress = function (progress) {
-      var max = win.pnl.progBar.maxvalue;
-      // progress is always 0.0 to 1.0
-      var pct = progress * max;
-      win.pnl.progBar.value = pct;
-      win.pnl.progBarLabel.text = Math.round(pct) + "%";
-      update();
-    };
-    
-    this.setTitle = function (title) {
-      win.pnl.text = title;
-      update();
-    };
-    
-    this.close = function () {
-      win.close();
-    };
-  }
-  
-  // function calcProgressBarSteps() {
-  //   var n = 0;
-  //   forEachUsableArtboard(function() {
-  //     n += 2;
-  //   });
-  //   return n;
-  // }
+
+
   
   
   
@@ -1651,9 +1666,7 @@ AI2HTML.settings = AI2HTML.settings || {};
     parseSettingsEntry: parseSettingsEntry,
     parseSettingsEntries: parseSettingsEntries,
     parseAsArray: parseAsArray,
-    showCompletionAlert: showCompletionAlert,
-    restoreDocumentState: restoreDocumentState,
-    ProgressBar: ProgressBar,
+    restoreDocumentState: restoreDocumentState
   };
   
 }());
@@ -1670,6 +1683,29 @@ AI2HTML.ai = AI2HTML.ai || {};
 (function() {
 
   var log = AI2HTML.logger;
+  
+  console.log('40-illustrator.js');
+  console.log('AI2HTML', AI2HTML);
+  
+  
+  // import settings from defaults
+  var caps = AI2HTML.defaults.caps;
+  var align = AI2HTML.defaults.align;
+  var blendModes = AI2HTML.defaults.blendModes;
+  var cssPrecision = AI2HTML.defaults.cssPrecision;
+  var cssTextStyleProperties = AI2HTML.defaults.cssTextStyleProperties;
+  
+  // globals (though it would be better to parameterize the functions instead)
+  var doc, docPath, nameSpace, fonts;
+  
+  
+  // call this function to update the global variables, they usually don't change
+  function updateGlobals() {
+    doc = AI2HTML.doc;
+    docPath = AI2HTML.docPath;
+    nameSpace = AI2HTML.nameSpace;
+    fonts = AI2HTML.fonts;
+  }
   
   // a, b: coordinate arrays, as from <PathItem>.geometricBounds
   function testBoundsIntersection(a, b) {
@@ -1833,7 +1869,6 @@ AI2HTML.ai = AI2HTML.ai || {};
   }
   
   function hideTextFrame(textFrame) {
-    textFramesToUnhide.push(textFrame);
     textFrame.hidden = true;
   }
 
@@ -3808,7 +3843,7 @@ AI2HTML.ai = AI2HTML.ai || {};
   function getCommonOutputSettings(settings) {
     var range = getWidthRangeForConfig(settings);
     return {
-      ai2html_version: scriptVersion,
+      ai2html_version: settings.scriptVersion,
       project_type: 'ai2html',
       min_width: range[0],
       max_width: range[1],
@@ -3832,7 +3867,7 @@ AI2HTML.ai = AI2HTML.ai || {};
   function generateYamlFileContent(settings) {
     var o = getCommonOutputSettings(settings);
     var lines = [];
-    lines.push('ai2html_version: ' + scriptVersion);
+    lines.push('ai2html_version: ' + settings.scriptVersion);
     if (settings.project_type) {
       lines.push('project_type: ' + settings.project_type);
     }
@@ -4057,15 +4092,13 @@ AI2HTML.ai = AI2HTML.ai || {};
       ariaAttrs += ' aria-describedby="' + altTextId + '"';
     }
     
-    progressBar.setTitle('Writing HTML output...');
-    
     if (_.isTrue(settings.include_resizer_script)) {
       responsiveJs  = getResizerScript(containerId);
       containerClasses += ' ai2html-responsive';
     }
     
     // comments
-    commentBlock = '<!-- Generated by ai2html v' + scriptVersion + ' - ' +
+    commentBlock = '<!-- Generated by ai2html v' + settings.scriptVersion + ' - ' +
       getDateTimeStamp() + ' -->\r' + '<!-- ai file: ' + doc.name + ' -->\r';
     
     if (settings.preview_slug) {
@@ -4169,7 +4202,7 @@ AI2HTML.ai = AI2HTML.ai || {};
   }
   
   function getDocumentSlug() {
-    return docSlug;
+    return AI2HTML.docSlug;
   }
   
   function makeDocumentSlug(rawName) {
@@ -4597,11 +4630,6 @@ AI2HTML.ai = AI2HTML.ai || {};
     _.forEach(doc.layers, unlockContainer);
   }
   
-  function unlockObject(obj) {
-    obj.locked = false;
-    objectsToRelock.push(obj);
-  }
-
   // Unlock a layer or group if visible and locked, as well as any locked and visible
   //   clipping masks
   // o: GroupItem or Layer
@@ -4684,6 +4712,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     getTransformationCss: getTransformationCss,
     getTextFrameCss: getTextFrameCss,
     convertAreaTextPath: convertAreaTextPath,
+    unlockObject: unlockObject,
     
     // ai2html symbol functions
     
@@ -4761,14 +4790,18 @@ AI2HTML.ai = AI2HTML.ai || {};
     findLayers: findLayers,
     unhideLayer: unhideLayer,
     layerIsChildOf: layerIsChildOf,
+    clearSelection: clearSelection,
     getComputedOpacity: getComputedOpacity,
     getSortedLayerItems: getSortedLayerItems,
     findCommonLayer: findCommonLayer,
     findCommonAncestorLayer: findCommonAncestorLayer,
     maskIsRelevant: maskIsRelevant,
     findMasks: findMasks,
-    storeSelectedItems: storeSelectedItems
+    storeSelectedItems: storeSelectedItems,
     
+    // call this when globals change
+    
+    updateGlobals: updateGlobals
     
   };
   
@@ -4866,8 +4899,6 @@ AI2HTML.testing = AI2HTML.testing || {};
 
 
 // Path: src/index.js
-/** @global */
-AI2HTML = AI2HTML || {};
 
 function main() {
 // Enclosing scripts in a named function (and not an anonymous, self-executing
@@ -4876,6 +4907,17 @@ function main() {
 // See (for example) https://forums.adobe.com/thread/1810764 and
 // http://wwwimages.adobe.com/content/dam/Adobe/en/devnet/pdf/illustrator/scripting/Readme.txt
   
+  var log = AI2HTML.logger;
+  
+  function warn(str) {
+    log.warn(str);
+  }
+  function error(str) {
+    log.error(str);
+  }
+  function message() {
+    log.message.apply(log, arguments);
+  }
   
   
   // If running in Node.js, export functions for testing and exit
@@ -4887,24 +4929,26 @@ function main() {
   // ================================
   // Global variable declarations
   // ================================
-  AI2HTML = {
-    // This can be overridden by settings
-    nameSpace: nameSpace = 'g-',
-    // vars to hold warnings and informational messages at the end
-    startTime: +new Date(),
-    textFramesToUnhide: [],
-    objectsToRelock: [],
-    docSettings: undefined,
-    textBlockData: undefined,
+  _.extend(AI2HTML, {
+    nameSpace: 'g-',
     doc: undefined,
     docPath: undefined,
     docSlug: undefined,
-    docIsSaved: undefined,
-    progressBar: undefined,
-    JSON: undefined
-  };
+    docIsSaved: false,
+    isNYT: false,
+  });
+  
+  // variables that are only used in this file
+  var docSettings;
+  var progressBar;
   
   AI2HTML.init = function() {
+    
+    var settings = AI2HTML.settings;
+    var ai = AI2HTML.ai;
+  
+    var startTime = +new Date();
+    var textBlockData;
     
     try {
       if (!isTestedIllustratorVersion(app.version)) {
@@ -4934,40 +4978,44 @@ function main() {
       
       // initialize script settings
       this.doc = app.activeDocument;
-      this.docPath = doc.path + '/';
-      this.docIsSaved = doc.saved;
-      this.textBlockData = initSpecialTextBlocks();
-      this.docSettings = initDocumentSettings(textBlockData.settings);
-      this.docSlug = docSettings.project_name || makeDocumentSlug(getRawDocumentName());
-      this.nameSpace = docSettings.namespace || nameSpace;
-      extendFontList(fonts, this.docSettings.fonts || []);
+      this.docPath = this.doc.path + '/';
+      this.docIsSaved = this.doc.saved;
+      textBlockData = settings.initSpecialTextBlocks();
+      docSettings = settings.initDocumentSettings(textBlockData.settings);
+      this.nameSpace = docSettings.namespace || this.nameSpace;
+      this.docSlug = docSettings.project_name || ai.makeDocumentSlug(ai.getRawDocumentName());
+      settings.extendFontList(AI2HTML.defaults.fonts, docSettings.fonts || []);
+      this.isNYT = settings.detectTimesFonts();
       
       if (!textBlockData.settings && _.isTrue(docSettings.create_settings_block)) {
-        createSettingsBlock(docSettings);
+        settings.createSettingsBlock(docSettings);
       }
       
+      ai.updateGlobals();
+      
       // render the document
-      render(docSettings, textBlockData.code);
+      this.render(docSettings, textBlockData.code);
     } catch(e) {
-      errors.push(formatError(e));
+      error(log.formatError(e));
     }
     
-    restoreDocumentState();
+    settings.restoreDocumentState();
+    
     if (progressBar) progressBar.close();
 
     // ==========================================
     // Save the AI document (if needed)
     // ==========================================
     
-    if (docIsSaved) {
+    if (this.docIsSaved) {
       // If document was originally in a saved state, reset the document's
       // saved flag (the document goes to unsaved state during the script,
       // because of unlocking / relocking of objects
-      doc.saved = true;
-    } else if (errors.length === 0) {
+      this.doc.saved = true;
+    } else if (!log.hasErrors()) {
       var saveOptions = new IllustratorSaveOptions();
       saveOptions.pdfCompatible = false;
-      doc.saveAs(new File(docPath + doc.name), saveOptions);
+      this.doc.saveAs(new File(this.docPath + this.doc.name), saveOptions);
       // doc.save(); // why not do this? (why set pdfCompatible = false?)
       message('Your Illustrator file was saved.');
     }
@@ -4975,40 +5023,235 @@ function main() {
     // =========================================================
     // Show alert box, optionally prompt to generate promo image
     // =========================================================
-    if (errors.length > 0) {
-      showCompletionAlert();
+    if (log.hasErrors()) {
+      log.showCompletionAlert();
       
     } else if (_.isTrue(docSettings.show_completion_dialog_box )) {
       message('Script ran in', ((+new Date() - startTime) / 1000).toFixed(1), 'seconds');
       var promptForPromo = _.isTrue(docSettings.write_image_files) && _.isTrue(docSettings.create_promo_image);
-      var showPromo = showCompletionAlert(promptForPromo);
-      if (showPromo) createPromoImage(docSettings);
+      var showPromo = log.showCompletionAlert(promptForPromo);
+      if (showPromo) ai.createPromoImage(docSettings);
     }
     
-    
-    
-    
-    // get doc references
-    
-    
-    // ingest settings block from doc and defaults
-    
-    
-    // parse to json
-    
-    
-    // parse to html or svelte
-    
-    
-    // write to file
   
   }
   
+  AI2HTML.render = function(settings, customBlocks) {
+    
+    var ai = AI2HTML.ai;
+    var settings = AI2HTML.settings;
+    
+    // warn about duplicate artboard names
+    settings.validateArtboardNames(docSettings);
+    
+    // Fix for issue #50
+    // If a text range is selected when the script runs, it interferes
+    // with script-driven selection. The fix is to clear this kind of selection.
+    if (this.doc.selection && this.doc.selection.typename) {
+      ai.clearSelection();
+    }
+    
+    // ================================================
+    // Generate HTML, CSS and images for each artboard
+    // ================================================
+    progressBar = new ProgressBar({name: 'Ai2html progress', steps: calcProgressBarSteps()});
+    unlockObjects(); // Unlock containers and clipping masks
+    var masks = findMasks(); // identify all clipping masks and their contents
+    var fileContentArr = [];
+    
+    forEachUsableArtboard(function(activeArtboard, abIndex) {
+      var abSettings = getArtboardSettings(activeArtboard);
+      var docArtboardName = getDocumentArtboardName(activeArtboard);
+      var textFrames, textData, imageData, specialData;
+      var artboardContent = {html: '', css: '', js: ''};
+      
+      doc.artboards.setActiveArtboardIndex(abIndex);
+      
+      // detect videos and other special layers
+      specialData = convertSpecialLayers(activeArtboard, settings);
+      if (specialData) {
+        forEach(specialData.layers, function(lyr) {
+          lyr.visible = false;
+        });
+      }
+      
+      // ========================
+      // Convert text objects
+      // ========================
+      
+      if (abSettings.image_only || settings.render_text_as == 'image') {
+        // don't convert text objects to HTML
+        textFrames = [];
+        textData = {html: '', styles: []};
+      } else {
+        progressBar.setTitle(docArtboardName + ': Generating text...');
+        textFrames = getTextFramesByArtboard(activeArtboard, masks, settings);
+        textData = convertTextFrames(textFrames, activeArtboard, settings);
+      }
+      
+      progressBar.step();
+      
+      // ==========================
+      // Generate artboard image(s)
+      // ==========================
+      
+      if (isTrue(settings.write_image_files)) {
+        progressBar.setTitle(docArtboardName + ': Capturing image...');
+        imageData = convertArtItems(activeArtboard, textFrames, masks, settings);
+      } else {
+        imageData = {html: ''};
+      }
+      
+      if (specialData) {
+        imageData.html = specialData.video + specialData.html_before +
+          imageData.html + specialData.html_after;
+        forEach(specialData.layers, function(lyr) {
+          lyr.visible = true;
+        });
+        if (specialData.video && !isTrue(settings.png_transparent)) {
+          warn('Background videos may be covered up without png_transparent:true');
+        }
+      }
+      
+      progressBar.step();
+      
+      //=====================================
+      // Finish generating artboard HTML and CSS
+      //=====================================
+      
+      artboardContent.html += '\r\t<!-- Artboard: ' + getArtboardName(activeArtboard) + ' -->\r' +
+        generateArtboardDiv(activeArtboard, settings) +
+        imageData.html +
+        textData.html +
+        '\t</div>\r';
+      
+      var abStyles = textData.styles;
+      if (specialData && specialData.video) {
+        // make videos tap/clickable (so they can be played manually if autoplay
+        // is disabled, e.g. in mobile low-power mode).
+        abStyles.push('> div { pointer-events: none; }\r');
+        abStyles.push('> img { pointer-events: none; }\r');
+      }
+      artboardContent.css += generateArtboardCss(activeArtboard, abStyles, settings);
+      
+      var oname = settings.output == 'one-file' ? getRawDocumentName() : docArtboardName;
+      // kludge to identify legacy embed projects
+      if (settings.output == 'one-file' &&
+        settings.project_type == 'ai2html' &&
+        !isTrue(settings.create_json_config_files)) {
+        oname = 'index';
+      }
+      assignArtboardContentToFile(oname, artboardContent, fileContentArr);
+      
+    }); // end artboard loop
+    
+    if (fileContentArr.length === 0) {
+      error('No usable artboards were found');
+    }
+    
+    //=====================================
+    // Output html file(s)
+    //=====================================
+    
+    forEach(fileContentArr, function(fileContent) {
+      addCustomContent(fileContent, customBlocks);
+      progressBar.setTitle('Writing HTML output...');
+      generateOutputHtml(fileContent, fileContent.name, settings);
+    });
+    
+    //=====================================
+    // Post-output operations
+    //=====================================
+    
+    if (isTrue(settings.create_json_config_files)) {
+      // Create JSON config files, one for each .ai file
+      var jsonStr = generateJsonSettingsFileContent(settings);
+      var jsonPath = docPath + getRawDocumentName() + '.json';
+      saveTextFile(jsonPath, jsonStr);
+    } else if (isTrue(settings.create_config_file)) {
+      // Create one top-level config.yml file
+      // (This is being replaced by multiple JSON config files for NYT projects)
+      var yamlPath = docPath + (settings.config_file_path || 'config.yml'),
+        yamlStr = generateYamlFileContent(settings);
+      checkForOutputFolder(yamlPath.replace(/[^\/]+$/, ''), 'configFileFolder');
+      saveTextFile(yamlPath, yamlStr);
+    }
+    
+    if (settings.cache_bust_token) {
+      incrementCacheBustToken(settings);
+    }
+    
+  } // end render()
   
   
   
+  function ProgressBar(opts) {
+    opts = opts || {};
+    var steps = opts.steps || 0;
+    var step = 0;
+    var win = new Window("palette", opts.name || "Progress", [150, 150, 600, 260]);
+    win.pnl = win.add("panel", [10, 10, 440, 100], "Progress");
+    win.pnl.progBar = win.pnl.add("progressbar", [20, 35, 410, 60], 0, 100);
+    win.pnl.progBarLabel = win.pnl.add("statictext", [20, 20, 320, 35], "0%");
+    win.show();
+    
+    // function getProgress() {
+    //   return win.pnl.progBar.value/win.pnl.progBar.maxvalue;
+    // }
+    
+    function update() {
+      win.update();
+    }
+    
+    this.step = function () {
+      step = Math.min(step + 1, steps);
+      this.setProgress(step / steps);
+    };
+    
+    this.setProgress = function (progress) {
+      var max = win.pnl.progBar.maxvalue;
+      // progress is always 0.0 to 1.0
+      var pct = progress * max;
+      win.pnl.progBar.value = pct;
+      win.pnl.progBarLabel.text = Math.round(pct) + "%";
+      update();
+    };
+    
+    this.setTitle = function (title) {
+      win.pnl.text = title;
+      update();
+    };
+    
+    this.close = function () {
+      win.close();
+    };
+  }
   
+  function calcProgressBarSteps() {
+    var n = 0;
+    AI2HTML.ai.forEachUsableArtboard(function() {
+      n += 2;
+    });
+    return n;
+  }
 }
+
+
+
+
+// get doc references
+
+
+// ingest settings block from doc and defaults
+
+
+// parse to json
+
+
+// parse to html or svelte
+
+
+// write to file
 
 main();
 
