@@ -25,7 +25,7 @@ var T = {
   },
   stop: function(key) {
     var startTime = T.times[key];
-    var elapsed = roundTo((+new Date() - startTime) / 1000, 1);
+    var elapsed = _.roundTo((+new Date() - startTime) / 1000, 1);
     delete T.times[key];
     message(key + ' - ' + elapsed + 's');
   }
@@ -96,7 +96,7 @@ _.some = function(arr, cb) {
 
 _.extend = function(o) {
   for (var i=1; i<arguments.length; i++) {
-    forEachProperty(arguments[i], add);
+    _.forEachProperty(arguments[i], add);
   }
   function add(v, k) {
     o[k] = v;
@@ -157,7 +157,7 @@ _.toArray = function(obj) {
 // multiple key sorting function based on https://github.com/Teun/thenBy.js
 // first by length of name, then by population, then by ID
 // data.sort(
-//     firstBy(function (v1, v2) { return v1.name.length - v2.name.length; })
+//     _.firstBy(function (v1, v2) { return v1.name.length - v2.name.length; })
 //     .thenBy(function (v1, v2) { return v1.population - v2.population; })
 //     .thenBy(function (v1, v2) { return v1.id - v2.id; });
 // );
@@ -272,34 +272,18 @@ _.roundTo = function(number, precision) {
 _.getDateTimeStamp = function() {
   var d     = new Date();
   var year  = d.getFullYear();
-  var date  = zeroPad(d.getDate(),2);
-  var month = zeroPad(d.getMonth() + 1,2);
-  var hour  = zeroPad(d.getHours(),2);
-  var min   = zeroPad(d.getMinutes(),2);
+  var date  = _.zeroPad(d.getDate(),2);
+  var month = _.zeroPad(d.getMonth() + 1,2);
+  var hour  = _.zeroPad(d.getHours(),2);
+  var min   = _.zeroPad(d.getMinutes(),2);
   return year + '-' + month + '-' + date + ' ' + hour + ':' + min;
 }
 
-// obj: JS object containing css properties and values
-// indentStr: string to use as block CSS indentation
-_.formatCss = function(obj, indentStr) {
-  var css = '';
-  var isBlock = !!indentStr;
-  for (var key in obj) {
-    if (isBlock) {
-      css += '\r' + indentStr;
-    }
-    css += key + ':' + obj[key]+ ';';
-  }
-  if (css && isBlock) {
-    css += '\r';
-  }
-  return css;
-}
 
 _.getCssColor = function(r, g, b, opacity) {
   var col, o;
   if (opacity > 0 && opacity < 100) {
-    o = roundTo(opacity / 100, 2);
+    o = _.roundTo(opacity / 100, 2);
     col = 'rgba(' + r + ',' + g + ',' + b + ',' + o + ')';
   } else {
     col = 'rgb(' + r + ',' + g + ',' + b + ')';
@@ -366,3 +350,11 @@ _.isFalse = function(val) {
   return val == 'false' || val == 'no' || val === false;
 }
 
+
+_.folderExists = function(path) {
+  return new Folder(path).exists;
+}
+
+_.fileExists = function (path) {
+  return new File(path).exists;
+}

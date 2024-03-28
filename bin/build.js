@@ -19,5 +19,19 @@ fs.writeFileSync(buildFile, ai2html);
 
 console.log(`Concatenation completed. Output file: ${buildFile}`);
 
+// copying file to scripts dir for testing
+
+const ai2jsonDir = '/Applications/Adobe Illustrator 2024/Presets.localized/en_US/Scripts';
+const ai2jsonFile = path.join(ai2jsonDir, 'ai2json.js');
+
+if (!fs.existsSync(ai2jsonDir)) {
+    console.error(`Directory not found: ${ai2jsonDir}`);
+    process.exit(1);
+}
+
+fs.copyFileSync(buildFile, ai2jsonFile);
+
+console.log(`Copied to ${ai2jsonFile}`);
+
 // Path: bin/build.js
 

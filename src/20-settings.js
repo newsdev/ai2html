@@ -11,8 +11,23 @@ AI2HTML.settings = AI2HTML.settings || {};
 (function() {
   
   var log = AI2HTML.logger;
+  var defaults = AI2HTML.defaults;
   var textFramesToUnhide = [];
   var objectsToRelock = [];
+  
+  // globals (though it would be better to parameterize the functions instead)
+  var doc, docPath;
+  
+  // call this function to update the global variables, they usually don't change
+  function updateGlobals() {
+    doc = AI2HTML.doc;
+    docPath = AI2HTML.docPath;
+  }
+  
+  function warn(str) { log.warn(str); }
+  function error(str) { log.error(str); }
+  function message() { log.message.apply(log, arguments); }
+  
   
   function isTestedIllustratorVersion(version) {
     var majorNum = parseInt(version);
@@ -21,8 +36,8 @@ AI2HTML.settings = AI2HTML.settings || {};
   
   function validateArtboardNames(settings) {
     var names = [];
-    forEachUsableArtboard(function (ab) {
-      var name = getArtboardName(ab);
+    AI2HTML.ai.forEachUsableArtboard(function (ab) {
+      var name = AI2HTML.ai.getArtboardName(ab);
       var isDupe = _.contains(names, name);
       if (isDupe) {
         // kludge: modify settings if same-name artboards are found
@@ -77,7 +92,7 @@ AI2HTML.settings = AI2HTML.settings || {};
         type = match ? match[1] : null;
       }
       if (!type) return; // not a special block
-      if (objectIsHidden(thisFrame)) {
+      if (AI2HTML.ai.objectIsHidden(thisFrame)) {
         if (type == 'settings') {
           error('Found a hidden ai2html-settings text block. Either delete or hide this settings block.');
         }
@@ -102,10 +117,10 @@ AI2HTML.settings = AI2HTML.settings || {};
         code[type] = code[type] || [];
         code[type].push(cleanCodeBlock(type, lines.join('\r')));
       }
-      if (objectOverlapsAnArtboard(thisFrame)) {
+      if (AI2HTML.ai.objectOverlapsAnArtboard(thisFrame)) {
         // An error will be thrown if trying to hide a text frame inside a
         // locked layer. Solution: unlock any locked parent layers.
-        if (objectIsLocked(thisFrame)) {
+        if (AI2HTML.ai.objectIsLocked(thisFrame)) {
           temporarilyUnlockObject(thisFrame);
         }
         temporarilyHideTextFrame(thisFrame);
@@ -130,7 +145,7 @@ AI2HTML.settings = AI2HTML.settings || {};
   
   // Derive ai2html program settings by merging default settings and overrides.
   function initDocumentSettings(textBlockSettings) {
-    var settings = extend({}, defaultSettings); // copy default settings
+    var settings = _.extend({}, defaults.defaultSettings); // copy default settings
     
     if (detectTimesEnv(textBlockSettings)) {
       // NYT settings are only applied in an NYTimes CMS context
@@ -201,12 +216,12 @@ AI2HTML.settings = AI2HTML.settings || {};
   
   function detectBirdkitEnv() {
     var configPath = docPath + '../birdkit.config.js';
-    return fileExists(configPath);
+    return _.fileExists(configPath);
   }
   
   function applyBirdkitSettings(settings, projectType) {
-    var packagePath = pathJoin(docPath, '..', 'package.json');
-    var pkg = fileExists(packagePath) ? readJSONFile(packagePath) : {};
+    var packagePath = _.pathJoin(docPath, '..', 'package.json');
+    var pkg = _.fileExists(packagePath) ? readJSONFile(packagePath) : {};
     
     // Is this a docless birdkit project? (assumes birdkit detected)
     var isEmbed = projectType == 'ai2html' || // manual setting from text block
@@ -216,10 +231,10 @@ AI2HTML.settings = AI2HTML.settings || {};
       // (deprecated) presence of 'config.yml' file indicates an embed
       detectConfigYml() ||
       // another test, to work around permissions issue preventing file reading
-      !folderExists(docPath + '../src/');
+      !_.folderExists(docPath + '../src/');
     
     if (isEmbed) {
-      extendSettings(settings, nytBirdkitEmbedSettings);
+      extendSettings(settings, defaults.nytBirdkitEmbedSettings);
       // early versions of birdkit still used config.yml for embed settings
       if (pkg.version && compareVersions(pkg.version, '1.4.0') < 0) {
         settings.create_json_config_files = false;
@@ -227,7 +242,7 @@ AI2HTML.settings = AI2HTML.settings || {};
         settings.config_file_path = "../config.yml";
       }
     } else {
-      extendSettings(settings, nytBirdkitSettings);
+      extendSettings(settings, defaults.nytBirdkitSettings);
     }
   }
   
@@ -244,18 +259,18 @@ AI2HTML.settings = AI2HTML.settings || {};
   }
   
   function detectConfigYml() {
-    return fileExists(docPath + '../config.yml');
+    return _.fileExists(docPath + '../config.yml');
   }
   
   function detectUnTimesianSettings(o) {
-    return o.html_output_path == defaultSettings.html_output_path;
+    return o.html_output_path == defaults.defaultSettings.html_output_path;
   }
   
   function applyTimesSettings(settings, blockSettings) {
     var yamlConfig = readYamlConfigFile(docPath + '../config.yml') || null;
     // project type can be set manually in the text block settings
     var projectType = blockSettings && blockSettings.project_type || null;
-    extendSettings(settings, nytOverrideSettings);
+    extendSettings(settings, defaults.nytOverrideSettings);
     
     if (detectBirdkitEnv()) {
       applyBirdkitSettings(settings, projectType);
@@ -266,9 +281,9 @@ AI2HTML.settings = AI2HTML.settings || {};
         warn('ai2html is unable to read the contents of config.yml');
       }
       if (projectType == 'ai2html' || (yamlConfig && yamlConfig.project_type == 'ai2html')) {
-        extendSettings(settings, nytPreviewEmbedSettings);
+        extendSettings(settings, defaults.nytPreviewEmbedSettings);
       } else {
-        extendSettings(settings, nytPreviewSettings);
+        extendSettings(settings, defaults.nytPreviewSettings);
       }
       if (yamlConfig && yamlConfig.scoop_slug) {
         settings.scoop_slug_from_config_yml = yamlConfig.scoop_slug;
@@ -280,20 +295,20 @@ AI2HTML.settings = AI2HTML.settings || {};
       }
     }
     
-    if (!folderExists(docPath + '../public/')) {
+    if (!_.folderExists(docPath + '../public/')) {
       error("Your project seems to be missing a \u201Cpublic\u201D folder.");
     }
     
     if (!settings.project_type) {
       error("ai2html is unable to determine the type of this project.");
-    } else if (settings.project_type != 'ai2html' && !folderExists(docPath + '../src/')) {
+    } else if (settings.project_type != 'ai2html' && !_.folderExists(docPath + '../src/')) {
       error("This seems to be a " + settings.project_type + " type project, but it is missing the expected \u201Csrc\u201D folder.");
     }
   }
   
   function extendSettings(settings, moreSettings) {
     var tmp = settings.fonts || [];
-    extend(settings, moreSettings);
+    _.extend(settings, moreSettings);
     // merge fonts, don't replace them
     if (moreSettings.fonts) {
       extendFontList(tmp, moreSettings.fonts);
@@ -304,11 +319,11 @@ AI2HTML.settings = AI2HTML.settings || {};
   // Looks for settings file in the ai2html script directory and/or the .ai document directory
   function readConfigFileSettings() {
     var settingsFile = 'ai2html-config.json';
-    var globalPath = pathJoin(getScriptDirectory(), settingsFile);
-    var localPath = pathJoin(docPath, settingsFile);
-    var globalSettings = fileExists(globalPath) ? readSettingsFile(globalPath) : {};
-    var localSettings = fileExists(localPath) ? readSettingsFile(localPath) : {};
-    return extend({}, globalSettings, localSettings);
+    var globalPath = _.pathJoin(getScriptDirectory(), settingsFile);
+    var localPath = _.pathJoin(docPath, settingsFile);
+    var globalSettings = _.fileExists(globalPath) ? readSettingsFile(globalPath) : {};
+    var localSettings = _.fileExists(localPath) ? readSettingsFile(localPath) : {};
+    return _.extend({}, globalSettings, localSettings);
   }
   
   function stripSettingsFileComments(str) {
@@ -321,7 +336,7 @@ AI2HTML.settings = AI2HTML.settings || {};
   function readSettingsFile(path) {
     var o = {}, str;
     try {
-      str = stripSettingsFileComments(readTextFile(path));
+      str = stripSettingsFileComments(AI2HTML.ai.readTextFile(path));
       o = JSON.parse(str);
     } catch (e) {
       warn('Error reading settings file ' + path + ': [' + e.message + ']');
@@ -356,7 +371,7 @@ AI2HTML.settings = AI2HTML.settings || {};
       clean = _.addEnclosingTag('script', clean);
     } else if (type == 'css') {
       clean = _.straightenCurlyQuotes(raw);
-      clean = stripTag('style', clean);
+      clean = _.stripTag('style', clean);
     }
     return clean;
   }
@@ -472,10 +487,66 @@ AI2HTML.settings = AI2HTML.settings || {};
       objectsToRelock[i].locked = true;
     }
   }
-
-
   
   
+  
+  function readYamlConfigFile(path) {
+    return _.fileExists(path) ? parseYaml(AI2HTML.ai.readTextFile(path)) : null;
+  }
+  
+  // Very simple Yaml parsing. Does not implement nested properties, arrays and other features
+  // (This is adequate for reading a few top-level properties from NYT's config.yml file)
+  function parseYaml(str) {
+    // TODO: strip comments // var comment = /\s*/
+    var o = {};
+    var lines = _.stringToLines(str);
+    for (var i = 0; i < lines.length; i++) {
+      parseKeyValueString(lines[i], o);
+    }
+    return o;
+  }
+  
+  
+  function parseKeyValueString(str, o) {
+    var dqRxp = /^"(?:[^"\\]|\\.)*"$/;
+    var parts = str.split(':');
+    var k, v;
+    if (parts.length > 1) {
+      k = _.trim(parts.shift());
+      v = _.trim(parts.join(':'));
+      if (dqRxp.test(v)) {
+        v = JSON.parse(v); // use JSON library to parse quoted strings
+      }
+      o[k] = v;
+    }
+  }
+  
+  
+  function readJSONFile(fpath) {
+    var content = AI2HTML.ai.readTextFile(fpath);
+    var json = null;
+    if (!content) {
+      // removing for now to avoid double warnings
+      // warn('Unable to read contents of file: ' + fpath);
+      return {};
+    }
+    try {
+      json = JSON.parse(content);
+    } catch(e) {
+      error('Error parsing JSON from ' + fpath + ': [' + e.message + ']');
+    }
+    return json;
+  }
+  
+  
+  function incrementCacheBustToken(settings) {
+    var c = settings.cache_bust_token;
+    if (parseInt(c) != +c) {
+      warn('cache_bust_token should be a positive integer');
+    } else {
+      updateSettingsEntry('cache_bust_token', +c + 1);
+    }
+  }
   
   AI2HTML.settings = {
     isTestedIllustratorVersion: isTestedIllustratorVersion,
@@ -504,7 +575,11 @@ AI2HTML.settings = AI2HTML.settings || {};
     parseSettingsEntry: parseSettingsEntry,
     parseSettingsEntries: parseSettingsEntries,
     parseAsArray: parseAsArray,
-    restoreDocumentState: restoreDocumentState
+    restoreDocumentState: restoreDocumentState,
+    readYamlConfigFile: readYamlConfigFile,
+    parseKeyValueString: parseKeyValueString,
+    incrementCacheBustToken: incrementCacheBustToken,
+    updateGlobals: updateGlobals
   };
   
 }());

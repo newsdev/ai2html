@@ -1,6 +1,6 @@
 // Path: src/index.js
 
-function main() {
+(function main() {
 // Enclosing scripts in a named function (and not an anonymous, self-executing
 // function) has been recommended as a way to minimise intermittent "MRAP" errors.
 // (This advice may be superstitious, need more evidence to decide.)
@@ -9,15 +9,9 @@ function main() {
   
   var log = AI2HTML.logger;
   
-  function warn(str) {
-    log.warn(str);
-  }
-  function error(str) {
-    log.error(str);
-  }
-  function message() {
-    log.message.apply(log, arguments);
-  }
+  function warn(str) { log.warn(str); }
+  function error(str) { log.error(str); }
+  function message() { log.message.apply(log, arguments); }
   
   
   // If running in Node.js, export functions for testing and exit
@@ -51,7 +45,7 @@ function main() {
     var textBlockData;
     
     try {
-      if (!isTestedIllustratorVersion(app.version)) {
+      if (!settings.isTestedIllustratorVersion(app.version)) {
         warn('Ai2html has not been tested on this version of Illustrator.');
       }
       if (!app.documents.length) {
@@ -79,6 +73,10 @@ function main() {
       // initialize script settings
       this.doc = app.activeDocument;
       this.docPath = this.doc.path + '/';
+      
+      settings.updateGlobals(); // doc and docPath
+      ai.updateGlobals();
+      
       this.docIsSaved = this.doc.saved;
       textBlockData = settings.initSpecialTextBlocks();
       docSettings = settings.initDocumentSettings(textBlockData.settings);
@@ -91,10 +89,12 @@ function main() {
         settings.createSettingsBlock(docSettings);
       }
       
-      ai.updateGlobals();
+      ai.updateGlobals(); // again, in case fonts are updated
       
       // render the document
       this.render(docSettings, textBlockData.code);
+      message(settings);
+      
     } catch(e) {
       error(log.formatError(e));
     }
@@ -139,10 +139,10 @@ function main() {
   AI2HTML.render = function(settings, customBlocks) {
     
     var ai = AI2HTML.ai;
-    var settings = AI2HTML.settings;
+    var that = this;
     
     // warn about duplicate artboard names
-    settings.validateArtboardNames(docSettings);
+    AI2HTML.settings.validateArtboardNames(docSettings);
     
     // Fix for issue #50
     // If a text range is selected when the script runs, it interferes
@@ -155,22 +155,22 @@ function main() {
     // Generate HTML, CSS and images for each artboard
     // ================================================
     progressBar = new ProgressBar({name: 'Ai2html progress', steps: calcProgressBarSteps()});
-    unlockObjects(); // Unlock containers and clipping masks
-    var masks = findMasks(); // identify all clipping masks and their contents
+    ai.unlockObjects(); // Unlock containers and clipping masks
+    var masks = ai.findMasks(); // identify all clipping masks and their contents
     var fileContentArr = [];
     
-    forEachUsableArtboard(function(activeArtboard, abIndex) {
-      var abSettings = getArtboardSettings(activeArtboard);
-      var docArtboardName = getDocumentArtboardName(activeArtboard);
+    ai.forEachUsableArtboard(function(activeArtboard, abIndex) {
+      var abSettings = ai.getArtboardSettings(activeArtboard);
+      var docArtboardName = ai.getDocumentArtboardName(activeArtboard);
       var textFrames, textData, imageData, specialData;
       var artboardContent = {html: '', css: '', js: ''};
       
-      doc.artboards.setActiveArtboardIndex(abIndex);
+      that.doc.artboards.setActiveArtboardIndex(abIndex);
       
       // detect videos and other special layers
-      specialData = convertSpecialLayers(activeArtboard, settings);
+      specialData = ai.convertSpecialLayers(activeArtboard, settings);
       if (specialData) {
-        forEach(specialData.layers, function(lyr) {
+        _.forEach(specialData.layers, function(lyr) {
           lyr.visible = false;
         });
       }
@@ -185,8 +185,8 @@ function main() {
         textData = {html: '', styles: []};
       } else {
         progressBar.setTitle(docArtboardName + ': Generating text...');
-        textFrames = getTextFramesByArtboard(activeArtboard, masks, settings);
-        textData = convertTextFrames(textFrames, activeArtboard, settings);
+        textFrames = ai.getTextFramesByArtboard(activeArtboard, masks, settings);
+        textData = ai.convertTextFrames(textFrames, activeArtboard, settings);
       }
       
       progressBar.step();
@@ -195,9 +195,9 @@ function main() {
       // Generate artboard image(s)
       // ==========================
       
-      if (isTrue(settings.write_image_files)) {
+      if (_.isTrue(settings.write_image_files)) {
         progressBar.setTitle(docArtboardName + ': Capturing image...');
-        imageData = convertArtItems(activeArtboard, textFrames, masks, settings);
+        imageData = ai.convertArtItems(activeArtboard, textFrames, masks, settings);
       } else {
         imageData = {html: ''};
       }
@@ -205,10 +205,10 @@ function main() {
       if (specialData) {
         imageData.html = specialData.video + specialData.html_before +
           imageData.html + specialData.html_after;
-        forEach(specialData.layers, function(lyr) {
-          lyr.visible = true;
-        });
-        if (specialData.video && !isTrue(settings.png_transparent)) {
+          _.forEach(specialData.layers, function(lyr) {
+            lyr.visible = true;
+          });
+        if (specialData.video && !_.isTrue(settings.png_transparent)) {
           warn('Background videos may be covered up without png_transparent:true');
         }
       }
@@ -219,8 +219,8 @@ function main() {
       // Finish generating artboard HTML and CSS
       //=====================================
       
-      artboardContent.html += '\r\t<!-- Artboard: ' + getArtboardName(activeArtboard) + ' -->\r' +
-        generateArtboardDiv(activeArtboard, settings) +
+      artboardContent.html += '\r\t<!-- Artboard: ' + ai.getArtboardName(activeArtboard) + ' -->\r' +
+        ai.generateArtboardDiv(activeArtboard, settings) +
         imageData.html +
         textData.html +
         '\t</div>\r';
@@ -232,16 +232,16 @@ function main() {
         abStyles.push('> div { pointer-events: none; }\r');
         abStyles.push('> img { pointer-events: none; }\r');
       }
-      artboardContent.css += generateArtboardCss(activeArtboard, abStyles, settings);
+      artboardContent.css += ai.generateArtboardCss(activeArtboard, abStyles, settings);
       
-      var oname = settings.output == 'one-file' ? getRawDocumentName() : docArtboardName;
+      var oname = settings.output == 'one-file' ? ai.getRawDocumentName() : docArtboardName;
       // kludge to identify legacy embed projects
       if (settings.output == 'one-file' &&
         settings.project_type == 'ai2html' &&
-        !isTrue(settings.create_json_config_files)) {
+        !_.isTrue(settings.create_json_config_files)) {
         oname = 'index';
       }
-      assignArtboardContentToFile(oname, artboardContent, fileContentArr);
+      ai.assignArtboardContentToFile(oname, artboardContent, fileContentArr);
       
     }); // end artboard loop
     
@@ -253,32 +253,32 @@ function main() {
     // Output html file(s)
     //=====================================
     
-    forEach(fileContentArr, function(fileContent) {
-      addCustomContent(fileContent, customBlocks);
+    _.forEach(fileContentArr, function(fileContent) {
+      ai.addCustomContent(fileContent, customBlocks);
       progressBar.setTitle('Writing HTML output...');
-      generateOutputHtml(fileContent, fileContent.name, settings);
+      ai.generateOutputHtml(fileContent, fileContent.name, settings);
     });
     
     //=====================================
     // Post-output operations
     //=====================================
     
-    if (isTrue(settings.create_json_config_files)) {
+    if (_.isTrue(settings.create_json_config_files)) {
       // Create JSON config files, one for each .ai file
-      var jsonStr = generateJsonSettingsFileContent(settings);
-      var jsonPath = docPath + getRawDocumentName() + '.json';
-      saveTextFile(jsonPath, jsonStr);
-    } else if (isTrue(settings.create_config_file)) {
+      var jsonStr = ai.generateJsonSettingsFileContent(settings);
+      var jsonPath = this.docPath + ai.getRawDocumentName() + '.json';
+      ai.saveTextFile(jsonPath, jsonStr);
+    } else if (_.isTrue(settings.create_config_file)) {
       // Create one top-level config.yml file
       // (This is being replaced by multiple JSON config files for NYT projects)
-      var yamlPath = docPath + (settings.config_file_path || 'config.yml'),
-        yamlStr = generateYamlFileContent(settings);
-      checkForOutputFolder(yamlPath.replace(/[^\/]+$/, ''), 'configFileFolder');
-      saveTextFile(yamlPath, yamlStr);
+      var yamlPath = this.docPath + (settings.config_file_path || 'config.yml'),
+        yamlStr = ai.generateYamlFileContent(settings);
+      ai.checkForOutputFolder(yamlPath.replace(/[^\/]+$/, ''), 'configFileFolder');
+      ai.saveTextFile(yamlPath, yamlStr);
     }
     
     if (settings.cache_bust_token) {
-      incrementCacheBustToken(settings);
+      AI2HTML.settings.incrementCacheBustToken(settings);
     }
     
   } // end render()
@@ -334,7 +334,12 @@ function main() {
     });
     return n;
   }
-}
+  
+  
+  // KICKOFF!
+  AI2HTML.init();
+  
+})();
 
 
 
@@ -353,5 +358,4 @@ function main() {
 
 // write to file
 
-main();
 

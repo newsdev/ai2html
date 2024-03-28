@@ -690,7 +690,7 @@ var T = {
   },
   stop: function(key) {
     var startTime = T.times[key];
-    var elapsed = roundTo((+new Date() - startTime) / 1000, 1);
+    var elapsed = _.roundTo((+new Date() - startTime) / 1000, 1);
     delete T.times[key];
     message(key + ' - ' + elapsed + 's');
   }
@@ -761,7 +761,7 @@ _.some = function(arr, cb) {
 
 _.extend = function(o) {
   for (var i=1; i<arguments.length; i++) {
-    forEachProperty(arguments[i], add);
+    _.forEachProperty(arguments[i], add);
   }
   function add(v, k) {
     o[k] = v;
@@ -822,7 +822,7 @@ _.toArray = function(obj) {
 // multiple key sorting function based on https://github.com/Teun/thenBy.js
 // first by length of name, then by population, then by ID
 // data.sort(
-//     firstBy(function (v1, v2) { return v1.name.length - v2.name.length; })
+//     _.firstBy(function (v1, v2) { return v1.name.length - v2.name.length; })
 //     .thenBy(function (v1, v2) { return v1.population - v2.population; })
 //     .thenBy(function (v1, v2) { return v1.id - v2.id; });
 // );
@@ -937,34 +937,18 @@ _.roundTo = function(number, precision) {
 _.getDateTimeStamp = function() {
   var d     = new Date();
   var year  = d.getFullYear();
-  var date  = zeroPad(d.getDate(),2);
-  var month = zeroPad(d.getMonth() + 1,2);
-  var hour  = zeroPad(d.getHours(),2);
-  var min   = zeroPad(d.getMinutes(),2);
+  var date  = _.zeroPad(d.getDate(),2);
+  var month = _.zeroPad(d.getMonth() + 1,2);
+  var hour  = _.zeroPad(d.getHours(),2);
+  var min   = _.zeroPad(d.getMinutes(),2);
   return year + '-' + month + '-' + date + ' ' + hour + ':' + min;
 }
 
-// obj: JS object containing css properties and values
-// indentStr: string to use as block CSS indentation
-_.formatCss = function(obj, indentStr) {
-  var css = '';
-  var isBlock = !!indentStr;
-  for (var key in obj) {
-    if (isBlock) {
-      css += '\r' + indentStr;
-    }
-    css += key + ':' + obj[key]+ ';';
-  }
-  if (css && isBlock) {
-    css += '\r';
-  }
-  return css;
-}
 
 _.getCssColor = function(r, g, b, opacity) {
   var col, o;
   if (opacity > 0 && opacity < 100) {
-    o = roundTo(opacity / 100, 2);
+    o = _.roundTo(opacity / 100, 2);
     col = 'rgba(' + r + ',' + g + ',' + b + ',' + o + ')';
   } else {
     col = 'rgb(' + r + ',' + g + ',' + b + ')';
@@ -1031,6 +1015,14 @@ _.isFalse = function(val) {
   return val == 'false' || val == 'no' || val === false;
 }
 
+
+_.folderExists = function(path) {
+  return new Folder(path).exists;
+}
+
+_.fileExists = function (path) {
+  return new File(path).exists;
+}
 
 // ==================================
 // ai2html feedback
@@ -1173,8 +1165,23 @@ AI2HTML.settings = AI2HTML.settings || {};
 (function() {
   
   var log = AI2HTML.logger;
+  var defaults = AI2HTML.defaults;
   var textFramesToUnhide = [];
   var objectsToRelock = [];
+  
+  // globals (though it would be better to parameterize the functions instead)
+  var doc, docPath;
+  
+  // call this function to update the global variables, they usually don't change
+  function updateGlobals() {
+    doc = AI2HTML.doc;
+    docPath = AI2HTML.docPath;
+  }
+  
+  function warn(str) { log.warn(str); }
+  function error(str) { log.error(str); }
+  function message() { log.message.apply(log, arguments); }
+  
   
   function isTestedIllustratorVersion(version) {
     var majorNum = parseInt(version);
@@ -1183,8 +1190,8 @@ AI2HTML.settings = AI2HTML.settings || {};
   
   function validateArtboardNames(settings) {
     var names = [];
-    forEachUsableArtboard(function (ab) {
-      var name = getArtboardName(ab);
+    AI2HTML.ai.forEachUsableArtboard(function (ab) {
+      var name = AI2HTML.ai.getArtboardName(ab);
       var isDupe = _.contains(names, name);
       if (isDupe) {
         // kludge: modify settings if same-name artboards are found
@@ -1239,7 +1246,7 @@ AI2HTML.settings = AI2HTML.settings || {};
         type = match ? match[1] : null;
       }
       if (!type) return; // not a special block
-      if (objectIsHidden(thisFrame)) {
+      if (AI2HTML.ai.objectIsHidden(thisFrame)) {
         if (type == 'settings') {
           error('Found a hidden ai2html-settings text block. Either delete or hide this settings block.');
         }
@@ -1264,10 +1271,10 @@ AI2HTML.settings = AI2HTML.settings || {};
         code[type] = code[type] || [];
         code[type].push(cleanCodeBlock(type, lines.join('\r')));
       }
-      if (objectOverlapsAnArtboard(thisFrame)) {
+      if (AI2HTML.ai.objectOverlapsAnArtboard(thisFrame)) {
         // An error will be thrown if trying to hide a text frame inside a
         // locked layer. Solution: unlock any locked parent layers.
-        if (objectIsLocked(thisFrame)) {
+        if (AI2HTML.ai.objectIsLocked(thisFrame)) {
           temporarilyUnlockObject(thisFrame);
         }
         temporarilyHideTextFrame(thisFrame);
@@ -1292,7 +1299,7 @@ AI2HTML.settings = AI2HTML.settings || {};
   
   // Derive ai2html program settings by merging default settings and overrides.
   function initDocumentSettings(textBlockSettings) {
-    var settings = extend({}, defaultSettings); // copy default settings
+    var settings = _.extend({}, defaults.defaultSettings); // copy default settings
     
     if (detectTimesEnv(textBlockSettings)) {
       // NYT settings are only applied in an NYTimes CMS context
@@ -1363,12 +1370,12 @@ AI2HTML.settings = AI2HTML.settings || {};
   
   function detectBirdkitEnv() {
     var configPath = docPath + '../birdkit.config.js';
-    return fileExists(configPath);
+    return _.fileExists(configPath);
   }
   
   function applyBirdkitSettings(settings, projectType) {
-    var packagePath = pathJoin(docPath, '..', 'package.json');
-    var pkg = fileExists(packagePath) ? readJSONFile(packagePath) : {};
+    var packagePath = _.pathJoin(docPath, '..', 'package.json');
+    var pkg = _.fileExists(packagePath) ? readJSONFile(packagePath) : {};
     
     // Is this a docless birdkit project? (assumes birdkit detected)
     var isEmbed = projectType == 'ai2html' || // manual setting from text block
@@ -1378,10 +1385,10 @@ AI2HTML.settings = AI2HTML.settings || {};
       // (deprecated) presence of 'config.yml' file indicates an embed
       detectConfigYml() ||
       // another test, to work around permissions issue preventing file reading
-      !folderExists(docPath + '../src/');
+      !_.folderExists(docPath + '../src/');
     
     if (isEmbed) {
-      extendSettings(settings, nytBirdkitEmbedSettings);
+      extendSettings(settings, defaults.nytBirdkitEmbedSettings);
       // early versions of birdkit still used config.yml for embed settings
       if (pkg.version && compareVersions(pkg.version, '1.4.0') < 0) {
         settings.create_json_config_files = false;
@@ -1389,7 +1396,7 @@ AI2HTML.settings = AI2HTML.settings || {};
         settings.config_file_path = "../config.yml";
       }
     } else {
-      extendSettings(settings, nytBirdkitSettings);
+      extendSettings(settings, defaults.nytBirdkitSettings);
     }
   }
   
@@ -1406,18 +1413,18 @@ AI2HTML.settings = AI2HTML.settings || {};
   }
   
   function detectConfigYml() {
-    return fileExists(docPath + '../config.yml');
+    return _.fileExists(docPath + '../config.yml');
   }
   
   function detectUnTimesianSettings(o) {
-    return o.html_output_path == defaultSettings.html_output_path;
+    return o.html_output_path == defaults.defaultSettings.html_output_path;
   }
   
   function applyTimesSettings(settings, blockSettings) {
     var yamlConfig = readYamlConfigFile(docPath + '../config.yml') || null;
     // project type can be set manually in the text block settings
     var projectType = blockSettings && blockSettings.project_type || null;
-    extendSettings(settings, nytOverrideSettings);
+    extendSettings(settings, defaults.nytOverrideSettings);
     
     if (detectBirdkitEnv()) {
       applyBirdkitSettings(settings, projectType);
@@ -1428,9 +1435,9 @@ AI2HTML.settings = AI2HTML.settings || {};
         warn('ai2html is unable to read the contents of config.yml');
       }
       if (projectType == 'ai2html' || (yamlConfig && yamlConfig.project_type == 'ai2html')) {
-        extendSettings(settings, nytPreviewEmbedSettings);
+        extendSettings(settings, defaults.nytPreviewEmbedSettings);
       } else {
-        extendSettings(settings, nytPreviewSettings);
+        extendSettings(settings, defaults.nytPreviewSettings);
       }
       if (yamlConfig && yamlConfig.scoop_slug) {
         settings.scoop_slug_from_config_yml = yamlConfig.scoop_slug;
@@ -1442,20 +1449,20 @@ AI2HTML.settings = AI2HTML.settings || {};
       }
     }
     
-    if (!folderExists(docPath + '../public/')) {
+    if (!_.folderExists(docPath + '../public/')) {
       error("Your project seems to be missing a \u201Cpublic\u201D folder.");
     }
     
     if (!settings.project_type) {
       error("ai2html is unable to determine the type of this project.");
-    } else if (settings.project_type != 'ai2html' && !folderExists(docPath + '../src/')) {
+    } else if (settings.project_type != 'ai2html' && !_.folderExists(docPath + '../src/')) {
       error("This seems to be a " + settings.project_type + " type project, but it is missing the expected \u201Csrc\u201D folder.");
     }
   }
   
   function extendSettings(settings, moreSettings) {
     var tmp = settings.fonts || [];
-    extend(settings, moreSettings);
+    _.extend(settings, moreSettings);
     // merge fonts, don't replace them
     if (moreSettings.fonts) {
       extendFontList(tmp, moreSettings.fonts);
@@ -1466,11 +1473,11 @@ AI2HTML.settings = AI2HTML.settings || {};
   // Looks for settings file in the ai2html script directory and/or the .ai document directory
   function readConfigFileSettings() {
     var settingsFile = 'ai2html-config.json';
-    var globalPath = pathJoin(getScriptDirectory(), settingsFile);
-    var localPath = pathJoin(docPath, settingsFile);
-    var globalSettings = fileExists(globalPath) ? readSettingsFile(globalPath) : {};
-    var localSettings = fileExists(localPath) ? readSettingsFile(localPath) : {};
-    return extend({}, globalSettings, localSettings);
+    var globalPath = _.pathJoin(getScriptDirectory(), settingsFile);
+    var localPath = _.pathJoin(docPath, settingsFile);
+    var globalSettings = _.fileExists(globalPath) ? readSettingsFile(globalPath) : {};
+    var localSettings = _.fileExists(localPath) ? readSettingsFile(localPath) : {};
+    return _.extend({}, globalSettings, localSettings);
   }
   
   function stripSettingsFileComments(str) {
@@ -1483,7 +1490,7 @@ AI2HTML.settings = AI2HTML.settings || {};
   function readSettingsFile(path) {
     var o = {}, str;
     try {
-      str = stripSettingsFileComments(readTextFile(path));
+      str = stripSettingsFileComments(AI2HTML.ai.readTextFile(path));
       o = JSON.parse(str);
     } catch (e) {
       warn('Error reading settings file ' + path + ': [' + e.message + ']');
@@ -1518,7 +1525,7 @@ AI2HTML.settings = AI2HTML.settings || {};
       clean = _.addEnclosingTag('script', clean);
     } else if (type == 'css') {
       clean = _.straightenCurlyQuotes(raw);
-      clean = stripTag('style', clean);
+      clean = _.stripTag('style', clean);
     }
     return clean;
   }
@@ -1634,10 +1641,66 @@ AI2HTML.settings = AI2HTML.settings || {};
       objectsToRelock[i].locked = true;
     }
   }
-
-
   
   
+  
+  function readYamlConfigFile(path) {
+    return _.fileExists(path) ? parseYaml(AI2HTML.ai.readTextFile(path)) : null;
+  }
+  
+  // Very simple Yaml parsing. Does not implement nested properties, arrays and other features
+  // (This is adequate for reading a few top-level properties from NYT's config.yml file)
+  function parseYaml(str) {
+    // TODO: strip comments // var comment = /\s*/
+    var o = {};
+    var lines = _.stringToLines(str);
+    for (var i = 0; i < lines.length; i++) {
+      parseKeyValueString(lines[i], o);
+    }
+    return o;
+  }
+  
+  
+  function parseKeyValueString(str, o) {
+    var dqRxp = /^"(?:[^"\\]|\\.)*"$/;
+    var parts = str.split(':');
+    var k, v;
+    if (parts.length > 1) {
+      k = _.trim(parts.shift());
+      v = _.trim(parts.join(':'));
+      if (dqRxp.test(v)) {
+        v = JSON.parse(v); // use JSON library to parse quoted strings
+      }
+      o[k] = v;
+    }
+  }
+  
+  
+  function readJSONFile(fpath) {
+    var content = AI2HTML.ai.readTextFile(fpath);
+    var json = null;
+    if (!content) {
+      // removing for now to avoid double warnings
+      // warn('Unable to read contents of file: ' + fpath);
+      return {};
+    }
+    try {
+      json = JSON.parse(content);
+    } catch(e) {
+      error('Error parsing JSON from ' + fpath + ': [' + e.message + ']');
+    }
+    return json;
+  }
+  
+  
+  function incrementCacheBustToken(settings) {
+    var c = settings.cache_bust_token;
+    if (parseInt(c) != +c) {
+      warn('cache_bust_token should be a positive integer');
+    } else {
+      updateSettingsEntry('cache_bust_token', +c + 1);
+    }
+  }
   
   AI2HTML.settings = {
     isTestedIllustratorVersion: isTestedIllustratorVersion,
@@ -1666,7 +1729,11 @@ AI2HTML.settings = AI2HTML.settings || {};
     parseSettingsEntry: parseSettingsEntry,
     parseSettingsEntries: parseSettingsEntries,
     parseAsArray: parseAsArray,
-    restoreDocumentState: restoreDocumentState
+    restoreDocumentState: restoreDocumentState,
+    readYamlConfigFile: readYamlConfigFile,
+    parseKeyValueString: parseKeyValueString,
+    incrementCacheBustToken: incrementCacheBustToken,
+    updateGlobals: updateGlobals
   };
   
 }());
@@ -1684,10 +1751,6 @@ AI2HTML.ai = AI2HTML.ai || {};
 
   var log = AI2HTML.logger;
   
-  console.log('40-illustrator.js');
-  console.log('AI2HTML', AI2HTML);
-  
-  
   // import settings from defaults
   var caps = AI2HTML.defaults.caps;
   var align = AI2HTML.defaults.align;
@@ -1698,14 +1761,21 @@ AI2HTML.ai = AI2HTML.ai || {};
   // globals (though it would be better to parameterize the functions instead)
   var doc, docPath, nameSpace, fonts;
   
-  
   // call this function to update the global variables, they usually don't change
+  // eventually this could be done in a cleaner way
   function updateGlobals() {
     doc = AI2HTML.doc;
     docPath = AI2HTML.docPath;
     nameSpace = AI2HTML.nameSpace;
-    fonts = AI2HTML.fonts;
+    fonts = AI2HTML.defaults.fonts;
   }
+  
+  
+  
+  function warn(str) { log.warn(str); }
+  function error(str) { log.error(str); }
+  function message() { log.message.apply(log, arguments); }
+  
   
   // a, b: coordinate arrays, as from <PathItem>.geometricBounds
   function testBoundsIntersection(a, b) {
@@ -1719,14 +1789,7 @@ AI2HTML.ai = AI2HTML.ai || {};
   function clearMatrixShift(m) {
     return app.concatenateTranslationMatrix(m, -m.mValueTX, -m.mValueTY);
   }
-  
-  function folderExists(path) {
-    return new Folder(path).exists;
-  }
-  
-  function fileExists(path) {
-    return new File(path).exists;
-  }
+
   
   function deleteFile(path) {
     var file = new File(path);
@@ -1734,36 +1797,8 @@ AI2HTML.ai = AI2HTML.ai || {};
       file.remove();
     }
   }
-  
-  function readYamlConfigFile(path) {
-    return fileExists(path) ? parseYaml(readTextFile(path)) : null;
-  }
-  
-  function parseKeyValueString(str, o) {
-    var dqRxp = /^"(?:[^"\\]|\\.)*"$/;
-    var parts = str.split(':');
-    var k, v;
-    if (parts.length > 1) {
-      k = _.trim(parts.shift());
-      v = _.trim(parts.join(':'));
-      if (dqRxp.test(v)) {
-        v = JSON.parse(v); // use JSON library to parse quoted strings
-      }
-      o[k] = v;
-    }
-  }
-  
-  // Very simple Yaml parsing. Does not implement nested properties, arrays and other features
-  // (This is adequate for reading a few top-level properties from NYT's config.yml file)
-  function parseYaml(str) {
-    // TODO: strip comments // var comment = /\s*/
-    var o = {};
-    var lines = _.stringToLines(str);
-    for (var i = 0; i < lines.length; i++) {
-      parseKeyValueString(lines[i], o);
-    }
-    return o;
-  }
+
+
   
   // TODO: improve
   // (currently ignores bracketed sections of the config file)
@@ -1814,22 +1849,6 @@ AI2HTML.ai = AI2HTML.ai || {};
     // This function used to use File#eof and File#readln(), but
     // that failed to read the last line when missing a final newline.
     return readFile(fpath, 'UTF-8') || '';
-  }
-  
-  function readJSONFile(fpath) {
-    var content = readTextFile(fpath);
-    var json = null;
-    if (!content) {
-      // removing for now to avoid double warnings
-      // warn('Unable to read contents of file: ' + fpath);
-      return {};
-    }
-    try {
-      json = JSON.parse(content);
-    } catch(e) {
-      error('Error parsing JSON from ' + fpath + ': [' + e.message + ']');
-    }
-    return json;
   }
   
   function saveTextFile(dest, contents) {
@@ -1901,7 +1920,7 @@ AI2HTML.ai = AI2HTML.ai || {};
       r = g = b = 0;
       o.warning = 'The text "%s" has ' + color.typename + ' fill. Please fill it with an RGB color.';
     }
-    o.color = getCssColor(r, g, b, opacity);
+    o.color = _.getCssColor(r, g, b, opacity);
     return o;
   }
 
@@ -1966,7 +1985,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     for (var i=0, n=p.characters.length; i<n; i++) {
       c = p.characters[i];
       curr = getCharStyle(c);
-      if (!prev || objectDiff(curr, prev)) {
+      if (!prev || _.objectDiff(curr, prev)) {
         currRange = {
           text: '',
           aiStyle: curr
@@ -2039,7 +2058,7 @@ AI2HTML.ai = AI2HTML.ai || {};
       // CSS to preserve this height (not supported by Illustrator API)
       return '<p>&nbsp;</p>';
     }
-    diff = objectDiff(pData.cssStyle, baseStyle);
+    diff = _.objectDiff(pData.cssStyle, baseStyle);
     // Give the pg a class, if it has a different style than the base pg class
     if (diff) {
       html = '<p class="' + getTextStyleClass(diff, pStyles, 'pstyle') + '">';
@@ -2049,7 +2068,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     for (var j=0; j<pData.ranges.length; j++) {
       range = pData.ranges[j];
       rangeHtml = _.cleanHtmlText(cleanHtmlTags(range.text));
-      diff = objectDiff(range.cssStyle, pData.cssStyle);
+      diff = _.objectDiff(range.cssStyle, pData.cssStyle);
       if (diff) {
         rangeHtml = '<span class="' +
           getTextStyleClass(diff, cStyles, 'cstyle') + '">' + rangeHtml + '</span>';
@@ -2132,10 +2151,10 @@ AI2HTML.ai = AI2HTML.ai || {};
     // initialize the base <p> style to be equal to the most common pg style
     if (pgStyles.length > 0) {
       pgStyles.sort(compareCharCount);
-      extend(baseStyle, pgStyles[0].cssStyle);
+      _.extend(baseStyle, pgStyles[0].cssStyle);
     }
     // override certain base style properties with default values
-    extend(baseStyle, defaultCssStyle, convertAiTextStyle(defaultAiStyle));
+    _.extend(baseStyle, defaultCssStyle, convertAiTextStyle(defaultAiStyle));
     return baseStyle;
     
     function compareCharCount(a, b) {
@@ -2148,7 +2167,7 @@ AI2HTML.ai = AI2HTML.ai || {};
         // add most common char style to the pg style, to avoid applying
         // <span> tags to all the text in the paragraph
         currCharStyles.sort(compareCharCount);
-        extend(pdata.aiStyle, currCharStyles[0].aiStyle);
+        _.extend(pdata.aiStyle, currCharStyles[0].aiStyle);
       }
       pdata.cssStyle = analyzeTextStyle(pdata.aiStyle, pdata.text, pgStyles);
       if (pdata.aiStyle.blendMode && !pdata.cssStyle['mix-blend-mode']) {
@@ -2287,7 +2306,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     }
     // if (('opacity' in aiStyle) && aiStyle.opacity < 100) {
     if ('opacity' in aiStyle) {
-      cssStyle.opacity = roundTo(aiStyle.opacity / 100, cssPrecision);
+      cssStyle.opacity = _.roundTo(aiStyle.opacity / 100, cssPrecision);
     }
     if (aiStyle.blendMode && (tmp = getBlendModeCss(aiStyle.blendMode))) {
       cssStyle['mix-blend-mode'] = tmp;
@@ -2300,14 +2319,14 @@ AI2HTML.ai = AI2HTML.ai || {};
       cssStyle['padding-bottom'] = aiStyle.spaceAfter + 'px';
     }
     if ('tracking' in aiStyle) {
-      cssStyle['letter-spacing'] = roundTo(aiStyle.tracking / 1000, cssPrecision) + 'em';
+      cssStyle['letter-spacing'] = _.roundTo(aiStyle.tracking / 1000, cssPrecision) + 'em';
     }
     if (aiStyle.superscript) {
-      fontSize = roundTo(fontSize * 0.7, 1);
+      fontSize = _.roundTo(fontSize * 0.7, 1);
       cssStyle['vertical-align'] = 'super';
     }
     if (aiStyle.subscript) {
-      fontSize = roundTo(fontSize * 0.7, 1);
+      fontSize = _.roundTo(fontSize * 0.7, 1);
       cssStyle['vertical-align'] = 'sub';
     }
     if (fontSize > 0) {
@@ -2339,7 +2358,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     var pct = parseFloat(vshift);
     var px = fontSize * pct / 100;
     if (!px || i==-1) return '0';
-    return roundTo(px, 1) + 'px';
+    return _.roundTo(px, 1) + 'px';
   }
   
   function textFrameIsRenderable(frame, artboardRect) {
@@ -2407,10 +2426,10 @@ AI2HTML.ai = AI2HTML.ai || {};
   function getTextFramesByArtboard(ab, masks, settings) {
     var candidateFrames = findTextFramesToRender(doc.textFrames, ab.artboardRect);
     var excludedFrames = getClippedTextFramesByArtboard(ab, masks);
-    candidateFrames = arraySubtract(candidateFrames, excludedFrames);
+    candidateFrames = _.arraySubtract(candidateFrames, excludedFrames);
     if (settings.render_rotated_skewed_text_as == 'image') {
       excludedFrames = _.filter(candidateFrames, textIsRotated);
-      candidateFrames = arraySubtract(candidateFrames, excludedFrames);
+      candidateFrames = _.arraySubtract(candidateFrames, excludedFrames);
     }
     return candidateFrames;
   }
@@ -2424,7 +2443,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     }
     // Sort frames top to bottom, left to right.
     selected.sort(
-      firstBy(function (v1, v2) { return v2.top  - v1.top; })
+      _.firstBy(function (v1, v2) { return v2.top  - v1.top; })
         .thenBy(function (v1, v2) { return v1.left - v2.left; })
     );
     return selected;
@@ -2437,14 +2456,32 @@ AI2HTML.ai = AI2HTML.ai || {};
     if (note) {
       parts = note.split(/[\r\n;,]+/);
       for (var i = 0; i < parts.length; i++) {
-        parseKeyValueString(parts[i], o);
+        AI2HTML.settings.parseKeyValueString(parts[i], o);
       }
     }
     return o;
   }
   
+  // obj: JS object containing css properties and values
+  // indentStr: string to use as block CSS indentation
+  function formatCss(obj, indentStr) {
+    var css = '';
+    var isBlock = !!indentStr;
+    for (var key in obj) {
+      if (isBlock) {
+        css += '\r' + indentStr;
+      }
+      css += key + ':' + obj[key]+ ';';
+    }
+    if (css && isBlock) {
+      css += '\r';
+    }
+    return css;
+  }
+  
+  
   function formatCssPct(part, whole) {
-    return roundTo(part / whole * 100, cssPrecision) + '%';
+    return _.roundTo(part / whole * 100, cssPrecision) + '%';
   }
   
   function getUntransformedTextBounds(textFrame) {
@@ -2477,12 +2514,12 @@ AI2HTML.ai = AI2HTML.ai || {};
     var horizAnchorPct = 50;
     var transformOrigin = horizAnchorPct + '% ' + vertAnchorPct + '%;';
     var transform = 'matrix(' +
-      roundTo(matrix.mValueA, cssPrecision) + ',' +
-      roundTo(-matrix.mValueB, cssPrecision) + ',' +
-      roundTo(-matrix.mValueC, cssPrecision) + ',' +
-      roundTo(matrix.mValueD, cssPrecision) + ',' +
-      roundTo(matrix.mValueTX, cssPrecision) + ',' +
-      roundTo(matrix.mValueTY, cssPrecision) + ');';
+      _.roundTo(matrix.mValueA, cssPrecision) + ',' +
+      _.roundTo(-matrix.mValueB, cssPrecision) + ',' +
+      _.roundTo(-matrix.mValueC, cssPrecision) + ',' +
+      _.roundTo(matrix.mValueD, cssPrecision) + ',' +
+      _.roundTo(matrix.mValueTX, cssPrecision) + ',' +
+      _.roundTo(matrix.mValueTY, cssPrecision) + ');';
     
     // TODO: handle character scaling.
     // One option: add separate CSS transform to paragraphs inside a TextFrame
@@ -2569,7 +2606,7 @@ AI2HTML.ai = AI2HTML.ai || {};
       // https://css-tricks.com/centering-in-the-unknown/
       // TODO: consider: http://zerosixthree.se/vertical-align-anything-with-just-3-lines-of-css/
       styles += 'top:' + formatCssPct(htmlT + marginTopPx + htmlBox.height / 2, abBox.height) + ';';
-      styles += 'margin-top:-' + roundTo(marginTopPx + htmlBox.height / 2, 1) + 'px;';
+      styles += 'margin-top:-' + _.roundTo(marginTopPx + htmlBox.height / 2, 1) + 'px;';
     } else {
       styles += 'top:' + formatCssPct(htmlT, abBox.height) + ';';
     }
@@ -2580,7 +2617,7 @@ AI2HTML.ai = AI2HTML.ai || {};
       // setting a negative left margin for horizontal placement of centered text
       // using percent for area text (because area text width uses percent) and pixels for point text
       if (thisFrame.kind == TextType.POINTTEXT) {
-        styles += 'margin-left:-' + roundTo(htmlW / 2, 1) + 'px;';
+        styles += 'margin-left:-' + _.roundTo(htmlW / 2, 1) + 'px;';
       } else {
         styles += 'margin-left:' + formatCssPct(-htmlW / 2, abBox.width )+ ';';
       }
@@ -2593,9 +2630,9 @@ AI2HTML.ai = AI2HTML.ai || {};
       classes += ' ' + nameSpace + 'aiPointText';
       // using pixel width with point text, because pct width causes alignment problems -- see issue #63
       // adding extra pixels in case HTML width is slightly less than AI width (affects alignment of right-aligned text)
-      styles += 'width:' + roundTo(htmlW, cssPrecision) + 'px;';
+      styles += 'width:' + _.roundTo(htmlW, cssPrecision) + 'px;';
     } else if (settings.text_responsiveness == 'fixed') {
-      styles += 'width:' + roundTo(htmlW, cssPrecision) + 'px;';
+      styles += 'width:' + _.roundTo(htmlW, cssPrecision) + 'px;';
     } else {
       // area text uses pct width, so width of text boxes will scale
       // TODO: consider only using pct width with wider text boxes that contain paragraphs of text
@@ -2654,12 +2691,12 @@ AI2HTML.ai = AI2HTML.ai || {};
     } else if (geom.type == 'circle') {
       width = geom.radius * 2;
       height = width;
-      // styles.push('border-radius: ' + roundTo(geom.radius, 1) + 'px');
+      // styles.push('border-radius: ' + _.roundTo(geom.radius, 1) + 'px');
       styles.push('border-radius: 50%');
     }
     
-    width = roundTo(width, precision);
-    height = roundTo(height, precision);
+    width = _.roundTo(width, precision);
+    height = _.roundTo(height, precision);
     
     if (opts.scaled) {
       styles.push('width: ' + formatCssPct(width, abBox.width));
@@ -2806,7 +2843,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     // TODO: handle opacity
     var style = {};
     var stroke, fill;
-    style.opacity = roundTo(getComputedOpacity(item) / 100, 2);
+    style.opacity = _.roundTo(getComputedOpacity(item) / 100, 2);
     if (getBlendMode(item) == BlendModes.MULTIPLY) {
       style.multiply = true;
     }
@@ -3111,7 +3148,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     // Embed images tagged :png as separate images
     // Inside this function, layers are hidden and unhidden as needed
     forEachImageLayer('png', function(lyr) {
-      var opts = extend({}, settings, {png_transparent: true});
+      var opts = _.extend({}, settings, {png_transparent: true});
       var name = getLayerImageName(lyr, activeArtboard, settings);
       var fmt = _.contains(settings.image_format || [], 'png24') ? 'png24' : 'png';
       // This test prevents empty images, but is expensive when a layer contains many art objects...
@@ -3151,8 +3188,8 @@ AI2HTML.ai = AI2HTML.ai || {};
   }
   
   function getImageFolder(settings) {
-    // return pathJoin(docPath, settings.html_output_path, settings.image_output_path);
-    return pathJoin(docPath, settings.image_output_path);
+    // return _.pathJoin(docPath, settings.html_output_path, settings.image_output_path);
+    return _.pathJoin(docPath, settings.image_output_path);
   }
   
   function getImageFileName(name, fmt) {
@@ -3162,14 +3199,14 @@ AI2HTML.ai = AI2HTML.ai || {};
   
   function getLayerOpacityCSS(layer) {
     var o = getComputedOpacity(layer);
-    return o < 100 ? 'opacity:' + roundTo(o / 100, 2) + ';' : '';
+    return o < 100 ? 'opacity:' + _.roundTo(o / 100, 2) + ';' : '';
   }
 
 // Capture and save an image to the filesystem and return html embed code
 //
   function exportImage(imgName, format, ab, masks, layer, settings) {
     var imgFile = getImageFileName(imgName, format);
-    var outputPath = pathJoin(getImageFolder(settings), imgFile);
+    var outputPath = _.pathJoin(getImageFolder(settings), imgFile);
     var imgId = getImageId(imgName);
     // imgClass: // remove artboard size (careful not to remove deduplication annotations)
     var imgClass = imgId.replace(/-[1-9][0-9]+-/, '-');
@@ -3282,7 +3319,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     _.forEach(findLayers(doc.layers), function(lyr) {
       // Except: don't hide layers that are children of a targeted layer
       // (inconvenient to unhide these selectively later)
-      if (find(targetLayers, function(target) {
+      if (_.find(targetLayers, function(target) {
         return layerIsChildOf(lyr, target);
       })) return;
       lyr.visible = false;
@@ -3338,10 +3375,10 @@ AI2HTML.ai = AI2HTML.ai || {};
 // Create an <img> tag for the artboard image
   function generateImageHtml(imgFile, imgId, imgClass, imgStyle, ab, settings) {
     var imgDir = settings.image_source_path,
-      imgAlt = encodeHtmlEntities(settings.image_alt_text || ''),
+      imgAlt = _.encodeHtmlEntities(settings.image_alt_text || ''),
       html, src;
     
-    src = imgDir ? pathJoin(imgDir, imgFile) : imgFile;
+    src = imgDir ? _.pathJoin(imgDir, imgFile) : imgFile;
     if (settings.cache_bust_token) {
       src += '?v=' + settings.cache_bust_token;
     }
@@ -3358,15 +3395,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     html += ' src="' + src + '"/>\r';
     return html;
   }
-  
-  function incrementCacheBustToken(settings) {
-    var c = settings.cache_bust_token;
-    if (parseInt(c) != +c) {
-      warn('cache_bust_token should be a positive integer');
-    } else {
-      updateSettingsEntry('cache_bust_token', +c + 1);
-    }
-  }
+
 
 // Create a promo image from the largest usable artboard
   function createPromoImage(settings) {
@@ -3478,7 +3507,7 @@ AI2HTML.ai = AI2HTML.ai || {};
   function copyArtboardForImageExport(ab, masks, items) {
     var layerMasks = _.filter(masks, function(o) {return !!o.layer;}),
       artboardBounds = ab.artboardRect,
-      sourceItems = items || toArray(doc.layers),
+      sourceItems = items || _.toArray(doc.layers),
       destLayer = doc.layers.add(),
       destGroup = doc.groupItems.add(),
       itemCount = 0,
@@ -3518,7 +3547,7 @@ AI2HTML.ai = AI2HTML.ai || {};
       // TODO: consider checking all item types
       // TODO: consider checking subgroups (recursively)
       // FIX: convert group.textFrames to array to avoid runtime error 'No such element' in _.forEach()
-      _.forEach(toArray(group.textFrames), removeItemIfHidden);
+      _.forEach(_.toArray(group.textFrames), removeItemIfHidden);
     }
     
     function removeItemIfHidden(item) {
@@ -3586,7 +3615,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     }
     
     function findLayerMask(lyr) {
-      return find(layerMasks, function(o) {return o.layer == lyr;});
+      return _.find(layerMasks, function(o) {return o.layer == lyr;});
     }
     
     function copyPageItem(item, dest) {
@@ -3688,7 +3717,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     var count = 0;
     content = content.replace(/<image[^<]+href="([^"]+)"[^<]+<\/image>/gm, function(match, href) {
       count++;
-      deleteFile(pathJoin(dir, href));
+      deleteFile(_.pathJoin(dir, href));
       return '';
     });
     if (count > 0) {
@@ -3710,7 +3739,7 @@ AI2HTML.ai = AI2HTML.ai || {};
 
 // Add ab content to an output
   function assignArtboardContentToFile(name, abData, outputArr) {
-    var obj = find(outputArr, function(o) {return o.name == name;});
+    var obj = _.find(outputArr, function(o) {return o.name == name;});
     if (!obj) {
       obj = {name: name, html: '', js: '', css: ''};
       outputArr.push(obj);
@@ -3749,7 +3778,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     }
     
     html += '\t<div id="' + id + '" class="' + classname + '" style="' + inlineStyle + '"';
-    html += ' data-aspect-ratio="' + roundTo(aspectRatio, 3) + '"';
+    html += ' data-aspect-ratio="' + _.roundTo(aspectRatio, 3) + '"';
     if (_.isTrue(settings.include_resizer_widths)) {
       html += ' data-min-width="' + visibleRange[0] + '"';
       if (visibleRange[1] < Infinity) {
@@ -4049,7 +4078,7 @@ AI2HTML.ai = AI2HTML.ai || {};
   function outputLocalPreviewPage(textForFile, localPreviewDestination, settings) {
     var localPreviewTemplateText = readTextFile(docPath + settings.local_preview_template);
     settings.ai2htmlPartial = textForFile; // TODO: don't modify global settings this way
-    var localPreviewHtml = applyTemplate(localPreviewTemplateText, settings);
+    var localPreviewHtml = _.applyTemplate(localPreviewTemplateText, settings);
     saveTextFile(localPreviewDestination, localPreviewHtml);
   }
   
@@ -4099,7 +4128,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     
     // comments
     commentBlock = '<!-- Generated by ai2html v' + settings.scriptVersion + ' - ' +
-      getDateTimeStamp() + ' -->\r' + '<!-- ai file: ' + doc.name + ' -->\r';
+      _.getDateTimeStamp() + ' -->\r' + '<!-- ai file: ' + doc.name + ' -->\r';
     
     if (settings.preview_slug) {
       commentBlock += '<!-- preview: ' + settings.preview_slug + ' -->\r';
@@ -4113,7 +4142,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     
     if (settings.alt_text) {
       html += '<div class="' + nameSpace + 'aiAltText" id="' + altTextId + '">' +
-        encodeHtmlEntities(settings.alt_text) + '</div>';
+        _.encodeHtmlEntities(settings.alt_text) + '</div>';
     }
     if (linkSrc) {
       // optional link around content
@@ -4135,9 +4164,9 @@ AI2HTML.ai = AI2HTML.ai || {};
     js = content.js + responsiveJs;
     
     textForFile =  '\r' + commentBlock + css + '\r' + html + '\r' + js +
-      '<!-- End ai2html' + ' - ' + getDateTimeStamp() + ' -->\r';
+      '<!-- End ai2html' + ' - ' + _.getDateTimeStamp() + ' -->\r';
     
-    textForFile = applyTemplate(textForFile, settings);
+    textForFile = _.applyTemplate(textForFile, settings);
     htmlFileDestinationFolder = docPath + settings.html_output_path;
     checkForOutputFolder(htmlFileDestinationFolder, 'html_output_path');
     htmlFileDestination = htmlFileDestinationFolder + pageName + settings.html_output_extension;
@@ -4490,7 +4519,7 @@ AI2HTML.ai = AI2HTML.ai || {};
 
 // Return array of layer objects, including both PageItems and sublayers, in z order
   function getSortedLayerItems(lyr) {
-    var items = toArray(lyr.pageItems).concat(toArray(lyr.layers));
+    var items = _.toArray(lyr.pageItems).concat(_.toArray(lyr.layers));
     if (lyr.layers.length > 0 && lyr.pageItems.length > 0) {
       // only need to sort if layer contains both layers and page objects
       items.sort(function(a, b) {
@@ -4559,7 +4588,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     // JS API does not support finding masks -- need to call a menu command for this
     // Assumes clipping paths have been unlocked
     app.executeMenuCommand('Clipping Masks menu item');
-    allMasks = toArray(doc.selection);
+    allMasks = _.toArray(doc.selection);
     clearSelection();
     relevantMasks = _.filter(allMasks, maskIsRelevant);
     // Lock all masks; then unlock each mask in turn and identify its contents.
@@ -4579,7 +4608,7 @@ AI2HTML.ai = AI2HTML.ai || {};
       
       // stash both objects and textframes
       // (optimization -- addresses poor performance when many objects are masked)
-      // //  obj.items = toArray(doc.selection || []); // Stash masked items
+      // //  obj.items = _.toArray(doc.selection || []); // Stash masked items
       storeSelectedItems(obj, doc.selection || []);
       
       if (mask.parent.typename == "GroupItem") {
@@ -4667,16 +4696,14 @@ AI2HTML.ai = AI2HTML.ai || {};
     testBoundsIntersection: testBoundsIntersection,
     shiftBounds: shiftBounds,
     clearMatrixShift: clearMatrixShift,
-    folderExists: folderExists,
-    fileExists: fileExists,
     deleteFile: deleteFile,
-    readYamlConfigFile: readYamlConfigFile,
     readGitConfigFile: readGitConfigFile,
     readFile: readFile,
     readTextFile: readTextFile,
-    readJSONFile: readJSONFile,
     saveTextFile: saveTextFile,
     checkForOutputFolder: checkForOutputFolder,
+    objectIsHidden: objectIsHidden,
+    objectOverlapsAnArtboard: objectOverlapsAnArtboard,
     
     // ai2html text functions
     
@@ -4707,12 +4734,14 @@ AI2HTML.ai = AI2HTML.ai || {};
     getTextFramesByArtboard: getTextFramesByArtboard,
     findTextFramesToRender: findTextFramesToRender,
     parseDataAttributes: parseDataAttributes,
+    formatCss: formatCss,
     formatCssPct: formatCssPct,
     getUntransformedTextBounds: getUntransformedTextBounds,
     getTransformationCss: getTransformationCss,
     getTextFrameCss: getTextFrameCss,
     convertAreaTextPath: convertAreaTextPath,
     unlockObject: unlockObject,
+    unlockObjects: unlockObjects,
     
     // ai2html symbol functions
     
@@ -4764,6 +4793,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     outputLocalPreviewPage: outputLocalPreviewPage,
     addCustomContent: addCustomContent,
     generateOutputHtml: generateOutputHtml,
+    objectIsLocked: objectIsLocked,
     
     // ai2html AI document reading functions
     
@@ -4826,66 +4856,36 @@ AI2HTML.testing = AI2HTML.testing || {};
     var ai = AI2HTML.ai;
     var settings = AI2HTML.settings;
     
-    var testBoundsIntersection = ai.testBoundsIntersection;
-    var trim = _.trim;
-    var stringToLines = _.stringToLines;
-    var contains = _.contains;
-    var arraySubtract = _.arraySubtract;
-    var firstBy = _.firstBy;
-    var zeroPad = _.zeroPad;
-    var roundTo = _.roundTo;
-    var pathJoin = _.pathJoin;
-    var pathSplit = _.pathSplit;
-    var folderExists = ai.folderExists;
-    var formatCss = _.formatCss;
-    var getCssColor = _.getCssColor;
-    var readGitConfigFile = ai.readGitConfigFile;
-    var readYamlConfigFile = ai.readYamlConfigFile;
-    var applyTemplate = _.applyTemplate;
-    var cleanHtmlText = _.cleanHtmlText;
-    var encodeHtmlEntities = _.encodeHtmlEntities;
-    var addEnclosingTag = _.addEnclosingTag;
-    var stripTag = _.stripTag;
-    var cleanCodeBlock = settings.cleanCodeBlock;
-    var findHtmlTag = _.findHtmlTag;
-    var cleanHtmlTags = ai.cleanHtmlTags;
-    var parseDataAttributes = ai.parseDataAttributes;
-    var parseObjectName = ai.parseObjectName;
-    var cleanObjectName = ai.cleanObjectName;
-    var uniqAssetName = ai.uniqAssetName;
-    var replaceSvgIds = ai.replaceSvgIds;
-    var compareVersions = settings.compareVersions;
-    
     module.exports = {
-      testBoundsIntersection: testBoundsIntersection,
-      trim: trim,
-      stringToLines: stringToLines,
-      contains: contains,
-      arraySubtract: arraySubtract,
-      firstBy: firstBy,
-      zeroPad: zeroPad,
-      roundTo: roundTo,
-      pathJoin: pathJoin,
-      pathSplit: pathSplit,
-      folderExists: folderExists,
-      formatCss: formatCss,
-      getCssColor: getCssColor,
-      readGitConfigFile: readGitConfigFile,
-      readYamlConfigFile: readYamlConfigFile,
-      applyTemplate: applyTemplate,
-      cleanHtmlText: cleanHtmlText,
-      encodeHtmlEntities: encodeHtmlEntities,
-      addEnclosingTag: addEnclosingTag,
-      stripTag: stripTag,
-      cleanCodeBlock: cleanCodeBlock,
-      findHtmlTag: findHtmlTag,
-      cleanHtmlTags: cleanHtmlTags,
-      parseDataAttributes: parseDataAttributes,
-      parseObjectName: parseObjectName,
-      cleanObjectName: cleanObjectName,
-      uniqAssetName: uniqAssetName,
-      replaceSvgIds: replaceSvgIds,
-      compareVersions: compareVersions
+      testBoundsIntersection: ai.testBoundsIntersection,
+      trim: _.trim,
+      stringToLines: _.stringToLines,
+      contains: _.contains,
+      arraySubtract: _.arraySubtract,
+      firstBy: _.firstBy,
+      zeroPad: _.zeroPad,
+      roundTo: _.roundTo,
+      pathJoin: _.pathJoin,
+      pathSplit: _.pathSplit,
+      folderExists: _.folderExists,
+      formatCss: ai.formatCss,
+      getCssColor: _.getCssColor,
+      readGitConfigFile: ai.readGitConfigFile,
+      readYamlConfigFile: settings.readYamlConfigFile,
+      applyTemplate: _.applyTemplate,
+      cleanHtmlText: _.cleanHtmlText,
+      encodeHtmlEntities: _.encodeHtmlEntities,
+      addEnclosingTag: _.addEnclosingTag,
+      stripTag: _.stripTag,
+      cleanCodeBlock: settings.cleanCodeBlock,
+      findHtmlTag: _.findHtmlTag,
+      cleanHtmlTags: ai.cleanHtmlTags,
+      parseDataAttributes: ai.parseDataAttributes,
+      parseObjectName: ai.parseObjectName,
+      cleanObjectName: ai.cleanObjectName,
+      uniqAssetName: ai.uniqAssetName,
+      replaceSvgIds: ai.replaceSvgIds,
+      compareVersions: settings.compareVersions
     };
     
   }
@@ -4900,7 +4900,7 @@ AI2HTML.testing = AI2HTML.testing || {};
 
 // Path: src/index.js
 
-function main() {
+(function main() {
 // Enclosing scripts in a named function (and not an anonymous, self-executing
 // function) has been recommended as a way to minimise intermittent "MRAP" errors.
 // (This advice may be superstitious, need more evidence to decide.)
@@ -4909,15 +4909,9 @@ function main() {
   
   var log = AI2HTML.logger;
   
-  function warn(str) {
-    log.warn(str);
-  }
-  function error(str) {
-    log.error(str);
-  }
-  function message() {
-    log.message.apply(log, arguments);
-  }
+  function warn(str) { log.warn(str); }
+  function error(str) { log.error(str); }
+  function message() { log.message.apply(log, arguments); }
   
   
   // If running in Node.js, export functions for testing and exit
@@ -4951,7 +4945,7 @@ function main() {
     var textBlockData;
     
     try {
-      if (!isTestedIllustratorVersion(app.version)) {
+      if (!settings.isTestedIllustratorVersion(app.version)) {
         warn('Ai2html has not been tested on this version of Illustrator.');
       }
       if (!app.documents.length) {
@@ -4979,6 +4973,10 @@ function main() {
       // initialize script settings
       this.doc = app.activeDocument;
       this.docPath = this.doc.path + '/';
+      
+      settings.updateGlobals(); // doc and docPath
+      ai.updateGlobals();
+      
       this.docIsSaved = this.doc.saved;
       textBlockData = settings.initSpecialTextBlocks();
       docSettings = settings.initDocumentSettings(textBlockData.settings);
@@ -4991,10 +4989,12 @@ function main() {
         settings.createSettingsBlock(docSettings);
       }
       
-      ai.updateGlobals();
+      ai.updateGlobals(); // again, in case fonts are updated
       
       // render the document
       this.render(docSettings, textBlockData.code);
+      message(settings);
+      
     } catch(e) {
       error(log.formatError(e));
     }
@@ -5039,10 +5039,10 @@ function main() {
   AI2HTML.render = function(settings, customBlocks) {
     
     var ai = AI2HTML.ai;
-    var settings = AI2HTML.settings;
+    var that = this;
     
     // warn about duplicate artboard names
-    settings.validateArtboardNames(docSettings);
+    AI2HTML.settings.validateArtboardNames(docSettings);
     
     // Fix for issue #50
     // If a text range is selected when the script runs, it interferes
@@ -5055,22 +5055,22 @@ function main() {
     // Generate HTML, CSS and images for each artboard
     // ================================================
     progressBar = new ProgressBar({name: 'Ai2html progress', steps: calcProgressBarSteps()});
-    unlockObjects(); // Unlock containers and clipping masks
-    var masks = findMasks(); // identify all clipping masks and their contents
+    ai.unlockObjects(); // Unlock containers and clipping masks
+    var masks = ai.findMasks(); // identify all clipping masks and their contents
     var fileContentArr = [];
     
-    forEachUsableArtboard(function(activeArtboard, abIndex) {
-      var abSettings = getArtboardSettings(activeArtboard);
-      var docArtboardName = getDocumentArtboardName(activeArtboard);
+    ai.forEachUsableArtboard(function(activeArtboard, abIndex) {
+      var abSettings = ai.getArtboardSettings(activeArtboard);
+      var docArtboardName = ai.getDocumentArtboardName(activeArtboard);
       var textFrames, textData, imageData, specialData;
       var artboardContent = {html: '', css: '', js: ''};
       
-      doc.artboards.setActiveArtboardIndex(abIndex);
+      that.doc.artboards.setActiveArtboardIndex(abIndex);
       
       // detect videos and other special layers
-      specialData = convertSpecialLayers(activeArtboard, settings);
+      specialData = ai.convertSpecialLayers(activeArtboard, settings);
       if (specialData) {
-        forEach(specialData.layers, function(lyr) {
+        _.forEach(specialData.layers, function(lyr) {
           lyr.visible = false;
         });
       }
@@ -5085,8 +5085,8 @@ function main() {
         textData = {html: '', styles: []};
       } else {
         progressBar.setTitle(docArtboardName + ': Generating text...');
-        textFrames = getTextFramesByArtboard(activeArtboard, masks, settings);
-        textData = convertTextFrames(textFrames, activeArtboard, settings);
+        textFrames = ai.getTextFramesByArtboard(activeArtboard, masks, settings);
+        textData = ai.convertTextFrames(textFrames, activeArtboard, settings);
       }
       
       progressBar.step();
@@ -5095,9 +5095,9 @@ function main() {
       // Generate artboard image(s)
       // ==========================
       
-      if (isTrue(settings.write_image_files)) {
+      if (_.isTrue(settings.write_image_files)) {
         progressBar.setTitle(docArtboardName + ': Capturing image...');
-        imageData = convertArtItems(activeArtboard, textFrames, masks, settings);
+        imageData = ai.convertArtItems(activeArtboard, textFrames, masks, settings);
       } else {
         imageData = {html: ''};
       }
@@ -5105,10 +5105,10 @@ function main() {
       if (specialData) {
         imageData.html = specialData.video + specialData.html_before +
           imageData.html + specialData.html_after;
-        forEach(specialData.layers, function(lyr) {
-          lyr.visible = true;
-        });
-        if (specialData.video && !isTrue(settings.png_transparent)) {
+          _.forEach(specialData.layers, function(lyr) {
+            lyr.visible = true;
+          });
+        if (specialData.video && !_.isTrue(settings.png_transparent)) {
           warn('Background videos may be covered up without png_transparent:true');
         }
       }
@@ -5119,8 +5119,8 @@ function main() {
       // Finish generating artboard HTML and CSS
       //=====================================
       
-      artboardContent.html += '\r\t<!-- Artboard: ' + getArtboardName(activeArtboard) + ' -->\r' +
-        generateArtboardDiv(activeArtboard, settings) +
+      artboardContent.html += '\r\t<!-- Artboard: ' + ai.getArtboardName(activeArtboard) + ' -->\r' +
+        ai.generateArtboardDiv(activeArtboard, settings) +
         imageData.html +
         textData.html +
         '\t</div>\r';
@@ -5132,16 +5132,16 @@ function main() {
         abStyles.push('> div { pointer-events: none; }\r');
         abStyles.push('> img { pointer-events: none; }\r');
       }
-      artboardContent.css += generateArtboardCss(activeArtboard, abStyles, settings);
+      artboardContent.css += ai.generateArtboardCss(activeArtboard, abStyles, settings);
       
-      var oname = settings.output == 'one-file' ? getRawDocumentName() : docArtboardName;
+      var oname = settings.output == 'one-file' ? ai.getRawDocumentName() : docArtboardName;
       // kludge to identify legacy embed projects
       if (settings.output == 'one-file' &&
         settings.project_type == 'ai2html' &&
-        !isTrue(settings.create_json_config_files)) {
+        !_.isTrue(settings.create_json_config_files)) {
         oname = 'index';
       }
-      assignArtboardContentToFile(oname, artboardContent, fileContentArr);
+      ai.assignArtboardContentToFile(oname, artboardContent, fileContentArr);
       
     }); // end artboard loop
     
@@ -5153,32 +5153,32 @@ function main() {
     // Output html file(s)
     //=====================================
     
-    forEach(fileContentArr, function(fileContent) {
-      addCustomContent(fileContent, customBlocks);
+    _.forEach(fileContentArr, function(fileContent) {
+      ai.addCustomContent(fileContent, customBlocks);
       progressBar.setTitle('Writing HTML output...');
-      generateOutputHtml(fileContent, fileContent.name, settings);
+      ai.generateOutputHtml(fileContent, fileContent.name, settings);
     });
     
     //=====================================
     // Post-output operations
     //=====================================
     
-    if (isTrue(settings.create_json_config_files)) {
+    if (_.isTrue(settings.create_json_config_files)) {
       // Create JSON config files, one for each .ai file
-      var jsonStr = generateJsonSettingsFileContent(settings);
-      var jsonPath = docPath + getRawDocumentName() + '.json';
-      saveTextFile(jsonPath, jsonStr);
-    } else if (isTrue(settings.create_config_file)) {
+      var jsonStr = ai.generateJsonSettingsFileContent(settings);
+      var jsonPath = this.docPath + ai.getRawDocumentName() + '.json';
+      ai.saveTextFile(jsonPath, jsonStr);
+    } else if (_.isTrue(settings.create_config_file)) {
       // Create one top-level config.yml file
       // (This is being replaced by multiple JSON config files for NYT projects)
-      var yamlPath = docPath + (settings.config_file_path || 'config.yml'),
-        yamlStr = generateYamlFileContent(settings);
-      checkForOutputFolder(yamlPath.replace(/[^\/]+$/, ''), 'configFileFolder');
-      saveTextFile(yamlPath, yamlStr);
+      var yamlPath = this.docPath + (settings.config_file_path || 'config.yml'),
+        yamlStr = ai.generateYamlFileContent(settings);
+      ai.checkForOutputFolder(yamlPath.replace(/[^\/]+$/, ''), 'configFileFolder');
+      ai.saveTextFile(yamlPath, yamlStr);
     }
     
     if (settings.cache_bust_token) {
-      incrementCacheBustToken(settings);
+      AI2HTML.settings.incrementCacheBustToken(settings);
     }
     
   } // end render()
@@ -5234,7 +5234,12 @@ function main() {
     });
     return n;
   }
-}
+  
+  
+  // KICKOFF!
+  AI2HTML.init();
+  
+})();
 
 
 
@@ -5253,7 +5258,6 @@ function main() {
 
 // write to file
 
-main();
 
 
 AI2HTML.ai2json = AI2HTML.ai2json || {};
