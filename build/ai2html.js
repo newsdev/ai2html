@@ -1300,6 +1300,7 @@ AI2HTML.settings = AI2HTML.settings || {};
   // Derive ai2html program settings by merging default settings and overrides.
   function initDocumentSettings(textBlockSettings) {
     var settings = _.extend({}, defaults.defaultSettings); // copy default settings
+    settings.scriptVersion = defaults.scriptVersion;
     
     if (detectTimesEnv(textBlockSettings)) {
       // NYT settings are only applied in an NYTimes CMS context
@@ -1737,7 +1738,6 @@ AI2HTML.settings = AI2HTML.settings || {};
   };
   
 }());
-
 
 AI2HTML = AI2HTML || {};
 /** @global */
@@ -3886,7 +3886,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     _.forEach(settings.config_file, function(key) {
       var val = String(settings[key]);
       if (_.isTrue(val)) val = true;
-      else if (isFalse(val)) val = false;
+      else if (_.isFalse(val)) val = false;
       o[key] = val;
     });
     return JSON.stringify(o, null, 2);
@@ -3919,7 +3919,7 @@ AI2HTML.ai = AI2HTML.ai || {};
       }
       if (useQuotes) {
         value = JSON.stringify(value); // wrap in quotes and escape internal quotes
-      } else if (_.isTrue(value) || isFalse(value)) {
+      } else if (_.isTrue(value) || _.isFalse(value)) {
         // use standard values for boolean settings
         value = _.isTrue(value) ? 'true' : 'false';
       }
@@ -5259,9 +5259,3 @@ AI2HTML.testing = AI2HTML.testing || {};
 // write to file
 
 
-
-AI2HTML.ai2json = AI2HTML.ai2json || {};
-
-AI2HTML.json2html = AI2HTML.json2html || {};
-
-AI2HTML.json2svelte = AI2HTML.json2svelte || {};

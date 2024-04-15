@@ -146,6 +146,7 @@ AI2HTML.settings = AI2HTML.settings || {};
   // Derive ai2html program settings by merging default settings and overrides.
   function initDocumentSettings(textBlockSettings) {
     var settings = _.extend({}, defaults.defaultSettings); // copy default settings
+    settings.scriptVersion = defaults.scriptVersion;
     
     if (detectTimesEnv(textBlockSettings)) {
       // NYT settings are only applied in an NYTimes CMS context

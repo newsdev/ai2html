@@ -2145,7 +2145,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     _.forEach(settings.config_file, function(key) {
       var val = String(settings[key]);
       if (_.isTrue(val)) val = true;
-      else if (isFalse(val)) val = false;
+      else if (_.isFalse(val)) val = false;
       o[key] = val;
     });
     return JSON.stringify(o, null, 2);
@@ -2178,7 +2178,7 @@ AI2HTML.ai = AI2HTML.ai || {};
       }
       if (useQuotes) {
         value = JSON.stringify(value); // wrap in quotes and escape internal quotes
-      } else if (_.isTrue(value) || isFalse(value)) {
+      } else if (_.isTrue(value) || _.isFalse(value)) {
         // use standard values for boolean settings
         value = _.isTrue(value) ? 'true' : 'false';
       }
