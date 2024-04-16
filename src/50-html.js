@@ -76,6 +76,213 @@ AI2HTML.html = AI2HTML.html || {};
     var srcName = _.isTrue(settings.use_lazy_loader) ? 'data-src' : 'src';
     return '<video ' + srcName + '="' + url + '" autoplay muted loop playsinline style="top:0; width:100%; object-fit:contain; position:absolute"></video>';
   }
+  
+  // Convert a collection of TextFrames to HTML and CSS
+  // TKTK
+  function convertTextData(textData, artboardData, settings) {
+    // var frameData = _.map(textFrames, function(frame) {
+    //   return {
+    //     paragraphs: importTextFrameParagraphs(frame)
+    //   };
+    // });
+    // var pgStyles = [];
+    // var charStyles = [];
+    // var baseStyle = deriveTextStyleCss(frameData);
+    // var idPrefix = nameSpace + 'ai' + getArtboardId(ab) + '-';
+    // var abBox = convertAiBounds(ab.artboardRect);
+    // var divs = _.map(frameData, function(obj, i) {
+    //   var frame = textFrames[i];
+    //   var divId = frame.name ? _.makeKeyword(frame.name) : idPrefix  + (i + 1);
+    //   var positionCss = getTextFrameCss(frame, abBox, obj.paragraphs, settings);
+    //   return '\t\t<div id="' + divId + '" ' + positionCss + '>' +
+    //     generateTextFrameHtml(obj.paragraphs, baseStyle, pgStyles, charStyles) + '\r\t\t</div>\r';
+    // });
+    //
+    // var allStyles = pgStyles.concat(charStyles);
+    // var cssBlocks = _.map(allStyles, function(obj) {
+    //   return '.' + obj.classname + ' {' + formatCss(obj.style, '\t\t') + '\t}\r';
+    // });
+    // if (divs.length > 0) {
+    //   cssBlocks.unshift('p {' + formatCss(baseStyle, '\t\t') + '\t}\r');
+    // }
+    //
+    // return {
+    //   styles: cssBlocks,
+    //   html: divs.join('')
+    // };
+  }
+  
+  
+  function generateTextFrameHtml(paragraphs, baseStyle, pStyles, cStyles) {
+    var html = '';
+    for (var i=0; i<paragraphs.length; i++) {
+      html += '\r\t\t\t' + generateParagraphHtml(paragraphs[i], baseStyle, pStyles, cStyles);
+    }
+    return html;
+  }
+  
+  
+  function generateParagraphHtml(pData, baseStyle, pStyles, cStyles) {
+    var html, diff, range, rangeHtml;
+    if (pData.text.length === 0) { // empty pg
+      // TODO: Calculate the height of empty paragraphs and generate
+      // CSS to preserve this height (not supported by Illustrator API)
+      return '<p>&nbsp;</p>';
+    }
+    diff = _.objectDiff(pData.cssStyle, baseStyle);
+    // Give the pg a class, if it has a different style than the base pg class
+    if (diff) {
+      html = '<p class="' + getTextStyleClass(diff, pStyles, 'pstyle') + '">';
+    } else {
+      html = '<p>';
+    }
+    for (var j=0; j<pData.ranges.length; j++) {
+      range = pData.ranges[j];
+      rangeHtml = _.cleanHtmlText(cleanHtmlTags(range.text));
+      diff = _.objectDiff(range.cssStyle, pData.cssStyle);
+      if (diff) {
+        rangeHtml = '<span class="' +
+          getTextStyleClass(diff, cStyles, 'cstyle') + '">' + rangeHtml + '</span>';
+      }
+      html += rangeHtml;
+    }
+    html += '</p>';
+    return html;
+  }
+  
+  
+  function getTextStyleClass(style, classes, name) {
+    var key = ai.getStyleKey(style);
+    var cname = nameSpace + (name || 'style');
+    var o, i;
+    for (i=0; i<classes.length; i++) {
+      o = classes[i];
+      if (o.key == key) {
+        return o.classname;
+      }
+    }
+    o = {
+      key: key,
+      style: style,
+      classname: cname + i
+    };
+    classes.push(o);
+    return o.classname;
+  }
+
+
+// Create class='' and style='' CSS for positioning the label container div
+// (This container wraps one or more <p> tags)
+  function getTextFrameCss(thisFrame, abBox, pgData, settings) {
+    var styles = '';
+    var classes = '';
+    // Using AI style of first paragraph in TextFrame to get information about
+    // tracking, justification and top padding
+    // TODO: consider positioning paragraphs separately, to handle pgs with different
+    //   justification in the same text block
+    var firstPgStyle = pgData[0].aiStyle;
+    var lastPgStyle = pgData[pgData.length - 1].aiStyle;
+    var isRotated = firstPgStyle.rotated;
+    var aiBounds = isRotated ? getUntransformedTextBounds(thisFrame) : thisFrame.geometricBounds;
+    var htmlBox = convertAiBounds(shiftBounds(aiBounds, -abBox.left, abBox.top));
+    var thisFrameAttributes = parseDataAttributes(thisFrame.note);
+    // estimated space between top of HTML container and character glyphs
+    // (related to differences in AI and CSS vertical positioning of text blocks)
+    var marginTopPx = (firstPgStyle.leading - firstPgStyle.size) / 2 + firstPgStyle.spaceBefore;
+    // estimated space between bottom of HTML container and character glyphs
+    var marginBottomPx = (lastPgStyle.leading - lastPgStyle.size) / 2 + lastPgStyle.spaceAfter;
+    // var trackingPx = firstPgStyle.size * firstPgStyle.tracking / 1000;
+    var htmlL = htmlBox.left;
+    var htmlT = Math.round(htmlBox.top - marginTopPx);
+    var htmlW = htmlBox.width;
+    var htmlH = htmlBox.height + marginTopPx + marginBottomPx;
+    var alignment, v_align, vertAnchorPct;
+    
+    if (firstPgStyle.justification == 'Justification.LEFT') {
+      alignment = 'left';
+    } else if (firstPgStyle.justification == 'Justification.RIGHT') {
+      alignment = 'right';
+    } else if (firstPgStyle.justification == 'Justification.CENTER') {
+      alignment = 'center';
+    }
+    
+    if (thisFrame.kind == TextType.AREATEXT) {
+      v_align = 'top'; // area text aligned to top by default
+      // EXPERIMENTAL feature
+      // Put a box around the text, if the text frame's textPath is styled
+      styles += convertAreaTextPath(thisFrame);
+    } else {  // point text
+      // point text aligned to midline (sensible default for chart y-axes, map labels, etc.)
+      v_align = 'middle';
+      htmlW += 22; // add a bit of extra width to try to prevent overflow
+    }
+    
+    if (thisFrameAttributes.valign && !isRotated) {
+      // override default vertical alignment, unless text is rotated (TODO: support other )
+      v_align = thisFrameAttributes.valign;
+      if (v_align == 'center') {
+        v_align = 'middle';
+      }
+    }
+    
+    if (isRotated) {
+      vertAnchorPct = (marginTopPx + htmlBox.height * 0.5 + 1) / (htmlH) * 100; // TODO: de-kludge
+      styles += getTransformationCss(thisFrame, vertAnchorPct);
+      // Only center alignment currently works well with rotated text
+      // TODO: simplify alignment of rotated text (some logic is in convertAiTextStyle())
+      v_align = 'middle';
+      alignment = 'center';
+      // text-align of point text set to 'center' in convertAiTextStyle()
+    }
+    
+    if (v_align == 'bottom') {
+      var bottomPx = abBox.height - (htmlBox.top + htmlBox.height + marginBottomPx);
+      styles += 'bottom:' + formatCssPct(bottomPx, abBox.height) + ';';
+    } else if (v_align == 'middle') {
+      // https://css-tricks.com/centering-in-the-unknown/
+      // TODO: consider: http://zerosixthree.se/vertical-align-anything-with-just-3-lines-of-css/
+      styles += 'top:' + formatCssPct(htmlT + marginTopPx + htmlBox.height / 2, abBox.height) + ';';
+      styles += 'margin-top:-' + _.roundTo(marginTopPx + htmlBox.height / 2, 1) + 'px;';
+    } else {
+      styles += 'top:' + formatCssPct(htmlT, abBox.height) + ';';
+    }
+    if (alignment == 'right') {
+      styles += 'right:' + formatCssPct(abBox.width - (htmlL + htmlBox.width), abBox.width) + ';';
+    } else if (alignment == 'center') {
+      styles += 'left:' + formatCssPct(htmlL + htmlBox.width / 2, abBox.width) + ';';
+      // setting a negative left margin for horizontal placement of centered text
+      // using percent for area text (because area text width uses percent) and pixels for point text
+      if (thisFrame.kind == TextType.POINTTEXT) {
+        styles += 'margin-left:-' + _.roundTo(htmlW / 2, 1) + 'px;';
+      } else {
+        styles += 'margin-left:' + formatCssPct(-htmlW / 2, abBox.width )+ ';';
+      }
+    } else {
+      styles += 'left:' + formatCssPct(htmlL, abBox.width) + ';';
+    }
+    
+    classes = nameSpace + getLayerName(thisFrame.layer) + ' ' + nameSpace + 'aiAbs';
+    if (thisFrame.kind == TextType.POINTTEXT) {
+      classes += ' ' + nameSpace + 'aiPointText';
+      // using pixel width with point text, because pct width causes alignment problems -- see issue #63
+      // adding extra pixels in case HTML width is slightly less than AI width (affects alignment of right-aligned text)
+      styles += 'width:' + _.roundTo(htmlW, cssPrecision) + 'px;';
+    } else if (settings.text_responsiveness == 'fixed') {
+      styles += 'width:' + _.roundTo(htmlW, cssPrecision) + 'px;';
+    } else {
+      // area text uses pct width, so width of text boxes will scale
+      // TODO: consider only using pct width with wider text boxes that contain paragraphs of text
+      styles += 'width:' + formatCssPct(htmlW, abBox.width) + ';';
+    }
+    return 'class="' + classes + '" style="' + styles + '"';
+    
+    // TK include prefix support for
+    //   '-webkit-transform: ' + transform + '-webkit-transform-origin: ' + transformOrigin +
+    //   '-ms-transform: ' + transform + '-ms-transform-origin: ' + transformOrigin;
+    
+  }
+
+
 
 
 // Wrap content HTML in a <div>, add styles and resizer script, write to a file
@@ -162,6 +369,8 @@ AI2HTML.html = AI2HTML.html || {};
       outputLocalPreviewPage(textForFile, previewFileDestination, settings);
     }
   }
+  
+  
   
   function assignArtboardContentToFile(name, abData, outputArr) {
     var obj = _.find(outputArr, function(o) {return o.name == name;});

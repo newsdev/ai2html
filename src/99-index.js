@@ -144,9 +144,10 @@
     
     var ai = AI2HTML.ai;
     var html = AI2HTML.html;
-    var that = this;
     var artboards = data.artboards;
     var customBlocks = data.customBlocks;
+    
+    html.updateGlobals();
     
     // ================================================
     // Generate HTML, CSS and images for each artboard
@@ -158,7 +159,6 @@
     _.forEach(artboards, function(artboardData, abIndex) {
       var abSettings = artboardData.settings;
       var docArtboardName = artboardData.name;
-      var textFrames = artboardData.textFrames;
       var textData = artboardData.textData;
       var imageData = artboardData.imageData;
       var specialData = artboardData.specialData;
@@ -179,11 +179,9 @@
       
       if (abSettings.image_only || settings.render_text_as == 'image') {
         // don't convert text objects to HTML
-        textFrames = [];
         textData = {html: '', styles: []};
       } else {
         progressBar.setTitle(docArtboardName + ': Generating text...');
-        textFrames = ai.getTextFramesByArtboard(activeArtboard, masks, settings);
         textData = ai.convertTextFrames(textFrames, activeArtboard, settings);
       }
       
@@ -195,6 +193,8 @@
       
       if (_.isTrue(settings.write_image_files)) {
         progressBar.setTitle(docArtboardName + ': Capturing image...');
+        
+        var textFrames = []; // TODO get text frames from textData
         imageData = ai.convertArtItems(activeArtboard, textFrames, masks, settings);
       } else {
         imageData = {html: ''};
@@ -319,7 +319,6 @@
       var artboardData = {
         settings: {},
         name: '',
-        textFrames: [],
         textData: [],
         imageData: [],
         specialData: []
@@ -339,8 +338,7 @@
       
       if (abSettings.image_only || settings.render_text_as == 'image') {
         // don't convert text objects to HTML
-        textFrames = [];
-        textData = {html: '', styles: []};
+        textData = [];
       } else {
         progressBar.setTitle(docArtboardName + ': Generating text...');
         textFrames = ai.getTextFramesByArtboard(activeArtboard, masks, settings);
@@ -353,17 +351,17 @@
       // Generate artboard image(s)
       // ==========================
       
-      if (_.isTrue(settings.write_image_files)) {
-        progressBar.setTitle(docArtboardName + ': Capturing image...');
-        imageData = ai.convertArtItems(activeArtboard, textFrames, masks, settings);
-      } else {
-        imageData = {html: ''};
-      }
-      
-      // restore special layers now that the image has been captured
-      _.forEach(specialData, function(layerData) {
-        layerData.layer.visible = true;
-      });
+      // if (_.isTrue(settings.write_image_files)) {
+      //   progressBar.setTitle(docArtboardName + ': Capturing image...');
+      //   imageData = ai.convertArtItems(activeArtboard, textFrames, masks, settings);
+      // } else {
+      //   imageData = {html: ''};
+      // }
+      //
+      // // restore special layers now that the image has been captured
+      // _.forEach(specialData, function(layerData) {
+      //   layerData.layer.visible = true;
+      // });
       
       
       progressBar.step();
@@ -375,7 +373,6 @@
       
       artboardData.settings = abSettings;
       artboardData.name = docArtboardName;
-      artboardData.textFrames = textFrames;
       artboardData.textData = textData;
       artboardData.imageData = imageData;
       artboardData.specialData = specialData;
