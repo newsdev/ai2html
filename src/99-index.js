@@ -92,7 +92,11 @@
       ai.updateGlobals(); // again, in case fonts are updated
       
       // render the document
-      this.render(docSettings, textBlockData.code);
+      var data = this.extract(docSettings, textBlockData.code);
+      
+      // TODO renable this
+      // this.render(data, docSettings);
+      
       message(settings);
       
     } catch(e) {
@@ -136,39 +140,33 @@
   
   }
   
-  AI2HTML.render = function(settings, customBlocks) {
+  AI2HTML.render = function(data, settings) {
     
     var ai = AI2HTML.ai;
+    var html = AI2HTML.html;
     var that = this;
-    
-    // warn about duplicate artboard names
-    AI2HTML.settings.validateArtboardNames(docSettings);
-    
-    // Fix for issue #50
-    // If a text range is selected when the script runs, it interferes
-    // with script-driven selection. The fix is to clear this kind of selection.
-    if (this.doc.selection && this.doc.selection.typename) {
-      ai.clearSelection();
-    }
+    var artboards = data.artboards;
+    var customBlocks = data.customBlocks;
     
     // ================================================
     // Generate HTML, CSS and images for each artboard
     // ================================================
-    progressBar = new ProgressBar({name: 'Ai2html progress', steps: calcProgressBarSteps()});
-    ai.unlockObjects(); // Unlock containers and clipping masks
-    var masks = ai.findMasks(); // identify all clipping masks and their contents
+    progressBar = new ProgressBar({name: 'Ai2html render progress', steps: calcProgressBarSteps()});
+    
     var fileContentArr = [];
     
-    ai.forEachUsableArtboard(function(activeArtboard, abIndex) {
-      var abSettings = ai.getArtboardSettings(activeArtboard);
-      var docArtboardName = ai.getDocumentArtboardName(activeArtboard);
-      var textFrames, textData, imageData, specialData;
+    _.forEach(artboards, function(artboardData, abIndex) {
+      var abSettings = artboardData.settings;
+      var docArtboardName = artboardData.name;
+      var textFrames = artboardData.textFrames;
+      var textData = artboardData.textData;
+      var imageData = artboardData.imageData;
+      var specialData = artboardData.specialData;
+      
       var artboardContent = {html: '', css: '', js: ''};
       
-      that.doc.artboards.setActiveArtboardIndex(abIndex);
       
-      // detect videos and other special layers
-      specialData = ai.convertSpecialLayers(activeArtboard, settings);
+      specialData = html.convertSpecialData(data.specialData, settings);
       if (specialData) {
         _.forEach(specialData.layers, function(lyr) {
           lyr.visible = false;
@@ -202,7 +200,8 @@
         imageData = {html: ''};
       }
       
-      if (specialData) {
+      if (data.specialData) {
+        var specialData = html.convertSpecialData(data.specialData);
         imageData.html = specialData.video + specialData.html_before +
           imageData.html + specialData.html_after;
           _.forEach(specialData.layers, function(lyr) {
@@ -281,8 +280,151 @@
       AI2HTML.settings.incrementCacheBustToken(settings);
     }
     
-  } // end render()
+  } // end extract()
   
+  
+  
+  // get a JSON representation of the document
+  AI2HTML.extract = function(settings, customBlocks) {
+    
+    var ai = AI2HTML.ai;
+    var that = this;
+    var data = {artboards: [], settings: settings};
+    
+    data.customBlocks = customBlocks;
+    
+    // warn about duplicate artboard names
+    AI2HTML.settings.validateArtboardNames(docSettings);
+    
+    // Fix for issue #50
+    // If a text range is selected when the script runs, it interferes
+    // with script-driven selection. The fix is to clear this kind of selection.
+    if (this.doc.selection && this.doc.selection.typename) {
+      ai.clearSelection();
+    }
+    
+    // ================================================
+    // Generate JSON for each artboard
+    // ================================================
+    progressBar = new ProgressBar({name: 'JSON extraction', steps: calcProgressBarSteps()});
+    ai.unlockObjects(); // Unlock containers and clipping masks
+    var masks = ai.findMasks(); // identify all clipping masks and their contents
+    var fileContentArr = [];
+    
+    ai.forEachUsableArtboard(function(activeArtboard, abIndex) {
+      var abSettings = ai.getArtboardSettings(activeArtboard);
+      var docArtboardName = ai.getDocumentArtboardName(activeArtboard);
+      var textFrames, textData, imageData, specialData;
+      // var artboardContent = {html: '', css: '', js: ''};
+      var artboardData = {
+        settings: {},
+        name: '',
+        textFrames: [],
+        textData: [],
+        imageData: [],
+        specialData: []
+      };
+      
+      that.doc.artboards.setActiveArtboardIndex(abIndex);
+      
+      // detect videos and other special layers
+      specialData = ai.convertSpecialLayers(activeArtboard, settings);
+      _.forEach(specialData, function(layerData) {
+        layerData.layer.visible = false;
+      });
+      
+      // ========================
+      // Convert text objects
+      // ========================
+      
+      if (abSettings.image_only || settings.render_text_as == 'image') {
+        // don't convert text objects to HTML
+        textFrames = [];
+        textData = {html: '', styles: []};
+      } else {
+        progressBar.setTitle(docArtboardName + ': Generating text...');
+        textFrames = ai.getTextFramesByArtboard(activeArtboard, masks, settings);
+        textData = ai.convertTextFrames(textFrames, activeArtboard, settings);
+      }
+      
+      progressBar.step();
+      
+      // ==========================
+      // Generate artboard image(s)
+      // ==========================
+      
+      if (_.isTrue(settings.write_image_files)) {
+        progressBar.setTitle(docArtboardName + ': Capturing image...');
+        imageData = ai.convertArtItems(activeArtboard, textFrames, masks, settings);
+      } else {
+        imageData = {html: ''};
+      }
+      
+      // restore special layers now that the image has been captured
+      _.forEach(specialData, function(layerData) {
+        layerData.layer.visible = true;
+      });
+      
+      
+      progressBar.step();
+      
+      //=====================================
+      // Finish generating artboard HTML and CSS
+      //=====================================
+      
+      
+      artboardData.settings = abSettings;
+      artboardData.name = docArtboardName;
+      artboardData.textFrames = textFrames;
+      artboardData.textData = textData;
+      artboardData.imageData = imageData;
+      artboardData.specialData = specialData;
+      
+      data.artboards.push(artboardData);
+      
+    }); // end artboard loop
+    
+    if (data.artboards.length === 0) {
+      error('No usable artboards were found');
+    }
+    
+    warn('JSON data:', data);
+    
+    //=====================================
+    // Output json file(s)
+    //=====================================
+    
+    // TODO make optional
+    var oname = ai.getRawDocumentName(); // always a single file name
+    progressBar.setTitle('Writing JSON output...');
+    ai.generateOutputJson(data, oname, settings);
+    
+    //=====================================
+    // Post-output operations
+    //=====================================
+    
+    // if (_.isTrue(settings.create_json_config_files)) {
+    //   // Create JSON config files, one for each .ai file
+    //   var jsonStr = ai.generateJsonSettingsFileContent(settings);
+    //   var jsonPath = this.docPath + ai.getRawDocumentName() + '.json';
+    //   ai.saveTextFile(jsonPath, jsonStr);
+    // } else if (_.isTrue(settings.create_config_file)) {
+    //   // Create one top-level config.yml file
+    //   // (This is being replaced by multiple JSON config files for NYT projects)
+    //   var yamlPath = this.docPath + (settings.config_file_path || 'config.yml'),
+    //     yamlStr = ai.generateYamlFileContent(settings);
+    //   ai.checkForOutputFolder(yamlPath.replace(/[^\/]+$/, ''), 'configFileFolder');
+    //   ai.saveTextFile(yamlPath, yamlStr);
+    // }
+    
+    if (settings.cache_bust_token) {
+      AI2HTML.settings.incrementCacheBustToken(settings);
+    }
+    
+    
+    return data;
+    
+  } // end render()
   
   
   function ProgressBar(opts) {

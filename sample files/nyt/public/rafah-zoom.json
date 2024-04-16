@@ -1,0 +1,124 @@
+{
+  "artboards": [
+    {
+      "settings": {
+        
+      },
+      "name": "rafah-zoom-Artboard_1",
+      "specialData": [
+        
+      ]
+    },
+    {
+      "settings": {
+        
+      },
+      "name": "rafah-zoom-Artboard_2",
+      "specialData": [
+        
+      ]
+    }
+  ],
+  "settings": {
+    "namespace": "g-",
+    "settings_version": "0.119.7",
+    "create_promo_image": false,
+    "promo_image_width": 1024,
+    "image_format": [
+      "auto"
+    ],
+    "write_image_files": true,
+    "responsiveness": "dynamic",
+    "max_width": "",
+    "output": "one-file",
+    "project_name": "",
+    "html_output_path": "../public/",
+    "html_output_extension": ".html",
+    "image_output_path": "../public/_assets/",
+    "image_source_path": "_assets/",
+    "image_alt_text": "",
+    "cache_bust_token": null,
+    "create_config_file": false,
+    "create_settings_block": true,
+    "config_file_path": "",
+    "local_preview_template": "",
+    "png_transparent": "false",
+    "png_number_of_colors": "128",
+    "jpg_quality": "60",
+    "center_html_output": true,
+    "use_2x_images_if_possible": true,
+    "use_lazy_loader": true,
+    "include_resizer_classes": false,
+    "include_resizer_widths": true,
+    "include_resizer_script": true,
+    "inline_svg": "false",
+    "svg_id_prefix": "",
+    "svg_embed_images": false,
+    "render_text_as": "html",
+    "render_rotated_skewed_text_as": "html",
+    "testing_mode": false,
+    "show_completion_dialog_box": true,
+    "clickable_link": "",
+    "last_updated_text": "",
+    "headline": "",
+    "leadin": "",
+    "summary": "",
+    "notes": "",
+    "sources": "",
+    "credit": "By The New York Times",
+    "settings_block": [
+      "settings_version",
+      "responsiveness",
+      "alt_text",
+      "max_width",
+      "image_format",
+      "png_number_of_colors",
+      "jpg_quality",
+      "last_updated_text",
+      "section",
+      "headline",
+      "leadin",
+      "summary",
+      "notes",
+      "sources",
+      "credit",
+      "display_for_promotion_only",
+      "dark_mode_compatible",
+      "size"
+    ],
+    "config_file": [
+      "last_updated_text",
+      "alt_text",
+      "section",
+      "headline",
+      "leadin",
+      "summary",
+      "notes",
+      "sources",
+      "credit",
+      "page_template",
+      "display_for_promotion_only",
+      "size"
+    ],
+    "scriptVersion": "0.121.0",
+    "min_width": 280,
+    "accessibility": true,
+    "fonts": [
+      
+    ],
+    "project_type": "ai2html",
+    "dark_mode_compatible": false,
+    "create_json_config_files": true,
+    "aria_role": "img",
+    "alt_text": "",
+    "page_template": "vi-article-embed",
+    "display_for_promotion_only": false,
+    "section": "",
+    "size": "full"
+  },
+  "customBlocks": {
+    "css": [
+      ".g-text-shadow-dark {\r    text-shadow: 0px 0px 2px rgba(0,0,0,.5), 0px 0px 2px rgba(0,0,0,.5), 0px 0px 2px rgba(0,0,0,.5), 0px 0px 1px rgba(0,0,0,.5);\r    -webkit-font-smoothing: antialiased;\r}"
+    ]
+  }
+}
