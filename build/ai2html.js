@@ -1444,7 +1444,7 @@ AI2HTML.settings = AI2HTML.settings || {};
         settings.scoop_slug_from_config_yml = yamlConfig.scoop_slug;
       }
       // Read .git/config file to get preview slug
-      var gitConfig = readGitConfigFile(docPath + "../.git/config") || {};
+      var gitConfig = AI2HTML.fs.readGitConfigFile(docPath + "../.git/config") || {};
       if (gitConfig.url) {
         settings.preview_slug = gitConfig.url.replace(/^[^:]+:/, "").replace(/\.git$/, "");
       }
@@ -1491,7 +1491,7 @@ AI2HTML.settings = AI2HTML.settings || {};
   function readSettingsFile(path) {
     var o = {}, str;
     try {
-      str = stripSettingsFileComments(AI2HTML.ai.readTextFile(path));
+      str = stripSettingsFileComments(AI2HTML.fs.readTextFile(path));
       o = JSON.parse(str);
     } catch (e) {
       warn('Error reading settings file ' + path + ': [' + e.message + ']');
@@ -1646,7 +1646,7 @@ AI2HTML.settings = AI2HTML.settings || {};
   
   
   function readYamlConfigFile(path) {
-    return _.fileExists(path) ? parseYaml(AI2HTML.ai.readTextFile(path)) : null;
+    return _.fileExists(path) ? parseYaml(AI2HTML.fs.readTextFile(path)) : null;
   }
   
   // Very simple Yaml parsing. Does not implement nested properties, arrays and other features
@@ -1678,7 +1678,7 @@ AI2HTML.settings = AI2HTML.settings || {};
   
   
   function readJSONFile(fpath) {
-    var content = AI2HTML.ai.readTextFile(fpath);
+    var content = AI2HTML.fs.readTextFile(fpath);
     var json = null;
     if (!content) {
       // removing for now to avoid double warnings
@@ -1739,57 +1739,63 @@ AI2HTML.settings = AI2HTML.settings || {};
   
 }());
 
+// ==================================
+// fs - file manupulation
+// ==================================
+
 AI2HTML = AI2HTML || {};
 /** @global */
-AI2HTML.ai = AI2HTML.ai || {};
-
-// ======================================
-// Illustrator specific utility functions
-// ======================================
+AI2HTML.fs = AI2HTML.fs || {};
 
 (function() {
-
+  
   var log = AI2HTML.logger;
-  
-  // import settings from defaults
-  var caps = AI2HTML.defaults.caps;
-  var align = AI2HTML.defaults.align;
-  var blendModes = AI2HTML.defaults.blendModes;
-  var cssPrecision = AI2HTML.defaults.cssPrecision;
-  var cssTextStyleProperties = AI2HTML.defaults.cssTextStyleProperties;
-  
-  // globals (though it would be better to parameterize the functions instead)
-  var doc, docPath, nameSpace, fonts;
-  
-  // call this function to update the global variables, they usually don't change
-  // eventually this could be done in a cleaner way
-  function updateGlobals() {
-    doc = AI2HTML.doc;
-    docPath = AI2HTML.docPath;
-    nameSpace = AI2HTML.nameSpace;
-    fonts = AI2HTML.defaults.fonts;
-  }
-  
-  
   
   function warn(str) { log.warn(str); }
   function error(str) { log.error(str); }
   function message() { log.message.apply(log, arguments); }
   
-  
-  // a, b: coordinate arrays, as from <PathItem>.geometricBounds
-  function testBoundsIntersection(a, b) {
-    return a[2] >= b[0] && b[2] >= a[0] && a[3] <= b[1] && b[3] <= a[1];
+  // instead of the usual updateGlobals pattern, since it's sparsely used
+  function getDocPath() {
+    return AI2HTML.docPath;
   }
   
-  function shiftBounds(bnds, dx, dy) {
-    return [bnds[0] + dx, bnds[1] + dy, bnds[2] + dx, bnds[3] + dy];
+  function checkForOutputFolder(folderPath, nickname) {
+    var outputFolder = new Folder( folderPath );
+    if (!outputFolder.exists) {
+      var outputFolderCreated = outputFolder.create();
+      if (outputFolderCreated) {
+        message('The ' + nickname + ' folder did not exist, so the folder was created.');
+      } else {
+        warn('The ' + nickname + ' folder did not exist and could not be created.');
+      }
+    }
   }
   
-  function clearMatrixShift(m) {
-    return app.concatenateTranslationMatrix(m, -m.mValueTX, -m.mValueTY);
+  
+  // Write an HTML page to a file for NYT Preview
+  function outputLocalPreviewPage(textForFile, localPreviewDestination, settings) {
+    var localPreviewTemplateText = readTextFile(getDocPath() + settings.local_preview_template);
+    settings.ai2htmlPartial = textForFile; // TODO: don't modify global settings this way
+    var localPreviewHtml = _.applyTemplate(localPreviewTemplateText, settings);
+    saveTextFile(localPreviewDestination, localPreviewHtml);
   }
 
+  // output json file
+  function saveOutputJson(jsonData, pageName, settings) {
+    var textForFile;
+    var jsonFileDestinationFolder, jsonFileDestination;
+    
+    textForFile = JSON.stringify(jsonData, null, 2);
+    jsonFileDestinationFolder = getDocPath() + settings.html_output_path;
+    checkForOutputFolder(jsonFileDestinationFolder, 'html_output_path');
+    jsonFileDestination = jsonFileDestinationFolder + pageName + '.json';
+    
+    // write file
+    saveTextFile(jsonFileDestination, textForFile);
+    
+  }
+  
   
   function deleteFile(path) {
     var file = new File(path);
@@ -1797,8 +1803,8 @@ AI2HTML.ai = AI2HTML.ai || {};
       file.remove();
     }
   }
-
-
+  
+  
   
   // TODO: improve
   // (currently ignores bracketed sections of the config file)
@@ -1860,18 +1866,125 @@ AI2HTML.ai = AI2HTML.ai || {};
     fd.close();
   }
   
-  function checkForOutputFolder(folderPath, nickname) {
-    var outputFolder = new Folder( folderPath );
-    if (!outputFolder.exists) {
-      var outputFolderCreated = outputFolder.create();
-      if (outputFolderCreated) {
-        message('The ' + nickname + ' folder did not exist, so the folder was created.');
-      } else {
-        warn('The ' + nickname + ' folder did not exist and could not be created.');
-      }
-    }
+  
+  function generateJsonSettingsFileContent(settings) {
+    var o = getCommonOutputSettings(settings);
+    _.forEach(settings.config_file, function(key) {
+      var val = String(settings[key]);
+      if (_.isTrue(val)) val = true;
+      else if (_.isFalse(val)) val = false;
+      o[key] = val;
+    });
+    return JSON.stringify(o, null, 2);
   }
 
+// Create a settings file (optimized for the NYT Scoop CMS)
+  function generateYamlFileContent(settings) {
+    var o = getCommonOutputSettings(settings);
+    var lines = [];
+    lines.push('ai2html_version: ' + settings.scriptVersion);
+    if (settings.project_type) {
+      lines.push('project_type: ' + settings.project_type);
+    }
+    lines.push('type: ' + o.type);
+    lines.push('tags: ' + o.tags);
+    lines.push('min_width: ' + o.min_width);
+    lines.push('max_width: ' + o.max_width);
+    if (_.isTrue(settings.dark_mode_compatible)) {
+      // kludge to output YAML array value for one setting
+      lines.push('display_overrides:\n  - DARK_MODE_COMPATIBLE');
+    }
+    
+    _.forEach(settings.config_file, function(key) {
+      var value = _.trim(String(settings[key]));
+      var useQuotes = value === '' || /\s/.test(value);
+      if (key == 'show_in_compatible_apps') {
+        // special case: this setting takes quoted 'yes' or 'no'
+        useQuotes = true; // assuming value is 'yes' or 'no';
+        value = _.isTrue(value) ? 'yes' : 'no';
+      }
+      if (useQuotes) {
+        value = JSON.stringify(value); // wrap in quotes and escape internal quotes
+      } else if (_.isTrue(value) || _.isFalse(value)) {
+        // use standard values for boolean settings
+        value = _.isTrue(value) ? 'true' : 'false';
+      }
+      lines.push(key + ': ' + value);
+    });
+    return lines.join('\n');
+  }
+  
+  
+  
+  AI2HTML.fs = {
+    checkForOutputFolder: checkForOutputFolder,
+    outputLocalPreviewPage: outputLocalPreviewPage,
+    saveOutputJson: saveOutputJson,
+    deleteFile: deleteFile,
+    readGitConfigFile: readGitConfigFile,
+    readFile: readFile,
+    readTextFile: readTextFile,
+    saveTextFile: saveTextFile,
+    generateJsonSettingsFileContent: generateJsonSettingsFileContent,
+    generateYamlFileContent: generateYamlFileContent
+  
+  }
+  
+
+})();
+
+AI2HTML = AI2HTML || {};
+/** @global */
+AI2HTML.ai = AI2HTML.ai || {};
+
+// ======================================
+// Illustrator specific utility functions
+// ======================================
+
+(function() {
+
+  var log = AI2HTML.logger;
+  
+  // import settings from defaults
+  var caps = AI2HTML.defaults.caps;
+  var align = AI2HTML.defaults.align;
+  var blendModes = AI2HTML.defaults.blendModes;
+  var cssPrecision = AI2HTML.defaults.cssPrecision;
+  var cssTextStyleProperties = AI2HTML.defaults.cssTextStyleProperties;
+  
+  // globals (though it would be better to parameterize the functions instead)
+  var doc, docPath, nameSpace, fonts;
+  
+  // call this function to update the global variables, they usually don't change
+  // eventually this could be done in a cleaner way
+  function updateGlobals() {
+    doc = AI2HTML.doc;
+    docPath = AI2HTML.docPath;
+    nameSpace = AI2HTML.nameSpace;
+    fonts = AI2HTML.defaults.fonts;
+  }
+  
+  
+  
+  function warn(str) { log.warn(str); }
+  function error(str) { log.error(str); }
+  function message() { log.message.apply(log, arguments); }
+  
+  
+  // a, b: coordinate arrays, as from <PathItem>.geometricBounds
+  function testBoundsIntersection(a, b) {
+    return a[2] >= b[0] && b[2] >= a[0] && a[3] <= b[1] && b[3] <= a[1];
+  }
+  
+  function shiftBounds(bnds, dx, dy) {
+    return [bnds[0] + dx, bnds[1] + dy, bnds[2] + dx, bnds[3] + dy];
+  }
+  
+  function clearMatrixShift(m) {
+    return app.concatenateTranslationMatrix(m, -m.mValueTX, -m.mValueTY);
+  }
+
+  
 
 // ==============================
 // ai2html text functions
@@ -3074,7 +3187,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     var hiddenLayers = [];
     var i;
     
-    checkForOutputFolder(getImageFolder(settings), 'image_output_path');
+    AI2HTML.fs.checkForOutputFolder(getImageFolder(settings), 'image_output_path');
     
     if (hideTextFrames) {
       for (i=0; i<textFrameCount; i++) {
@@ -3220,7 +3333,7 @@ AI2HTML.ai = AI2HTML.ai || {};
   }
   
   function generateInlineSvg(imgPath, imgClass, imgStyle, settings) {
-    var svg = readFile(imgPath) || '';
+    var svg = AI2HTML.fs.readFile(imgPath) || '';
     var attr = ' class="' + imgClass + '"';
     if (imgStyle) {
       attr += ' style="' + imgStyle + '"';
@@ -3634,7 +3747,7 @@ AI2HTML.ai = AI2HTML.ai || {};
   }
   
   function rewriteSVGFile(path, id) {
-    var svg = readFile(path);
+    var svg = AI2HTML.fs.readFile(path);
     var selector;
     if (!svg) return;
     // replace id created by Illustrator (relevant for inline SVG)
@@ -3649,7 +3762,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     svg = injectCSSinSVG(svg, selector + ' { vector-effect: non-scaling-stroke; }');
     // remove images from filesystem and SVG file
     svg = removeImagesInSVG(svg, path);
-    saveTextFile(path, svg);
+    AI2HTML.fs.saveTextFile(path, svg);
   }
   
   function reapplyEffectsInSVG(svg) {
@@ -3686,7 +3799,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     var count = 0;
     content = content.replace(/<image[^<]+href="([^"]+)"[^<]+<\/image>/gm, function(match, href) {
       count++;
-      deleteFile(_.pathJoin(dir, href));
+      AI2HTML.fs.deleteFile(_.pathJoin(dir, href));
       return '';
     });
     if (count > 0) {
@@ -3838,53 +3951,6 @@ AI2HTML.ai = AI2HTML.ai || {};
     }
   }
   
-  function generateJsonSettingsFileContent(settings) {
-    var o = getCommonOutputSettings(settings);
-    _.forEach(settings.config_file, function(key) {
-      var val = String(settings[key]);
-      if (_.isTrue(val)) val = true;
-      else if (_.isFalse(val)) val = false;
-      o[key] = val;
-    });
-    return JSON.stringify(o, null, 2);
-  }
-
-// Create a settings file (optimized for the NYT Scoop CMS)
-  function generateYamlFileContent(settings) {
-    var o = getCommonOutputSettings(settings);
-    var lines = [];
-    lines.push('ai2html_version: ' + settings.scriptVersion);
-    if (settings.project_type) {
-      lines.push('project_type: ' + settings.project_type);
-    }
-    lines.push('type: ' + o.type);
-    lines.push('tags: ' + o.tags);
-    lines.push('min_width: ' + o.min_width);
-    lines.push('max_width: ' + o.max_width);
-    if (_.isTrue(settings.dark_mode_compatible)) {
-      // kludge to output YAML array value for one setting
-      lines.push('display_overrides:\n  - DARK_MODE_COMPATIBLE');
-    }
-    
-    _.forEach(settings.config_file, function(key) {
-      var value = _.trim(String(settings[key]));
-      var useQuotes = value === '' || /\s/.test(value);
-      if (key == 'show_in_compatible_apps') {
-        // special case: this setting takes quoted 'yes' or 'no'
-        useQuotes = true; // assuming value is 'yes' or 'no';
-        value = _.isTrue(value) ? 'yes' : 'no';
-      }
-      if (useQuotes) {
-        value = JSON.stringify(value); // wrap in quotes and escape internal quotes
-      } else if (_.isTrue(value) || _.isFalse(value)) {
-        // use standard values for boolean settings
-        value = _.isTrue(value) ? 'true' : 'false';
-      }
-      lines.push(key + ': ' + value);
-    });
-    return lines.join('\n');
-  }
-  
   function getResizerScript(containerId) {
     // The resizer function is embedded in the HTML page -- external variables must
     // be passed in.
@@ -4031,30 +4097,6 @@ AI2HTML.ai = AI2HTML.ai || {};
     return '<script type="text/javascript">\r\t' + resizerJs + '\r</script>\r';
   }
 
-// Write an HTML page to a file for NYT Preview
-  function outputLocalPreviewPage(textForFile, localPreviewDestination, settings) {
-    var localPreviewTemplateText = readTextFile(docPath + settings.local_preview_template);
-    settings.ai2htmlPartial = textForFile; // TODO: don't modify global settings this way
-    var localPreviewHtml = _.applyTemplate(localPreviewTemplateText, settings);
-    saveTextFile(localPreviewDestination, localPreviewHtml);
-  }
-
-// output json file
-  function generateOutputJson(jsonData, pageName, settings) {
-    var textForFile;
-    var jsonFileDestinationFolder, jsonFileDestination;
-   
-    textForFile = JSON.stringify(jsonData, null, 2);
-    jsonFileDestinationFolder = docPath + settings.html_output_path;
-    checkForOutputFolder(jsonFileDestinationFolder, 'html_output_path');
-    jsonFileDestination = jsonFileDestinationFolder + pageName + '.json';
-    
-    // write file
-    saveTextFile(jsonFileDestination, textForFile);
-    
-  }
-
-
 // ======================================
 // ai2html AI document reading functions
 // ======================================
@@ -4200,7 +4242,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     // remove suffixes added by copying
     settingsStr = settingsStr.replace(/ copy.*/i, '');
     // parse comma-delimited variables
-    _.forEach(settingsStr.split(','), function(part) {
+    _.forEach(settingsStr.split(/ *, */), function(part) {
       var eq = part.indexOf('=');
       var name, value;
       if (/^\d+$/.test(part)) {
@@ -4563,12 +4605,6 @@ AI2HTML.ai = AI2HTML.ai || {};
     testBoundsIntersection: testBoundsIntersection,
     shiftBounds: shiftBounds,
     clearMatrixShift: clearMatrixShift,
-    deleteFile: deleteFile,
-    readGitConfigFile: readGitConfigFile,
-    readFile: readFile,
-    readTextFile: readTextFile,
-    saveTextFile: saveTextFile,
-    checkForOutputFolder: checkForOutputFolder,
     objectIsHidden: objectIsHidden,
     objectOverlapsAnArtboard: objectOverlapsAnArtboard,
     
@@ -4645,11 +4681,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     generateArtboardDiv: generateArtboardDiv,
     generateArtboardCss: generateArtboardCss,
     generatePageCss: generatePageCss,
-    generateJsonSettingsFileContent: generateJsonSettingsFileContent,
-    generateYamlFileContent: generateYamlFileContent,
     getResizerScript: getResizerScript,
-    outputLocalPreviewPage: outputLocalPreviewPage,
-    generateOutputJson: generateOutputJson,
     objectIsLocked: objectIsLocked,
     
     // ai2html AI document reading functions
@@ -5047,7 +5079,7 @@ AI2HTML.html = AI2HTML.html || {};
     
     textForFile = _.applyTemplate(textForFile, settings);
     htmlFileDestinationFolder = docPath + settings.html_output_path;
-    checkForOutputFolder(htmlFileDestinationFolder, 'html_output_path');
+    AI2HTML.fs.checkForOutputFolder(htmlFileDestinationFolder, 'html_output_path');
     htmlFileDestination = htmlFileDestinationFolder + pageName + settings.html_output_extension;
     
     // 'index' is assigned upstream now (where applicable)
@@ -5056,13 +5088,13 @@ AI2HTML.html = AI2HTML.html || {};
     // }
     
     // write file
-    saveTextFile(htmlFileDestination, textForFile);
+    AI2HTML.fs.saveTextFile(htmlFileDestination, textForFile);
     
     // process local preview template if appropriate
     if (settings.local_preview_template !== '') {
       // TODO: may have missed a condition, need to compare with original version
       var previewFileDestination = htmlFileDestinationFolder + pageName + '.preview.html';
-      outputLocalPreviewPage(textForFile, previewFileDestination, settings);
+      AI2HTML.fs.outputLocalPreviewPage(textForFile, previewFileDestination, settings);
     }
   }
   
@@ -5132,6 +5164,7 @@ AI2HTML.testing = AI2HTML.testing || {};
     
     var ai = AI2HTML.ai;
     var settings = AI2HTML.settings;
+    var fs = AI2HTML.fs;
     
     module.exports = {
       testBoundsIntersection: ai.testBoundsIntersection,
@@ -5147,7 +5180,7 @@ AI2HTML.testing = AI2HTML.testing || {};
       folderExists: _.folderExists,
       formatCss: ai.formatCss,
       getCssColor: _.getCssColor,
-      readGitConfigFile: ai.readGitConfigFile,
+      readGitConfigFile: fs.readGitConfigFile,
       readYamlConfigFile: settings.readYamlConfigFile,
       applyTemplate: _.applyTemplate,
       cleanHtmlText: _.cleanHtmlText,
@@ -5217,6 +5250,7 @@ AI2HTML.testing = AI2HTML.testing || {};
     
     var settings = AI2HTML.settings;
     var ai = AI2HTML.ai;
+    var fs = AI2HTML.fs;
   
     var startTime = +new Date();
     var textBlockData;
@@ -5270,6 +5304,13 @@ AI2HTML.testing = AI2HTML.testing || {};
       
       // render the document
       var data = this.extract(docSettings, textBlockData.code);
+      
+      // Output json file(s)
+      // TODO make optional
+      var oname = ai.getRawDocumentName(); // always a single file name
+      fs.saveOutputJson(data, oname, docSettings);
+      
+      // TODO: json.imagedata
       
       // TODO renable this
       // this.render(data, docSettings);
@@ -5441,16 +5482,16 @@ AI2HTML.testing = AI2HTML.testing || {};
     
     if (_.isTrue(settings.create_json_config_files)) {
       // Create JSON config files, one for each .ai file
-      var jsonStr = ai.generateJsonSettingsFileContent(settings);
+      var jsonStr = fs.generateJsonSettingsFileContent(settings);
       var jsonPath = this.docPath + ai.getRawDocumentName() + '.json';
-      ai.saveTextFile(jsonPath, jsonStr);
+      fs.saveTextFile(jsonPath, jsonStr);
     } else if (_.isTrue(settings.create_config_file)) {
       // Create one top-level config.yml file
       // (This is being replaced by multiple JSON config files for NYT projects)
       var yamlPath = this.docPath + (settings.config_file_path || 'config.yml'),
-        yamlStr = ai.generateYamlFileContent(settings);
-      ai.checkForOutputFolder(yamlPath.replace(/[^\/]+$/, ''), 'configFileFolder');
-      ai.saveTextFile(yamlPath, yamlStr);
+        yamlStr = fs.generateYamlFileContent(settings);
+      fs.checkForOutputFolder(yamlPath.replace(/[^\/]+$/, ''), 'configFileFolder');
+      fs.saveTextFile(yamlPath, yamlStr);
     }
     
     if (settings.cache_bust_token) {
@@ -5562,17 +5603,7 @@ AI2HTML.testing = AI2HTML.testing || {};
       error('No usable artboards were found');
     }
     
-    warn('JSON data:', data);
-    
-    //=====================================
-    // Output json file(s)
-    //=====================================
-    
-    // TODO make optional
-    var oname = ai.getRawDocumentName(); // always a single file name
-    progressBar.setTitle('Writing JSON output...');
-    ai.generateOutputJson(data, oname, settings);
-    
+
     //=====================================
     // Post-output operations
     //=====================================

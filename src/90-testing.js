@@ -16,6 +16,7 @@ AI2HTML.testing = AI2HTML.testing || {};
     
     var ai = AI2HTML.ai;
     var settings = AI2HTML.settings;
+    var fs = AI2HTML.fs;
     
     module.exports = {
       testBoundsIntersection: ai.testBoundsIntersection,
@@ -31,7 +32,7 @@ AI2HTML.testing = AI2HTML.testing || {};
       folderExists: _.folderExists,
       formatCss: ai.formatCss,
       getCssColor: _.getCssColor,
-      readGitConfigFile: ai.readGitConfigFile,
+      readGitConfigFile: fs.readGitConfigFile,
       readYamlConfigFile: settings.readYamlConfigFile,
       applyTemplate: _.applyTemplate,
       cleanHtmlText: _.cleanHtmlText,

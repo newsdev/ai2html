@@ -50,87 +50,6 @@ AI2HTML.ai = AI2HTML.ai || {};
   }
 
   
-  function deleteFile(path) {
-    var file = new File(path);
-    if (file.exists) {
-      file.remove();
-    }
-  }
-
-
-  
-  // TODO: improve
-  // (currently ignores bracketed sections of the config file)
-  function readGitConfigFile(path) {
-    var file = new File(path);
-    var o = null;
-    var parts;
-    if (file.exists) {
-      o = {};
-      file.open('r');
-      while(!file.eof) {
-        parts = file.readln().split('=');
-        if (parts.length > 1) {
-          o[_.trim(parts[0])] = _.trim(parts[1]);
-        }
-      }
-      file.close();
-    }
-    return o;
-  }
-  
-  function readFile(fpath, enc) {
-    var content = null;
-    var file = new File(fpath);
-    if (file.exists) {
-      if (enc) {
-        file.encoding = enc;
-      }
-      file.open('r');
-      if (file.error) {
-        // (on macos) restricted permissions will cause an error here
-        warn('Unable to open ' + file.fsName + ': [' + file.error + ']');
-        return null;
-      }
-      content = file.read();
-      file.close();
-      // (on macos) 'file.length' triggers a file operation that returns -1 if unable to access file
-      if (!content && (file.length > 0 || file.length == -1)) {
-        warn('Unable to read from ' + file.fsName + ' (reported size: ' + file.length + ' bytes)');
-      }
-    } else {
-      warn(fpath + ' could not be found.');
-    }
-    return content;
-  }
-  
-  function readTextFile(fpath) {
-    // This function used to use File#eof and File#readln(), but
-    // that failed to read the last line when missing a final newline.
-    return readFile(fpath, 'UTF-8') || '';
-  }
-  
-  function saveTextFile(dest, contents) {
-    var fd = new File(dest);
-    fd.open('w', 'TEXT', 'TEXT');
-    fd.lineFeed = 'Unix';
-    fd.encoding = 'UTF-8';
-    fd.writeln(contents);
-    fd.close();
-  }
-  
-  function checkForOutputFolder(folderPath, nickname) {
-    var outputFolder = new Folder( folderPath );
-    if (!outputFolder.exists) {
-      var outputFolderCreated = outputFolder.create();
-      if (outputFolderCreated) {
-        message('The ' + nickname + ' folder did not exist, so the folder was created.');
-      } else {
-        warn('The ' + nickname + ' folder did not exist and could not be created.');
-      }
-    }
-  }
-
 
 // ==============================
 // ai2html text functions
@@ -1333,7 +1252,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     var hiddenLayers = [];
     var i;
     
-    checkForOutputFolder(getImageFolder(settings), 'image_output_path');
+    AI2HTML.fs.checkForOutputFolder(getImageFolder(settings), 'image_output_path');
     
     if (hideTextFrames) {
       for (i=0; i<textFrameCount; i++) {
@@ -1479,7 +1398,7 @@ AI2HTML.ai = AI2HTML.ai || {};
   }
   
   function generateInlineSvg(imgPath, imgClass, imgStyle, settings) {
-    var svg = readFile(imgPath) || '';
+    var svg = AI2HTML.fs.readFile(imgPath) || '';
     var attr = ' class="' + imgClass + '"';
     if (imgStyle) {
       attr += ' style="' + imgStyle + '"';
@@ -1893,7 +1812,7 @@ AI2HTML.ai = AI2HTML.ai || {};
   }
   
   function rewriteSVGFile(path, id) {
-    var svg = readFile(path);
+    var svg = AI2HTML.fs.readFile(path);
     var selector;
     if (!svg) return;
     // replace id created by Illustrator (relevant for inline SVG)
@@ -1908,7 +1827,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     svg = injectCSSinSVG(svg, selector + ' { vector-effect: non-scaling-stroke; }');
     // remove images from filesystem and SVG file
     svg = removeImagesInSVG(svg, path);
-    saveTextFile(path, svg);
+    AI2HTML.fs.saveTextFile(path, svg);
   }
   
   function reapplyEffectsInSVG(svg) {
@@ -1945,7 +1864,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     var count = 0;
     content = content.replace(/<image[^<]+href="([^"]+)"[^<]+<\/image>/gm, function(match, href) {
       count++;
-      deleteFile(_.pathJoin(dir, href));
+      AI2HTML.fs.deleteFile(_.pathJoin(dir, href));
       return '';
     });
     if (count > 0) {
@@ -2097,53 +2016,6 @@ AI2HTML.ai = AI2HTML.ai || {};
     }
   }
   
-  function generateJsonSettingsFileContent(settings) {
-    var o = getCommonOutputSettings(settings);
-    _.forEach(settings.config_file, function(key) {
-      var val = String(settings[key]);
-      if (_.isTrue(val)) val = true;
-      else if (_.isFalse(val)) val = false;
-      o[key] = val;
-    });
-    return JSON.stringify(o, null, 2);
-  }
-
-// Create a settings file (optimized for the NYT Scoop CMS)
-  function generateYamlFileContent(settings) {
-    var o = getCommonOutputSettings(settings);
-    var lines = [];
-    lines.push('ai2html_version: ' + settings.scriptVersion);
-    if (settings.project_type) {
-      lines.push('project_type: ' + settings.project_type);
-    }
-    lines.push('type: ' + o.type);
-    lines.push('tags: ' + o.tags);
-    lines.push('min_width: ' + o.min_width);
-    lines.push('max_width: ' + o.max_width);
-    if (_.isTrue(settings.dark_mode_compatible)) {
-      // kludge to output YAML array value for one setting
-      lines.push('display_overrides:\n  - DARK_MODE_COMPATIBLE');
-    }
-    
-    _.forEach(settings.config_file, function(key) {
-      var value = _.trim(String(settings[key]));
-      var useQuotes = value === '' || /\s/.test(value);
-      if (key == 'show_in_compatible_apps') {
-        // special case: this setting takes quoted 'yes' or 'no'
-        useQuotes = true; // assuming value is 'yes' or 'no';
-        value = _.isTrue(value) ? 'yes' : 'no';
-      }
-      if (useQuotes) {
-        value = JSON.stringify(value); // wrap in quotes and escape internal quotes
-      } else if (_.isTrue(value) || _.isFalse(value)) {
-        // use standard values for boolean settings
-        value = _.isTrue(value) ? 'true' : 'false';
-      }
-      lines.push(key + ': ' + value);
-    });
-    return lines.join('\n');
-  }
-  
   function getResizerScript(containerId) {
     // The resizer function is embedded in the HTML page -- external variables must
     // be passed in.
@@ -2290,30 +2162,6 @@ AI2HTML.ai = AI2HTML.ai || {};
     return '<script type="text/javascript">\r\t' + resizerJs + '\r</script>\r';
   }
 
-// Write an HTML page to a file for NYT Preview
-  function outputLocalPreviewPage(textForFile, localPreviewDestination, settings) {
-    var localPreviewTemplateText = readTextFile(docPath + settings.local_preview_template);
-    settings.ai2htmlPartial = textForFile; // TODO: don't modify global settings this way
-    var localPreviewHtml = _.applyTemplate(localPreviewTemplateText, settings);
-    saveTextFile(localPreviewDestination, localPreviewHtml);
-  }
-
-// output json file
-  function generateOutputJson(jsonData, pageName, settings) {
-    var textForFile;
-    var jsonFileDestinationFolder, jsonFileDestination;
-   
-    textForFile = JSON.stringify(jsonData, null, 2);
-    jsonFileDestinationFolder = docPath + settings.html_output_path;
-    checkForOutputFolder(jsonFileDestinationFolder, 'html_output_path');
-    jsonFileDestination = jsonFileDestinationFolder + pageName + '.json';
-    
-    // write file
-    saveTextFile(jsonFileDestination, textForFile);
-    
-  }
-
-
 // ======================================
 // ai2html AI document reading functions
 // ======================================
@@ -2459,7 +2307,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     // remove suffixes added by copying
     settingsStr = settingsStr.replace(/ copy.*/i, '');
     // parse comma-delimited variables
-    _.forEach(settingsStr.split(','), function(part) {
+    _.forEach(settingsStr.split(/ *, */), function(part) {
       var eq = part.indexOf('=');
       var name, value;
       if (/^\d+$/.test(part)) {
@@ -2822,12 +2670,6 @@ AI2HTML.ai = AI2HTML.ai || {};
     testBoundsIntersection: testBoundsIntersection,
     shiftBounds: shiftBounds,
     clearMatrixShift: clearMatrixShift,
-    deleteFile: deleteFile,
-    readGitConfigFile: readGitConfigFile,
-    readFile: readFile,
-    readTextFile: readTextFile,
-    saveTextFile: saveTextFile,
-    checkForOutputFolder: checkForOutputFolder,
     objectIsHidden: objectIsHidden,
     objectOverlapsAnArtboard: objectOverlapsAnArtboard,
     
@@ -2904,11 +2746,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     generateArtboardDiv: generateArtboardDiv,
     generateArtboardCss: generateArtboardCss,
     generatePageCss: generatePageCss,
-    generateJsonSettingsFileContent: generateJsonSettingsFileContent,
-    generateYamlFileContent: generateYamlFileContent,
     getResizerScript: getResizerScript,
-    outputLocalPreviewPage: outputLocalPreviewPage,
-    generateOutputJson: generateOutputJson,
     objectIsLocked: objectIsLocked,
     
     // ai2html AI document reading functions

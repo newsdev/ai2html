@@ -40,6 +40,7 @@
     
     var settings = AI2HTML.settings;
     var ai = AI2HTML.ai;
+    var fs = AI2HTML.fs;
   
     var startTime = +new Date();
     var textBlockData;
@@ -93,6 +94,13 @@
       
       // render the document
       var data = this.extract(docSettings, textBlockData.code);
+      
+      // Output json file(s)
+      // TODO make optional
+      var oname = ai.getRawDocumentName(); // always a single file name
+      fs.saveOutputJson(data, oname, docSettings);
+      
+      // TODO: json.imagedata
       
       // TODO renable this
       // this.render(data, docSettings);
@@ -264,16 +272,16 @@
     
     if (_.isTrue(settings.create_json_config_files)) {
       // Create JSON config files, one for each .ai file
-      var jsonStr = ai.generateJsonSettingsFileContent(settings);
+      var jsonStr = fs.generateJsonSettingsFileContent(settings);
       var jsonPath = this.docPath + ai.getRawDocumentName() + '.json';
-      ai.saveTextFile(jsonPath, jsonStr);
+      fs.saveTextFile(jsonPath, jsonStr);
     } else if (_.isTrue(settings.create_config_file)) {
       // Create one top-level config.yml file
       // (This is being replaced by multiple JSON config files for NYT projects)
       var yamlPath = this.docPath + (settings.config_file_path || 'config.yml'),
-        yamlStr = ai.generateYamlFileContent(settings);
-      ai.checkForOutputFolder(yamlPath.replace(/[^\/]+$/, ''), 'configFileFolder');
-      ai.saveTextFile(yamlPath, yamlStr);
+        yamlStr = fs.generateYamlFileContent(settings);
+      fs.checkForOutputFolder(yamlPath.replace(/[^\/]+$/, ''), 'configFileFolder');
+      fs.saveTextFile(yamlPath, yamlStr);
     }
     
     if (settings.cache_bust_token) {
@@ -385,17 +393,7 @@
       error('No usable artboards were found');
     }
     
-    warn('JSON data:', data);
-    
-    //=====================================
-    // Output json file(s)
-    //=====================================
-    
-    // TODO make optional
-    var oname = ai.getRawDocumentName(); // always a single file name
-    progressBar.setTitle('Writing JSON output...');
-    ai.generateOutputJson(data, oname, settings);
-    
+
     //=====================================
     // Post-output operations
     //=====================================

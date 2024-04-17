@@ -290,7 +290,7 @@ AI2HTML.settings = AI2HTML.settings || {};
         settings.scoop_slug_from_config_yml = yamlConfig.scoop_slug;
       }
       // Read .git/config file to get preview slug
-      var gitConfig = readGitConfigFile(docPath + "../.git/config") || {};
+      var gitConfig = AI2HTML.fs.readGitConfigFile(docPath + "../.git/config") || {};
       if (gitConfig.url) {
         settings.preview_slug = gitConfig.url.replace(/^[^:]+:/, "").replace(/\.git$/, "");
       }
@@ -337,7 +337,7 @@ AI2HTML.settings = AI2HTML.settings || {};
   function readSettingsFile(path) {
     var o = {}, str;
     try {
-      str = stripSettingsFileComments(AI2HTML.ai.readTextFile(path));
+      str = stripSettingsFileComments(AI2HTML.fs.readTextFile(path));
       o = JSON.parse(str);
     } catch (e) {
       warn('Error reading settings file ' + path + ': [' + e.message + ']');
@@ -492,7 +492,7 @@ AI2HTML.settings = AI2HTML.settings || {};
   
   
   function readYamlConfigFile(path) {
-    return _.fileExists(path) ? parseYaml(AI2HTML.ai.readTextFile(path)) : null;
+    return _.fileExists(path) ? parseYaml(AI2HTML.fs.readTextFile(path)) : null;
   }
   
   // Very simple Yaml parsing. Does not implement nested properties, arrays and other features
@@ -524,7 +524,7 @@ AI2HTML.settings = AI2HTML.settings || {};
   
   
   function readJSONFile(fpath) {
-    var content = AI2HTML.ai.readTextFile(fpath);
+    var content = AI2HTML.fs.readTextFile(fpath);
     var json = null;
     if (!content) {
       // removing for now to avoid double warnings

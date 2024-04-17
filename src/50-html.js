@@ -351,7 +351,7 @@ AI2HTML.html = AI2HTML.html || {};
     
     textForFile = _.applyTemplate(textForFile, settings);
     htmlFileDestinationFolder = docPath + settings.html_output_path;
-    checkForOutputFolder(htmlFileDestinationFolder, 'html_output_path');
+    AI2HTML.fs.checkForOutputFolder(htmlFileDestinationFolder, 'html_output_path');
     htmlFileDestination = htmlFileDestinationFolder + pageName + settings.html_output_extension;
     
     // 'index' is assigned upstream now (where applicable)
@@ -360,13 +360,13 @@ AI2HTML.html = AI2HTML.html || {};
     // }
     
     // write file
-    saveTextFile(htmlFileDestination, textForFile);
+    AI2HTML.fs.saveTextFile(htmlFileDestination, textForFile);
     
     // process local preview template if appropriate
     if (settings.local_preview_template !== '') {
       // TODO: may have missed a condition, need to compare with original version
       var previewFileDestination = htmlFileDestinationFolder + pageName + '.preview.html';
-      outputLocalPreviewPage(textForFile, previewFileDestination, settings);
+      AI2HTML.fs.outputLocalPreviewPage(textForFile, previewFileDestination, settings);
     }
   }
   

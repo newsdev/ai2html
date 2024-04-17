@@ -2,9 +2,10 @@
   "artboards": [
     {
       "settings": {
-        
+        "width": 600,
+        "fixed": true
       },
-      "name": "rafah-zoom-Artboard_1",
+      "name": "rafah-zoom-desktop",
       "textData": [
         {
           "id": "g-ai0-1",
