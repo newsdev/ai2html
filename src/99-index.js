@@ -92,6 +92,10 @@
       
       ai.updateGlobals(); // again, in case fonts are updated
       
+      // ==========================================
+      // Extract data
+      // ==========================================
+      
       // render the document
       var data = this.extract(docSettings, textBlockData.code);
       
@@ -100,12 +104,11 @@
       var oname = ai.getRawDocumentName(); // always a single file name
       fs.saveOutputJson(data, oname, docSettings);
       
-      // TODO: json.imagedata
+      // ==========================================
+      // Render outputs
+      // ==========================================
       
-      // TODO renable this
-      // this.render(data, docSettings);
-      
-      message(settings);
+      this.render(data, data.settings);
       
     } catch(e) {
       error(log.formatError(e));
@@ -152,6 +155,7 @@
     
     var ai = AI2HTML.ai;
     var html = AI2HTML.html;
+    var fs = AI2HTML.fs;
     var artboards = data.artboards;
     var customBlocks = data.customBlocks;
     
@@ -173,14 +177,6 @@
       
       var artboardContent = {html: '', css: '', js: ''};
       
-      
-      specialData = html.convertSpecialData(data.specialData, settings);
-      if (specialData) {
-        _.forEach(specialData.layers, function(lyr) {
-          lyr.visible = false;
-        });
-      }
-      
       // ========================
       // Convert text objects
       // ========================
@@ -190,7 +186,7 @@
         textData = {html: '', styles: []};
       } else {
         progressBar.setTitle(docArtboardName + ': Generating text...');
-        textData = ai.convertTextFrames(textFrames, activeArtboard, settings);
+        textData = html.convertTextData(textData);
       }
       
       progressBar.step();
@@ -199,26 +195,26 @@
       // Generate artboard image(s)
       // ==========================
       
-      if (_.isTrue(settings.write_image_files)) {
-        progressBar.setTitle(docArtboardName + ': Capturing image...');
-        
-        var textFrames = []; // TODO get text frames from textData
-        imageData = ai.convertArtItems(activeArtboard, textFrames, masks, settings);
-      } else {
-        imageData = {html: ''};
-      }
-      
-      if (data.specialData) {
-        var specialData = html.convertSpecialData(data.specialData);
-        imageData.html = specialData.video + specialData.html_before +
-          imageData.html + specialData.html_after;
-          _.forEach(specialData.layers, function(lyr) {
-            lyr.visible = true;
-          });
-        if (specialData.video && !_.isTrue(settings.png_transparent)) {
-          warn('Background videos may be covered up without png_transparent:true');
-        }
-      }
+      // if (_.isTrue(settings.write_image_files)) {
+      //   progressBar.setTitle(docArtboardName + ': Capturing image...');
+      //
+      //   var textFrames = []; // TODO get text frames from textData
+      //   imageData = ai.convertArtItems(activeArtboard, textFrames, masks, settings);
+      // } else {
+      //   imageData = {html: ''};
+      // }
+      //
+      // if (data.specialData) {
+      //   var specialData = html.convertSpecialData(data.specialData);
+      //   imageData.html = specialData.video + specialData.html_before +
+      //     imageData.html + specialData.html_after;
+      //     _.forEach(specialData.layers, function(lyr) {
+      //       lyr.visible = true;
+      //     });
+      //   if (specialData.video && !_.isTrue(settings.png_transparent)) {
+      //     warn('Background videos may be covered up without png_transparent:true');
+      //   }
+      // }
       
       progressBar.step();
       
@@ -226,8 +222,8 @@
       // Finish generating artboard HTML and CSS
       //=====================================
       
-      artboardContent.html += '\r\t<!-- Artboard: ' + ai.getArtboardName(activeArtboard) + ' -->\r' +
-        ai.generateArtboardDiv(activeArtboard, settings) +
+      artboardContent.html += '\r\t<!-- Artboard: ' + docArtboardName + ' -->\r' +
+        html.generateArtboardDiv(artboardData, settings) +
         imageData.html +
         textData.html +
         '\t</div>\r';
@@ -239,16 +235,16 @@
         abStyles.push('> div { pointer-events: none; }\r');
         abStyles.push('> img { pointer-events: none; }\r');
       }
-      artboardContent.css += ai.generateArtboardCss(activeArtboard, abStyles, settings);
+      artboardContent.css += html.generateArtboardCss(artboardData, abStyles, settings);
       
-      var oname = settings.output == 'one-file' ? ai.getRawDocumentName() : docArtboardName;
+      var oname = settings.output == 'one-file' ? data.rawDocumentName : docArtboardName;
       // kludge to identify legacy embed projects
       if (settings.output == 'one-file' &&
         settings.project_type == 'ai2html' &&
         !_.isTrue(settings.create_json_config_files)) {
         oname = 'index';
       }
-      ai.assignArtboardContentToFile(oname, artboardContent, fileContentArr);
+      html.assignArtboardContentToFile(oname, artboardContent, fileContentArr);
       
     }); // end artboard loop
     
@@ -261,9 +257,9 @@
     //=====================================
     
     _.forEach(fileContentArr, function(fileContent) {
-      ai.addCustomContent(fileContent, customBlocks);
+      html.addCustomContent(fileContent, customBlocks);
       progressBar.setTitle('Writing HTML output...');
-      ai.generateOutputHtml(fileContent, fileContent.name, settings);
+      html.generateOutputHtml(fileContent, fileContent.name, settings);
     });
     
     //=====================================
@@ -297,7 +293,12 @@
     
     var ai = AI2HTML.ai;
     var that = this;
-    var data = {artboards: [], settings: settings};
+    var data = {
+      slug: this.docSlug,
+      rawDocumentName: ai.getRawDocumentName(),
+      artboards: [],
+      settings: settings
+    };
     
     data.customBlocks = customBlocks;
     
@@ -310,6 +311,9 @@
     if (this.doc.selection && this.doc.selection.typename) {
       ai.clearSelection();
     }
+    
+    // will need this later for file exports
+    data.settings.range = ai.getWidthRangeForConfig(settings);
     
     // ================================================
     // Generate JSON for each artboard
@@ -325,8 +329,9 @@
       var textFrames, textData, imageData, specialData;
       // var artboardContent = {html: '', css: '', js: ''};
       var artboardData = {
-        settings: {},
+        id: ai.getArtboardId(activeArtboard),
         name: '',
+        settings: {},
         textData: [],
         imageData: [],
         specialData: []
@@ -359,28 +364,26 @@
       // Generate artboard image(s)
       // ==========================
       
-      // if (_.isTrue(settings.write_image_files)) {
-      //   progressBar.setTitle(docArtboardName + ': Capturing image...');
-      //   imageData = ai.convertArtItems(activeArtboard, textFrames, masks, settings);
-      // } else {
-      //   imageData = {html: ''};
-      // }
-      //
-      // // restore special layers now that the image has been captured
-      // _.forEach(specialData, function(layerData) {
-      //   layerData.layer.visible = true;
-      // });
-      
+      if (_.isTrue(settings.write_image_files)) {
+        progressBar.setTitle(docArtboardName + ': Capturing image...');
+        imageData = ai.convertArtItems(activeArtboard, textFrames, masks, settings);
+      } else {
+        imageData = [];
+      }
+
+      // restore special layers now that the image has been captured
+      _.forEach(specialData, function(layerData) {
+        layerData.layer.visible = true;
+      });
       
       progressBar.step();
       
-      //=====================================
-      // Finish generating artboard HTML and CSS
-      //=====================================
+      // Finish generating artboard JSON
       
+      artboardData = _.extend(artboardData, ai.getArtboardData(activeArtboard, settings));
       
-      artboardData.settings = abSettings;
       artboardData.name = docArtboardName;
+      artboardData.settings = abSettings;
       artboardData.textData = textData;
       artboardData.imageData = imageData;
       artboardData.specialData = specialData;
@@ -392,25 +395,6 @@
     if (data.artboards.length === 0) {
       error('No usable artboards were found');
     }
-    
-
-    //=====================================
-    // Post-output operations
-    //=====================================
-    
-    // if (_.isTrue(settings.create_json_config_files)) {
-    //   // Create JSON config files, one for each .ai file
-    //   var jsonStr = ai.generateJsonSettingsFileContent(settings);
-    //   var jsonPath = this.docPath + ai.getRawDocumentName() + '.json';
-    //   ai.saveTextFile(jsonPath, jsonStr);
-    // } else if (_.isTrue(settings.create_config_file)) {
-    //   // Create one top-level config.yml file
-    //   // (This is being replaced by multiple JSON config files for NYT projects)
-    //   var yamlPath = this.docPath + (settings.config_file_path || 'config.yml'),
-    //     yamlStr = ai.generateYamlFileContent(settings);
-    //   ai.checkForOutputFolder(yamlPath.replace(/[^\/]+$/, ''), 'configFileFolder');
-    //   ai.saveTextFile(yamlPath, yamlStr);
-    // }
     
     if (settings.cache_bust_token) {
       AI2HTML.settings.incrementCacheBustToken(settings);

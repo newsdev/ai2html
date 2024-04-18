@@ -378,7 +378,7 @@ AI2HTML.settings = AI2HTML.settings || {};
   }
   
   function createSettingsBlock(settings) {
-    var bounds = getAllArtboardBounds();
+    var bounds = AI2HTML.ai.getAllArtboardBounds();
     var fontSize = 15;
     var leading = 19;
     var extraLines = 6;

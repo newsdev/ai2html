@@ -1,0 +1,1413 @@
+{
+  "slug": "rafah-zoom",
+  "rawDocumentName": "rafah-zoom",
+  "artboards": [
+    {
+      "id": 0,
+      "name": "rafah-zoom-desktop",
+      "settings": {
+        "width": 600,
+        "fixed": true
+      },
+      "textData": [
+        {
+          "id": "g-ai0-1",
+          "paragraphs": [
+            {
+              "text": "1,000 feet",
+              "aiStyle": {
+                "leading": 17,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "justification": "Justification.LEFT",
+                "rotated": false,
+                "opacity": 100,
+                "blendMode": null,
+                "frameType": "point"
+              },
+              "ranges": [
+                {
+                  "text": "1,000 ",
+                  "aiStyle": {
+                    "color": "rgb(255,255,255)",
+                    "aifont": "NYTFranklin-Medium",
+                    "size": 15,
+                    "capitalization": "",
+                    "tracking": 0,
+                    "superscript": false,
+                    "subscript": false
+                  }
+                },
+                {
+                  "text": "fe",
+                  "aiStyle": {
+                    "color": "rgb(255,255,255)",
+                    "aifont": "NYTFranklin-Medium",
+                    "size": 24,
+                    "capitalization": "",
+                    "tracking": 0,
+                    "superscript": false,
+                    "subscript": false
+                  }
+                },
+                {
+                  "text": "et",
+                  "aiStyle": {
+                    "color": "rgb(252,0,0)",
+                    "aifont": "NYTFranklin-Medium",
+                    "size": 24,
+                    "capitalization": "",
+                    "tracking": 0,
+                    "superscript": false,
+                    "subscript": false
+                  }
+                }
+              ]
+            },
+            {
+              "text": "is a long way",
+              "aiStyle": {
+                "leading": 17,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "justification": "Justification.LEFT",
+                "rotated": false,
+                "opacity": 100,
+                "blendMode": null,
+                "frameType": "point"
+              },
+              "ranges": [
+                {
+                  "text": "is a long way",
+                  "aiStyle": {
+                    "color": "rgb(252,0,0)",
+                    "aifont": "NYTFranklin-Medium",
+                    "size": 24,
+                    "capitalization": "",
+                    "tracking": 0,
+                    "superscript": false,
+                    "subscript": false
+                  }
+                }
+              ]
+            },
+            {
+              "text": "to go",
+              "aiStyle": {
+                "leading": 17,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "justification": "Justification.LEFT",
+                "rotated": false,
+                "opacity": 100,
+                "blendMode": null,
+                "frameType": "point"
+              },
+              "ranges": [
+                {
+                  "text": "to go",
+                  "aiStyle": {
+                    "color": "rgb(252,0,0)",
+                    "aifont": "NYTFranklin-Medium",
+                    "size": 24,
+                    "capitalization": "",
+                    "tracking": 0,
+                    "superscript": false,
+                    "subscript": false
+                  }
+                }
+              ]
+            }
+          ],
+          "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
+          "styles": {
+            "top": "NaN%",
+            "margin-top": "-NaNpx",
+            "left": "0.7277%",
+            "width": "151px"
+          }
+        },
+        {
+          "id": "g-ai0-2",
+          "paragraphs": [
+            {
+              "text": "Crowds",
+              "aiStyle": {
+                "leading": 17,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "justification": "Justification.LEFT",
+                "rotated": false,
+                "opacity": 100,
+                "blendMode": null,
+                "frameType": "point"
+              },
+              "ranges": [
+                {
+                  "text": "Crowds",
+                  "aiStyle": {
+                    "color": "rgb(255,255,255)",
+                    "aifont": "NYTFranklin-Medium",
+                    "size": 15,
+                    "capitalization": "",
+                    "tracking": 0,
+                    "superscript": false,
+                    "subscript": false
+                  }
+                }
+              ]
+            },
+            {
+              "text": "waiting",
+              "aiStyle": {
+                "leading": 17,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "justification": "Justification.LEFT",
+                "rotated": false,
+                "opacity": 100,
+                "blendMode": null,
+                "frameType": "point"
+              },
+              "ranges": [
+                {
+                  "text": "waiting",
+                  "aiStyle": {
+                    "color": "rgb(255,255,255)",
+                    "aifont": "NYTFranklin-Medium",
+                    "size": 15,
+                    "capitalization": "",
+                    "tracking": 0,
+                    "superscript": false,
+                    "subscript": false
+                  }
+                }
+              ]
+            },
+            {
+              "text": "at gate",
+              "aiStyle": {
+                "leading": 17,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "justification": "Justification.LEFT",
+                "rotated": false,
+                "opacity": 100,
+                "blendMode": null,
+                "frameType": "point"
+              },
+              "ranges": [
+                {
+                  "text": "at gate",
+                  "aiStyle": {
+                    "color": "rgb(255,255,255)",
+                    "aifont": "NYTFranklin-Medium",
+                    "size": 15,
+                    "capitalization": "",
+                    "tracking": 0,
+                    "superscript": false,
+                    "subscript": false
+                  }
+                }
+              ]
+            }
+          ],
+          "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
+          "styles": {
+            "top": "NaN%",
+            "margin-top": "-NaNpx",
+            "left": "67.7822%",
+            "width": "69px"
+          }
+        },
+        {
+          "id": "g-ai0-3",
+          "paragraphs": [
+            {
+              "text": "Blasts tk",
+              "aiStyle": {
+                "leading": 17,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "justification": "Justification.LEFT",
+                "rotated": false,
+                "opacity": 100,
+                "blendMode": null,
+                "frameType": "point"
+              },
+              "ranges": [
+                {
+                  "text": "Blasts tk",
+                  "aiStyle": {
+                    "color": "rgb(255,255,255)",
+                    "aifont": "NYTFranklin-Medium",
+                    "size": 15,
+                    "capitalization": "",
+                    "tracking": 25,
+                    "superscript": false,
+                    "subscript": false
+                  }
+                }
+              ]
+            }
+          ],
+          "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
+          "styles": {
+            "top": "NaN%",
+            "margin-top": "-NaNpx",
+            "left": "43.739%",
+            "width": "80px"
+          }
+        },
+        {
+          "id": "g-ai0-4",
+          "paragraphs": [
+            {
+              "text": "{country}",
+              "aiStyle": {
+                "leading": 30,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "justification": "Justification.LEFT",
+                "rotated": false,
+                "opacity": 50,
+                "blendMode": null,
+                "frameType": "point"
+              },
+              "ranges": [
+                {
+                  "text": "{country}",
+                  "aiStyle": {
+                    "color": "rgb(255,255,255)",
+                    "aifont": "NYTFranklin-Medium",
+                    "size": 25,
+                    "capitalization": "",
+                    "tracking": 25,
+                    "superscript": false,
+                    "subscript": false
+                  }
+                }
+              ]
+            }
+          ],
+          "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
+          "styles": {
+            "top": "NaN%",
+            "margin-top": "-NaNpx",
+            "left": "8.0742%",
+            "width": "125px"
+          }
+        },
+        {
+          "id": "g-ai0-5",
+          "paragraphs": [
+            {
+              "text": "GAZA",
+              "aiStyle": {
+                "leading": 30,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "justification": "Justification.LEFT",
+                "rotated": false,
+                "opacity": 50,
+                "blendMode": null,
+                "frameType": "point"
+              },
+              "ranges": [
+                {
+                  "text": "GAZA",
+                  "aiStyle": {
+                    "color": "rgb(255,255,255)",
+                    "aifont": "NYTFranklin-Medium",
+                    "size": 25,
+                    "capitalization": "",
+                    "tracking": 25,
+                    "superscript": false,
+                    "subscript": false
+                  }
+                }
+              ]
+            }
+          ],
+          "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
+          "styles": {
+            "top": "NaN%",
+            "margin-top": "-NaNpx",
+            "left": "81.4549%",
+            "width": "83px"
+          }
+        },
+        {
+          "id": "g-ai0-6",
+          "paragraphs": [
+            {
+              "text": "Strike",
+              "aiStyle": {
+                "leading": 17,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "justification": "Justification.LEFT",
+                "rotated": false,
+                "opacity": 100,
+                "blendMode": null,
+                "frameType": "point"
+              },
+              "ranges": [
+                {
+                  "text": "Strike",
+                  "aiStyle": {
+                    "color": "rgb(255,255,255)",
+                    "aifont": "NYTFranklin-Medium",
+                    "size": 15,
+                    "capitalization": "",
+                    "tracking": 0,
+                    "superscript": false,
+                    "subscript": false
+                  }
+                }
+              ]
+            },
+            {
+              "text": "craters",
+              "aiStyle": {
+                "leading": 17,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "justification": "Justification.LEFT",
+                "rotated": false,
+                "opacity": 100,
+                "blendMode": null,
+                "frameType": "point"
+              },
+              "ranges": [
+                {
+                  "text": "craters",
+                  "aiStyle": {
+                    "color": "rgb(255,255,255)",
+                    "aifont": "NYTFranklin-Medium",
+                    "size": 15,
+                    "capitalization": "",
+                    "tracking": 0,
+                    "superscript": false,
+                    "subscript": false
+                  }
+                }
+              ]
+            }
+          ],
+          "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
+          "styles": {
+            "top": "NaN%",
+            "margin-top": "-NaNpx",
+            "left": "46.5702%",
+            "width": "66px"
+          }
+        },
+        {
+          "id": "g-ai0-7",
+          "paragraphs": [
+            {
+              "text": "Craters from",
+              "aiStyle": {
+                "leading": 17,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "justification": "Justification.LEFT",
+                "rotated": false,
+                "opacity": 100,
+                "blendMode": null,
+                "frameType": "point"
+              },
+              "ranges": [
+                {
+                  "text": "Craters from",
+                  "aiStyle": {
+                    "color": "rgb(255,255,255)",
+                    "aifont": "NYTFranklin-Medium",
+                    "size": 15,
+                    "capitalization": "",
+                    "tracking": 0,
+                    "superscript": false,
+                    "subscript": false
+                  }
+                }
+              ]
+            },
+            {
+              "text": "previous strikes",
+              "aiStyle": {
+                "leading": 17,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "justification": "Justification.LEFT",
+                "rotated": false,
+                "opacity": 100,
+                "blendMode": null,
+                "frameType": "point"
+              },
+              "ranges": [
+                {
+                  "text": "previous strikes",
+                  "aiStyle": {
+                    "color": "rgb(255,255,255)",
+                    "aifont": "NYTFranklin-Medium",
+                    "size": 15,
+                    "capitalization": "",
+                    "tracking": 0,
+                    "superscript": false,
+                    "subscript": false
+                  }
+                }
+              ]
+            }
+          ],
+          "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
+          "styles": {
+            "top": "NaN%",
+            "margin-top": "-NaNpx",
+            "left": "49.1826%",
+            "width": "121px"
+          }
+        },
+        {
+          "id": "g-ai0-8",
+          "paragraphs": [
+            {
+              "text": "Rafah",
+              "aiStyle": {
+                "leading": 17,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "justification": "Justification.LEFT",
+                "rotated": false,
+                "opacity": 100,
+                "blendMode": null,
+                "frameType": "point"
+              },
+              "ranges": [
+                {
+                  "text": "Rafah",
+                  "aiStyle": {
+                    "color": "rgb(234,126,52)",
+                    "aifont": "NYTFranklin-Bold",
+                    "size": 15,
+                    "capitalization": "",
+                    "tracking": 0,
+                    "superscript": false,
+                    "subscript": false
+                  }
+                }
+              ]
+            },
+            {
+              "text": "crossing",
+              "aiStyle": {
+                "leading": 17,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "justification": "Justification.LEFT",
+                "rotated": false,
+                "opacity": 100,
+                "blendMode": null,
+                "frameType": "point"
+              },
+              "ranges": [
+                {
+                  "text": "crossing",
+                  "aiStyle": {
+                    "color": "rgb(234,126,52)",
+                    "aifont": "NYTFranklin-Bold",
+                    "size": 15,
+                    "capitalization": "",
+                    "tracking": 0,
+                    "superscript": false,
+                    "subscript": false
+                  }
+                }
+              ]
+            }
+          ],
+          "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
+          "styles": {
+            "top": "NaN%",
+            "margin-top": "-NaNpx",
+            "left": "29.6463%",
+            "width": "78px"
+          }
+        },
+        {
+          "id": "g-ai0-9",
+          "paragraphs": [
+            {
+              "text": "Gate",
+              "aiStyle": {
+                "leading": 17,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "justification": "Justification.RIGHT",
+                "rotated": false,
+                "opacity": 100,
+                "blendMode": null,
+                "frameType": "point"
+              },
+              "ranges": [
+                {
+                  "text": "Gate",
+                  "aiStyle": {
+                    "color": "rgb(255,255,255)",
+                    "aifont": "NYTFranklin-Medium",
+                    "size": 15,
+                    "capitalization": "",
+                    "tracking": 0,
+                    "superscript": false,
+                    "subscript": false
+                  }
+                }
+              ]
+            }
+          ],
+          "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
+          "styles": {
+            "top": "NaN%",
+            "margin-top": "-NaNpx",
+            "right": "79.2035%",
+            "width": "52px"
+          }
+        },
+        {
+          "id": "g-ai0-10",
+          "paragraphs": [
+            {
+              "text": "Additional fencing",
+              "aiStyle": {
+                "leading": 17,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "justification": "Justification.LEFT",
+                "rotated": false,
+                "opacity": 100,
+                "blendMode": null,
+                "frameType": "point"
+              },
+              "ranges": [
+                {
+                  "text": "Additional fencing",
+                  "aiStyle": {
+                    "color": "rgb(255,255,255)",
+                    "aifont": "NYTFranklin-Medium",
+                    "size": 15,
+                    "capitalization": "",
+                    "tracking": 0,
+                    "superscript": false,
+                    "subscript": false
+                  }
+                }
+              ]
+            }
+          ],
+          "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
+          "styles": {
+            "top": "NaN%",
+            "margin-top": "-NaNpx",
+            "left": "54.3525%",
+            "width": "135px"
+          }
+        },
+        {
+          "id": "g-ai0-11",
+          "paragraphs": [
+            {
+              "text": "Humanitarian aid",
+              "aiStyle": {
+                "leading": 17,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "justification": "Justification.LEFT",
+                "rotated": false,
+                "opacity": 100,
+                "blendMode": null,
+                "frameType": "point"
+              },
+              "ranges": [
+                {
+                  "text": "Humanitarian aid",
+                  "aiStyle": {
+                    "color": "rgb(255,255,255)",
+                    "aifont": "NYTFranklin-Medium",
+                    "size": 15,
+                    "capitalization": "",
+                    "tracking": 0,
+                    "superscript": false,
+                    "subscript": false
+                  }
+                }
+              ]
+            },
+            {
+              "text": "trucks waiting",
+              "aiStyle": {
+                "leading": 17,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "justification": "Justification.LEFT",
+                "rotated": false,
+                "opacity": 100,
+                "blendMode": null,
+                "frameType": "point"
+              },
+              "ranges": [
+                {
+                  "text": "trucks waiting",
+                  "aiStyle": {
+                    "color": "rgb(255,255,255)",
+                    "aifont": "NYTFranklin-Medium",
+                    "size": 15,
+                    "capitalization": "",
+                    "tracking": 0,
+                    "superscript": false,
+                    "subscript": false
+                  }
+                }
+              ]
+            },
+            {
+              "text": "along road",
+              "aiStyle": {
+                "leading": 17,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "justification": "Justification.LEFT",
+                "rotated": false,
+                "opacity": 100,
+                "blendMode": null,
+                "frameType": "point"
+              },
+              "ranges": [
+                {
+                  "text": "along road",
+                  "aiStyle": {
+                    "color": "rgb(255,255,255)",
+                    "aifont": "NYTFranklin-Medium",
+                    "size": 15,
+                    "capitalization": "",
+                    "tracking": 0,
+                    "superscript": false,
+                    "subscript": false
+                  }
+                }
+              ]
+            }
+          ],
+          "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
+          "styles": {
+            "top": "NaN%",
+            "margin-top": "-NaNpx",
+            "left": "13.3431%",
+            "width": "131px"
+          }
+        }
+      ],
+      "imageData": [
+        {
+          "type": "base",
+          "html": "\t\t<img id=\"g-rafah-zoom-desktop-img\" class=\"g-rafah-zoom-desktop-img g-aiImg\" alt=\"\" data-src=\"_assets/rafah-zoom-desktop.jpg\" src=\"data:image/gif;base64,R0lGODlhCgAKAIAAAB8fHwAAACH5BAEAAAAALAAAAAAKAAoAAAIIhI+py+0PYysAOw==\"/>\r"
+        }
+      ],
+      "specialData": [
+        
+      ],
+      "widthRange": [
+        600,
+        600
+      ],
+      "visibleRange": [
+        600,
+        null
+      ],
+      "bounds": {
+        "left": 225.5,
+        "top": -598.470803422668,
+        "width": 599,
+        "height": 437.899267577603
+      }
+    },
+    {
+      "id": 1,
+      "name": "rafah-zoom-Artboard_2",
+      "settings": {
+        
+      },
+      "textData": [
+        {
+          "id": "g-ai1-1",
+          "paragraphs": [
+            {
+              "text": "1,000 feet",
+              "aiStyle": {
+                "leading": 17,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "justification": "Justification.LEFT",
+                "rotated": false,
+                "opacity": 100,
+                "blendMode": null,
+                "frameType": "point"
+              },
+              "ranges": [
+                {
+                  "text": "1,000 feet",
+                  "aiStyle": {
+                    "color": "rgb(255,255,255)",
+                    "aifont": "NYTFranklin-Medium",
+                    "size": 13,
+                    "capitalization": "",
+                    "tracking": 0,
+                    "superscript": false,
+                    "subscript": false
+                  }
+                }
+              ]
+            }
+          ],
+          "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
+          "styles": {
+            "top": "NaN%",
+            "margin-top": "-NaNpx",
+            "left": "1.3609%",
+            "width": "80px"
+          }
+        },
+        {
+          "id": "g-ai1-2",
+          "paragraphs": [
+            {
+              "text": "Crowds",
+              "aiStyle": {
+                "leading": 14,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "justification": "Justification.LEFT",
+                "rotated": false,
+                "opacity": 100,
+                "blendMode": null,
+                "frameType": "point"
+              },
+              "ranges": [
+                {
+                  "text": "Crowds",
+                  "aiStyle": {
+                    "color": "rgb(255,255,255)",
+                    "aifont": "NYTFranklin-Medium",
+                    "size": 13,
+                    "capitalization": "",
+                    "tracking": 25,
+                    "superscript": false,
+                    "subscript": false
+                  }
+                }
+              ]
+            },
+            {
+              "text": "waiting",
+              "aiStyle": {
+                "leading": 14,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "justification": "Justification.LEFT",
+                "rotated": false,
+                "opacity": 100,
+                "blendMode": null,
+                "frameType": "point"
+              },
+              "ranges": [
+                {
+                  "text": "waiting",
+                  "aiStyle": {
+                    "color": "rgb(255,255,255)",
+                    "aifont": "NYTFranklin-Medium",
+                    "size": 13,
+                    "capitalization": "",
+                    "tracking": 25,
+                    "superscript": false,
+                    "subscript": false
+                  }
+                }
+              ]
+            },
+            {
+              "text": "at gate",
+              "aiStyle": {
+                "leading": 14,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "justification": "Justification.LEFT",
+                "rotated": false,
+                "opacity": 100,
+                "blendMode": null,
+                "frameType": "point"
+              },
+              "ranges": [
+                {
+                  "text": "at gate",
+                  "aiStyle": {
+                    "color": "rgb(255,255,255)",
+                    "aifont": "NYTFranklin-Medium",
+                    "size": 13,
+                    "capitalization": "",
+                    "tracking": 25,
+                    "superscript": false,
+                    "subscript": false
+                  }
+                }
+              ]
+            }
+          ],
+          "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
+          "styles": {
+            "top": "NaN%",
+            "margin-top": "-NaNpx",
+            "left": "77.6683%",
+            "width": "65px"
+          }
+        },
+        {
+          "id": "g-ai1-3",
+          "paragraphs": [
+            {
+              "text": "{country}",
+              "aiStyle": {
+                "leading": 18,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "justification": "Justification.LEFT",
+                "rotated": false,
+                "opacity": 50,
+                "blendMode": null,
+                "frameType": "point"
+              },
+              "ranges": [
+                {
+                  "text": "{country}",
+                  "aiStyle": {
+                    "color": "rgb(255,255,255)",
+                    "aifont": "NYTFranklin-Medium",
+                    "size": 15,
+                    "capitalization": "",
+                    "tracking": 25,
+                    "superscript": false,
+                    "subscript": false
+                  }
+                }
+              ]
+            }
+          ],
+          "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
+          "styles": {
+            "top": "NaN%",
+            "margin-top": "-NaNpx",
+            "left": "4.4643%",
+            "width": "84px"
+          }
+        },
+        {
+          "id": "g-ai1-4",
+          "paragraphs": [
+            {
+              "text": "GAZA",
+              "aiStyle": {
+                "leading": 18,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "justification": "Justification.LEFT",
+                "rotated": false,
+                "opacity": 50,
+                "blendMode": null,
+                "frameType": "point"
+              },
+              "ranges": [
+                {
+                  "text": "GAZA",
+                  "aiStyle": {
+                    "color": "rgb(255,255,255)",
+                    "aifont": "NYTFranklin-Medium",
+                    "size": 15,
+                    "capitalization": "",
+                    "tracking": 25,
+                    "superscript": false,
+                    "subscript": false
+                  }
+                }
+              ]
+            }
+          ],
+          "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
+          "styles": {
+            "top": "NaN%",
+            "margin-top": "-NaNpx",
+            "left": "84.4763%",
+            "width": "59px"
+          }
+        },
+        {
+          "id": "g-ai1-5",
+          "paragraphs": [
+            {
+              "text": "Strike",
+              "aiStyle": {
+                "leading": 14,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "justification": "Justification.LEFT",
+                "rotated": false,
+                "opacity": 100,
+                "blendMode": null,
+                "frameType": "point"
+              },
+              "ranges": [
+                {
+                  "text": "Strike",
+                  "aiStyle": {
+                    "color": "rgb(255,255,255)",
+                    "aifont": "NYTFranklin-Medium",
+                    "size": 13,
+                    "capitalization": "",
+                    "tracking": 25,
+                    "superscript": false,
+                    "subscript": false
+                  }
+                }
+              ]
+            },
+            {
+              "text": "craters",
+              "aiStyle": {
+                "leading": 14,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "justification": "Justification.LEFT",
+                "rotated": false,
+                "opacity": 100,
+                "blendMode": null,
+                "frameType": "point"
+              },
+              "ranges": [
+                {
+                  "text": "craters",
+                  "aiStyle": {
+                    "color": "rgb(255,255,255)",
+                    "aifont": "NYTFranklin-Medium",
+                    "size": 13,
+                    "capitalization": "",
+                    "tracking": 25,
+                    "superscript": false,
+                    "subscript": false
+                  }
+                }
+              ]
+            }
+          ],
+          "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
+          "styles": {
+            "top": "NaN%",
+            "margin-top": "-NaNpx",
+            "left": "51.9993%",
+            "width": "63px"
+          }
+        },
+        {
+          "id": "g-ai1-6",
+          "paragraphs": [
+            {
+              "text": "Rafah",
+              "aiStyle": {
+                "leading": 14,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "justification": "Justification.LEFT",
+                "rotated": false,
+                "opacity": 100,
+                "blendMode": null,
+                "frameType": "point"
+              },
+              "ranges": [
+                {
+                  "text": "Rafah",
+                  "aiStyle": {
+                    "color": "rgb(234,126,52)",
+                    "aifont": "NYTFranklin-Bold",
+                    "size": 13,
+                    "capitalization": "",
+                    "tracking": 25,
+                    "superscript": false,
+                    "subscript": false
+                  }
+                }
+              ]
+            },
+            {
+              "text": "crossing",
+              "aiStyle": {
+                "leading": 14,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "justification": "Justification.LEFT",
+                "rotated": false,
+                "opacity": 100,
+                "blendMode": null,
+                "frameType": "point"
+              },
+              "ranges": [
+                {
+                  "text": "crossing",
+                  "aiStyle": {
+                    "color": "rgb(234,126,52)",
+                    "aifont": "NYTFranklin-Bold",
+                    "size": 13,
+                    "capitalization": "",
+                    "tracking": 25,
+                    "superscript": false,
+                    "subscript": false
+                  }
+                }
+              ]
+            }
+          ],
+          "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
+          "styles": {
+            "top": "NaN%",
+            "margin-top": "-NaNpx",
+            "left": "27.9496%",
+            "width": "73px"
+          }
+        },
+        {
+          "id": "g-ai1-7",
+          "paragraphs": [
+            {
+              "text": "Gate",
+              "aiStyle": {
+                "leading": 14,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "justification": "Justification.RIGHT",
+                "rotated": false,
+                "opacity": 100,
+                "blendMode": null,
+                "frameType": "point"
+              },
+              "ranges": [
+                {
+                  "text": "Gate",
+                  "aiStyle": {
+                    "color": "rgb(255,255,255)",
+                    "aifont": "NYTFranklin-Medium",
+                    "size": 13,
+                    "capitalization": "",
+                    "tracking": 25,
+                    "superscript": false,
+                    "subscript": false
+                  }
+                }
+              ]
+            }
+          ],
+          "classes": "g-Layer_1 g-aiAbs g-aiPointText",
+          "styles": {
+            "top": "NaN%",
+            "margin-top": "-NaNpx",
+            "right": "80.2585%",
+            "width": "49px"
+          }
+        },
+        {
+          "id": "g-ai1-8",
+          "paragraphs": [
+            {
+              "text": "Additional fencing",
+              "aiStyle": {
+                "leading": 14,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "justification": "Justification.LEFT",
+                "rotated": false,
+                "opacity": 100,
+                "blendMode": null,
+                "frameType": "point"
+              },
+              "ranges": [
+                {
+                  "text": "Additional fencing",
+                  "aiStyle": {
+                    "color": "rgb(255,255,255)",
+                    "aifont": "NYTFranklin-Medium",
+                    "size": 13,
+                    "capitalization": "",
+                    "tracking": 25,
+                    "superscript": false,
+                    "subscript": false
+                  }
+                }
+              ]
+            },
+            {
+              "text": "apparent on satellite",
+              "aiStyle": {
+                "leading": 14,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "justification": "Justification.LEFT",
+                "rotated": false,
+                "opacity": 100,
+                "blendMode": null,
+                "frameType": "point"
+              },
+              "ranges": [
+                {
+                  "text": "apparent on satellite",
+                  "aiStyle": {
+                    "color": "rgb(255,255,255)",
+                    "aifont": "NYTFranklin-Medium",
+                    "size": 13,
+                    "capitalization": "",
+                    "tracking": 25,
+                    "superscript": false,
+                    "subscript": false
+                  }
+                }
+              ]
+            }
+          ],
+          "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
+          "styles": {
+            "top": "NaN%",
+            "margin-top": "-NaNpx",
+            "left": "59.1129%",
+            "width": "141px"
+          }
+        },
+        {
+          "id": "g-ai1-9",
+          "paragraphs": [
+            {
+              "text": "Humanitarian aid",
+              "aiStyle": {
+                "leading": 14,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "justification": "Justification.LEFT",
+                "rotated": false,
+                "opacity": 100,
+                "blendMode": null,
+                "frameType": "point"
+              },
+              "ranges": [
+                {
+                  "text": "Humanitarian aid",
+                  "aiStyle": {
+                    "color": "rgb(255,255,255)",
+                    "aifont": "NYTFranklin-Medium",
+                    "size": 13,
+                    "capitalization": "",
+                    "tracking": 25,
+                    "superscript": false,
+                    "subscript": false
+                  }
+                }
+              ]
+            },
+            {
+              "text": "trucks waiting",
+              "aiStyle": {
+                "leading": 14,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "justification": "Justification.LEFT",
+                "rotated": false,
+                "opacity": 100,
+                "blendMode": null,
+                "frameType": "point"
+              },
+              "ranges": [
+                {
+                  "text": "trucks waiting",
+                  "aiStyle": {
+                    "color": "rgb(255,255,255)",
+                    "aifont": "NYTFranklin-Medium",
+                    "size": 13,
+                    "capitalization": "",
+                    "tracking": 25,
+                    "superscript": false,
+                    "subscript": false
+                  }
+                }
+              ]
+            },
+            {
+              "text": "along road",
+              "aiStyle": {
+                "leading": 14,
+                "spaceBefore": 0,
+                "spaceAfter": 0,
+                "justification": "Justification.LEFT",
+                "rotated": false,
+                "opacity": 100,
+                "blendMode": null,
+                "frameType": "point"
+              },
+              "ranges": [
+                {
+                  "text": "along road",
+                  "aiStyle": {
+                    "color": "rgb(255,255,255)",
+                    "aifont": "NYTFranklin-Medium",
+                    "size": 13,
+                    "capitalization": "",
+                    "tracking": 25,
+                    "superscript": false,
+                    "subscript": false
+                  }
+                }
+              ]
+            }
+          ],
+          "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
+          "styles": {
+            "top": "NaN%",
+            "margin-top": "-NaNpx",
+            "left": "11.6178%",
+            "width": "122px"
+          }
+        }
+      ],
+      "imageData": [
+        {
+          "type": "base",
+          "html": "\t\t<img id=\"g-rafah-zoom-Artboard_2-img\" class=\"g-rafah-zoom-Artboard_2-img g-aiImg\" alt=\"\" data-src=\"_assets/rafah-zoom-Artboard_2.jpg\" src=\"data:image/gif;base64,R0lGODlhCgAKAIAAAB8fHwAAACH5BAEAAAAALAAAAAAKAAoAAAIIhI+py+0PYysAOw==\"/>\r"
+        }
+      ],
+      "specialData": [
+        
+      ],
+      "widthRange": [
+        0,
+        599
+      ],
+      "visibleRange": [
+        0,
+        599
+      ],
+      "bounds": {
+        "left": 1189.3545489377,
+        "top": -523.153341207964,
+        "width": 294,
+        "height": 269.874820241695
+      }
+    }
+  ],
+  "settings": {
+    "namespace": "g-",
+    "settings_version": "0.119.7",
+    "create_promo_image": false,
+    "promo_image_width": 1024,
+    "image_format": [
+      "auto"
+    ],
+    "write_image_files": true,
+    "responsiveness": "dynamic",
+    "max_width": "",
+    "output": "one-file",
+    "project_name": "",
+    "html_output_path": "../public/",
+    "html_output_extension": ".html",
+    "image_output_path": "../public/_assets/",
+    "image_source_path": "_assets/",
+    "image_alt_text": "",
+    "cache_bust_token": null,
+    "create_config_file": false,
+    "create_settings_block": true,
+    "config_file_path": "",
+    "local_preview_template": "",
+    "png_transparent": "false",
+    "png_number_of_colors": "128",
+    "jpg_quality": "60",
+    "center_html_output": true,
+    "use_2x_images_if_possible": true,
+    "use_lazy_loader": true,
+    "include_resizer_classes": false,
+    "include_resizer_widths": true,
+    "include_resizer_script": true,
+    "inline_svg": "false",
+    "svg_id_prefix": "",
+    "svg_embed_images": false,
+    "render_text_as": "html",
+    "render_rotated_skewed_text_as": "html",
+    "testing_mode": false,
+    "show_completion_dialog_box": true,
+    "clickable_link": "",
+    "last_updated_text": "",
+    "headline": "",
+    "leadin": "",
+    "summary": "",
+    "notes": "",
+    "sources": "",
+    "credit": "By The New York Times",
+    "settings_block": [
+      "settings_version",
+      "responsiveness",
+      "alt_text",
+      "max_width",
+      "image_format",
+      "png_number_of_colors",
+      "jpg_quality",
+      "last_updated_text",
+      "section",
+      "headline",
+      "leadin",
+      "summary",
+      "notes",
+      "sources",
+      "credit",
+      "display_for_promotion_only",
+      "dark_mode_compatible",
+      "size"
+    ],
+    "config_file": [
+      "last_updated_text",
+      "alt_text",
+      "section",
+      "headline",
+      "leadin",
+      "summary",
+      "notes",
+      "sources",
+      "credit",
+      "page_template",
+      "display_for_promotion_only",
+      "size"
+    ],
+    "scriptVersion": "0.121.0",
+    "min_width": 280,
+    "accessibility": true,
+    "fonts": [
+      
+    ],
+    "project_type": "ai2html",
+    "dark_mode_compatible": false,
+    "create_json_config_files": true,
+    "aria_role": "img",
+    "alt_text": "",
+    "page_template": "vi-article-embed",
+    "display_for_promotion_only": false,
+    "section": "",
+    "size": "full",
+    "range": [
+      280,
+      600
+    ]
+  },
+  "customBlocks": {
+    "css": [
+      ".g-text-shadow-dark {\r    text-shadow: 0px 0px 2px rgba(0,0,0,.5), 0px 0px 2px rgba(0,0,0,.5), 0px 0px 2px rgba(0,0,0,.5), 0px 0px 1px rgba(0,0,0,.5);\r    -webkit-font-smoothing: antialiased;\r}"
+    ]
+  }
+}

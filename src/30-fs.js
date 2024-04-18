@@ -48,7 +48,7 @@ AI2HTML.fs = AI2HTML.fs || {};
     textForFile = JSON.stringify(jsonData, null, 2);
     jsonFileDestinationFolder = getDocPath() + settings.html_output_path;
     checkForOutputFolder(jsonFileDestinationFolder, 'html_output_path');
-    jsonFileDestination = jsonFileDestinationFolder + pageName + '.json';
+    jsonFileDestination = jsonFileDestinationFolder + pageName + '-data.json';
     
     // write file
     saveTextFile(jsonFileDestination, textForFile);
@@ -64,6 +64,18 @@ AI2HTML.fs = AI2HTML.fs || {};
   }
   
   
+  function getCommonOutputSettings(settings) {
+    // var range = getWidthRangeForConfig(settings);
+    var range = settings.range;
+    return {
+      ai2html_version: settings.scriptVersion,
+      project_type: 'ai2html',
+      min_width: range[0],
+      max_width: range[1],
+      tags: 'ai2html',
+      type: 'embeddedinteractive'
+    }
+  }
   
   // TODO: improve
   // (currently ignores bracketed sections of the config file)

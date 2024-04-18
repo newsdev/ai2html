@@ -56,6 +56,7 @@ AI2HTML.logger = AI2HTML.logger || {};
   function error(msg) {
     var e = new Error(msg);
     e.name = 'UserError';
+    AI2HTML.settings.restoreDocumentState();
     throw e;
   }
 

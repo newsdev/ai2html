@@ -41,7 +41,7 @@ AI2HTML.testing = AI2HTML.testing || {};
       stripTag: _.stripTag,
       cleanCodeBlock: settings.cleanCodeBlock,
       findHtmlTag: _.findHtmlTag,
-      cleanHtmlTags: ai.cleanHtmlTags,
+      cleanHtmlTags: html.cleanHtmlTags,
       parseDataAttributes: ai.parseDataAttributes,
       parseObjectName: ai.parseObjectName,
       cleanObjectName: ai.cleanObjectName,
