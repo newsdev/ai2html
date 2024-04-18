@@ -108,7 +108,7 @@
       // Render outputs
       // ==========================================
       
-      this.render(data, data.settings);
+      // this.render(data, data.settings);
       
     } catch(e) {
       error(log.formatError(e));

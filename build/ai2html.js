@@ -2152,6 +2152,9 @@ AI2HTML.ai = AI2HTML.ai || {};
         paragraphs: importTextFrameParagraphs(frame)
       };
     });
+    var pgStyles = [];
+    var charStyles = [];
+    var baseStyle = deriveTextStyleCss(frameData);
     var idPrefix = nameSpace + 'ai' + getArtboardId(ab) + '-';
     var abBox = convertAiBounds(ab.artboardRect);
     
@@ -2466,6 +2469,213 @@ AI2HTML.ai = AI2HTML.ai || {};
     
   }
 
+
+// Compute the base paragraph style by finding the most common style in frameData
+// Side effect: adds cssStyle object alongside each aiStyle object
+// frameData: Array of data objects parsed from a collection of TextFrames
+// Returns object containing css text style properties of base pg style
+  function deriveTextStyleCss(frameData) {
+    var pgStyles = [];
+    var baseStyle = {};
+    // override detected settings with these style properties
+    var defaultCssStyle = {
+      'text-align': 'left',
+      'text-transform': 'none',
+      'padding-bottom': 0,
+      'padding-top': 0,
+      'mix-blend-mode': 'normal',
+      'font-style': 'normal',
+      'height': 'auto',
+      'position': 'static' // 'relative' also used (to correct baseline misalignment)
+    };
+    var defaultAiStyle = {
+      opacity: 100 // given as AI style because opacity is converted to several CSS properties
+    };
+    var currCharStyles;
+    
+    _.forEach(frameData, function(frame) {
+      _.forEach(frame.paragraphs, analyzeParagraphStyle);
+    });
+    
+    // initialize the base <p> style to be equal to the most common pg style
+    if (pgStyles.length > 0) {
+      pgStyles.sort(compareCharCount);
+      _.extend(baseStyle, pgStyles[0].cssStyle);
+    }
+    // override certain base style properties with default values
+    _.extend(baseStyle, defaultCssStyle, convertAiTextStyle(defaultAiStyle));
+    return baseStyle;
+    
+    function compareCharCount(a, b) {
+      return b.count - a.count;
+    }
+    function analyzeParagraphStyle(pdata) {
+      currCharStyles = [];
+      _.forEach(pdata.ranges, convertRangeStyle);
+      if (currCharStyles.length > 0) {
+        // add most common char style to the pg style, to avoid applying
+        // <span> tags to all the text in the paragraph
+        currCharStyles.sort(compareCharCount);
+        _.extend(pdata.aiStyle, currCharStyles[0].aiStyle);
+      }
+      pdata.cssStyle = analyzeTextStyle(pdata.aiStyle, pdata.text, pgStyles);
+      if (pdata.aiStyle.blendMode && !pdata.cssStyle['mix-blend-mode']) {
+        log.warnOnce('Missing a rule for converting ' + pdata.aiStyle.blendMode + ' to CSS.');
+      }
+    }
+    
+    function convertRangeStyle(range) {
+      range.cssStyle = analyzeTextStyle(range.aiStyle, range.text, currCharStyles);
+      if (range.warning) {
+        warn(range.warning.replace('%s', _.truncateString(range.text, 35)));
+      }
+      if (range.aiStyle.aifont && !range.cssStyle['font-family']) {
+        log.warnOnce('Missing a rule for converting font: ' + range.aiStyle.aifont +
+          '. Sample text: ' + _.truncateString(range.text, 35), range.aiStyle.aifont);
+      }
+    }
+    
+    function analyzeTextStyle(aiStyle, text, stylesArr) {
+      var cssStyle = convertAiTextStyle(aiStyle);
+      var key = getStyleKey(cssStyle);
+      var o;
+      if (text.length === 0) {
+        return {};
+      }
+      for (var i=0; i<stylesArr.length; i++) {
+        if (stylesArr[i].key == key) {
+          o = stylesArr[i];
+          break;
+        }
+      }
+      if (!o) {
+        o = {
+          key: key,
+          aiStyle: aiStyle,
+          cssStyle: cssStyle,
+          count: 0
+        };
+        stylesArr.push(o);
+      }
+      o.count += text.length;
+      // o.count++; // each occurence counts equally
+      return cssStyle;
+    }
+  }
+
+
+
+// convert an object containing parsed AI text styles to an object containing CSS style properties
+  function convertAiTextStyle(aiStyle) {
+    var cssStyle = {};
+    var fontSize = aiStyle.size;
+    var fontInfo, tmp;
+    if (aiStyle.aifont) {
+      fontInfo = findFontInfo(aiStyle.aifont);
+      if (fontInfo.family) {
+        cssStyle['font-family'] = fontInfo.family;
+      }
+      if (fontInfo.weight) {
+        cssStyle['font-weight'] = fontInfo.weight;
+      }
+      if (fontInfo.style) {
+        cssStyle['font-style'] = fontInfo.style;
+      }
+    }
+    if ('leading' in aiStyle) {
+      cssStyle['line-height'] = aiStyle.leading + 'px';
+      // Fix for line height error affecting point text in Chrome/Safari at certain browser zooms.
+      if (aiStyle.frameType == 'point') {
+        cssStyle.height = cssStyle['line-height'];
+      }
+    }
+    // if (('opacity' in aiStyle) && aiStyle.opacity < 100) {
+    if ('opacity' in aiStyle) {
+      cssStyle.opacity = _.roundTo(aiStyle.opacity / 100, cssPrecision);
+    }
+    if (aiStyle.blendMode && (tmp = getBlendModeCss(aiStyle.blendMode))) {
+      cssStyle['mix-blend-mode'] = tmp;
+      // TODO: consider opacity fallback for IE
+    }
+    if (aiStyle.spaceBefore > 0) {
+      cssStyle['padding-top'] = aiStyle.spaceBefore + 'px';
+    }
+    if (aiStyle.spaceAfter > 0) {
+      cssStyle['padding-bottom'] = aiStyle.spaceAfter + 'px';
+    }
+    if ('tracking' in aiStyle) {
+      cssStyle['letter-spacing'] = _.roundTo(aiStyle.tracking / 1000, cssPrecision) + 'em';
+    }
+    if (aiStyle.superscript) {
+      fontSize = _.roundTo(fontSize * 0.7, 1);
+      cssStyle['vertical-align'] = 'super';
+    }
+    if (aiStyle.subscript) {
+      fontSize = _.roundTo(fontSize * 0.7, 1);
+      cssStyle['vertical-align'] = 'sub';
+    }
+    if (fontSize > 0) {
+      cssStyle['font-size'] = fontSize + 'px';
+    }
+    // kludge: text-align of rotated text is handled as a special case (see also getTextFrameCss())
+    if (aiStyle.rotated && aiStyle.frameType == 'point') {
+      cssStyle['text-align'] = 'center';
+    } else if (aiStyle.justification && (tmp = getJustificationCss(aiStyle.justification))) {
+      cssStyle['text-align'] = tmp;
+    }
+    if (aiStyle.capitalization && (tmp = getCapitalizationCss(aiStyle.capitalization))) {
+      cssStyle['text-transform'] = tmp;
+    }
+    if (aiStyle.color) {
+      cssStyle.color = aiStyle.color;
+    }
+    // applying vshift only to point text
+    // (based on experience with NYTFranklin)
+    if (aiStyle.size > 0 && fontInfo.vshift && aiStyle.frameType == 'point') {
+      cssStyle.top = vshiftToPixels(fontInfo.vshift, aiStyle.size);
+      cssStyle.position = 'relative';
+    }
+    return cssStyle;
+  }
+
+
+
+
+// Lookup an AI font name in the font table
+  function findFontInfo(aifont) {
+    var info = null;
+    for (var k=0; k<fonts.length; k++) {
+      if (aifont == fonts[k].aifont) {
+        info = fonts[k];
+        break;
+      }
+    }
+    if (!info) {
+      // font not found... parse the AI font name to give it a weight and style
+      info = {};
+      if (aifont.indexOf('Italic') > -1) {
+        info.style = 'italic';
+      }
+      if (aifont.indexOf('Bold') > -1) {
+        info.weight = 700;
+      } else {
+        info.weight = 500;
+      }
+    }
+    return info;
+  }
+  
+  
+  // s: object containing CSS text properties
+  function getStyleKey(s) {
+    var key = '';
+    for (var i=0, n=cssTextStyleProperties.length; i<n; i++) {
+      key += '~' + (s[cssTextStyleProperties[i]] || '');
+    }
+    return key;
+  }
+  
+  
   
   function getAreaTextPathProps(frame) {
     var props = {};
@@ -2483,6 +2693,45 @@ AI2HTML.ai = AI2HTML.ai || {};
       }
     }
     return props;
+  }
+
+
+// ai: AI justification value
+  function getJustificationCss(ai) {
+    for (var k=0; k<align.length; k++) {
+      if (ai == align[k].ai) {
+        return align[k].html;
+      }
+    }
+    return 'initial'; // CSS default
+  }
+
+// ai: AI capitalization value
+  function getCapitalizationCss(ai) {
+    for (var k=0; k<caps.length; k++) {
+      if (ai == caps[k].ai) {
+        return caps[k].html;
+      }
+    }
+    return '';
+  }
+  
+  function getBlendModeCss(ai) {
+    for (var k=0; k<blendModes.length; k++) {
+      if (ai == blendModes[k].ai) {
+        return blendModes[k].html;
+      }
+    }
+    return '';
+  }
+
+ 
+  function vshiftToPixels(vshift, fontSize) {
+    var i = vshift.indexOf('%');
+    var pct = parseFloat(vshift);
+    var px = fontSize * pct / 100;
+    if (!px || i==-1) return '0';
+    return _.roundTo(px, 1) + 'px';
   }
 
 
@@ -5009,250 +5258,9 @@ AI2HTML.html = AI2HTML.html || {};
   }
 
 
-// Compute the base paragraph style by finding the most common style in frameData
-// Side effect: adds cssStyle object alongside each aiStyle object
-// frameData: Array of data objects parsed from a collection of TextFrames
-// Returns object containing css text style properties of base pg style
-  function deriveTextStyleCss(frameData) {
-    var pgStyles = [];
-    var baseStyle = {};
-    // override detected settings with these style properties
-    var defaultCssStyle = {
-      'text-align': 'left',
-      'text-transform': 'none',
-      'padding-bottom': 0,
-      'padding-top': 0,
-      'mix-blend-mode': 'normal',
-      'font-style': 'normal',
-      'height': 'auto',
-      'position': 'static' // 'relative' also used (to correct baseline misalignment)
-    };
-    var defaultAiStyle = {
-      opacity: 100 // given as AI style because opacity is converted to several CSS properties
-    };
-    var currCharStyles;
-    
-    _.forEach(frameData, function(frame) {
-      _.forEach(frame.paragraphs, analyzeParagraphStyle);
-    });
-    
-    // initialize the base <p> style to be equal to the most common pg style
-    if (pgStyles.length > 0) {
-      pgStyles.sort(compareCharCount);
-      _.extend(baseStyle, pgStyles[0].cssStyle);
-    }
-    // override certain base style properties with default values
-    _.extend(baseStyle, defaultCssStyle, convertAiTextStyle(defaultAiStyle));
-    return baseStyle;
-    
-    function compareCharCount(a, b) {
-      return b.count - a.count;
-    }
-    function analyzeParagraphStyle(pdata) {
-      currCharStyles = [];
-      _.forEach(pdata.ranges, convertRangeStyle);
-      if (currCharStyles.length > 0) {
-        // add most common char style to the pg style, to avoid applying
-        // <span> tags to all the text in the paragraph
-        currCharStyles.sort(compareCharCount);
-        _.extend(pdata.aiStyle, currCharStyles[0].aiStyle);
-      }
-      pdata.cssStyle = analyzeTextStyle(pdata.aiStyle, pdata.text, pgStyles);
-      if (pdata.aiStyle.blendMode && !pdata.cssStyle['mix-blend-mode']) {
-        log.warnOnce('Missing a rule for converting ' + pdata.aiStyle.blendMode + ' to CSS.');
-      }
-    }
-    
-    function convertRangeStyle(range) {
-      range.cssStyle = analyzeTextStyle(range.aiStyle, range.text, currCharStyles);
-      if (range.warning) {
-        warn(range.warning.replace('%s', _.truncateString(range.text, 35)));
-      }
-      if (range.aiStyle.aifont && !range.cssStyle['font-family']) {
-        log.warnOnce('Missing a rule for converting font: ' + range.aiStyle.aifont +
-          '. Sample text: ' + _.truncateString(range.text, 35), range.aiStyle.aifont);
-      }
-    }
-    
-    function analyzeTextStyle(aiStyle, text, stylesArr) {
-      var cssStyle = convertAiTextStyle(aiStyle);
-      var key = getStyleKey(cssStyle);
-      var o;
-      if (text.length === 0) {
-        return {};
-      }
-      for (var i=0; i<stylesArr.length; i++) {
-        if (stylesArr[i].key == key) {
-          o = stylesArr[i];
-          break;
-        }
-      }
-      if (!o) {
-        o = {
-          key: key,
-          aiStyle: aiStyle,
-          cssStyle: cssStyle,
-          count: 0
-        };
-        stylesArr.push(o);
-      }
-      o.count += text.length;
-      // o.count++; // each occurence counts equally
-      return cssStyle;
-    }
-  }
 
 
 
-// convert an object containing parsed AI text styles to an object containing CSS style properties
-  function convertAiTextStyle(aiStyle) {
-    var cssStyle = {};
-    var fontSize = aiStyle.size;
-    var fontInfo, tmp;
-    if (aiStyle.aifont) {
-      fontInfo = findFontInfo(aiStyle.aifont);
-      if (fontInfo.family) {
-        cssStyle['font-family'] = fontInfo.family;
-      }
-      if (fontInfo.weight) {
-        cssStyle['font-weight'] = fontInfo.weight;
-      }
-      if (fontInfo.style) {
-        cssStyle['font-style'] = fontInfo.style;
-      }
-    }
-    if ('leading' in aiStyle) {
-      cssStyle['line-height'] = aiStyle.leading + 'px';
-      // Fix for line height error affecting point text in Chrome/Safari at certain browser zooms.
-      if (aiStyle.frameType == 'point') {
-        cssStyle.height = cssStyle['line-height'];
-      }
-    }
-    // if (('opacity' in aiStyle) && aiStyle.opacity < 100) {
-    if ('opacity' in aiStyle) {
-      cssStyle.opacity = _.roundTo(aiStyle.opacity / 100, cssPrecision);
-    }
-    if (aiStyle.blendMode && (tmp = getBlendModeCss(aiStyle.blendMode))) {
-      cssStyle['mix-blend-mode'] = tmp;
-      // TODO: consider opacity fallback for IE
-    }
-    if (aiStyle.spaceBefore > 0) {
-      cssStyle['padding-top'] = aiStyle.spaceBefore + 'px';
-    }
-    if (aiStyle.spaceAfter > 0) {
-      cssStyle['padding-bottom'] = aiStyle.spaceAfter + 'px';
-    }
-    if ('tracking' in aiStyle) {
-      cssStyle['letter-spacing'] = _.roundTo(aiStyle.tracking / 1000, cssPrecision) + 'em';
-    }
-    if (aiStyle.superscript) {
-      fontSize = _.roundTo(fontSize * 0.7, 1);
-      cssStyle['vertical-align'] = 'super';
-    }
-    if (aiStyle.subscript) {
-      fontSize = _.roundTo(fontSize * 0.7, 1);
-      cssStyle['vertical-align'] = 'sub';
-    }
-    if (fontSize > 0) {
-      cssStyle['font-size'] = fontSize + 'px';
-    }
-    // kludge: text-align of rotated text is handled as a special case (see also getTextFrameCss())
-    if (aiStyle.rotated && aiStyle.frameType == 'point') {
-      cssStyle['text-align'] = 'center';
-    } else if (aiStyle.justification && (tmp = getJustificationCss(aiStyle.justification))) {
-      cssStyle['text-align'] = tmp;
-    }
-    if (aiStyle.capitalization && (tmp = getCapitalizationCss(aiStyle.capitalization))) {
-      cssStyle['text-transform'] = tmp;
-    }
-    if (aiStyle.color) {
-      cssStyle.color = aiStyle.color;
-    }
-    // applying vshift only to point text
-    // (based on experience with NYTFranklin)
-    if (aiStyle.size > 0 && fontInfo.vshift && aiStyle.frameType == 'point') {
-      cssStyle.top = vshiftToPixels(fontInfo.vshift, aiStyle.size);
-      cssStyle.position = 'relative';
-    }
-    return cssStyle;
-  }
-  
-  // s: object containing CSS text properties
-  function getStyleKey(s) {
-    var key = '';
-    for (var i=0, n=cssTextStyleProperties.length; i<n; i++) {
-      key += '~' + (s[cssTextStyleProperties[i]] || '');
-    }
-    return key;
-  }
-
-
-
-// Lookup an AI font name in the font table
-  function findFontInfo(aifont) {
-    var info = null;
-    for (var k=0; k<fonts.length; k++) {
-      if (aifont == fonts[k].aifont) {
-        info = fonts[k];
-        break;
-      }
-    }
-    if (!info) {
-      // font not found... parse the AI font name to give it a weight and style
-      info = {};
-      if (aifont.indexOf('Italic') > -1) {
-        info.style = 'italic';
-      }
-      if (aifont.indexOf('Bold') > -1) {
-        info.weight = 700;
-      } else {
-        info.weight = 500;
-      }
-    }
-    return info;
-  }
-
-
-
-// ai: AI justification value
-  function getJustificationCss(ai) {
-    for (var k=0; k<align.length; k++) {
-      if (ai == align[k].ai) {
-        return align[k].html;
-      }
-    }
-    return 'initial'; // CSS default
-  }
-
-// ai: AI capitalization value
-  function getCapitalizationCss(ai) {
-    for (var k=0; k<caps.length; k++) {
-      if (ai == caps[k].ai) {
-        return caps[k].html;
-      }
-    }
-    return '';
-  }
-  
-  function getBlendModeCss(ai) {
-    for (var k=0; k<blendModes.length; k++) {
-      if (ai == blendModes[k].ai) {
-        return blendModes[k].html;
-      }
-    }
-    return '';
-  }
-  
-  
-  
-  function vshiftToPixels(vshift, fontSize) {
-    var i = vshift.indexOf('%');
-    var pct = parseFloat(vshift);
-    var px = fontSize * pct / 100;
-    if (!px || i==-1) return '0';
-    return _.roundTo(px, 1) + 'px';
-  }
-  
   
   AI2HTML.html = {
     
@@ -5444,7 +5452,7 @@ AI2HTML.testing = AI2HTML.testing || {};
       // Render outputs
       // ==========================================
       
-      this.render(data, data.settings);
+      // this.render(data, data.settings);
       
     } catch(e) {
       error(log.formatError(e));

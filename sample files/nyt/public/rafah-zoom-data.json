@@ -23,7 +23,14 @@
                 "rotated": false,
                 "opacity": 100,
                 "blendMode": null,
-                "frameType": "point"
+                "frameType": "point",
+                "color": "rgb(255,255,255)",
+                "aifont": "NYTFranklin-Medium",
+                "size": 15,
+                "capitalization": "",
+                "tracking": 0,
+                "superscript": false,
+                "subscript": false
               },
               "ranges": [
                 {
@@ -36,6 +43,13 @@
                     "tracking": 0,
                     "superscript": false,
                     "subscript": false
+                  },
+                  "cssStyle": {
+                    "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                    "font-weight": "500",
+                    "letter-spacing": "0em",
+                    "font-size": "15px",
+                    "color": "rgb(255,255,255)"
                   }
                 },
                 {
@@ -48,6 +62,13 @@
                     "tracking": 0,
                     "superscript": false,
                     "subscript": false
+                  },
+                  "cssStyle": {
+                    "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                    "font-weight": "500",
+                    "letter-spacing": "0em",
+                    "font-size": "24px",
+                    "color": "rgb(255,255,255)"
                   }
                 },
                 {
@@ -60,9 +81,29 @@
                     "tracking": 0,
                     "superscript": false,
                     "subscript": false
+                  },
+                  "cssStyle": {
+                    "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                    "font-weight": "500",
+                    "letter-spacing": "0em",
+                    "font-size": "24px",
+                    "color": "rgb(252,0,0)"
                   }
                 }
-              ]
+              ],
+              "cssStyle": {
+                "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                "font-weight": "500",
+                "line-height": "17px",
+                "height": "17px",
+                "opacity": 1,
+                "letter-spacing": "0em",
+                "font-size": "15px",
+                "text-align": "left",
+                "color": "rgb(255,255,255)",
+                "top": "1.2px",
+                "position": "relative"
+              }
             },
             {
               "text": "is a long way",
@@ -74,7 +115,14 @@
                 "rotated": false,
                 "opacity": 100,
                 "blendMode": null,
-                "frameType": "point"
+                "frameType": "point",
+                "color": "rgb(252,0,0)",
+                "aifont": "NYTFranklin-Medium",
+                "size": 24,
+                "capitalization": "",
+                "tracking": 0,
+                "superscript": false,
+                "subscript": false
               },
               "ranges": [
                 {
@@ -87,9 +135,29 @@
                     "tracking": 0,
                     "superscript": false,
                     "subscript": false
+                  },
+                  "cssStyle": {
+                    "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                    "font-weight": "500",
+                    "letter-spacing": "0em",
+                    "font-size": "24px",
+                    "color": "rgb(252,0,0)"
                   }
                 }
-              ]
+              ],
+              "cssStyle": {
+                "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                "font-weight": "500",
+                "line-height": "17px",
+                "height": "17px",
+                "opacity": 1,
+                "letter-spacing": "0em",
+                "font-size": "24px",
+                "text-align": "left",
+                "color": "rgb(252,0,0)",
+                "top": "1.9px",
+                "position": "relative"
+              }
             },
             {
               "text": "to go",
@@ -101,7 +169,14 @@
                 "rotated": false,
                 "opacity": 100,
                 "blendMode": null,
-                "frameType": "point"
+                "frameType": "point",
+                "color": "rgb(252,0,0)",
+                "aifont": "NYTFranklin-Medium",
+                "size": 24,
+                "capitalization": "",
+                "tracking": 0,
+                "superscript": false,
+                "subscript": false
               },
               "ranges": [
                 {
@@ -114,15 +189,35 @@
                     "tracking": 0,
                     "superscript": false,
                     "subscript": false
+                  },
+                  "cssStyle": {
+                    "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                    "font-weight": "500",
+                    "letter-spacing": "0em",
+                    "font-size": "24px",
+                    "color": "rgb(252,0,0)"
                   }
                 }
-              ]
+              ],
+              "cssStyle": {
+                "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                "font-weight": "500",
+                "line-height": "17px",
+                "height": "17px",
+                "opacity": 1,
+                "letter-spacing": "0em",
+                "font-size": "24px",
+                "text-align": "left",
+                "color": "rgb(252,0,0)",
+                "top": "1.9px",
+                "position": "relative"
+              }
             }
           ],
           "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
           "styles": {
-            "top": "NaN%",
-            "margin-top": "-NaNpx",
+            "top": "7.4118%",
+            "margin-top": "-30.5px",
             "left": "0.7277%",
             "width": "151px"
           }
@@ -140,7 +235,14 @@
                 "rotated": false,
                 "opacity": 100,
                 "blendMode": null,
-                "frameType": "point"
+                "frameType": "point",
+                "color": "rgb(255,255,255)",
+                "aifont": "NYTFranklin-Medium",
+                "size": 15,
+                "capitalization": "",
+                "tracking": 0,
+                "superscript": false,
+                "subscript": false
               },
               "ranges": [
                 {
@@ -153,9 +255,29 @@
                     "tracking": 0,
                     "superscript": false,
                     "subscript": false
+                  },
+                  "cssStyle": {
+                    "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                    "font-weight": "500",
+                    "letter-spacing": "0em",
+                    "font-size": "15px",
+                    "color": "rgb(255,255,255)"
                   }
                 }
-              ]
+              ],
+              "cssStyle": {
+                "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                "font-weight": "500",
+                "line-height": "17px",
+                "height": "17px",
+                "opacity": 1,
+                "letter-spacing": "0em",
+                "font-size": "15px",
+                "text-align": "left",
+                "color": "rgb(255,255,255)",
+                "top": "1.2px",
+                "position": "relative"
+              }
             },
             {
               "text": "waiting",
@@ -167,7 +289,14 @@
                 "rotated": false,
                 "opacity": 100,
                 "blendMode": null,
-                "frameType": "point"
+                "frameType": "point",
+                "color": "rgb(255,255,255)",
+                "aifont": "NYTFranklin-Medium",
+                "size": 15,
+                "capitalization": "",
+                "tracking": 0,
+                "superscript": false,
+                "subscript": false
               },
               "ranges": [
                 {
@@ -180,9 +309,29 @@
                     "tracking": 0,
                     "superscript": false,
                     "subscript": false
+                  },
+                  "cssStyle": {
+                    "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                    "font-weight": "500",
+                    "letter-spacing": "0em",
+                    "font-size": "15px",
+                    "color": "rgb(255,255,255)"
                   }
                 }
-              ]
+              ],
+              "cssStyle": {
+                "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                "font-weight": "500",
+                "line-height": "17px",
+                "height": "17px",
+                "opacity": 1,
+                "letter-spacing": "0em",
+                "font-size": "15px",
+                "text-align": "left",
+                "color": "rgb(255,255,255)",
+                "top": "1.2px",
+                "position": "relative"
+              }
             },
             {
               "text": "at gate",
@@ -194,7 +343,14 @@
                 "rotated": false,
                 "opacity": 100,
                 "blendMode": null,
-                "frameType": "point"
+                "frameType": "point",
+                "color": "rgb(255,255,255)",
+                "aifont": "NYTFranklin-Medium",
+                "size": 15,
+                "capitalization": "",
+                "tracking": 0,
+                "superscript": false,
+                "subscript": false
               },
               "ranges": [
                 {
@@ -207,15 +363,35 @@
                     "tracking": 0,
                     "superscript": false,
                     "subscript": false
+                  },
+                  "cssStyle": {
+                    "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                    "font-weight": "500",
+                    "letter-spacing": "0em",
+                    "font-size": "15px",
+                    "color": "rgb(255,255,255)"
                   }
                 }
-              ]
+              ],
+              "cssStyle": {
+                "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                "font-weight": "500",
+                "line-height": "17px",
+                "height": "17px",
+                "opacity": 1,
+                "letter-spacing": "0em",
+                "font-size": "15px",
+                "text-align": "left",
+                "color": "rgb(255,255,255)",
+                "top": "1.2px",
+                "position": "relative"
+              }
             }
           ],
           "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
           "styles": {
-            "top": "NaN%",
-            "margin-top": "-NaNpx",
+            "top": "13.881%",
+            "margin-top": "-25.8px",
             "left": "67.7822%",
             "width": "69px"
           }
@@ -233,7 +409,14 @@
                 "rotated": false,
                 "opacity": 100,
                 "blendMode": null,
-                "frameType": "point"
+                "frameType": "point",
+                "color": "rgb(255,255,255)",
+                "aifont": "NYTFranklin-Medium",
+                "size": 15,
+                "capitalization": "",
+                "tracking": 25,
+                "superscript": false,
+                "subscript": false
               },
               "ranges": [
                 {
@@ -246,15 +429,35 @@
                     "tracking": 25,
                     "superscript": false,
                     "subscript": false
+                  },
+                  "cssStyle": {
+                    "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                    "font-weight": "500",
+                    "letter-spacing": "0.025em",
+                    "font-size": "15px",
+                    "color": "rgb(255,255,255)"
                   }
                 }
-              ]
+              ],
+              "cssStyle": {
+                "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                "font-weight": "500",
+                "line-height": "17px",
+                "height": "17px",
+                "opacity": 1,
+                "letter-spacing": "0.025em",
+                "font-size": "15px",
+                "text-align": "left",
+                "color": "rgb(255,255,255)",
+                "top": "1.2px",
+                "position": "relative"
+              }
             }
           ],
           "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
           "styles": {
-            "top": "NaN%",
-            "margin-top": "-NaNpx",
+            "top": "19.5901%",
+            "margin-top": "-8.8px",
             "left": "43.739%",
             "width": "80px"
           }
@@ -272,7 +475,14 @@
                 "rotated": false,
                 "opacity": 50,
                 "blendMode": null,
-                "frameType": "point"
+                "frameType": "point",
+                "color": "rgb(255,255,255)",
+                "aifont": "NYTFranklin-Medium",
+                "size": 25,
+                "capitalization": "",
+                "tracking": 25,
+                "superscript": false,
+                "subscript": false
               },
               "ranges": [
                 {
@@ -285,15 +495,35 @@
                     "tracking": 25,
                     "superscript": false,
                     "subscript": false
+                  },
+                  "cssStyle": {
+                    "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                    "font-weight": "500",
+                    "letter-spacing": "0.025em",
+                    "font-size": "25px",
+                    "color": "rgb(255,255,255)"
                   }
                 }
-              ]
+              ],
+              "cssStyle": {
+                "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                "font-weight": "500",
+                "line-height": "30px",
+                "height": "30px",
+                "opacity": 0.5,
+                "letter-spacing": "0.025em",
+                "font-size": "25px",
+                "text-align": "left",
+                "color": "rgb(255,255,255)",
+                "top": "2px",
+                "position": "relative"
+              }
             }
           ],
           "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
           "styles": {
-            "top": "NaN%",
-            "margin-top": "-NaNpx",
+            "top": "28.6321%",
+            "margin-top": "-15.4px",
             "left": "8.0742%",
             "width": "125px"
           }
@@ -311,7 +541,14 @@
                 "rotated": false,
                 "opacity": 50,
                 "blendMode": null,
-                "frameType": "point"
+                "frameType": "point",
+                "color": "rgb(255,255,255)",
+                "aifont": "NYTFranklin-Medium",
+                "size": 25,
+                "capitalization": "",
+                "tracking": 25,
+                "superscript": false,
+                "subscript": false
               },
               "ranges": [
                 {
@@ -324,15 +561,35 @@
                     "tracking": 25,
                     "superscript": false,
                     "subscript": false
+                  },
+                  "cssStyle": {
+                    "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                    "font-weight": "500",
+                    "letter-spacing": "0.025em",
+                    "font-size": "25px",
+                    "color": "rgb(255,255,255)"
                   }
                 }
-              ]
+              ],
+              "cssStyle": {
+                "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                "font-weight": "500",
+                "line-height": "30px",
+                "height": "30px",
+                "opacity": 0.5,
+                "letter-spacing": "0.025em",
+                "font-size": "25px",
+                "text-align": "left",
+                "color": "rgb(255,255,255)",
+                "top": "2px",
+                "position": "relative"
+              }
             }
           ],
           "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
           "styles": {
-            "top": "NaN%",
-            "margin-top": "-NaNpx",
+            "top": "28.6321%",
+            "margin-top": "-15.4px",
             "left": "81.4549%",
             "width": "83px"
           }
@@ -350,7 +607,14 @@
                 "rotated": false,
                 "opacity": 100,
                 "blendMode": null,
-                "frameType": "point"
+                "frameType": "point",
+                "color": "rgb(255,255,255)",
+                "aifont": "NYTFranklin-Medium",
+                "size": 15,
+                "capitalization": "",
+                "tracking": 0,
+                "superscript": false,
+                "subscript": false
               },
               "ranges": [
                 {
@@ -363,9 +627,29 @@
                     "tracking": 0,
                     "superscript": false,
                     "subscript": false
+                  },
+                  "cssStyle": {
+                    "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                    "font-weight": "500",
+                    "letter-spacing": "0em",
+                    "font-size": "15px",
+                    "color": "rgb(255,255,255)"
                   }
                 }
-              ]
+              ],
+              "cssStyle": {
+                "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                "font-weight": "500",
+                "line-height": "17px",
+                "height": "17px",
+                "opacity": 1,
+                "letter-spacing": "0em",
+                "font-size": "15px",
+                "text-align": "left",
+                "color": "rgb(255,255,255)",
+                "top": "1.2px",
+                "position": "relative"
+              }
             },
             {
               "text": "craters",
@@ -377,7 +661,14 @@
                 "rotated": false,
                 "opacity": 100,
                 "blendMode": null,
-                "frameType": "point"
+                "frameType": "point",
+                "color": "rgb(255,255,255)",
+                "aifont": "NYTFranklin-Medium",
+                "size": 15,
+                "capitalization": "",
+                "tracking": 0,
+                "superscript": false,
+                "subscript": false
               },
               "ranges": [
                 {
@@ -390,15 +681,35 @@
                     "tracking": 0,
                     "superscript": false,
                     "subscript": false
+                  },
+                  "cssStyle": {
+                    "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                    "font-weight": "500",
+                    "letter-spacing": "0em",
+                    "font-size": "15px",
+                    "color": "rgb(255,255,255)"
                   }
                 }
-              ]
+              ],
+              "cssStyle": {
+                "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                "font-weight": "500",
+                "line-height": "17px",
+                "height": "17px",
+                "opacity": 1,
+                "letter-spacing": "0em",
+                "font-size": "15px",
+                "text-align": "left",
+                "color": "rgb(255,255,255)",
+                "top": "1.2px",
+                "position": "relative"
+              }
             }
           ],
           "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
           "styles": {
-            "top": "NaN%",
-            "margin-top": "-NaNpx",
+            "top": "48.7064%",
+            "margin-top": "-17.3px",
             "left": "46.5702%",
             "width": "66px"
           }
@@ -416,7 +727,14 @@
                 "rotated": false,
                 "opacity": 100,
                 "blendMode": null,
-                "frameType": "point"
+                "frameType": "point",
+                "color": "rgb(255,255,255)",
+                "aifont": "NYTFranklin-Medium",
+                "size": 15,
+                "capitalization": "",
+                "tracking": 0,
+                "superscript": false,
+                "subscript": false
               },
               "ranges": [
                 {
@@ -429,9 +747,29 @@
                     "tracking": 0,
                     "superscript": false,
                     "subscript": false
+                  },
+                  "cssStyle": {
+                    "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                    "font-weight": "500",
+                    "letter-spacing": "0em",
+                    "font-size": "15px",
+                    "color": "rgb(255,255,255)"
                   }
                 }
-              ]
+              ],
+              "cssStyle": {
+                "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                "font-weight": "500",
+                "line-height": "17px",
+                "height": "17px",
+                "opacity": 1,
+                "letter-spacing": "0em",
+                "font-size": "15px",
+                "text-align": "left",
+                "color": "rgb(255,255,255)",
+                "top": "1.2px",
+                "position": "relative"
+              }
             },
             {
               "text": "previous strikes",
@@ -443,7 +781,14 @@
                 "rotated": false,
                 "opacity": 100,
                 "blendMode": null,
-                "frameType": "point"
+                "frameType": "point",
+                "color": "rgb(255,255,255)",
+                "aifont": "NYTFranklin-Medium",
+                "size": 15,
+                "capitalization": "",
+                "tracking": 0,
+                "superscript": false,
+                "subscript": false
               },
               "ranges": [
                 {
@@ -456,15 +801,35 @@
                     "tracking": 0,
                     "superscript": false,
                     "subscript": false
+                  },
+                  "cssStyle": {
+                    "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                    "font-weight": "500",
+                    "letter-spacing": "0em",
+                    "font-size": "15px",
+                    "color": "rgb(255,255,255)"
                   }
                 }
-              ]
+              ],
+              "cssStyle": {
+                "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                "font-weight": "500",
+                "line-height": "17px",
+                "height": "17px",
+                "opacity": 1,
+                "letter-spacing": "0em",
+                "font-size": "15px",
+                "text-align": "left",
+                "color": "rgb(255,255,255)",
+                "top": "1.2px",
+                "position": "relative"
+              }
             }
           ],
           "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
           "styles": {
-            "top": "NaN%",
-            "margin-top": "-NaNpx",
+            "top": "51.4467%",
+            "margin-top": "-17.3px",
             "left": "49.1826%",
             "width": "121px"
           }
@@ -482,7 +847,14 @@
                 "rotated": false,
                 "opacity": 100,
                 "blendMode": null,
-                "frameType": "point"
+                "frameType": "point",
+                "color": "rgb(234,126,52)",
+                "aifont": "NYTFranklin-Bold",
+                "size": 15,
+                "capitalization": "",
+                "tracking": 0,
+                "superscript": false,
+                "subscript": false
               },
               "ranges": [
                 {
@@ -495,9 +867,29 @@
                     "tracking": 0,
                     "superscript": false,
                     "subscript": false
+                  },
+                  "cssStyle": {
+                    "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                    "font-weight": "700",
+                    "letter-spacing": "0em",
+                    "font-size": "15px",
+                    "color": "rgb(234,126,52)"
                   }
                 }
-              ]
+              ],
+              "cssStyle": {
+                "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                "font-weight": "700",
+                "line-height": "17px",
+                "height": "17px",
+                "opacity": 1,
+                "letter-spacing": "0em",
+                "font-size": "15px",
+                "text-align": "left",
+                "color": "rgb(234,126,52)",
+                "top": "1.2px",
+                "position": "relative"
+              }
             },
             {
               "text": "crossing",
@@ -509,7 +901,14 @@
                 "rotated": false,
                 "opacity": 100,
                 "blendMode": null,
-                "frameType": "point"
+                "frameType": "point",
+                "color": "rgb(234,126,52)",
+                "aifont": "NYTFranklin-Bold",
+                "size": 15,
+                "capitalization": "",
+                "tracking": 0,
+                "superscript": false,
+                "subscript": false
               },
               "ranges": [
                 {
@@ -522,15 +921,35 @@
                     "tracking": 0,
                     "superscript": false,
                     "subscript": false
+                  },
+                  "cssStyle": {
+                    "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                    "font-weight": "700",
+                    "letter-spacing": "0em",
+                    "font-size": "15px",
+                    "color": "rgb(234,126,52)"
                   }
                 }
-              ]
+              ],
+              "cssStyle": {
+                "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                "font-weight": "700",
+                "line-height": "17px",
+                "height": "17px",
+                "opacity": 1,
+                "letter-spacing": "0em",
+                "font-size": "15px",
+                "text-align": "left",
+                "color": "rgb(234,126,52)",
+                "top": "1.2px",
+                "position": "relative"
+              }
             }
           ],
           "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
           "styles": {
-            "top": "NaN%",
-            "margin-top": "-NaNpx",
+            "top": "54.4069%",
+            "margin-top": "-17.2px",
             "left": "29.6463%",
             "width": "78px"
           }
@@ -548,7 +967,14 @@
                 "rotated": false,
                 "opacity": 100,
                 "blendMode": null,
-                "frameType": "point"
+                "frameType": "point",
+                "color": "rgb(255,255,255)",
+                "aifont": "NYTFranklin-Medium",
+                "size": 15,
+                "capitalization": "",
+                "tracking": 0,
+                "superscript": false,
+                "subscript": false
               },
               "ranges": [
                 {
@@ -561,15 +987,35 @@
                     "tracking": 0,
                     "superscript": false,
                     "subscript": false
+                  },
+                  "cssStyle": {
+                    "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                    "font-weight": "500",
+                    "letter-spacing": "0em",
+                    "font-size": "15px",
+                    "color": "rgb(255,255,255)"
                   }
                 }
-              ]
+              ],
+              "cssStyle": {
+                "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                "font-weight": "500",
+                "line-height": "17px",
+                "height": "17px",
+                "opacity": 1,
+                "letter-spacing": "0em",
+                "font-size": "15px",
+                "text-align": "right",
+                "color": "rgb(255,255,255)",
+                "top": "1.2px",
+                "position": "relative"
+              }
             }
           ],
           "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
           "styles": {
-            "top": "NaN%",
-            "margin-top": "-NaNpx",
+            "top": "68.2315%",
+            "margin-top": "-8.8px",
             "right": "79.2035%",
             "width": "52px"
           }
@@ -587,7 +1033,14 @@
                 "rotated": false,
                 "opacity": 100,
                 "blendMode": null,
-                "frameType": "point"
+                "frameType": "point",
+                "color": "rgb(255,255,255)",
+                "aifont": "NYTFranklin-Medium",
+                "size": 15,
+                "capitalization": "",
+                "tracking": 0,
+                "superscript": false,
+                "subscript": false
               },
               "ranges": [
                 {
@@ -600,15 +1053,35 @@
                     "tracking": 0,
                     "superscript": false,
                     "subscript": false
+                  },
+                  "cssStyle": {
+                    "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                    "font-weight": "500",
+                    "letter-spacing": "0em",
+                    "font-size": "15px",
+                    "color": "rgb(255,255,255)"
                   }
                 }
-              ]
+              ],
+              "cssStyle": {
+                "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                "font-weight": "500",
+                "line-height": "17px",
+                "height": "17px",
+                "opacity": 1,
+                "letter-spacing": "0em",
+                "font-size": "15px",
+                "text-align": "left",
+                "color": "rgb(255,255,255)",
+                "top": "1.2px",
+                "position": "relative"
+              }
             }
           ],
           "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
           "styles": {
-            "top": "NaN%",
-            "margin-top": "-NaNpx",
+            "top": "77.5944%",
+            "margin-top": "-8.8px",
             "left": "54.3525%",
             "width": "135px"
           }
@@ -626,7 +1099,14 @@
                 "rotated": false,
                 "opacity": 100,
                 "blendMode": null,
-                "frameType": "point"
+                "frameType": "point",
+                "color": "rgb(255,255,255)",
+                "aifont": "NYTFranklin-Medium",
+                "size": 15,
+                "capitalization": "",
+                "tracking": 0,
+                "superscript": false,
+                "subscript": false
               },
               "ranges": [
                 {
@@ -639,9 +1119,29 @@
                     "tracking": 0,
                     "superscript": false,
                     "subscript": false
+                  },
+                  "cssStyle": {
+                    "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                    "font-weight": "500",
+                    "letter-spacing": "0em",
+                    "font-size": "15px",
+                    "color": "rgb(255,255,255)"
                   }
                 }
-              ]
+              ],
+              "cssStyle": {
+                "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                "font-weight": "500",
+                "line-height": "17px",
+                "height": "17px",
+                "opacity": 1,
+                "letter-spacing": "0em",
+                "font-size": "15px",
+                "text-align": "left",
+                "color": "rgb(255,255,255)",
+                "top": "1.2px",
+                "position": "relative"
+              }
             },
             {
               "text": "trucks waiting",
@@ -653,7 +1153,14 @@
                 "rotated": false,
                 "opacity": 100,
                 "blendMode": null,
-                "frameType": "point"
+                "frameType": "point",
+                "color": "rgb(255,255,255)",
+                "aifont": "NYTFranklin-Medium",
+                "size": 15,
+                "capitalization": "",
+                "tracking": 0,
+                "superscript": false,
+                "subscript": false
               },
               "ranges": [
                 {
@@ -666,9 +1173,29 @@
                     "tracking": 0,
                     "superscript": false,
                     "subscript": false
+                  },
+                  "cssStyle": {
+                    "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                    "font-weight": "500",
+                    "letter-spacing": "0em",
+                    "font-size": "15px",
+                    "color": "rgb(255,255,255)"
                   }
                 }
-              ]
+              ],
+              "cssStyle": {
+                "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                "font-weight": "500",
+                "line-height": "17px",
+                "height": "17px",
+                "opacity": 1,
+                "letter-spacing": "0em",
+                "font-size": "15px",
+                "text-align": "left",
+                "color": "rgb(255,255,255)",
+                "top": "1.2px",
+                "position": "relative"
+              }
             },
             {
               "text": "along road",
@@ -680,7 +1207,14 @@
                 "rotated": false,
                 "opacity": 100,
                 "blendMode": null,
-                "frameType": "point"
+                "frameType": "point",
+                "color": "rgb(255,255,255)",
+                "aifont": "NYTFranklin-Medium",
+                "size": 15,
+                "capitalization": "",
+                "tracking": 0,
+                "superscript": false,
+                "subscript": false
               },
               "ranges": [
                 {
@@ -693,15 +1227,35 @@
                     "tracking": 0,
                     "superscript": false,
                     "subscript": false
+                  },
+                  "cssStyle": {
+                    "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                    "font-weight": "500",
+                    "letter-spacing": "0em",
+                    "font-size": "15px",
+                    "color": "rgb(255,255,255)"
                   }
                 }
-              ]
+              ],
+              "cssStyle": {
+                "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                "font-weight": "500",
+                "line-height": "17px",
+                "height": "17px",
+                "opacity": 1,
+                "letter-spacing": "0em",
+                "font-size": "15px",
+                "text-align": "left",
+                "color": "rgb(255,255,255)",
+                "top": "1.2px",
+                "position": "relative"
+              }
             }
           ],
           "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
           "styles": {
-            "top": "NaN%",
-            "margin-top": "-NaNpx",
+            "top": "91.9811%",
+            "margin-top": "-25.8px",
             "left": "13.3431%",
             "width": "131px"
           }
@@ -751,7 +1305,14 @@
                 "rotated": false,
                 "opacity": 100,
                 "blendMode": null,
-                "frameType": "point"
+                "frameType": "point",
+                "color": "rgb(255,255,255)",
+                "aifont": "NYTFranklin-Medium",
+                "size": 13,
+                "capitalization": "",
+                "tracking": 0,
+                "superscript": false,
+                "subscript": false
               },
               "ranges": [
                 {
@@ -764,15 +1325,35 @@
                     "tracking": 0,
                     "superscript": false,
                     "subscript": false
+                  },
+                  "cssStyle": {
+                    "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                    "font-weight": "500",
+                    "letter-spacing": "0em",
+                    "font-size": "13px",
+                    "color": "rgb(255,255,255)"
                   }
                 }
-              ]
+              ],
+              "cssStyle": {
+                "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                "font-weight": "500",
+                "line-height": "17px",
+                "height": "17px",
+                "opacity": 1,
+                "letter-spacing": "0em",
+                "font-size": "13px",
+                "text-align": "left",
+                "color": "rgb(255,255,255)",
+                "top": "1px",
+                "position": "relative"
+              }
             }
           ],
           "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
           "styles": {
-            "top": "NaN%",
-            "margin-top": "-NaNpx",
+            "top": "5.8349%",
+            "margin-top": "-8.7px",
             "left": "1.3609%",
             "width": "80px"
           }
@@ -790,7 +1371,14 @@
                 "rotated": false,
                 "opacity": 100,
                 "blendMode": null,
-                "frameType": "point"
+                "frameType": "point",
+                "color": "rgb(255,255,255)",
+                "aifont": "NYTFranklin-Medium",
+                "size": 13,
+                "capitalization": "",
+                "tracking": 25,
+                "superscript": false,
+                "subscript": false
               },
               "ranges": [
                 {
@@ -803,9 +1391,29 @@
                     "tracking": 25,
                     "superscript": false,
                     "subscript": false
+                  },
+                  "cssStyle": {
+                    "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                    "font-weight": "500",
+                    "letter-spacing": "0.025em",
+                    "font-size": "13px",
+                    "color": "rgb(255,255,255)"
                   }
                 }
-              ]
+              ],
+              "cssStyle": {
+                "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                "font-weight": "500",
+                "line-height": "14px",
+                "height": "14px",
+                "opacity": 1,
+                "letter-spacing": "0.025em",
+                "font-size": "13px",
+                "text-align": "left",
+                "color": "rgb(255,255,255)",
+                "top": "1px",
+                "position": "relative"
+              }
             },
             {
               "text": "waiting",
@@ -817,7 +1425,14 @@
                 "rotated": false,
                 "opacity": 100,
                 "blendMode": null,
-                "frameType": "point"
+                "frameType": "point",
+                "color": "rgb(255,255,255)",
+                "aifont": "NYTFranklin-Medium",
+                "size": 13,
+                "capitalization": "",
+                "tracking": 25,
+                "superscript": false,
+                "subscript": false
               },
               "ranges": [
                 {
@@ -830,9 +1445,29 @@
                     "tracking": 25,
                     "superscript": false,
                     "subscript": false
+                  },
+                  "cssStyle": {
+                    "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                    "font-weight": "500",
+                    "letter-spacing": "0.025em",
+                    "font-size": "13px",
+                    "color": "rgb(255,255,255)"
                   }
                 }
-              ]
+              ],
+              "cssStyle": {
+                "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                "font-weight": "500",
+                "line-height": "14px",
+                "height": "14px",
+                "opacity": 1,
+                "letter-spacing": "0.025em",
+                "font-size": "13px",
+                "text-align": "left",
+                "color": "rgb(255,255,255)",
+                "top": "1px",
+                "position": "relative"
+              }
             },
             {
               "text": "at gate",
@@ -844,7 +1479,14 @@
                 "rotated": false,
                 "opacity": 100,
                 "blendMode": null,
-                "frameType": "point"
+                "frameType": "point",
+                "color": "rgb(255,255,255)",
+                "aifont": "NYTFranklin-Medium",
+                "size": 13,
+                "capitalization": "",
+                "tracking": 25,
+                "superscript": false,
+                "subscript": false
               },
               "ranges": [
                 {
@@ -857,15 +1499,35 @@
                     "tracking": 25,
                     "superscript": false,
                     "subscript": false
+                  },
+                  "cssStyle": {
+                    "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                    "font-weight": "500",
+                    "letter-spacing": "0.025em",
+                    "font-size": "13px",
+                    "color": "rgb(255,255,255)"
                   }
                 }
-              ]
+              ],
+              "cssStyle": {
+                "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                "font-weight": "500",
+                "line-height": "14px",
+                "height": "14px",
+                "opacity": 1,
+                "letter-spacing": "0.025em",
+                "font-size": "13px",
+                "text-align": "left",
+                "color": "rgb(255,255,255)",
+                "top": "1px",
+                "position": "relative"
+              }
             }
           ],
           "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
           "styles": {
-            "top": "NaN%",
-            "margin-top": "-NaNpx",
+            "top": "14.9131%",
+            "margin-top": "-21.2px",
             "left": "77.6683%",
             "width": "65px"
           }
@@ -883,7 +1545,14 @@
                 "rotated": false,
                 "opacity": 50,
                 "blendMode": null,
-                "frameType": "point"
+                "frameType": "point",
+                "color": "rgb(255,255,255)",
+                "aifont": "NYTFranklin-Medium",
+                "size": 15,
+                "capitalization": "",
+                "tracking": 25,
+                "superscript": false,
+                "subscript": false
               },
               "ranges": [
                 {
@@ -896,15 +1565,35 @@
                     "tracking": 25,
                     "superscript": false,
                     "subscript": false
+                  },
+                  "cssStyle": {
+                    "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                    "font-weight": "500",
+                    "letter-spacing": "0.025em",
+                    "font-size": "15px",
+                    "color": "rgb(255,255,255)"
                   }
                 }
-              ]
+              ],
+              "cssStyle": {
+                "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                "font-weight": "500",
+                "line-height": "18px",
+                "height": "18px",
+                "opacity": 0.5,
+                "letter-spacing": "0.025em",
+                "font-size": "15px",
+                "text-align": "left",
+                "color": "rgb(255,255,255)",
+                "top": "1.2px",
+                "position": "relative"
+              }
             }
           ],
           "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
           "styles": {
-            "top": "NaN%",
-            "margin-top": "-NaNpx",
+            "top": "31.2345%",
+            "margin-top": "-9.3px",
             "left": "4.4643%",
             "width": "84px"
           }
@@ -922,7 +1611,14 @@
                 "rotated": false,
                 "opacity": 50,
                 "blendMode": null,
-                "frameType": "point"
+                "frameType": "point",
+                "color": "rgb(255,255,255)",
+                "aifont": "NYTFranklin-Medium",
+                "size": 15,
+                "capitalization": "",
+                "tracking": 25,
+                "superscript": false,
+                "subscript": false
               },
               "ranges": [
                 {
@@ -935,15 +1631,35 @@
                     "tracking": 25,
                     "superscript": false,
                     "subscript": false
+                  },
+                  "cssStyle": {
+                    "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                    "font-weight": "500",
+                    "letter-spacing": "0.025em",
+                    "font-size": "15px",
+                    "color": "rgb(255,255,255)"
                   }
                 }
-              ]
+              ],
+              "cssStyle": {
+                "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                "font-weight": "500",
+                "line-height": "18px",
+                "height": "18px",
+                "opacity": 0.5,
+                "letter-spacing": "0.025em",
+                "font-size": "15px",
+                "text-align": "left",
+                "color": "rgb(255,255,255)",
+                "top": "1.2px",
+                "position": "relative"
+              }
             }
           ],
           "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
           "styles": {
-            "top": "NaN%",
-            "margin-top": "-NaNpx",
+            "top": "31.2345%",
+            "margin-top": "-9.3px",
             "left": "84.4763%",
             "width": "59px"
           }
@@ -961,7 +1677,14 @@
                 "rotated": false,
                 "opacity": 100,
                 "blendMode": null,
-                "frameType": "point"
+                "frameType": "point",
+                "color": "rgb(255,255,255)",
+                "aifont": "NYTFranklin-Medium",
+                "size": 13,
+                "capitalization": "",
+                "tracking": 25,
+                "superscript": false,
+                "subscript": false
               },
               "ranges": [
                 {
@@ -974,9 +1697,29 @@
                     "tracking": 25,
                     "superscript": false,
                     "subscript": false
+                  },
+                  "cssStyle": {
+                    "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                    "font-weight": "500",
+                    "letter-spacing": "0.025em",
+                    "font-size": "13px",
+                    "color": "rgb(255,255,255)"
                   }
                 }
-              ]
+              ],
+              "cssStyle": {
+                "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                "font-weight": "500",
+                "line-height": "14px",
+                "height": "14px",
+                "opacity": 1,
+                "letter-spacing": "0.025em",
+                "font-size": "13px",
+                "text-align": "left",
+                "color": "rgb(255,255,255)",
+                "top": "1px",
+                "position": "relative"
+              }
             },
             {
               "text": "craters",
@@ -988,7 +1731,14 @@
                 "rotated": false,
                 "opacity": 100,
                 "blendMode": null,
-                "frameType": "point"
+                "frameType": "point",
+                "color": "rgb(255,255,255)",
+                "aifont": "NYTFranklin-Medium",
+                "size": 13,
+                "capitalization": "",
+                "tracking": 25,
+                "superscript": false,
+                "subscript": false
               },
               "ranges": [
                 {
@@ -1001,15 +1751,35 @@
                     "tracking": 25,
                     "superscript": false,
                     "subscript": false
+                  },
+                  "cssStyle": {
+                    "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                    "font-weight": "500",
+                    "letter-spacing": "0.025em",
+                    "font-size": "13px",
+                    "color": "rgb(255,255,255)"
                   }
                 }
-              ]
+              ],
+              "cssStyle": {
+                "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                "font-weight": "500",
+                "line-height": "14px",
+                "height": "14px",
+                "opacity": 1,
+                "letter-spacing": "0.025em",
+                "font-size": "13px",
+                "text-align": "left",
+                "color": "rgb(255,255,255)",
+                "top": "1px",
+                "position": "relative"
+              }
             }
           ],
           "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
           "styles": {
-            "top": "NaN%",
-            "margin-top": "-NaNpx",
+            "top": "47.8914%",
+            "margin-top": "-14.2px",
             "left": "51.9993%",
             "width": "63px"
           }
@@ -1027,7 +1797,14 @@
                 "rotated": false,
                 "opacity": 100,
                 "blendMode": null,
-                "frameType": "point"
+                "frameType": "point",
+                "color": "rgb(234,126,52)",
+                "aifont": "NYTFranklin-Bold",
+                "size": 13,
+                "capitalization": "",
+                "tracking": 25,
+                "superscript": false,
+                "subscript": false
               },
               "ranges": [
                 {
@@ -1040,9 +1817,29 @@
                     "tracking": 25,
                     "superscript": false,
                     "subscript": false
+                  },
+                  "cssStyle": {
+                    "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                    "font-weight": "700",
+                    "letter-spacing": "0.025em",
+                    "font-size": "13px",
+                    "color": "rgb(234,126,52)"
                   }
                 }
-              ]
+              ],
+              "cssStyle": {
+                "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                "font-weight": "700",
+                "line-height": "14px",
+                "height": "14px",
+                "opacity": 1,
+                "letter-spacing": "0.025em",
+                "font-size": "13px",
+                "text-align": "left",
+                "color": "rgb(234,126,52)",
+                "top": "1px",
+                "position": "relative"
+              }
             },
             {
               "text": "crossing",
@@ -1054,7 +1851,14 @@
                 "rotated": false,
                 "opacity": 100,
                 "blendMode": null,
-                "frameType": "point"
+                "frameType": "point",
+                "color": "rgb(234,126,52)",
+                "aifont": "NYTFranklin-Bold",
+                "size": 13,
+                "capitalization": "",
+                "tracking": 25,
+                "superscript": false,
+                "subscript": false
               },
               "ranges": [
                 {
@@ -1067,15 +1871,35 @@
                     "tracking": 25,
                     "superscript": false,
                     "subscript": false
+                  },
+                  "cssStyle": {
+                    "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                    "font-weight": "700",
+                    "letter-spacing": "0.025em",
+                    "font-size": "13px",
+                    "color": "rgb(234,126,52)"
                   }
                 }
-              ]
+              ],
+              "cssStyle": {
+                "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                "font-weight": "700",
+                "line-height": "14px",
+                "height": "14px",
+                "opacity": 1,
+                "letter-spacing": "0.025em",
+                "font-size": "13px",
+                "text-align": "left",
+                "color": "rgb(234,126,52)",
+                "top": "1px",
+                "position": "relative"
+              }
             }
           ],
           "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
           "styles": {
-            "top": "NaN%",
-            "margin-top": "-NaNpx",
+            "top": "55.6608%",
+            "margin-top": "-14.2px",
             "left": "27.9496%",
             "width": "73px"
           }
@@ -1093,7 +1917,14 @@
                 "rotated": false,
                 "opacity": 100,
                 "blendMode": null,
-                "frameType": "point"
+                "frameType": "point",
+                "color": "rgb(255,255,255)",
+                "aifont": "NYTFranklin-Medium",
+                "size": 13,
+                "capitalization": "",
+                "tracking": 25,
+                "superscript": false,
+                "subscript": false
               },
               "ranges": [
                 {
@@ -1106,15 +1937,35 @@
                     "tracking": 25,
                     "superscript": false,
                     "subscript": false
+                  },
+                  "cssStyle": {
+                    "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                    "font-weight": "500",
+                    "letter-spacing": "0.025em",
+                    "font-size": "13px",
+                    "color": "rgb(255,255,255)"
                   }
                 }
-              ]
+              ],
+              "cssStyle": {
+                "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                "font-weight": "500",
+                "line-height": "14px",
+                "height": "14px",
+                "opacity": 1,
+                "letter-spacing": "0.025em",
+                "font-size": "13px",
+                "text-align": "right",
+                "color": "rgb(255,255,255)",
+                "top": "1px",
+                "position": "relative"
+              }
             }
           ],
           "classes": "g-Layer_1 g-aiAbs g-aiPointText",
           "styles": {
-            "top": "NaN%",
-            "margin-top": "-NaNpx",
+            "top": "67.1596%",
+            "margin-top": "-7.2px",
             "right": "80.2585%",
             "width": "49px"
           }
@@ -1132,7 +1983,14 @@
                 "rotated": false,
                 "opacity": 100,
                 "blendMode": null,
-                "frameType": "point"
+                "frameType": "point",
+                "color": "rgb(255,255,255)",
+                "aifont": "NYTFranklin-Medium",
+                "size": 13,
+                "capitalization": "",
+                "tracking": 25,
+                "superscript": false,
+                "subscript": false
               },
               "ranges": [
                 {
@@ -1145,9 +2003,29 @@
                     "tracking": 25,
                     "superscript": false,
                     "subscript": false
+                  },
+                  "cssStyle": {
+                    "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                    "font-weight": "500",
+                    "letter-spacing": "0.025em",
+                    "font-size": "13px",
+                    "color": "rgb(255,255,255)"
                   }
                 }
-              ]
+              ],
+              "cssStyle": {
+                "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                "font-weight": "500",
+                "line-height": "14px",
+                "height": "14px",
+                "opacity": 1,
+                "letter-spacing": "0.025em",
+                "font-size": "13px",
+                "text-align": "left",
+                "color": "rgb(255,255,255)",
+                "top": "1px",
+                "position": "relative"
+              }
             },
             {
               "text": "apparent on satellite",
@@ -1159,7 +2037,14 @@
                 "rotated": false,
                 "opacity": 100,
                 "blendMode": null,
-                "frameType": "point"
+                "frameType": "point",
+                "color": "rgb(255,255,255)",
+                "aifont": "NYTFranklin-Medium",
+                "size": 13,
+                "capitalization": "",
+                "tracking": 25,
+                "superscript": false,
+                "subscript": false
               },
               "ranges": [
                 {
@@ -1172,15 +2057,35 @@
                     "tracking": 25,
                     "superscript": false,
                     "subscript": false
+                  },
+                  "cssStyle": {
+                    "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                    "font-weight": "500",
+                    "letter-spacing": "0.025em",
+                    "font-size": "13px",
+                    "color": "rgb(255,255,255)"
                   }
                 }
-              ]
+              ],
+              "cssStyle": {
+                "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                "font-weight": "500",
+                "line-height": "14px",
+                "height": "14px",
+                "opacity": 1,
+                "letter-spacing": "0.025em",
+                "font-size": "13px",
+                "text-align": "left",
+                "color": "rgb(255,255,255)",
+                "top": "1px",
+                "position": "relative"
+              }
             }
           ],
           "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
           "styles": {
-            "top": "NaN%",
-            "margin-top": "-NaNpx",
+            "top": "72.3473%",
+            "margin-top": "-14.2px",
             "left": "59.1129%",
             "width": "141px"
           }
@@ -1198,7 +2103,14 @@
                 "rotated": false,
                 "opacity": 100,
                 "blendMode": null,
-                "frameType": "point"
+                "frameType": "point",
+                "color": "rgb(255,255,255)",
+                "aifont": "NYTFranklin-Medium",
+                "size": 13,
+                "capitalization": "",
+                "tracking": 25,
+                "superscript": false,
+                "subscript": false
               },
               "ranges": [
                 {
@@ -1211,9 +2123,29 @@
                     "tracking": 25,
                     "superscript": false,
                     "subscript": false
+                  },
+                  "cssStyle": {
+                    "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                    "font-weight": "500",
+                    "letter-spacing": "0.025em",
+                    "font-size": "13px",
+                    "color": "rgb(255,255,255)"
                   }
                 }
-              ]
+              ],
+              "cssStyle": {
+                "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                "font-weight": "500",
+                "line-height": "14px",
+                "height": "14px",
+                "opacity": 1,
+                "letter-spacing": "0.025em",
+                "font-size": "13px",
+                "text-align": "left",
+                "color": "rgb(255,255,255)",
+                "top": "1px",
+                "position": "relative"
+              }
             },
             {
               "text": "trucks waiting",
@@ -1225,7 +2157,14 @@
                 "rotated": false,
                 "opacity": 100,
                 "blendMode": null,
-                "frameType": "point"
+                "frameType": "point",
+                "color": "rgb(255,255,255)",
+                "aifont": "NYTFranklin-Medium",
+                "size": 13,
+                "capitalization": "",
+                "tracking": 25,
+                "superscript": false,
+                "subscript": false
               },
               "ranges": [
                 {
@@ -1238,9 +2177,29 @@
                     "tracking": 25,
                     "superscript": false,
                     "subscript": false
+                  },
+                  "cssStyle": {
+                    "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                    "font-weight": "500",
+                    "letter-spacing": "0.025em",
+                    "font-size": "13px",
+                    "color": "rgb(255,255,255)"
                   }
                 }
-              ]
+              ],
+              "cssStyle": {
+                "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                "font-weight": "500",
+                "line-height": "14px",
+                "height": "14px",
+                "opacity": 1,
+                "letter-spacing": "0.025em",
+                "font-size": "13px",
+                "text-align": "left",
+                "color": "rgb(255,255,255)",
+                "top": "1px",
+                "position": "relative"
+              }
             },
             {
               "text": "along road",
@@ -1252,7 +2211,14 @@
                 "rotated": false,
                 "opacity": 100,
                 "blendMode": null,
-                "frameType": "point"
+                "frameType": "point",
+                "color": "rgb(255,255,255)",
+                "aifont": "NYTFranklin-Medium",
+                "size": 13,
+                "capitalization": "",
+                "tracking": 25,
+                "superscript": false,
+                "subscript": false
               },
               "ranges": [
                 {
@@ -1265,15 +2231,35 @@
                     "tracking": 25,
                     "superscript": false,
                     "subscript": false
+                  },
+                  "cssStyle": {
+                    "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                    "font-weight": "500",
+                    "letter-spacing": "0.025em",
+                    "font-size": "13px",
+                    "color": "rgb(255,255,255)"
                   }
                 }
-              ]
+              ],
+              "cssStyle": {
+                "font-family": "nyt-franklin,arial,helvetica,sans-serif",
+                "font-weight": "500",
+                "line-height": "14px",
+                "height": "14px",
+                "opacity": 1,
+                "letter-spacing": "0.025em",
+                "font-size": "13px",
+                "text-align": "left",
+                "color": "rgb(255,255,255)",
+                "top": "1px",
+                "position": "relative"
+              }
             }
           ],
           "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
           "styles": {
-            "top": "NaN%",
-            "margin-top": "-NaNpx",
+            "top": "90.5037%",
+            "margin-top": "-21.2px",
             "left": "11.6178%",
             "width": "122px"
           }
