@@ -1,3 +1,12 @@
+### v0.121.0
+- MAJOR refactor, splitting the script into multiple files for better organization and maintainability. The split is not perfect, and there's some awkward globalisms, but it's a big step. 
+- Added a bin/build.js script that concatenates the files into a single file for distribution.
+- Broke ai2html into two steps: first an exportable JSON data file, then conversion to HTML. This allows for multiple export paths in the future.
+- Fixed a bug if the majority of the text is bold or italics, all text would inherit that style.
+- Artboard comment names are now just the artboard name instead of repeating the namespace/filename
+- Allow for space characters in extra data (e.g. :600, fixed) in artboard names
+- Removed the -webkit-transform and -ms-transform from the inline CSS output. It's 2024.
+
 ### v0.120.0
 - Use the literal .ai document name as the default HTML output file name (stop replacing spaces and other characters with underscores and hyphens).
 - Mark as tested in Illustrator 2024

@@ -305,7 +305,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     
     if (v_align == 'bottom') {
       var bottomPx = abBox.height - (htmlBox.top + htmlBox.height + marginBottomPx);
-      props.bottom = formatCssPct(bottomPx, abBox.height) + ';';
+      props.bottom = formatCssPct(bottomPx, abBox.height) + '';
     } else if (v_align == 'middle') {
       // https://css-tricks.com/centering-in-the-unknown/
       // TODO: consider: http://zerosixthree.se/vertical-align-anything-with-just-3-lines-of-css/
@@ -404,7 +404,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     var frames = [];
     _.forEach(masks, function(o) {
       var clipRect = o.mask.geometricBounds;
-      if (testSimilarBounds(abRect, clipRect, 5)) {
+      if (_.testSimilarBounds(abRect, clipRect, 5)) {
         // if clip path is masking the current artboard, skip the test
         return;
       }
@@ -1826,7 +1826,7 @@ AI2HTML.ai = AI2HTML.ai || {};
   }
   
   function removeImagesInSVG(content, path) {
-    var dir = pathSplit(path)[0];
+    var dir = _.pathSplit(path)[0];
     var count = 0;
     content = content.replace(/<image[^<]+href="([^"]+)"[^<]+<\/image>/gm, function(match, href) {
       count++;
@@ -2365,106 +2365,46 @@ AI2HTML.ai = AI2HTML.ai || {};
   
   AI2HTML.ai = {
     testBoundsIntersection: testBoundsIntersection,
-    shiftBounds: shiftBounds,
-    clearMatrixShift: clearMatrixShift,
     objectIsHidden: objectIsHidden,
     objectOverlapsAnArtboard: objectOverlapsAnArtboard,
+    createPromoImage: createPromoImage,
     
     // ai2html text functions
     
-    textIsRotated: textIsRotated,
     hideTextFrame: hideTextFrame,
-    convertAiColor: convertAiColor,
-    getCharStyle: getCharStyle,
-    getParagraphStyle: getParagraphStyle,
-    getParagraphRanges: getParagraphRanges,
-    importTextFrameParagraphs: importTextFrameParagraphs,
     convertTextFrames: convertTextFrames,
-    textFrameIsRenderable: textFrameIsRenderable,
-    selectMaskedItems: selectMaskedItems,
-    getClippedTextFramesByArtboard: getClippedTextFramesByArtboard,
     getTextFramesByArtboard: getTextFramesByArtboard,
-    findTextFramesToRender: findTextFramesToRender,
     parseDataAttributes: parseDataAttributes,
-    getUntransformedTextBounds: getUntransformedTextBounds,
     unlockObject: unlockObject,
     unlockObjects: unlockObjects,
     convertAiTextStyle: convertAiTextStyle,
     
     // ai2html symbol functions
     
-    getBasicSymbolCss: getBasicSymbolCss,
     getSymbolClass: getSymbolClass,
-    exportSymbolAsHtml: exportSymbolAsHtml,
-    testEmptyArtboard: testEmptyArtboard,
-    testLayerArtboardIntersection: testLayerArtboardIntersection,
-    exportSymbols: exportSymbols,
-    getBasicSymbolStyle: getBasicSymbolStyle,
-    getPathBBox: getPathBBox,
-    getBBoxCenter: getBBoxCenter,
-    getLineGeometry: getLineGeometry,
-    pathPointIsCorner: pathPointIsCorner,
-    getRectangleData: getRectangleData,
-    getCircleData: getCircleData,
     
     // ai2html image functions
     
-    getArtboardImageName: getArtboardImageName,
-    getLayerImageName: getLayerImageName,
-    getImageId: getImageId,
     uniqAssetName: uniqAssetName,
-    getPromoImageFormat: getPromoImageFormat,
-    resolveArtboardImageFormat: resolveArtboardImageFormat,
-    objectHasLayer: objectHasLayer,
-    artboardContainsVisibleRasterImage: artboardContainsVisibleRasterImage,
     convertSpecialLayers: convertSpecialLayers,
-    getSpecialLayerText: getSpecialLayerText,
     convertArtItems: convertArtItems,
-    findTaggedLayers: findTaggedLayers,
-    getImageFolder: getImageFolder,
-    getImageFileName: getImageFileName,
-    getLayerOpacityCSS: getLayerOpacityCSS,
-    exportImage: exportImage,
     replaceSvgIds: replaceSvgIds,
-    rewriteSVGFile: rewriteSVGFile,
-    reapplyEffectsInSVG: reapplyEffectsInSVG,
-    removeImagesInSVG: removeImagesInSVG,
-    injectCSSinSVG: injectCSSinSVG,
     objectIsLocked: objectIsLocked,
     
     // ai2html AI document reading functions
     
-    convertAiBounds: convertAiBounds,
     getArtboardId: getArtboardId,
     cleanObjectName: cleanObjectName,
     getArtboardName: getArtboardName,
-    getLayerName: getLayerName,
-    getDocumentSlug: getDocumentSlug,
     makeDocumentSlug: makeDocumentSlug,
     getRawDocumentName: getRawDocumentName,
-    getArtboardFullName: getArtboardFullName,
     getDocumentArtboardName: getDocumentArtboardName,
-    getArtboardWidth: getArtboardWidth,
-    getArtboardVisibilityRange: getArtboardVisibilityRange,
-    getArtboardWidthRange: getArtboardWidthRange,
     getWidthRangeForConfig: getWidthRangeForConfig,
     parseObjectName: parseObjectName,
     getArtboardSettings: getArtboardSettings,
-    getArtboardResponsiveness: getArtboardResponsiveness,
-    getArtboardInfo: getArtboardInfo,
     forEachUsableArtboard: forEachUsableArtboard,
-    findLargestArtboard: findLargestArtboard,
-    findLayers: findLayers,
-    unhideLayer: unhideLayer,
-    layerIsChildOf: layerIsChildOf,
     clearSelection: clearSelection,
-    getComputedOpacity: getComputedOpacity,
-    getSortedLayerItems: getSortedLayerItems,
-    findCommonLayer: findCommonLayer,
-    findCommonAncestorLayer: findCommonAncestorLayer,
-    maskIsRelevant: maskIsRelevant,
     findMasks: findMasks,
-    storeSelectedItems: storeSelectedItems,
     
     getArtboardData: getArtboardData,
     getAllArtboardBounds: getAllArtboardBounds,
