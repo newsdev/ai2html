@@ -177,16 +177,17 @@
       
       var artboardContent = {html: '', css: '', js: ''};
       
+      var renderedText, renderedImage;
       // ========================
       // Convert text objects
       // ========================
       
       if (abSettings.image_only || settings.render_text_as == 'image') {
         // don't convert text objects to HTML
-        textData = {html: '', styles: []};
+        renderedText = {html: '', styles: []};
       } else {
         progressBar.setTitle(docArtboardName + ': Generating text...');
-        textData = html.convertTextData(textData);
+        renderedText = html.convertTextData(textData);
       }
       
       progressBar.step();
@@ -195,26 +196,24 @@
       // Generate artboard image(s)
       // ==========================
       
-      // if (_.isTrue(settings.write_image_files)) {
-      //   progressBar.setTitle(docArtboardName + ': Capturing image...');
-      //
-      //   var textFrames = []; // TODO get text frames from textData
-      //   imageData = ai.convertArtItems(activeArtboard, textFrames, masks, settings);
-      // } else {
-      //   imageData = {html: ''};
-      // }
-      //
-      // if (data.specialData) {
-      //   var specialData = html.convertSpecialData(data.specialData);
-      //   imageData.html = specialData.video + specialData.html_before +
-      //     imageData.html + specialData.html_after;
-      //     _.forEach(specialData.layers, function(lyr) {
-      //       lyr.visible = true;
-      //     });
-      //   if (specialData.video && !_.isTrue(settings.png_transparent)) {
-      //     warn('Background videos may be covered up without png_transparent:true');
-      //   }
-      // }
+      if (_.isTrue(settings.write_image_files)) {
+        progressBar.setTitle(docArtboardName + ': Placing image...');
+        renderedImage = html.convertArtItemsToHtml(imageData);
+      } else {
+        renderedImage = {html: ''};
+      }
+
+      if (data.specialData) {
+        var specialData = html.convertSpecialData(data.specialData);
+        renderedImage.html = specialData.video + specialData.html_before +
+          renderedImage.html + specialData.html_after;
+          _.forEach(specialData.layers, function(lyr) {
+            lyr.visible = true;
+          });
+        if (specialData.video && !_.isTrue(settings.png_transparent)) {
+          warn('Background videos may be covered up without png_transparent:true');
+        }
+      }
       
       progressBar.step();
       
@@ -222,13 +221,13 @@
       // Finish generating artboard HTML and CSS
       //=====================================
       
-      artboardContent.html += '\r\t<!-- Artboard: ' + docArtboardName + ' -->\r' +
+      artboardContent.html += '\r\t<!-- Artboard: ' + artboardData.fullName + ' -->\r' +
         html.generateArtboardDiv(artboardData, settings) +
-        imageData.html +
-        textData.html +
+        renderedImage.html +
+        renderedText.html +
         '\t</div>\r';
       
-      var abStyles = textData.styles;
+      var abStyles = renderedText.styles;
       if (specialData && specialData.video) {
         // make videos tap/clickable (so they can be played manually if autoplay
         // is disabled, e.g. in mobile low-power mode).

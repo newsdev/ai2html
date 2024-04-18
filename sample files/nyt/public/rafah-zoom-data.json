@@ -6,8 +6,7 @@
       "id": 0,
       "name": "rafah-zoom-desktop",
       "settings": {
-        "width": 600,
-        "fixed": true
+        "width": 600
       },
       "textData": [
         {
@@ -1264,15 +1263,16 @@
       "imageData": [
         {
           "type": "base",
-          "html": "\t\t<img id=\"g-rafah-zoom-desktop-img\" class=\"g-rafah-zoom-desktop-img g-aiImg\" alt=\"\" data-src=\"_assets/rafah-zoom-desktop.jpg\" src=\"data:image/gif;base64,R0lGODlhCgAKAIAAAB8fHwAAACH5BAEAAAAALAAAAAAKAAoAAAIIhI+py+0PYysAOw==\"/>\r"
+          "html": "<img id=\"g-rafah-zoom-desktop-img\" class=\"g-rafah-zoom-desktop-img g-aiImg\" alt=\"\" data-src=\"_assets/rafah-zoom-desktop.jpg\" src=\"data:image/gif;base64,R0lGODlhCgAKAIAAAB8fHwAAACH5BAEAAAAALAAAAAAKAAoAAAIIhI+py+0PYysAOw==\"/>"
         }
       ],
       "specialData": [
         
       ],
+      "fullName": "rafah-zoom-desktop",
       "widthRange": [
         600,
-        600
+        null
       ],
       "visibleRange": [
         600,
@@ -2268,12 +2268,13 @@
       "imageData": [
         {
           "type": "base",
-          "html": "\t\t<img id=\"g-rafah-zoom-Artboard_2-img\" class=\"g-rafah-zoom-Artboard_2-img g-aiImg\" alt=\"\" data-src=\"_assets/rafah-zoom-Artboard_2.jpg\" src=\"data:image/gif;base64,R0lGODlhCgAKAIAAAB8fHwAAACH5BAEAAAAALAAAAAAKAAoAAAIIhI+py+0PYysAOw==\"/>\r"
+          "html": "<img id=\"g-rafah-zoom-Artboard_2-img\" class=\"g-rafah-zoom-Artboard_2-img g-aiImg\" alt=\"\" data-src=\"_assets/rafah-zoom-Artboard_2.jpg\" src=\"data:image/gif;base64,R0lGODlhCgAKAIAAAB8fHwAAACH5BAEAAAAALAAAAAAKAAoAAAIIhI+py+0PYysAOw==\"/>"
         }
       ],
       "specialData": [
         
       ],
+      "fullName": "rafah-zoom-Artboard_2",
       "widthRange": [
         0,
         599
@@ -2388,7 +2389,7 @@
     "size": "full",
     "range": [
       280,
-      600
+      1600
     ]
   },
   "customBlocks": {

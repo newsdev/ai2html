@@ -2192,7 +2192,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     
     return {
       id: getArtboardId(ab),
-      name: fullName,
+      fullName: fullName,
       widthRange: widthRange,
       visibleRange: visibleRange,
       bounds: bounds
@@ -2452,14 +2452,14 @@ AI2HTML.ai = AI2HTML.ai || {};
     var props = {};
     var matrix = clearMatrixShift(textFrame.matrix);
     var horizAnchorPct = 50;
-    var transformOrigin = horizAnchorPct + '% ' + vertAnchorPct + '%;';
+    var transformOrigin = horizAnchorPct + '% ' + vertAnchorPct + '%';
     var transform = 'matrix(' +
       _.roundTo(matrix.mValueA, cssPrecision) + ',' +
       _.roundTo(-matrix.mValueB, cssPrecision) + ',' +
       _.roundTo(-matrix.mValueC, cssPrecision) + ',' +
       _.roundTo(matrix.mValueD, cssPrecision) + ',' +
       _.roundTo(matrix.mValueTX, cssPrecision) + ',' +
-      _.roundTo(matrix.mValueTY, cssPrecision) + ');';
+      _.roundTo(matrix.mValueTY, cssPrecision) + ')';
     
     // TODO: handle character scaling.
     // One option: add separate CSS transform to paragraphs inside a TextFrame
@@ -3454,7 +3454,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     if (settings.cache_bust_token) {
       src += '?v=' + settings.cache_bust_token;
     }
-    html = '\t\t<img id="' + imgId + '" class="' + imgClass + '" alt="' + imgAlt + '"';
+    html = '<img id="' + imgId + '" class="' + imgClass + '" alt="' + imgAlt + '"';
     if (imgStyle) {
       html += ' style="' + imgStyle + '"';
     }
@@ -3464,7 +3464,7 @@ AI2HTML.ai = AI2HTML.ai || {};
       // (<img> element requires a src attribute, according to spec.)
       src = 'data:image/gif;base64,R0lGODlhCgAKAIAAAB8fHwAAACH5BAEAAAAALAAAAAAKAAoAAAIIhI+py+0PYysAOw==';
     }
-    html += ' src="' + src + '"/>\r';
+    html += ' src="' + src + '"/>';
     return html;
   }
 
@@ -4571,7 +4571,6 @@ AI2HTML.html = AI2HTML.html || {};
     }
     // override certain base style properties with default values
     _.extend(baseStyle, defaultCssStyle, ai.convertAiTextStyle(defaultAiStyle));
-    warn("baseStyle: " + JSON.stringify(baseStyle));
     
     return baseStyle;
   }
@@ -4889,88 +4888,13 @@ AI2HTML.html = AI2HTML.html || {};
 
 
 // Generate images and return HTML embed code
-  function convertArtItemsToHtml(activeArtboard, textFrames, masks, settings) {
-    var imgName = getArtboardImageName(activeArtboard, settings);
-    var hideTextFrames = !_.isTrue(settings.testing_mode) && settings.render_text_as != 'image';
-    var textFrameCount = textFrames.length;
+  function convertArtItemsToHtml(imageData) {
     var html = '';
-    var uniqNames = [];
-    var hiddenItems = [];
-    var hiddenLayers = [];
-    var i;
-    
-    AI2HTML.fs.checkForOutputFolder(getImageFolder(settings), 'image_output_path');
-    
-    if (hideTextFrames) {
-      for (i=0; i<textFrameCount; i++) {
-        textFrames[i].hidden = true;
-      }
+    if (imageData && imageData.length) {
+      html = _.map(imageData, function(obj) {
+        return '\t\t' + obj.html + '\r';
+      }).join('');
     }
-    
-    // WIP
-    // _.forEach(findTaggedLayers('svg-symbol'), function(lyr) {
-    //   var obj = exportSvgSymbols(lyr, activeArtboard, masks);
-    //   html += obj.html;
-    //   hiddenItems = hiddenItems.concat(obj.items);
-    // });
-    
-    // Symbols in :symbol layers are not scaled
-    _.forEach(findTaggedLayers('symbol'), function(lyr) {
-      var obj = exportSymbols(lyr, activeArtboard, masks, {scaled: false});
-      html += obj.html;
-      hiddenItems = hiddenItems.concat(obj.items);
-    });
-    
-    // Symbols in :div layers are scaled
-    _.forEach(findTaggedLayers('div'), function(lyr) {
-      var obj = exportSymbols(lyr, activeArtboard, masks, {scaled: true});
-      html += obj.html;
-      hiddenItems = hiddenItems.concat(obj.items);
-    });
-    
-    _.forEach(findTaggedLayers('svg'), function(lyr) {
-      var uniqName = uniqAssetName(getLayerImageName(lyr, activeArtboard, settings), uniqNames);
-      var layerHtml = exportImage(uniqName, 'svg', activeArtboard, masks, lyr, settings);
-      if (layerHtml) {
-        uniqNames.push(uniqName);
-        html += layerHtml;
-      }
-      lyr.visible = false;
-      hiddenLayers.push(lyr);
-    });
-    
-    // Embed images tagged :png as separate images
-    // Inside this function, layers are hidden and unhidden as needed
-    forEachImageLayer('png', function(lyr) {
-      var opts = _.extend({}, settings, {png_transparent: true});
-      var name = getLayerImageName(lyr, activeArtboard, settings);
-      var fmt = _.contains(settings.image_format || [], 'png24') ? 'png24' : 'png';
-      // This test prevents empty images, but is expensive when a layer contains many art objects...
-      // consider only testing if an option is set by the user.
-      if (testLayerArtboardIntersection(lyr, activeArtboard)) {
-        html = exportImage(name, fmt, activeArtboard, null, null, opts) + html;
-      }
-      hiddenLayers.push(lyr); // need to unhide this layer later, after base image is captured
-    });
-    // placing ab image before other elements
-    html = captureArtboardImage(imgName, activeArtboard, masks, settings) + html;
-    // unhide hidden layers (if any)
-    _.forEach(hiddenLayers, function(lyr) {
-      lyr.visible = true;
-    });
-    
-    // unhide text frames
-    if (hideTextFrames) {
-      for (i=0; i<textFrameCount; i++) {
-        textFrames[i].hidden = false;
-      }
-    }
-    
-    // unhide items exported as symbols
-    _.forEach(hiddenItems, function(item) {
-      item.hidden = false;
-    });
-    
     return {html: html};
   }
 
@@ -5534,16 +5458,17 @@ AI2HTML.testing = AI2HTML.testing || {};
       
       var artboardContent = {html: '', css: '', js: ''};
       
+      var renderedText, renderedImage;
       // ========================
       // Convert text objects
       // ========================
       
       if (abSettings.image_only || settings.render_text_as == 'image') {
         // don't convert text objects to HTML
-        textData = {html: '', styles: []};
+        renderedText = {html: '', styles: []};
       } else {
         progressBar.setTitle(docArtboardName + ': Generating text...');
-        textData = html.convertTextData(textData);
+        renderedText = html.convertTextData(textData);
       }
       
       progressBar.step();
@@ -5552,26 +5477,24 @@ AI2HTML.testing = AI2HTML.testing || {};
       // Generate artboard image(s)
       // ==========================
       
-      // if (_.isTrue(settings.write_image_files)) {
-      //   progressBar.setTitle(docArtboardName + ': Capturing image...');
-      //
-      //   var textFrames = []; // TODO get text frames from textData
-      //   imageData = ai.convertArtItems(activeArtboard, textFrames, masks, settings);
-      // } else {
-      //   imageData = {html: ''};
-      // }
-      //
-      // if (data.specialData) {
-      //   var specialData = html.convertSpecialData(data.specialData);
-      //   imageData.html = specialData.video + specialData.html_before +
-      //     imageData.html + specialData.html_after;
-      //     _.forEach(specialData.layers, function(lyr) {
-      //       lyr.visible = true;
-      //     });
-      //   if (specialData.video && !_.isTrue(settings.png_transparent)) {
-      //     warn('Background videos may be covered up without png_transparent:true');
-      //   }
-      // }
+      if (_.isTrue(settings.write_image_files)) {
+        progressBar.setTitle(docArtboardName + ': Placing image...');
+        renderedImage = html.convertArtItemsToHtml(imageData);
+      } else {
+        renderedImage = {html: ''};
+      }
+
+      if (data.specialData) {
+        var specialData = html.convertSpecialData(data.specialData);
+        renderedImage.html = specialData.video + specialData.html_before +
+          renderedImage.html + specialData.html_after;
+          _.forEach(specialData.layers, function(lyr) {
+            lyr.visible = true;
+          });
+        if (specialData.video && !_.isTrue(settings.png_transparent)) {
+          warn('Background videos may be covered up without png_transparent:true');
+        }
+      }
       
       progressBar.step();
       
@@ -5579,13 +5502,13 @@ AI2HTML.testing = AI2HTML.testing || {};
       // Finish generating artboard HTML and CSS
       //=====================================
       
-      artboardContent.html += '\r\t<!-- Artboard: ' + docArtboardName + ' -->\r' +
+      artboardContent.html += '\r\t<!-- Artboard: ' + artboardData.fullName + ' -->\r' +
         html.generateArtboardDiv(artboardData, settings) +
-        imageData.html +
-        textData.html +
+        renderedImage.html +
+        renderedText.html +
         '\t</div>\r';
       
-      var abStyles = textData.styles;
+      var abStyles = renderedText.styles;
       if (specialData && specialData.video) {
         // make videos tap/clickable (so they can be played manually if autoplay
         // is disabled, e.g. in mobile low-power mode).

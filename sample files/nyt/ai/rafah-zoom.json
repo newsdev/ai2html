@@ -2,7 +2,7 @@
   "ai2html_version": "0.121.0",
   "project_type": "ai2html",
   "min_width": 280,
-  "max_width": 600,
+  "max_width": 1600,
   "tags": "ai2html",
   "type": "embeddedinteractive",
   "last_updated_text": "",

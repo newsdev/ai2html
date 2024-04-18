@@ -232,7 +232,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     
     return {
       id: getArtboardId(ab),
-      name: fullName,
+      fullName: fullName,
       widthRange: widthRange,
       visibleRange: visibleRange,
       bounds: bounds
@@ -492,14 +492,14 @@ AI2HTML.ai = AI2HTML.ai || {};
     var props = {};
     var matrix = clearMatrixShift(textFrame.matrix);
     var horizAnchorPct = 50;
-    var transformOrigin = horizAnchorPct + '% ' + vertAnchorPct + '%;';
+    var transformOrigin = horizAnchorPct + '% ' + vertAnchorPct + '%';
     var transform = 'matrix(' +
       _.roundTo(matrix.mValueA, cssPrecision) + ',' +
       _.roundTo(-matrix.mValueB, cssPrecision) + ',' +
       _.roundTo(-matrix.mValueC, cssPrecision) + ',' +
       _.roundTo(matrix.mValueD, cssPrecision) + ',' +
       _.roundTo(matrix.mValueTX, cssPrecision) + ',' +
-      _.roundTo(matrix.mValueTY, cssPrecision) + ');';
+      _.roundTo(matrix.mValueTY, cssPrecision) + ')';
     
     // TODO: handle character scaling.
     // One option: add separate CSS transform to paragraphs inside a TextFrame
@@ -1494,7 +1494,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     if (settings.cache_bust_token) {
       src += '?v=' + settings.cache_bust_token;
     }
-    html = '\t\t<img id="' + imgId + '" class="' + imgClass + '" alt="' + imgAlt + '"';
+    html = '<img id="' + imgId + '" class="' + imgClass + '" alt="' + imgAlt + '"';
     if (imgStyle) {
       html += ' style="' + imgStyle + '"';
     }
@@ -1504,7 +1504,7 @@ AI2HTML.ai = AI2HTML.ai || {};
       // (<img> element requires a src attribute, according to spec.)
       src = 'data:image/gif;base64,R0lGODlhCgAKAIAAAB8fHwAAACH5BAEAAAAALAAAAAAKAAoAAAIIhI+py+0PYysAOw==';
     }
-    html += ' src="' + src + '"/>\r';
+    html += ' src="' + src + '"/>';
     return html;
   }
 
