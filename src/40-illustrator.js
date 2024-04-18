@@ -195,7 +195,7 @@ AI2HTML.ai = AI2HTML.ai || {};
   
 
 
-// Convert a collection of TextFrames to HTML and CSS
+// Convert a collection of TextFrames to JSON
   function convertTextFrames(textFrames, ab, settings) {
     var data = [];
     var frameData = _.map(textFrames, function(frame) {
@@ -531,8 +531,9 @@ AI2HTML.ai = AI2HTML.ai || {};
       _.forEach(frame.paragraphs, analyzeParagraphStyle);
     });
     
-    return true;
+    // error('pgStyles ' + JSON.stringify(pgStyles));
     
+    return true;
     
     function compareCharCount(a, b) {
       return b.count - a.count;

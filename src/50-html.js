@@ -102,8 +102,8 @@ AI2HTML.html = AI2HTML.html || {};
   
   function calcBaseStyle(textData) {
     
+    var pgStyles = [];
     var baseStyle = {};
-    var pgStyles = textData.concat(); // clone
     
     var defaultCssStyle = {
       'text-align': 'left',
@@ -118,19 +118,54 @@ AI2HTML.html = AI2HTML.html || {};
     var defaultAiStyle = {
       opacity: 100 // given as AI style because opacity is converted to several CSS properties
     };
+    var resetCssStyle = {
+      'font-style': 'normal',
+      'font-weight': 'normal'
+    };
     
     function compareCharCount(a, b) {
       return b.count - a.count;
     }
     
+    function analyzeTextStyle(cssStyle, text, stylesArr) {
+      var key = AI2HTML.settings.getStyleKey(cssStyle);
+      var o;
+      if (text.length === 0) {
+        return {};
+      }
+      for (var i=0; i<stylesArr.length; i++) {
+        if (stylesArr[i].key == key) {
+          o = stylesArr[i];
+          break;
+        }
+      }
+      if (!o) {
+        o = {
+          key: key,
+          cssStyle: cssStyle,
+          count: 0
+        };
+        stylesArr.push(o);
+      }
+      o.count += text.length;
+      // o.count++; // each occurence counts equally
+      return cssStyle;
+    }
+    
+    _.forEach(textData, function(frame) {
+      _.forEach(frame.paragraphs, function(pg) {
+        var cssStyle = analyzeTextStyle(pg.cssStyle, pg.text, pgStyles);
+      });
+    });
+    
     // initialize the base <p> style to be equal to the most common pg style
     if (pgStyles.length > 0) {
       pgStyles.sort(compareCharCount);
       // _.extend(baseStyle, pgStyles[0].cssStyle);
-      _.extend(baseStyle, pgStyles[0].paragraphs[0].cssStyle);
+      _.extend(baseStyle, pgStyles[0].cssStyle);
     }
     // override certain base style properties with default values
-    _.extend(baseStyle, defaultCssStyle, ai.convertAiTextStyle(defaultAiStyle));
+    _.extend(baseStyle, defaultCssStyle, ai.convertAiTextStyle(defaultAiStyle), resetCssStyle);
     
     return baseStyle;
   }
