@@ -6,6 +6,7 @@
 - Artboard comment names are now just the artboard name instead of repeating the namespace/filename
 - Allow for space characters in extra data (e.g. :600, fixed) in artboard names
 - Removed the -webkit-transform and -ms-transform from the inline CSS output. It's 2024.
+- TK bug: it's getting one extra mask somehow..
 
 ### v0.120.0
 - Use the literal .ai document name as the default HTML output file name (stop replacing spaces and other characters with underscores and hyphens).

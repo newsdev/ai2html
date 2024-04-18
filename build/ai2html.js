@@ -3076,7 +3076,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     return _.contains(doc.placedItems, test) || _.contains(doc.rasterItems, test);
   }
   
-  function convertSpecialLayers(activeArtboard, settings) {
+  function convertSpecialLayers(activeArtboard) {
     var layersData = [];
     
     _.forEach(findTaggedLayers('video'), function(lyr) {
@@ -5542,7 +5542,7 @@ AI2HTML.testing = AI2HTML.testing || {};
     data.customBlocks = customBlocks;
     
     // warn about duplicate artboard names
-    AI2HTML.settings.validateArtboardNames(docSettings);
+    AI2HTML.settings.validateArtboardNames(settings);
     
     // Fix for issue #50
     // If a text range is selected when the script runs, it interferes
@@ -5560,7 +5560,6 @@ AI2HTML.testing = AI2HTML.testing || {};
     progressBar = new ProgressBar({name: 'JSON extraction', steps: calcProgressBarSteps()});
     ai.unlockObjects(); // Unlock containers and clipping masks
     var masks = ai.findMasks(); // identify all clipping masks and their contents
-    var fileContentArr = [];
     
     ai.forEachUsableArtboard(function(activeArtboard, abIndex) {
       var abSettings = ai.getArtboardSettings(activeArtboard);
@@ -5579,7 +5578,7 @@ AI2HTML.testing = AI2HTML.testing || {};
       that.doc.artboards.setActiveArtboardIndex(abIndex);
       
       // detect videos and other special layers
-      specialData = ai.convertSpecialLayers(activeArtboard, settings);
+      specialData = ai.convertSpecialLayers(activeArtboard);
       _.forEach(specialData, function(layerData) {
         layerData.layer.visible = false;
       });

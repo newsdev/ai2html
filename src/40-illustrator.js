@@ -1133,7 +1133,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     return _.contains(doc.placedItems, test) || _.contains(doc.rasterItems, test);
   }
   
-  function convertSpecialLayers(activeArtboard, settings) {
+  function convertSpecialLayers(activeArtboard) {
     var layersData = [];
     
     _.forEach(findTaggedLayers('video'), function(lyr) {
