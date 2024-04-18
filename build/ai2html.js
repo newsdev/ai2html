@@ -2152,9 +2152,8 @@ AI2HTML.ai = AI2HTML.ai || {};
         paragraphs: importTextFrameParagraphs(frame)
       };
     });
-    var pgStyles = [];
-    var charStyles = [];
-    var baseStyle = deriveTextStyleCss(frameData);
+    
+    deriveTextStyleCss(frameData); // modifies frameData in place
     var idPrefix = nameSpace + 'ai' + getArtboardId(ab) + '-';
     var abBox = convertAiBounds(ab.artboardRect);
     
@@ -2166,7 +2165,7 @@ AI2HTML.ai = AI2HTML.ai || {};
         id: divId,
         paragraphs: obj.paragraphs,
         classes: css.classes,
-        styles: css.props
+        position: css.props
       });
     });
     
@@ -2199,7 +2198,6 @@ AI2HTML.ai = AI2HTML.ai || {};
     // TODO: consider positioning paragraphs separately, to handle pgs with different
     //   justification in the same text block
     var firstPgStyle = pgData[0].aiStyle;
-    warn('firstPgStyle: ' + JSON.stringify(firstPgStyle));
     var lastPgStyle = pgData[pgData.length - 1].aiStyle;
     var isRotated = firstPgStyle.rotated;
     var aiBounds = isRotated ? getUntransformedTextBounds(thisFrame) : thisFrame.geometricBounds;
@@ -2260,8 +2258,6 @@ AI2HTML.ai = AI2HTML.ai || {};
     } else if (v_align == 'middle') {
       // https://css-tricks.com/centering-in-the-unknown/
       // TODO: consider: http://zerosixthree.se/vertical-align-anything-with-just-3-lines-of-css/
-      // BUG: GETTING NAN TODO
-      warn(htmlT + ' - ' + marginTopPx + ' - ' + htmlBox.height / 2 + ' / ' + abBox.height);
       props.top = formatCssPct(htmlT + marginTopPx + htmlBox.height / 2, abBox.height) + '';
       props['margin-top'] = '-' + _.roundTo(marginTopPx + htmlBox.height / 2, 1) + 'px';
     } else {
@@ -2476,35 +2472,16 @@ AI2HTML.ai = AI2HTML.ai || {};
 // Returns object containing css text style properties of base pg style
   function deriveTextStyleCss(frameData) {
     var pgStyles = [];
-    var baseStyle = {};
     // override detected settings with these style properties
-    var defaultCssStyle = {
-      'text-align': 'left',
-      'text-transform': 'none',
-      'padding-bottom': 0,
-      'padding-top': 0,
-      'mix-blend-mode': 'normal',
-      'font-style': 'normal',
-      'height': 'auto',
-      'position': 'static' // 'relative' also used (to correct baseline misalignment)
-    };
-    var defaultAiStyle = {
-      opacity: 100 // given as AI style because opacity is converted to several CSS properties
-    };
+
     var currCharStyles;
     
     _.forEach(frameData, function(frame) {
       _.forEach(frame.paragraphs, analyzeParagraphStyle);
     });
     
-    // initialize the base <p> style to be equal to the most common pg style
-    if (pgStyles.length > 0) {
-      pgStyles.sort(compareCharCount);
-      _.extend(baseStyle, pgStyles[0].cssStyle);
-    }
-    // override certain base style properties with default values
-    _.extend(baseStyle, defaultCssStyle, convertAiTextStyle(defaultAiStyle));
-    return baseStyle;
+    return true;
+    
     
     function compareCharCount(a, b) {
       return b.count - a.count;
@@ -4368,6 +4345,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     getUntransformedTextBounds: getUntransformedTextBounds,
     unlockObject: unlockObject,
     unlockObjects: unlockObjects,
+    convertAiTextStyle: convertAiTextStyle,
     
     // ai2html symbol functions
     
@@ -4541,10 +4519,10 @@ AI2HTML.html = AI2HTML.html || {};
   function convertTextData(textData) {
     var pgStyles = [];
     var charStyles = [];
-    var baseStyle = deriveTextStyleCss(textData);
+    var baseStyle = calcBaseStyle(textData);
     var divs = _.map(textData, function(obj, i) {
       var divId = obj.id;
-      var positionCss = 'class="' + obj.classes + '" style="' + propsToCss(obj.styles) + '"';
+      var positionCss = 'class="' + obj.classes + '" style="' + propsToCss(obj.position) + '"';
       return '\t\t<div id="' + divId + '" ' + positionCss + '>' +
         generateTextFrameHtml(obj.paragraphs, baseStyle, pgStyles, charStyles) + '\r\t\t</div>\r';
     });
@@ -4561,6 +4539,41 @@ AI2HTML.html = AI2HTML.html || {};
       styles: cssBlocks,
       html: divs.join('')
     };
+  }
+  
+  function calcBaseStyle(textData) {
+    
+    var baseStyle = {};
+    var pgStyles = textData.paragraphs;
+    
+    var defaultCssStyle = {
+      'text-align': 'left',
+      'text-transform': 'none',
+      'padding-bottom': 0,
+      'padding-top': 0,
+      'mix-blend-mode': 'normal',
+      'font-style': 'normal',
+      'height': 'auto',
+      'position': 'static' // 'relative' also used (to correct baseline misalignment)
+    };
+    var defaultAiStyle = {
+      opacity: 100 // given as AI style because opacity is converted to several CSS properties
+    };
+    
+    function compareCharCount(a, b) {
+      return b.count - a.count;
+    }
+    
+    // initialize the base <p> style to be equal to the most common pg style
+    if (pgStyles.length > 0) {
+      pgStyles.sort(compareCharCount);
+      _.extend(baseStyle, pgStyles[0].cssStyle);
+    }
+    // override certain base style properties with default values
+    _.extend(baseStyle, defaultCssStyle, ai.convertAiTextStyle(defaultAiStyle));
+    warn("baseStyle: " + JSON.stringify(baseStyle));
+    
+    return baseStyle;
   }
   
   

@@ -215,7 +215,7 @@
             }
           ],
           "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
-          "styles": {
+          "position": {
             "top": "7.4118%",
             "margin-top": "-30.5px",
             "left": "0.7277%",
@@ -389,7 +389,7 @@
             }
           ],
           "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
-          "styles": {
+          "position": {
             "top": "13.881%",
             "margin-top": "-25.8px",
             "left": "67.7822%",
@@ -455,7 +455,7 @@
             }
           ],
           "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
-          "styles": {
+          "position": {
             "top": "19.5901%",
             "margin-top": "-8.8px",
             "left": "43.739%",
@@ -521,7 +521,7 @@
             }
           ],
           "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
-          "styles": {
+          "position": {
             "top": "28.6321%",
             "margin-top": "-15.4px",
             "left": "8.0742%",
@@ -587,7 +587,7 @@
             }
           ],
           "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
-          "styles": {
+          "position": {
             "top": "28.6321%",
             "margin-top": "-15.4px",
             "left": "81.4549%",
@@ -707,7 +707,7 @@
             }
           ],
           "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
-          "styles": {
+          "position": {
             "top": "48.7064%",
             "margin-top": "-17.3px",
             "left": "46.5702%",
@@ -827,7 +827,7 @@
             }
           ],
           "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
-          "styles": {
+          "position": {
             "top": "51.4467%",
             "margin-top": "-17.3px",
             "left": "49.1826%",
@@ -947,7 +947,7 @@
             }
           ],
           "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
-          "styles": {
+          "position": {
             "top": "54.4069%",
             "margin-top": "-17.2px",
             "left": "29.6463%",
@@ -1013,7 +1013,7 @@
             }
           ],
           "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
-          "styles": {
+          "position": {
             "top": "68.2315%",
             "margin-top": "-8.8px",
             "right": "79.2035%",
@@ -1079,7 +1079,7 @@
             }
           ],
           "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
-          "styles": {
+          "position": {
             "top": "77.5944%",
             "margin-top": "-8.8px",
             "left": "54.3525%",
@@ -1253,7 +1253,7 @@
             }
           ],
           "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
-          "styles": {
+          "position": {
             "top": "91.9811%",
             "margin-top": "-25.8px",
             "left": "13.3431%",
@@ -1351,7 +1351,7 @@
             }
           ],
           "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
-          "styles": {
+          "position": {
             "top": "5.8349%",
             "margin-top": "-8.7px",
             "left": "1.3609%",
@@ -1525,7 +1525,7 @@
             }
           ],
           "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
-          "styles": {
+          "position": {
             "top": "14.9131%",
             "margin-top": "-21.2px",
             "left": "77.6683%",
@@ -1591,7 +1591,7 @@
             }
           ],
           "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
-          "styles": {
+          "position": {
             "top": "31.2345%",
             "margin-top": "-9.3px",
             "left": "4.4643%",
@@ -1657,7 +1657,7 @@
             }
           ],
           "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
-          "styles": {
+          "position": {
             "top": "31.2345%",
             "margin-top": "-9.3px",
             "left": "84.4763%",
@@ -1777,7 +1777,7 @@
             }
           ],
           "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
-          "styles": {
+          "position": {
             "top": "47.8914%",
             "margin-top": "-14.2px",
             "left": "51.9993%",
@@ -1897,7 +1897,7 @@
             }
           ],
           "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
-          "styles": {
+          "position": {
             "top": "55.6608%",
             "margin-top": "-14.2px",
             "left": "27.9496%",
@@ -1963,7 +1963,7 @@
             }
           ],
           "classes": "g-Layer_1 g-aiAbs g-aiPointText",
-          "styles": {
+          "position": {
             "top": "67.1596%",
             "margin-top": "-7.2px",
             "right": "80.2585%",
@@ -2083,7 +2083,7 @@
             }
           ],
           "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
-          "styles": {
+          "position": {
             "top": "72.3473%",
             "margin-top": "-14.2px",
             "left": "59.1129%",
@@ -2257,7 +2257,7 @@
             }
           ],
           "classes": "g-text-shadow-dark g-aiAbs g-aiPointText",
-          "styles": {
+          "position": {
             "top": "90.5037%",
             "margin-top": "-21.2px",
             "left": "11.6178%",

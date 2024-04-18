@@ -82,10 +82,10 @@ AI2HTML.html = AI2HTML.html || {};
   function convertTextData(textData) {
     var pgStyles = [];
     var charStyles = [];
-    var baseStyle = deriveTextStyleCss(textData);
+    var baseStyle = calcBaseStyle(textData);
     var divs = _.map(textData, function(obj, i) {
       var divId = obj.id;
-      var positionCss = 'class="' + obj.classes + '" style="' + propsToCss(obj.styles) + '"';
+      var positionCss = 'class="' + obj.classes + '" style="' + propsToCss(obj.position) + '"';
       return '\t\t<div id="' + divId + '" ' + positionCss + '>' +
         generateTextFrameHtml(obj.paragraphs, baseStyle, pgStyles, charStyles) + '\r\t\t</div>\r';
     });
@@ -102,6 +102,41 @@ AI2HTML.html = AI2HTML.html || {};
       styles: cssBlocks,
       html: divs.join('')
     };
+  }
+  
+  function calcBaseStyle(textData) {
+    
+    var baseStyle = {};
+    var pgStyles = textData.paragraphs;
+    
+    var defaultCssStyle = {
+      'text-align': 'left',
+      'text-transform': 'none',
+      'padding-bottom': 0,
+      'padding-top': 0,
+      'mix-blend-mode': 'normal',
+      'font-style': 'normal',
+      'height': 'auto',
+      'position': 'static' // 'relative' also used (to correct baseline misalignment)
+    };
+    var defaultAiStyle = {
+      opacity: 100 // given as AI style because opacity is converted to several CSS properties
+    };
+    
+    function compareCharCount(a, b) {
+      return b.count - a.count;
+    }
+    
+    // initialize the base <p> style to be equal to the most common pg style
+    if (pgStyles.length > 0) {
+      pgStyles.sort(compareCharCount);
+      _.extend(baseStyle, pgStyles[0].cssStyle);
+    }
+    // override certain base style properties with default values
+    _.extend(baseStyle, defaultCssStyle, ai.convertAiTextStyle(defaultAiStyle));
+    warn("baseStyle: " + JSON.stringify(baseStyle));
+    
+    return baseStyle;
   }
   
   
