@@ -11,11 +11,7 @@ AI2HTML.html = AI2HTML.html || {};
   var log = AI2HTML.logger;
   
   // import settings from defaults
-  var caps = AI2HTML.defaults.caps;
-  var align = AI2HTML.defaults.align;
-  var blendModes = AI2HTML.defaults.blendModes;
   var cssPrecision = AI2HTML.defaults.cssPrecision;
-  var cssTextStyleProperties = AI2HTML.defaults.cssTextStyleProperties;
   
   // globals (though it would be better to parameterize the functions instead)
   var doc, docPath, nameSpace, fonts, ai;
@@ -107,7 +103,7 @@ AI2HTML.html = AI2HTML.html || {};
   function calcBaseStyle(textData) {
     
     var baseStyle = {};
-    var pgStyles = textData.paragraphs;
+    var pgStyles = textData.concat(); // clone
     
     var defaultCssStyle = {
       'text-align': 'left',
@@ -130,7 +126,8 @@ AI2HTML.html = AI2HTML.html || {};
     // initialize the base <p> style to be equal to the most common pg style
     if (pgStyles.length > 0) {
       pgStyles.sort(compareCharCount);
-      _.extend(baseStyle, pgStyles[0].cssStyle);
+      // _.extend(baseStyle, pgStyles[0].cssStyle);
+      _.extend(baseStyle, pgStyles[0].paragraphs[0].cssStyle);
     }
     // override certain base style properties with default values
     _.extend(baseStyle, defaultCssStyle, ai.convertAiTextStyle(defaultAiStyle));
@@ -198,7 +195,7 @@ AI2HTML.html = AI2HTML.html || {};
   }
   
   function getTextStyleClass(style, classes, name) {
-    var key = getStyleKey(style);
+    var key = AI2HTML.settings.getStyleKey(style);
     var cname = nameSpace + (name || 'style');
     var o, i;
     for (i=0; i<classes.length; i++) {

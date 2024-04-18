@@ -15,7 +15,6 @@ AI2HTML.ai = AI2HTML.ai || {};
   var align = AI2HTML.defaults.align;
   var blendModes = AI2HTML.defaults.blendModes;
   var cssPrecision = AI2HTML.defaults.cssPrecision;
-  var cssTextStyleProperties = AI2HTML.defaults.cssTextStyleProperties;
   
   // globals (though it would be better to parameterize the functions instead)
   var doc, docPath, nameSpace, fonts;
@@ -566,7 +565,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     
     function analyzeTextStyle(aiStyle, text, stylesArr) {
       var cssStyle = convertAiTextStyle(aiStyle);
-      var key = getStyleKey(cssStyle);
+      var key = AI2HTML.settings.getStyleKey(cssStyle);
       var o;
       if (text.length === 0) {
         return {};
@@ -694,15 +693,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     return info;
   }
   
-  
-  // s: object containing CSS text properties
-  function getStyleKey(s) {
-    var key = '';
-    for (var i=0, n=cssTextStyleProperties.length; i<n; i++) {
-      key += '~' + (s[cssTextStyleProperties[i]] || '');
-    }
-    return key;
-  }
+
   
   
   

@@ -549,6 +549,16 @@ AI2HTML.settings = AI2HTML.settings || {};
     }
   }
   
+  
+  // s: object containing CSS text properties
+  function getStyleKey(s) {
+    var key = '';
+    for (var i=0, n=defaults.cssTextStyleProperties.length; i<n; i++) {
+      key += '~' + (s[defaults.cssTextStyleProperties[i]] || '');
+    }
+    return key;
+  }
+  
   AI2HTML.settings = {
     isTestedIllustratorVersion: isTestedIllustratorVersion,
     validateArtboardNames: validateArtboardNames,
@@ -580,6 +590,8 @@ AI2HTML.settings = AI2HTML.settings || {};
     readYamlConfigFile: readYamlConfigFile,
     parseKeyValueString: parseKeyValueString,
     incrementCacheBustToken: incrementCacheBustToken,
+    getStyleKey: getStyleKey,
+    
     updateGlobals: updateGlobals
   };
   
