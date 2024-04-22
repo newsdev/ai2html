@@ -2606,11 +2606,10 @@ function deriveTextStyleCss(frameData) {
     'padding-top': 0,
     'mix-blend-mode': 'normal',
     'font-style': 'normal',
+    'font-weight': 'regular',
     'height': 'auto',
+    'opacity': 1,
     'position': 'static' // 'relative' also used (to correct baseline misalignment)
-  };
-  var defaultAiStyle = {
-    opacity: 100 // given as AI style because opacity is converted to several CSS properties
   };
   var currCharStyles;
 
@@ -2624,7 +2623,7 @@ function deriveTextStyleCss(frameData) {
     extend(baseStyle, pgStyles[0].cssStyle);
   }
   // override certain base style properties with default values
-  extend(baseStyle, defaultCssStyle, convertAiTextStyle(defaultAiStyle));
+  extend(baseStyle, defaultCssStyle);
   return baseStyle;
 
   function compareCharCount(a, b) {
