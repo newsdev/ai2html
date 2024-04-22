@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.120.0';
+var scriptVersion = '0.120.2';
 
 // ================================================
 // ai2html and config settings
