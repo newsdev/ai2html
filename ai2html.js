@@ -60,6 +60,7 @@ var defaultSettings = {
   "image_format": ["auto"],  // Options: auto, png, png24, jpg, svg
   "write_image_files": true,
   "responsiveness": "fixed", // Options: fixed, dynamic
+  "text_responsiveness": "dynamic", // Options: fixed, dynamic
   "max_width": "",
   "output": "one-file",      // Options: one-file, multiple-files
   "project_name": "",        // Defaults to the name of the AI file
