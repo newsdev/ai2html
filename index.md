@@ -133,7 +133,7 @@ When you run ai2html for the first time in your ai file, the script will place a
 *Other options that can be added to the settings text block (or an ai2html-config.json file):*
 - **text_responsiveness**
   - <span style="font-variant: small-caps">Possible values</span>: `fixed` `dynamic`
-  - <span style="font-variant: small-caps">Default</span>: `responsive`
+  - <span style="font-variant: small-caps">Default</span>: `dynamic`
   - This setting controls whether blocks of HTML text converted from Illustrator "area text" objects have a fixed width or expand and contract in proportion to the width of the graphic.
 - **max_width**
   - <span style="font-variant: small-caps">Possible values</span>: Any positive integer
