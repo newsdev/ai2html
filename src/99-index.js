@@ -99,17 +99,22 @@
       // render the document
       var data = this.extract(docSettings, textBlockData.code);
       
-      // Output json file(s)
-      // TODO make optional
-      var oname = ai.getRawDocumentName(); // always a single file name
-      fs.saveOutputJson(data, oname, docSettings);
-      
       // ==========================================
       // Render outputs
       // ==========================================
       
-      this.renderHtml(data, data.settings);
-      this.renderSvelte(data, data.settings);
+      if (settings.output_format == 'json') {
+        var oname = ai.getRawDocumentName(); // always a single file name
+        fs.saveOutputJson(data, oname, docSettings);
+      }
+      
+      if (settings.output_format == 'html') {
+        this.renderHtml(data, data.settings);
+      }
+      
+      if (settings.output_format == 'svelte') {
+        this.renderSvelte(data, data.settings);
+      }
       
     } catch(e) {
       error(log.formatError(e));
@@ -288,10 +293,8 @@
   
   AI2HTML.renderSvelte = function(data, settings) {
     
-    var ai = AI2HTML.ai;
     var html = AI2HTML.html;
     var svelte = AI2HTML.svelte;
-    var fs = AI2HTML.fs;
     var artboards = data.artboards;
     var customBlocks = data.customBlocks;
     

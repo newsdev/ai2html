@@ -35,7 +35,7 @@ AI2HTML.svelte = AI2HTML.svelte || {};
     var t3 = '\t',
       t4 = t3 + '\t',
       t5 = t4 + '\t',
-      abId = '#' + nameSpace + ab.fullName,
+      abId = '.' + nameSpace + ab.fullName,
       css = '';
     css += t3 + abId + ' {\r';
     css += t4 + 'position:relative;\r';
@@ -47,7 +47,7 @@ AI2HTML.svelte = AI2HTML.svelte || {};
       css += t3 + abId + ' ' + cssBlock;
     });
     
-    if (_.isTrue(settings.use_container_media_query)) {
+    if (_.isTrue(settings.include_resizer_script)) {
       var visibleRange = ab.visibleRange;
       css += t3 + '@container (min-width: ' + visibleRange[0] + 'px) and (max-width: ' + Math.min(visibleRange[1], 99999999) + 'px) {\r';
       css += t4 + abId + ' {\r';
@@ -87,9 +87,9 @@ AI2HTML.svelte = AI2HTML.svelte || {};
       }
     }
     
-    html += '\t<div id="' + id + '" class="' + classname + '" style="' + inlineStyle + '"';
+    html += '\t<div class="' + id + ' ' + classname + '" style="' + inlineStyle + '"';
     html += ' data-aspect-ratio="' + _.roundTo(aspectRatio, 3) + '"';
-    if (_.isTrue(settings.include_resizer_widths)) {
+    if (_.isTrue(settings.include_resizer_script)) {
       html += ' data-min-width="' + visibleRange[0] + '"';
       if (visibleRange[1] < Infinity) {
         html +=  ' data-max-width="' + visibleRange[1] + '"';
@@ -134,7 +134,7 @@ AI2HTML.svelte = AI2HTML.svelte || {};
         // Assuming feedback is defined elsewhere and is accessible
       }
       
-      feedback.push('Svelte variables: ' + uniqueVariables.join(', '));
+      message('Svelte variables: ' + uniqueVariables.join(', '));
     }
     return js;
   }
@@ -160,7 +160,6 @@ AI2HTML.svelte = AI2HTML.svelte || {};
     }
     
     if (_.isTrue(settings.include_resizer_script)) {
-      responsiveJs  = getResizerScript(containerId);
       containerClasses += ' ai2html-responsive';
     }
     
@@ -176,7 +175,7 @@ AI2HTML.svelte = AI2HTML.svelte || {};
     }
     
     // HTML
-    html = '<div id="' + containerId + '" class="' + containerClasses + '"' + ariaAttrs + ' bind:clientWidth>\r';
+    html = '<div class="' + containerId + ' ' + containerClasses + '"' + ariaAttrs + ' bind:clientWidth>\r';
     
     if (settings.alt_text) {
       html += '<div class="' + nameSpace + 'aiAltText" id="' + altTextId + '">' +
@@ -212,7 +211,7 @@ AI2HTML.svelte = AI2HTML.svelte || {};
     
     textForFile = _.applyTemplate(textForFile, settings);
     htmlFileDestinationFolder = docPath + outputPath;
-    AI2HTML.fs.checkForOutputFolder(htmlFileDestinationFolder, 'html_output_path');
+    AI2HTML.fs.checkForOutputFolder(htmlFileDestinationFolder, 'svelte_output_path');
     htmlFileDestination = htmlFileDestinationFolder + (settings.svelte_output_file_name || pageName + '.svelte');
     
     // 'index' is assigned upstream now (where applicable)
@@ -281,12 +280,11 @@ AI2HTML.svelte = AI2HTML.svelte || {};
     var css = '';
     var t2 = '\t';
     var t3 = '\r\t\t';
-    // var blockStart = t2 + '#' + containerId + ' ';
     var blockStart = t2;
     var blockEnd = '\r' + t2 + '}\r';
     
-    css += blockStart + '#' + containerId + ' {';
-    if (_.isTrue(settings.use_container_media_query)) {
+    css += blockStart + '.' + containerId + ' {';
+    if (_.isTrue(settings.include_resizer_script)) {
       css += t3 + 'container-type: inline-size;';
     }
     if (settings.max_width) {
@@ -295,7 +293,7 @@ AI2HTML.svelte = AI2HTML.svelte || {};
       css += blockEnd;
     
     if (_.isTrue(settings.center_html_output)) {
-      css += blockStart + '#' + containerId + ', ' + '.' + nameSpace + 'artboard {';
+      css += blockStart + '.' + containerId + ', ' + '.' + nameSpace + 'artboard {';
       css += t3 + 'margin:0 auto;';
       css += blockEnd;
     }

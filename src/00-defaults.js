@@ -34,7 +34,6 @@
 /** @global */
 var AI2HTML = AI2HTML || {};
 
-
 /** @global */
 AI2HTML.defaults = AI2HTML.defaults || {};
 
@@ -64,8 +63,10 @@ AI2HTML.defaults = AI2HTML.defaults || {};
     "max_width": "",
     "output": "one-file",      // Options: one-file, multiple-files
     "project_name": "",        // Defaults to the name of the AI file
+    "output_format": "html",   // Options: html, svelte, json
     "html_output_path": "ai2html-output/",
     "html_output_extension": ".html",
+    "svelte_output_path": "ai2html-output/",
     "image_output_path": "ai2html-output/",
     "image_source_path": "",
     "image_alt_text": "", // Generally, use alt_text instead

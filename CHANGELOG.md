@@ -8,8 +8,10 @@
 - Removed the -webkit-transform and -ms-transform from the inline CSS output. It's 2024.
 - `use_native_lazy_loader` setting to use the native browser lazy loading for images.
 - Attempt to restore hidden layers on program crash
+- svelte "resizer_script" has a container query + svelte js
+- svelte uses classes instead of ids since we might want to repeatedly use the same graphic on a page
 - TK bug with saving SVGs: it's getting one extra mask somehow.. and then in exportSVG, copyArtbordForImageExport not everyting is getting copied.
-- 
+- TODO: svelte video control, expose video elements to the parent
 
 ### v0.120.0
 - Use the literal .ai document name as the default HTML output file name (stop replacing spaces and other characters with underscores and hyphens).

@@ -34,7 +34,6 @@
 /** @global */
 var AI2HTML = AI2HTML || {};
 
-
 /** @global */
 AI2HTML.defaults = AI2HTML.defaults || {};
 
@@ -64,8 +63,10 @@ AI2HTML.defaults = AI2HTML.defaults || {};
     "max_width": "",
     "output": "one-file",      // Options: one-file, multiple-files
     "project_name": "",        // Defaults to the name of the AI file
+    "output_format": "html",   // Options: html, svelte, json
     "html_output_path": "ai2html-output/",
     "html_output_extension": ".html",
+    "svelte_output_path": "ai2html-output/",
     "image_output_path": "ai2html-output/",
     "image_source_path": "",
     "image_alt_text": "", // Generally, use alt_text instead
@@ -5233,7 +5234,7 @@ AI2HTML.svelte = AI2HTML.svelte || {};
     var t3 = '\t',
       t4 = t3 + '\t',
       t5 = t4 + '\t',
-      abId = '#' + nameSpace + ab.fullName,
+      abId = '.' + nameSpace + ab.fullName,
       css = '';
     css += t3 + abId + ' {\r';
     css += t4 + 'position:relative;\r';
@@ -5245,7 +5246,7 @@ AI2HTML.svelte = AI2HTML.svelte || {};
       css += t3 + abId + ' ' + cssBlock;
     });
     
-    if (_.isTrue(settings.use_container_media_query)) {
+    if (_.isTrue(settings.include_resizer_script)) {
       var visibleRange = ab.visibleRange;
       css += t3 + '@container (min-width: ' + visibleRange[0] + 'px) and (max-width: ' + Math.min(visibleRange[1], 99999999) + 'px) {\r';
       css += t4 + abId + ' {\r';
@@ -5285,9 +5286,9 @@ AI2HTML.svelte = AI2HTML.svelte || {};
       }
     }
     
-    html += '\t<div id="' + id + '" class="' + classname + '" style="' + inlineStyle + '"';
+    html += '\t<div class="' + id + ' ' + classname + '" style="' + inlineStyle + '"';
     html += ' data-aspect-ratio="' + _.roundTo(aspectRatio, 3) + '"';
-    if (_.isTrue(settings.include_resizer_widths)) {
+    if (_.isTrue(settings.include_resizer_script)) {
       html += ' data-min-width="' + visibleRange[0] + '"';
       if (visibleRange[1] < Infinity) {
         html +=  ' data-max-width="' + visibleRange[1] + '"';
@@ -5332,7 +5333,7 @@ AI2HTML.svelte = AI2HTML.svelte || {};
         // Assuming feedback is defined elsewhere and is accessible
       }
       
-      feedback.push('Svelte variables: ' + uniqueVariables.join(', '));
+      message('Svelte variables: ' + uniqueVariables.join(', '));
     }
     return js;
   }
@@ -5358,7 +5359,6 @@ AI2HTML.svelte = AI2HTML.svelte || {};
     }
     
     if (_.isTrue(settings.include_resizer_script)) {
-      responsiveJs  = getResizerScript(containerId);
       containerClasses += ' ai2html-responsive';
     }
     
@@ -5374,7 +5374,7 @@ AI2HTML.svelte = AI2HTML.svelte || {};
     }
     
     // HTML
-    html = '<div id="' + containerId + '" class="' + containerClasses + '"' + ariaAttrs + ' bind:clientWidth>\r';
+    html = '<div class="' + containerId + ' ' + containerClasses + '"' + ariaAttrs + ' bind:clientWidth>\r';
     
     if (settings.alt_text) {
       html += '<div class="' + nameSpace + 'aiAltText" id="' + altTextId + '">' +
@@ -5410,7 +5410,7 @@ AI2HTML.svelte = AI2HTML.svelte || {};
     
     textForFile = _.applyTemplate(textForFile, settings);
     htmlFileDestinationFolder = docPath + outputPath;
-    AI2HTML.fs.checkForOutputFolder(htmlFileDestinationFolder, 'html_output_path');
+    AI2HTML.fs.checkForOutputFolder(htmlFileDestinationFolder, 'svelte_output_path');
     htmlFileDestination = htmlFileDestinationFolder + (settings.svelte_output_file_name || pageName + '.svelte');
     
     // 'index' is assigned upstream now (where applicable)
@@ -5479,12 +5479,11 @@ AI2HTML.svelte = AI2HTML.svelte || {};
     var css = '';
     var t2 = '\t';
     var t3 = '\r\t\t';
-    // var blockStart = t2 + '#' + containerId + ' ';
     var blockStart = t2;
     var blockEnd = '\r' + t2 + '}\r';
     
-    css += blockStart + '#' + containerId + ' {';
-    if (_.isTrue(settings.use_container_media_query)) {
+    css += blockStart + '.' + containerId + ' {';
+    if (_.isTrue(settings.include_resizer_script)) {
       css += t3 + 'container-type: inline-size;';
     }
     if (settings.max_width) {
@@ -5493,7 +5492,7 @@ AI2HTML.svelte = AI2HTML.svelte || {};
       css += blockEnd;
     
     if (_.isTrue(settings.center_html_output)) {
-      css += blockStart + '#' + containerId + ', ' + '.' + nameSpace + 'artboard {';
+      css += blockStart + '.' + containerId + ', ' + '.' + nameSpace + 'artboard {';
       css += t3 + 'margin:0 auto;';
       css += blockEnd;
     }
@@ -5734,17 +5733,22 @@ AI2HTML.testing = AI2HTML.testing || {};
       // render the document
       var data = this.extract(docSettings, textBlockData.code);
       
-      // Output json file(s)
-      // TODO make optional
-      var oname = ai.getRawDocumentName(); // always a single file name
-      fs.saveOutputJson(data, oname, docSettings);
-      
       // ==========================================
       // Render outputs
       // ==========================================
       
-      this.renderHtml(data, data.settings);
-      this.renderSvelte(data, data.settings);
+      if (settings.output_format == 'json') {
+        var oname = ai.getRawDocumentName(); // always a single file name
+        fs.saveOutputJson(data, oname, docSettings);
+      }
+      
+      if (settings.output_format == 'html') {
+        this.renderHtml(data, data.settings);
+      }
+      
+      if (settings.output_format == 'svelte') {
+        this.renderSvelte(data, data.settings);
+      }
       
     } catch(e) {
       error(log.formatError(e));
@@ -5923,10 +5927,8 @@ AI2HTML.testing = AI2HTML.testing || {};
   
   AI2HTML.renderSvelte = function(data, settings) {
     
-    var ai = AI2HTML.ai;
     var html = AI2HTML.html;
     var svelte = AI2HTML.svelte;
-    var fs = AI2HTML.fs;
     var artboards = data.artboards;
     var customBlocks = data.customBlocks;
     
