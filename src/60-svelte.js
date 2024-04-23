@@ -199,11 +199,11 @@ AI2HTML.svelte = AI2HTML.svelte || {};
     
     // JS
     js = '\r<script>\r' +
-      '  import { onMount } from "svelte";\r' +
+      'import { onMount } from "svelte";\r' +
       getSvelteJs(html) +
       '  onMount(() => {\r' +
       content.js +
-      '  });\r' +
+      '});\r' +
       '\r</script>\r';
     
     textForFile =  '\r' + commentBlock + css + '\r' + html + '\r' + js +
