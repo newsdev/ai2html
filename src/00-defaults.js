@@ -79,6 +79,7 @@ AI2HTML.defaults = AI2HTML.defaults || {};
     "jpg_quality": 60,
     "center_html_output": true,
     "use_2x_images_if_possible": true,
+    "use_native_lazy_loader": false,
     "use_lazy_loader": false,
     "include_resizer_classes": false, // Triggers an error (feature was removed)
     "include_resizer_widths": true,
@@ -167,13 +168,19 @@ AI2HTML.defaults = AI2HTML.defaults || {};
   var nytBirdkitSettings = {
     "project_type": "freebird",
     "html_output_path": "../src/lib/graphics/",
-    "image_output_path": "../public/_assets/"
+    "svelte_output_path": "../src/lib/project/",
+    "svelte_output_file_name": "index.svelte",
+    "image_output_path": "../public/_assets/",
+    "use_native_lazy_loader": true,
   };
   
   var nytBirdkitEmbedSettings = {
     "project_type": "ai2html",
     "html_output_path": "../public/",
     "image_output_path": "../public/_assets/",
+    "svelte_output_path": "../src/lib/project/",
+    "svelte_output_file_name": "index.svelte",
+    "use_native_lazy_loader": true,
     "dark_mode_compatible": false,
     "create_json_config_files": true,
     "create_promo_image": false,

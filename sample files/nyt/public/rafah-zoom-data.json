@@ -1263,7 +1263,7 @@
       "imageData": [
         {
           "type": "base",
-          "html": "<img id=\"g-rafah-zoom-desktop-img\" class=\"g-rafah-zoom-desktop-img g-aiImg\" alt=\"\" data-src=\"_assets/rafah-zoom-desktop.jpg\" src=\"data:image/gif;base64,R0lGODlhCgAKAIAAAB8fHwAAACH5BAEAAAAALAAAAAAKAAoAAAIIhI+py+0PYysAOw==\"/>"
+          "html": "<img id=\"g-rafah-zoom-desktop-img\" class=\"g-rafah-zoom-desktop-img g-aiImg\" alt=\"\" loading=\"lazy\" src=\"_assets/rafah-zoom-desktop.jpg\"/>"
         }
       ],
       "specialData": [
@@ -2268,7 +2268,7 @@
       "imageData": [
         {
           "type": "base",
-          "html": "<img id=\"g-rafah-zoom-Artboard_2-img\" class=\"g-rafah-zoom-Artboard_2-img g-aiImg\" alt=\"\" data-src=\"_assets/rafah-zoom-Artboard_2.jpg\" src=\"data:image/gif;base64,R0lGODlhCgAKAIAAAB8fHwAAACH5BAEAAAAALAAAAAAKAAoAAAIIhI+py+0PYysAOw==\"/>"
+          "html": "<img id=\"g-rafah-zoom-Artboard_2-img\" class=\"g-rafah-zoom-Artboard_2-img g-aiImg\" alt=\"\" loading=\"lazy\" src=\"_assets/rafah-zoom-Artboard_2.jpg\"/>"
         }
       ],
       "specialData": [
@@ -2319,6 +2319,7 @@
     "jpg_quality": "60",
     "center_html_output": true,
     "use_2x_images_if_possible": true,
+    "use_native_lazy_loader": true,
     "use_lazy_loader": true,
     "include_resizer_classes": false,
     "include_resizer_widths": true,
@@ -2379,6 +2380,8 @@
       
     ],
     "project_type": "ai2html",
+    "svelte_output_path": "../src/lib/project/",
+    "svelte_output_file_name": "index.svelte",
     "dark_mode_compatible": false,
     "create_json_config_files": true,
     "aria_role": "img",

@@ -79,6 +79,7 @@ AI2HTML.defaults = AI2HTML.defaults || {};
     "jpg_quality": 60,
     "center_html_output": true,
     "use_2x_images_if_possible": true,
+    "use_native_lazy_loader": false,
     "use_lazy_loader": false,
     "include_resizer_classes": false, // Triggers an error (feature was removed)
     "include_resizer_widths": true,
@@ -167,13 +168,19 @@ AI2HTML.defaults = AI2HTML.defaults || {};
   var nytBirdkitSettings = {
     "project_type": "freebird",
     "html_output_path": "../src/lib/graphics/",
-    "image_output_path": "../public/_assets/"
+    "svelte_output_path": "../src/lib/project/",
+    "svelte_output_file_name": "index.svelte",
+    "image_output_path": "../public/_assets/",
+    "use_native_lazy_loader": true,
   };
   
   var nytBirdkitEmbedSettings = {
     "project_type": "ai2html",
     "html_output_path": "../public/",
     "image_output_path": "../public/_assets/",
+    "svelte_output_path": "../src/lib/project/",
+    "svelte_output_file_name": "index.svelte",
+    "use_native_lazy_loader": true,
     "dark_mode_compatible": false,
     "create_json_config_files": true,
     "create_promo_image": false,
@@ -3442,7 +3449,11 @@ AI2HTML.ai = AI2HTML.ai || {};
     if (imgStyle) {
       html += ' style="' + imgStyle + '"';
     }
-    if (_.isTrue(settings.use_lazy_loader)) {
+    
+    if (_.isTrue(settings.use_native_lazy_loader)) {
+      html += ' loading="lazy"';
+    }
+    else if (_.isTrue(settings.use_lazy_loader)) {
       html += ' data-src="' + src + '"';
       // placeholder while image loads
       // (<img> element requires a src attribute, according to spec.)
@@ -3569,6 +3580,8 @@ AI2HTML.ai = AI2HTML.ai || {};
       itemCount = 0,
       groupPos, group2, doc2;
     
+    message('layerMasks: ' + layerMasks.length);
+    
     destLayer.name = 'ArtboardContent';
     destGroup.move(destLayer, ElementPlacement.PLACEATEND);
     _.forEach(sourceItems, copyLayerOrItem);
@@ -3585,6 +3598,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     }
     destGroup.remove();
     destLayer.remove();
+    
     return doc2 || null;
     
     function copyLayer(lyr) {
@@ -3612,6 +3626,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     
     // Item: Layer (sublayer) or PageItem
     function copyLayerOrItem(item) {
+      message('copyLayerOrItem: ' + item.name + ' (' + item.typename + ')' + ' hidden: ' + item.hidden);
       if (item.typename == 'Layer') {
         copyLayer(item);
       } else {
@@ -3697,6 +3712,8 @@ AI2HTML.ai = AI2HTML.ai || {};
     //   clip to the current artboard), so we copy artboard objects to a temporary
     //   document for export.
     var exportDoc = copyArtboardForImageExport(ab, masks, items);
+    message('masks: ' + masks.length + ' named: ' + _.map(masks, function(o) {return o.mask.name;}).join(', '));
+    message('items: ' + items);
     var opts = new ExportOptionsSVG();
     if (!exportDoc) return false;
     
@@ -4197,6 +4214,9 @@ AI2HTML.ai = AI2HTML.ai || {};
     _.forEach(relevantMasks, function(mask) {
       var obj = {mask: mask};
       var selection, item;
+      
+      message("Checking mask: " + mask.name);
+      message("Mask parent: " + mask.parent.typename);
       
       // Select items in this mask
       mask.locked = false;
@@ -4862,7 +4882,7 @@ AI2HTML.html = AI2HTML.html || {};
 // ===================================
 // ai2html output generation functions
 // ===================================
-  
+
   function generateArtboardDiv(data, settings) {
     var id = nameSpace + data.fullName;
     var classname = nameSpace + 'artboard';
@@ -5176,6 +5196,381 @@ AI2HTML.html = AI2HTML.html || {};
   
 }());
 
+AI2HTML = AI2HTML || {};
+/** @global */
+AI2HTML.svelte = AI2HTML.svelte || {};
+
+// ======================================
+// Utility functions that convert JSON to HTML
+// ======================================
+
+(function() {
+
+  var log = AI2HTML.logger;
+  
+  // import settings from defaults
+  var cssPrecision = AI2HTML.defaults.cssPrecision;
+  
+  // globals (though it would be better to parameterize the functions instead)
+  var doc, docPath, nameSpace, fonts, ai;
+  
+  // call this function to update the global variables, they usually don't change
+  // eventually this could be done in a cleaner way
+  function updateGlobals() {
+    doc = AI2HTML.doc;
+    docPath = AI2HTML.docPath;
+    nameSpace = AI2HTML.nameSpace;
+    fonts = AI2HTML.defaults.fonts;
+    ai = AI2HTML.ai;
+  }
+  
+  function warn(str) { log.warn(str); }
+  function error(str) { log.error(str); }
+  function message() { log.message.apply(log, arguments); }
+  
+  
+  function generateArtboardCss(ab, cssRules, settings) {
+    var t3 = '\t',
+      t4 = t3 + '\t',
+      t5 = t4 + '\t',
+      abId = '#' + nameSpace + ab.fullName,
+      css = '';
+    css += t3 + abId + ' {\r';
+    css += t4 + 'position:relative;\r';
+    css += t4 + 'overflow:hidden;\r';
+    css += t3 + '}\r';
+    
+    // classes for paragraph and character styles
+    _.forEach(cssRules, function(cssBlock) {
+      css += t3 + abId + ' ' + cssBlock;
+    });
+    
+    if (_.isTrue(settings.use_container_media_query)) {
+      var visibleRange = ab.visibleRange;
+      css += t3 + '@container (min-width: ' + visibleRange[0] + 'px) and (max-width: ' + Math.min(visibleRange[1], 99999999) + 'px) {\r';
+      css += t4 + abId + ' {\r';
+      css += t5 + 'display: block;\r';
+      css += t4 + '}\r';
+      css += t3 + '}\r';
+    }
+    
+    return css;
+  }
+  
+  
+  function generateArtboardDiv(data, settings) {
+    var id = nameSpace + data.fullName;
+    var classname = nameSpace + 'artboard';
+    var widthRange = data.widthRange;
+    var visibleRange = data.visibleRange;
+    var abBox = data.bounds;
+    var aspectRatio = abBox.width / abBox.height;
+    var inlineStyle = '';
+    var inlineSpacerStyle = '';
+    var html = '';
+    
+    // Set size of graphic using inline CSS
+    if (widthRange[0] == widthRange[1]) {
+      // fixed width
+      inlineStyle += 'width:' + abBox.width + 'px; height:' + abBox.height + 'px;';
+    } else {
+      // Set height of dynamic artboards using vertical padding as a %, to preserve aspect ratio.
+      inlineSpacerStyle = 'padding: 0 0 ' + formatCssPct(abBox.height, abBox.width) + ' 0;';
+      if (widthRange[0] > 0) {
+        inlineStyle += 'min-width: ' + widthRange[0] + 'px;';
+      }
+      if (widthRange[1] < Infinity) {
+        inlineStyle += 'max-width: ' + widthRange[1] + 'px;';
+        inlineStyle += 'max-height: ' + Math.round(widthRange[1] / aspectRatio) + 'px';
+      }
+    }
+    
+    html += '\t<div id="' + id + '" class="' + classname + '" style="' + inlineStyle + '"';
+    html += ' data-aspect-ratio="' + _.roundTo(aspectRatio, 3) + '"';
+    if (_.isTrue(settings.include_resizer_widths)) {
+      html += ' data-min-width="' + visibleRange[0] + '"';
+      if (visibleRange[1] < Infinity) {
+        html +=  ' data-max-width="' + visibleRange[1] + '"';
+      }
+      // svelte control of css
+      html += ' class:visible={' + visibleRange[0] + ' <= clientWidth && clientWidth <= ' + visibleRange[1] + '}';
+    }
+    
+    html += '>\r';
+    // add spacer div
+    html += '<div style="' + inlineSpacerStyle + '"></div>\n';
+    return html;
+  }
+  
+  function getSvelteJs(html) {
+    
+    // search HTML for any {text_variables}
+    var variables = html.match(/\{[a-zA-Z0-9_]+}/g);
+    var js = 'let clientWidth = -1; \r'; // starts below 0 so that the containerCSS triggers first
+    var uniqueVariables = []; // To hold unique variables
+    
+    if (variables) {
+      // Loop through variables to remove duplicates
+      for (var i = 0; i < variables.length; i++) {
+        // Check if the variable is already in the uniqueVariables array
+        var isDuplicate = false;
+        for (var j = 0; j < uniqueVariables.length; j++) {
+          if (variables[i] === uniqueVariables[j]) {
+            isDuplicate = true;
+            break; // Stop searching, as a duplicate is found
+          }
+        }
+        // If not a duplicate, add to uniqueVariables array
+        if (!isDuplicate) {
+          uniqueVariables.push(variables[i]);
+        }
+      }
+      
+      // Iterate over unique variables to create JS code
+      for (var i = 0; i < uniqueVariables.length; i++) {
+        js += 'export let ' + uniqueVariables[i].replace(/[{}]/g, '') + ' = "";\r';
+        // Assuming feedback is defined elsewhere and is accessible
+      }
+      
+      feedback.push('Svelte variables: ' + uniqueVariables.join(', '));
+    }
+    return js;
+  }
+
+
+
+// Wrap content HTML in a <div>, add styles and resizer script, write to a file
+  function generateOutputHtml(content, pageName, settings) {
+    var linkSrc = settings.clickable_link || '';
+    var containerId = nameSpace + pageName + '-box';
+    var altTextId = containerId + '-img-desc';
+    var textForFile, html, js, css, commentBlock;
+    var htmlFileDestinationFolder, htmlFileDestination;
+    var containerClasses = 'ai2html';
+    var outputPath = settings.svelte_output_path || settings.html_output_path;
+    // accessibility features
+    var ariaAttrs = '';
+    if (settings.aria_role) {
+      ariaAttrs += ' role="' + settings.aria_role + '"';
+    }
+    if (settings.alt_text) {
+      ariaAttrs += ' aria-describedby="' + altTextId + '"';
+    }
+    
+    if (_.isTrue(settings.include_resizer_script)) {
+      responsiveJs  = getResizerScript(containerId);
+      containerClasses += ' ai2html-responsive';
+    }
+    
+    // comments
+    commentBlock = '<!-- Generated by ai2html v' + settings.scriptVersion + ' - ' +
+      _.getDateTimeStamp() + ' -->\r' + '<!-- ai file: ' + doc.name + ' -->\r';
+    
+    if (settings.preview_slug) {
+      commentBlock += '<!-- preview: ' + settings.preview_slug + ' -->\r';
+    }
+    if (settings.scoop_slug_from_config_yml) {
+      commentBlock += '<!-- scoop: ' + settings.scoop_slug_from_config_yml + ' -->\r';
+    }
+    
+    // HTML
+    html = '<div id="' + containerId + '" class="' + containerClasses + '"' + ariaAttrs + ' bind:clientWidth>\r';
+    
+    if (settings.alt_text) {
+      html += '<div class="' + nameSpace + 'aiAltText" id="' + altTextId + '">' +
+        _.encodeHtmlEntities(settings.alt_text) + '</div>';
+    }
+    if (linkSrc) {
+      // optional link around content
+      html += '\t<a class="' + nameSpace + 'ai2htmlLink" href="' + linkSrc + '">\r';
+    }
+    html += content.html;
+    if (linkSrc) {
+      html += '\t</a>\r';
+    }
+    html += '\r</div>\r';
+    
+    // CSS
+    css = '<style media="screen,print">\r' +
+      generatePageCss(containerId, settings) +
+      content.css +
+      '\r</style>\r';
+    
+    // JS
+    js = '\r<script>\r' +
+      '  import { onMount } from "svelte";\r' +
+      getSvelteJs(html) +
+      '  onMount(() => {\r' +
+      content.js +
+      '  });\r' +
+      '\r</script>\r';
+    
+    textForFile =  '\r' + commentBlock + css + '\r' + html + '\r' + js +
+      '<!-- End ai2html' + ' - ' + _.getDateTimeStamp() + ' -->\r';
+    
+    textForFile = _.applyTemplate(textForFile, settings);
+    htmlFileDestinationFolder = docPath + outputPath;
+    AI2HTML.fs.checkForOutputFolder(htmlFileDestinationFolder, 'html_output_path');
+    htmlFileDestination = htmlFileDestinationFolder + (settings.svelte_output_file_name || pageName + '.svelte');
+    
+    // 'index' is assigned upstream now (where applicable)
+    // if (settings.output == 'one-file' && settings.project_type == 'ai2html') {
+    //   htmlFileDestination = htmlFileDestinationFolder + 'index' + settings.html_output_extension;
+    // }
+    
+    // write file
+    AI2HTML.fs.saveTextFile(htmlFileDestination, textForFile);
+    
+    // TODO different preview file
+    // process local preview template if appropriate
+    if (settings.local_preview_template !== '') {
+      // TODO: may have missed a condition, need to compare with original version
+      var previewFileDestination = htmlFileDestinationFolder + pageName + '.preview.html';
+      AI2HTML.fs.outputLocalPreviewPage(textForFile, previewFileDestination, settings);
+    }
+  }
+  
+  
+  function convertSpecialData(layersData, settings) {
+    var data = {
+      layers: [],
+      html_before: '',
+      html_after: '',
+      video: ''
+    };
+    // the data supports multiple videos, but the current export code does not
+    var video = _.filter(layersData, function(d) { return d.type === 'video'; })[0];
+    
+    if (video) {
+      var html = makeVideoHtml(video.url, settings);
+      if (html) {
+        data.video = html;
+        data.layers.push(video.layer);
+      }
+    }
+    
+    var htmlBefore = _.filter(layersData, function(d) { return d.type === 'html-before'; })[0];
+    if (htmlBefore) {
+      data.html_before = htmlBefore.html;
+      data.layers.push(htmlBefore.layer);
+    }
+    
+    var htmlAfter = _.filter(layersData, function(d) { return d.type === 'html-after'; })[0];
+    if (htmlAfter) {
+      data.html_after = htmlAfter.html;
+      data.layers.push(htmlAfter.layer);
+    }
+    
+    return data.layers.length === 0 ? null : data;
+  }
+  
+  function makeVideoHtml(url, settings) {
+    url = _.trim(url);
+    if (!/^https:/.test(url) || !/\.mp4$/.test(url)) {
+      return '';
+    }
+    var preload = isTrue(settings.use_lazy_loader) ? 'preload="metadata"' : 'preload="auto"';
+    return '<video ' + 'src="' + url + '" ' + preload + ' autoplay muted loop playsinline style="top:0; width:100%; object-fit:contain; position:absolute"></video>';
+  }
+
+
+// Get CSS styles that are common to all generated content
+  function generatePageCss(containerId, settings) {
+    var css = '';
+    var t2 = '\t';
+    var t3 = '\r\t\t';
+    // var blockStart = t2 + '#' + containerId + ' ';
+    var blockStart = t2;
+    var blockEnd = '\r' + t2 + '}\r';
+    
+    css += blockStart + '#' + containerId + ' {';
+    if (_.isTrue(settings.use_container_media_query)) {
+      css += t3 + 'container-type: inline-size;';
+    }
+    if (settings.max_width) {
+      css += t3 + 'max-width:' + settings.max_width + 'px;';
+    }
+      css += blockEnd;
+    
+    if (_.isTrue(settings.center_html_output)) {
+      css += blockStart + '#' + containerId + ', ' + '.' + nameSpace + 'artboard {';
+      css += t3 + 'margin:0 auto;';
+      css += blockEnd;
+    }
+    if (settings.alt_text) {
+      css += blockStart + ' .' + nameSpace + 'aiAltText {';
+      css += t3 + 'position: absolute;';
+      css += t3 + 'left: -10000px;';
+      css += t3 + 'width: 1px;';
+      css += t3 + 'height: 1px;';
+      css += t3 + 'overflow: hidden;';
+      css += t3 + 'white-space: nowrap;';
+      css += blockEnd;
+    }
+    if (settings.clickable_link !== '') {
+      css += blockStart + ' .' + nameSpace + 'ai2htmlLink {';
+      css += t3 + 'display: block;';
+      css += blockEnd;
+    }
+    // default <p> styles
+    css += blockStart + 'p {';
+    css += t3 + 'margin:0;';
+    if (_.isTrue(settings.testing_mode)) {
+      css += t3 + 'color: rgba(209, 0, 0, 0.5) !important;';
+    }
+    css += blockEnd;
+    
+    css += blockStart + '.' + nameSpace + 'aiAbs {';
+    css += t3 + 'position:absolute;';
+    css += blockEnd;
+    
+    css += blockStart + '.' + nameSpace + 'aiImg {';
+    css += t3 + 'position:absolute;';
+    css += t3 + 'top:0;';
+    css += t3 + 'display:block;';
+    css += t3 + 'width:100% !important;';
+    css += blockEnd;
+    
+    css += blockStart + '.' + ai.getSymbolClass() + ' {';
+    css += t3 + 'position: absolute;';
+    css += t3 + 'box-sizing: border-box;';
+    css += blockEnd;
+    
+    css += blockStart + '.' + nameSpace + 'aiPointText p { white-space: nowrap; }\r';
+    
+    // artboard visibility on resize, svelte
+    css += blockStart + '.' + nameSpace + 'artboard {';
+    css += t3 + 'display: none;'; // for svelte visibility via css class
+    css += blockEnd;
+    
+    css += blockStart + '.visible' + ' {';
+    css += t3 + 'display: block;';
+    css += blockEnd;
+    
+    // TODO container query
+    
+    return css;
+  }
+  
+  
+  function formatCssPct(part, whole) {
+    return ai.formatCssPct(part, whole);
+  }
+  
+  
+  AI2HTML.svelte = {
+    
+    generateArtboardCss: generateArtboardCss,
+    generateArtboardDiv: generateArtboardDiv,
+    generateOutputHtml: generateOutputHtml,
+
+    // call this when globals change
+    updateGlobals: updateGlobals
+    
+  };
+  
+}());
+
 
 // ==================================
 // ai2html utils for testing subfunctions in Node.js
@@ -5348,7 +5743,8 @@ AI2HTML.testing = AI2HTML.testing || {};
       // Render outputs
       // ==========================================
       
-      this.render(data, data.settings);
+      this.renderHtml(data, data.settings);
+      this.renderSvelte(data, data.settings);
       
     } catch(e) {
       error(log.formatError(e));
@@ -5387,11 +5783,9 @@ AI2HTML.testing = AI2HTML.testing || {};
       var showPromo = log.showCompletionAlert(promptForPromo);
       if (showPromo) ai.createPromoImage(docSettings);
     }
-    
-  
   }
   
-  AI2HTML.render = function(data, settings) {
+  AI2HTML.renderHtml = function(data, settings) {
     
     var ai = AI2HTML.ai;
     var html = AI2HTML.html;
@@ -5404,7 +5798,7 @@ AI2HTML.testing = AI2HTML.testing || {};
     // ================================================
     // Generate HTML, CSS and images for each artboard
     // ================================================
-    progressBar = new ProgressBar({name: 'Ai2html render progress', steps: calcProgressBarSteps()});
+    progressBar = new ProgressBar({name: 'Ai2html HTML render progress', steps: calcProgressBarSteps()});
     
     var fileContentArr = [];
     
@@ -5523,8 +5917,126 @@ AI2HTML.testing = AI2HTML.testing || {};
       AI2HTML.settings.incrementCacheBustToken(settings);
     }
     
-  } // end extract()
+  } // end renderHtml()
   
+  
+  
+  AI2HTML.renderSvelte = function(data, settings) {
+    
+    var ai = AI2HTML.ai;
+    var html = AI2HTML.html;
+    var svelte = AI2HTML.svelte;
+    var fs = AI2HTML.fs;
+    var artboards = data.artboards;
+    var customBlocks = data.customBlocks;
+    
+    svelte.updateGlobals();
+    
+    // ================================================
+    // Generate HTML, CSS and images for each artboard
+    // ================================================
+    progressBar = new ProgressBar({name: 'Ai2html Svelte render progress', steps: calcProgressBarSteps()});
+    
+    var fileContentArr = [];
+    
+    _.forEach(artboards, function(artboardData, abIndex) {
+      var abSettings = artboardData.settings;
+      var docArtboardName = artboardData.name;
+      var textData = artboardData.textData;
+      var imageData = artboardData.imageData;
+      var specialData = artboardData.specialData;
+      
+      var artboardContent = {html: '', css: '', js: ''};
+      
+      var renderedText, renderedImage;
+      // ========================
+      // Convert text objects
+      // ========================
+      
+      if (abSettings.image_only || settings.render_text_as == 'image') {
+        // don't convert text objects to HTML
+        renderedText = {html: '', styles: []};
+      } else {
+        progressBar.setTitle(docArtboardName + ': Generating text...');
+        renderedText = html.convertTextData(textData);
+      }
+      
+      progressBar.step();
+      
+      // ==========================
+      // Generate artboard image(s)
+      // ==========================
+      
+      if (_.isTrue(settings.write_image_files)) {
+        progressBar.setTitle(docArtboardName + ': Placing image...');
+        renderedImage = html.convertArtItemsToHtml(imageData);
+      } else {
+        renderedImage = {html: ''};
+      }
+      
+      // TODO svelte-y videos with hooks
+      if (data.specialData) {
+        var specialData = html.convertSpecialData(data.specialData);
+        renderedImage.html = specialData.video + specialData.html_before +
+          renderedImage.html + specialData.html_after;
+        _.forEach(specialData.layers, function(lyr) {
+          lyr.visible = true;
+        });
+        if (specialData.video && !_.isTrue(settings.png_transparent)) {
+          warn('Background videos may be covered up without png_transparent:true');
+        }
+      }
+      
+      progressBar.step();
+      
+      //=====================================
+      // Finish generating artboard HTML and CSS
+      //=====================================
+      
+      artboardContent.html += '\r\t<!-- Artboard: ' + artboardData.fullName + ' -->\r' +
+        svelte.generateArtboardDiv(artboardData, settings) +
+        renderedImage.html +
+        renderedText.html +
+        '\t</div>\r';
+      
+      var abStyles = renderedText.styles;
+      // TODO control of video elements
+      if (specialData && specialData.video) {
+        // make videos tap/clickable (so they can be played manually if autoplay
+        // is disabled, e.g. in mobile low-power mode).
+        abStyles.push('> div { pointer-events: none; }\r');
+        abStyles.push('> img { pointer-events: none; }\r');
+      }
+      artboardContent.css += svelte.generateArtboardCss(artboardData, abStyles, settings);
+      
+      var oname = settings.output == 'one-file' ? data.rawDocumentName : docArtboardName;
+      html.assignArtboardContentToFile(oname, artboardContent, fileContentArr);
+      
+    }); // end artboard loop
+    
+    if (fileContentArr.length === 0) {
+      error('No usable artboards were found');
+    }
+    
+    //=====================================
+    // Output html file(s)
+    //=====================================
+    
+    _.forEach(fileContentArr, function(fileContent) {
+      html.addCustomContent(fileContent, customBlocks);
+      progressBar.setTitle('Writing HTML output...');
+      svelte.generateOutputHtml(fileContent, fileContent.name, settings);
+    });
+    
+    //=====================================
+    // Post-output operations
+    //=====================================
+    
+    if (settings.cache_bust_token) {
+      AI2HTML.settings.incrementCacheBustToken(settings);
+    }
+    
+  } // end renderSvelte()
   
   
   // get a JSON representation of the document
@@ -5641,7 +6153,7 @@ AI2HTML.testing = AI2HTML.testing || {};
     
     return data;
     
-  } // end render()
+  } // end extract()
   
   
   function ProgressBar(opts) {

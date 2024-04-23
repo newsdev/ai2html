@@ -1499,7 +1499,11 @@ AI2HTML.ai = AI2HTML.ai || {};
     if (imgStyle) {
       html += ' style="' + imgStyle + '"';
     }
-    if (_.isTrue(settings.use_lazy_loader)) {
+    
+    if (_.isTrue(settings.use_native_lazy_loader)) {
+      html += ' loading="lazy"';
+    }
+    else if (_.isTrue(settings.use_lazy_loader)) {
       html += ' data-src="' + src + '"';
       // placeholder while image loads
       // (<img> element requires a src attribute, according to spec.)
@@ -1626,6 +1630,8 @@ AI2HTML.ai = AI2HTML.ai || {};
       itemCount = 0,
       groupPos, group2, doc2;
     
+    message('layerMasks: ' + layerMasks.length);
+    
     destLayer.name = 'ArtboardContent';
     destGroup.move(destLayer, ElementPlacement.PLACEATEND);
     _.forEach(sourceItems, copyLayerOrItem);
@@ -1642,6 +1648,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     }
     destGroup.remove();
     destLayer.remove();
+    
     return doc2 || null;
     
     function copyLayer(lyr) {
@@ -1669,6 +1676,7 @@ AI2HTML.ai = AI2HTML.ai || {};
     
     // Item: Layer (sublayer) or PageItem
     function copyLayerOrItem(item) {
+      message('copyLayerOrItem: ' + item.name + ' (' + item.typename + ')' + ' hidden: ' + item.hidden);
       if (item.typename == 'Layer') {
         copyLayer(item);
       } else {
@@ -1754,6 +1762,8 @@ AI2HTML.ai = AI2HTML.ai || {};
     //   clip to the current artboard), so we copy artboard objects to a temporary
     //   document for export.
     var exportDoc = copyArtboardForImageExport(ab, masks, items);
+    message('masks: ' + masks.length + ' named: ' + _.map(masks, function(o) {return o.mask.name;}).join(', '));
+    message('items: ' + items);
     var opts = new ExportOptionsSVG();
     if (!exportDoc) return false;
     
@@ -2254,6 +2264,9 @@ AI2HTML.ai = AI2HTML.ai || {};
     _.forEach(relevantMasks, function(mask) {
       var obj = {mask: mask};
       var selection, item;
+      
+      message("Checking mask: " + mask.name);
+      message("Mask parent: " + mask.parent.typename);
       
       // Select items in this mask
       mask.locked = false;

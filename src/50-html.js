@@ -498,7 +498,7 @@ AI2HTML.html = AI2HTML.html || {};
 // ===================================
 // ai2html output generation functions
 // ===================================
-  
+
   function generateArtboardDiv(data, settings) {
     var id = nameSpace + data.fullName;
     var classname = nameSpace + 'artboard';

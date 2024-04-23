@@ -108,7 +108,8 @@
       // Render outputs
       // ==========================================
       
-      this.render(data, data.settings);
+      this.renderHtml(data, data.settings);
+      this.renderSvelte(data, data.settings);
       
     } catch(e) {
       error(log.formatError(e));
@@ -147,11 +148,9 @@
       var showPromo = log.showCompletionAlert(promptForPromo);
       if (showPromo) ai.createPromoImage(docSettings);
     }
-    
-  
   }
   
-  AI2HTML.render = function(data, settings) {
+  AI2HTML.renderHtml = function(data, settings) {
     
     var ai = AI2HTML.ai;
     var html = AI2HTML.html;
@@ -164,7 +163,7 @@
     // ================================================
     // Generate HTML, CSS and images for each artboard
     // ================================================
-    progressBar = new ProgressBar({name: 'Ai2html render progress', steps: calcProgressBarSteps()});
+    progressBar = new ProgressBar({name: 'Ai2html HTML render progress', steps: calcProgressBarSteps()});
     
     var fileContentArr = [];
     
@@ -283,8 +282,126 @@
       AI2HTML.settings.incrementCacheBustToken(settings);
     }
     
-  } // end extract()
+  } // end renderHtml()
   
+  
+  
+  AI2HTML.renderSvelte = function(data, settings) {
+    
+    var ai = AI2HTML.ai;
+    var html = AI2HTML.html;
+    var svelte = AI2HTML.svelte;
+    var fs = AI2HTML.fs;
+    var artboards = data.artboards;
+    var customBlocks = data.customBlocks;
+    
+    svelte.updateGlobals();
+    
+    // ================================================
+    // Generate HTML, CSS and images for each artboard
+    // ================================================
+    progressBar = new ProgressBar({name: 'Ai2html Svelte render progress', steps: calcProgressBarSteps()});
+    
+    var fileContentArr = [];
+    
+    _.forEach(artboards, function(artboardData, abIndex) {
+      var abSettings = artboardData.settings;
+      var docArtboardName = artboardData.name;
+      var textData = artboardData.textData;
+      var imageData = artboardData.imageData;
+      var specialData = artboardData.specialData;
+      
+      var artboardContent = {html: '', css: '', js: ''};
+      
+      var renderedText, renderedImage;
+      // ========================
+      // Convert text objects
+      // ========================
+      
+      if (abSettings.image_only || settings.render_text_as == 'image') {
+        // don't convert text objects to HTML
+        renderedText = {html: '', styles: []};
+      } else {
+        progressBar.setTitle(docArtboardName + ': Generating text...');
+        renderedText = html.convertTextData(textData);
+      }
+      
+      progressBar.step();
+      
+      // ==========================
+      // Generate artboard image(s)
+      // ==========================
+      
+      if (_.isTrue(settings.write_image_files)) {
+        progressBar.setTitle(docArtboardName + ': Placing image...');
+        renderedImage = html.convertArtItemsToHtml(imageData);
+      } else {
+        renderedImage = {html: ''};
+      }
+      
+      // TODO svelte-y videos with hooks
+      if (data.specialData) {
+        var specialData = html.convertSpecialData(data.specialData);
+        renderedImage.html = specialData.video + specialData.html_before +
+          renderedImage.html + specialData.html_after;
+        _.forEach(specialData.layers, function(lyr) {
+          lyr.visible = true;
+        });
+        if (specialData.video && !_.isTrue(settings.png_transparent)) {
+          warn('Background videos may be covered up without png_transparent:true');
+        }
+      }
+      
+      progressBar.step();
+      
+      //=====================================
+      // Finish generating artboard HTML and CSS
+      //=====================================
+      
+      artboardContent.html += '\r\t<!-- Artboard: ' + artboardData.fullName + ' -->\r' +
+        svelte.generateArtboardDiv(artboardData, settings) +
+        renderedImage.html +
+        renderedText.html +
+        '\t</div>\r';
+      
+      var abStyles = renderedText.styles;
+      // TODO control of video elements
+      if (specialData && specialData.video) {
+        // make videos tap/clickable (so they can be played manually if autoplay
+        // is disabled, e.g. in mobile low-power mode).
+        abStyles.push('> div { pointer-events: none; }\r');
+        abStyles.push('> img { pointer-events: none; }\r');
+      }
+      artboardContent.css += svelte.generateArtboardCss(artboardData, abStyles, settings);
+      
+      var oname = settings.output == 'one-file' ? data.rawDocumentName : docArtboardName;
+      html.assignArtboardContentToFile(oname, artboardContent, fileContentArr);
+      
+    }); // end artboard loop
+    
+    if (fileContentArr.length === 0) {
+      error('No usable artboards were found');
+    }
+    
+    //=====================================
+    // Output html file(s)
+    //=====================================
+    
+    _.forEach(fileContentArr, function(fileContent) {
+      html.addCustomContent(fileContent, customBlocks);
+      progressBar.setTitle('Writing HTML output...');
+      svelte.generateOutputHtml(fileContent, fileContent.name, settings);
+    });
+    
+    //=====================================
+    // Post-output operations
+    //=====================================
+    
+    if (settings.cache_bust_token) {
+      AI2HTML.settings.incrementCacheBustToken(settings);
+    }
+    
+  } // end renderSvelte()
   
   
   // get a JSON representation of the document
@@ -401,7 +518,7 @@
     
     return data;
     
-  } // end render()
+  } // end extract()
   
   
   function ProgressBar(opts) {

@@ -3670,12 +3670,10 @@ function exportImage(imgName, format, ab, masks, layer, settings) {
 
   imgClass += ' ' + nameSpace + 'aiImg';
   if (format == 'svg') {
-    warn('Layer: ' + layer);
     if (layer) {
       svgInlineStyle = getLayerOpacityCSS(layer);
       svgLayersArg = [layer];
     }
-    warn(masks.length);
     created = exportSVG(outputPath, ab, masks, svgLayersArg, settings);
     if (!created) {
       return ''; // no image was created
