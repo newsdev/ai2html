@@ -1,5 +1,8 @@
+### v0.121.1
+- Bump the lazy loading threshold to 800px
+
 ### v0.121.0
-- Add a 400px threshold for lazy-loading images using IntersectionObserver.
+- Add a 400px threshold for lazy loading images using IntersectionObserver.
 
 ### v0.120.0
 - Use the literal .ai document name as the default HTML output file name (stop replacing spaces and other characters with underscores and hyphens).

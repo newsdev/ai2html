@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.121.0';
+var scriptVersion = '0.121.1';
 
 // ================================================
 // ai2html and config settings
@@ -4447,7 +4447,7 @@ function getResizerScript(containerId) {
             waiting = false;
             update();
           } else {
-            observer = new IntersectionObserver(onIntersectionChange, {rootMargin: "400px"});
+            observer = new IntersectionObserver(onIntersectionChange, {rootMargin: "800px"});
             observer.observe(container);
           }
         }
