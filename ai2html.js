@@ -672,7 +672,7 @@ function render(settings, customBlocks) {
     }
     artboardContent.css += generateArtboardCss(activeArtboard, abStyles, settings);
 
-    var oname = settings.output == 'one-file' ? getRawDocumentName() : docArtboardName;
+    var oname = settings.output == 'one-file' ? docSlug : docArtboardName;
     // kludge to identify legacy embed projects
     if (settings.output == 'one-file' &&
         settings.project_type == 'ai2html' &&
