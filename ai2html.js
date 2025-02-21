@@ -3610,6 +3610,16 @@ function convertArtItems(activeArtboard, textFrames, masks, settings) {
     }
     hiddenLayers.push(lyr); // need to unhide this layer later, after base image is captured
   });
+  // Also embed layers tagged :jpg as separate images
+  forEachImageLayer('jpg', function(lyr) {
+    var name = getLayerImageName(lyr, activeArtboard, settings);
+    // Same test as :png to prevent empty images (see above)
+    if (testLayerArtboardIntersection(lyr, activeArtboard)) {
+      html = exportImage(name, 'jpg', activeArtboard, null, null, settings) + html;
+    }
+    hiddenLayers.push(lyr); // need to unhide this layer later, after base image is captured
+  });
+
   // placing ab image before other elements
   html = captureArtboardImage(imgName, activeArtboard, masks, settings) + html;
   // unhide hidden layers (if any)
