@@ -439,6 +439,7 @@ var cssTextStyleProperties = [
   'padding-bottom',
   'text-align',
   'text-transform',
+  'text-decoration',
   'mix-blend-mode',
   'vertical-align' // for superscript
 ];
@@ -2405,6 +2406,8 @@ function getCharStyle(c) {
   o.tracking = c.tracking;
   o.superscript = c.baselinePosition == FontBaselineOption.SUPERSCRIPT;
   o.subscript = c.baselinePosition == FontBaselineOption.SUBSCRIPT;
+  o.strikethrough = c.strikeThrough;
+  o.underline = c.underline;
   return o;
 }
 
@@ -2603,6 +2606,7 @@ function deriveTextStyleCss(frameData) {
   var defaultCssStyle = {
     'text-align': 'left',
     'text-transform': 'none',
+    'text-decoration': 'none',
     'padding-bottom': 0,
     'padding-top': 0,
     'mix-blend-mode': 'normal',
@@ -2811,6 +2815,15 @@ function convertAiTextStyle(aiStyle) {
   if (aiStyle.capitalization && (tmp = getCapitalizationCss(aiStyle.capitalization))) {
     cssStyle['text-transform'] = tmp;
   }
+
+  if (aiStyle.strikethrough && aiStyle.underline) {
+    cssStyle["text-decoration"] = "line-through underline";
+  } else if (aiStyle.strikethrough) {
+    cssStyle['text-decoration'] = 'line-through';
+  } else if (aiStyle.underline) {
+    cssStyle['text-decoration'] = 'underline';
+  }
+
   if (aiStyle.color) {
     cssStyle.color = aiStyle.color;
   }
