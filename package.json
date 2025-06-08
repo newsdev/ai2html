@@ -1,6 +1,6 @@
 {
   "name": "ai2html",
-  "version": "0.121.1",
+  "version": "0.122.0",
   "description": "A script for Adobe Illustrator that converts your Illustrator artwork into an html page.",
   "main": "./ai2html.js",
   "scripts": {

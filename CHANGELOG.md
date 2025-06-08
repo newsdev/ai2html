@@ -1,3 +1,11 @@
+### v0.122.0
+- Added `include_resizer_css` option, which turns on CSS-only artboard resizing using container queries.
+- If a browser does not support container queries, the smallest artboard is displayed.
+- `include_resizer_script: true` is still the default for NYT users.
+- `include_resizer_css: true` is the default for other users.
+- `include_resizer_css` overrides `include_resizer_script` if both are true.
+- When `include_resizer_css` is true, lazy loading is implemented using the `loading="lazy"` <img> attribute (the old script includes a JS implementation of lazy loading).
+
 ### v0.121.1
 - Bump the lazy loading threshold to 800px
 

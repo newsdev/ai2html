@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.121.1';
+var scriptVersion = '0.122.0';
 
 // ================================================
 // ai2html and config settings
@@ -79,9 +79,9 @@ var defaultSettings = {
   "jpg_quality": 60,
   "center_html_output": true,
   "use_2x_images_if_possible": true,
-  "use_lazy_loader": false,
-  "include_resizer_classes": false, // Triggers an error (feature was removed)
+  "use_lazy_loader": true,
   "include_resizer_widths": true,
+  "include_resizer_css": true, // container-query resizing
   "include_resizer_script": false,
   "inline_svg": false, // Embed background image SVG in HTML instead of loading a file
   "svg_id_prefix": "", // Prefix SVG ids with a string to disambiguate from other ids on the page
@@ -104,8 +104,8 @@ var defaultSettings = {
     "settings_version",
     "image_format",
     "responsiveness",
-    "include_resizer_script",
-    "use_lazy_loader",
+    "include_resizer_css",
+    // "use_lazy_loader",
     "output",
     "html_output_path",
     // "html_output_extension", // removed from settings block in v0.115.6
@@ -136,8 +136,8 @@ var defaultSettings = {
 // These settings override the default settings in NYT preview/birdkit projects
 var nytOverrideSettings = {
   "image_source_path": "_assets/", // path for <img src="">
-  "use_lazy_loader": true,
   "include_resizer_script": true,
+  "include_resizer_css": false,
   "min_width": 280, // added as workaround for a scoop bug affecting ai2html-type graphics
   "accessibility": true,
   "settings_block": [
@@ -958,20 +958,12 @@ function getDateTimeStamp() {
   return year + '-' + month + '-' + date + ' ' + hour + ':' + min;
 }
 
-// obj: JS object containing css properties and values
-// indentStr: string to use as block CSS indentation
-function formatCss(obj, indentStr) {
-  var css = '';
-  var isBlock = !!indentStr;
-  for (var key in obj) {
-    if (isBlock) {
-      css += '\r' + indentStr;
-    }
-    css += key + ':' + obj[key]+ ';';
+function formatCssRule(selector, obj) {
+  var css = selector + ' {\r';
+  for (var k in obj) {
+    css += '\t' + k + ':' + obj[k]+ ';\r';
   }
-  if (css && isBlock) {
-    css += '\r';
-  }
+  css += '}\r';
   return css;
 }
 
@@ -1222,7 +1214,12 @@ function concatMessages(args) {
       try {
         // json2.json implementation throws error if object contains a cycle
         // and many Illustrator objects have cycles.
-        msg += JSON.stringify(arg);
+        msg += JSON.stringify(arg, function(k, v) {
+          if (v === Infinity) return "Infinity";
+          if (v === -Infinity) return "-Infinity";
+          if (Number.isNaN(v)) return "NaN";
+          return v;
+        });
       } catch(e) {
         msg += String(arg);
       }
@@ -1352,7 +1349,7 @@ function exportFunctionsForTesting() {
 
 function isTestedIllustratorVersion(version) {
   var majorNum = parseInt(version);
-  return majorNum >= 18 && majorNum <= 28; // Illustrator CC 2014 through 2024
+  return majorNum >= 18 && majorNum <= 29; // Illustrator CC 2014 through 2025
 }
 
 function validateArtboardNames(settings) {
@@ -1480,10 +1477,6 @@ function initDocumentSettings(textBlockSettings) {
 
 // Trigger errors and warnings for some common problems
 function validateDocumentSettings(settings) {
-  if (isTrue(settings.include_resizer_classes)) {
-    error("The include_resizer_classes option was removed. Please file a GitHub issue if you need this feature.");
-  }
-
   if (!(settings.responsiveness == 'fixed' || settings.responsiveness == 'dynamic')) {
     warn('Unsupported "responsiveness" setting: ' + (settings.responsiveness || '[]'));
   }
@@ -1933,6 +1926,10 @@ function getRawDocumentName() {
   return doc.name.replace(/(.+)\.[aieps]+$/,"$1");
 }
 
+function getContainerQueryName() {
+  return nameSpace + makeDocumentSlug(getRawDocumentName()) + '-box';
+}
+
 function getArtboardFullName(ab, settings) {
   var suffix = '';
   if (settings.grouped_artboards) {
@@ -1967,7 +1964,11 @@ function getArtboardWidth(ab) {
   return abSettings.width || convertAiBounds(ab.artboardRect).width;
 }
 
-// get range of container widths that an ab is visible
+// get range of container widths that an ab is visible as a [min,max] array
+// smallest artboard starts with 0, largest artboard ends with Infinity
+// values are inclusive and rounded
+// example: [0, 599]  [600, Infinity]
+//
 function getArtboardVisibilityRange(ab, settings) {
   var thisWidth = getArtboardWidth(ab);
   var minWidth, nextWidth;
@@ -1979,7 +1980,7 @@ function getArtboardVisibilityRange(ab, settings) {
     }
     minWidth = Math.min(w, minWidth || Infinity);
   });
-  return [thisWidth == minWidth ? 0 : thisWidth, nextWidth ? nextWidth - 1 : Infinity];
+  return [thisWidth == minWidth ? 0 : thisWidth, !!nextWidth ? nextWidth - 1 : Infinity];
 }
 
 // Get range of widths that an ab can be sized
@@ -2580,10 +2581,10 @@ function convertTextFrames(textFrames, ab, settings) {
 
   var allStyles = pgStyles.concat(charStyles);
   var cssBlocks = map(allStyles, function(obj) {
-    return '.' + obj.classname + ' {' + formatCss(obj.style, '\t\t') + '\t}\r';
+    return formatCssRule('.' + obj.classname, obj.style);
   });
   if (divs.length > 0) {
-    cssBlocks.unshift('p {' + formatCss(baseStyle, '\t\t') + '\t}\r');
+    cssBlocks.unshift(formatCssRule('p', baseStyle));
   }
 
   return {
@@ -3838,11 +3839,18 @@ function generateImageHtml(imgFile, imgId, imgClass, imgStyle, ab, settings) {
   if (imgStyle) {
     html += ' style="' + imgStyle + '"';
   }
-  if (isTrue(settings.use_lazy_loader)) {
+  // Use JS lazy loading if the resizer script is enabled
+  if (isTrue(settings.use_lazy_loader) &&
+    isTrue(settings.include_resizer_script) &&
+    !isTrue(settings.include_resizer_css)) {
     html += ' data-src="' + src + '"';
     // placeholder while image loads
     // (<img> element requires a src attribute, according to spec.)
     src = 'data:image/gif;base64,R0lGODlhCgAKAIAAAB8fHwAAACH5BAEAAAAALAAAAAAKAAoAAAIIhI+py+0PYysAOw==';
+  } else if (isTrue(settings.use_lazy_loader)) {
+    // native lazy loading seems to work well -- images aren't loaded when
+    // hidden or far from the viewport.
+    html += ' loading="lazy"';
   }
   html += ' src="' + src + '"/>\r';
   return html;
@@ -4239,7 +4247,8 @@ function generateArtboardDiv(ab, settings) {
 
   html += '\t<div id="' + id + '" class="' + classname + '" style="' + inlineStyle + '"';
   html += ' data-aspect-ratio="' + roundTo(aspectRatio, 3) + '"';
-  if (isTrue(settings.include_resizer_widths)) {
+  if (isTrue(settings.include_resizer_widths) ||
+    isTrue(settings.include_resizer_script)) {
     html += ' data-min-width="' + visibleRange[0] + '"';
     if (visibleRange[1] < Infinity) {
       html +=  ' data-max-width="' + visibleRange[1] + '"';
@@ -4252,80 +4261,113 @@ function generateArtboardDiv(ab, settings) {
 }
 
 function generateArtboardCss(ab, cssRules, settings) {
-  var t3 = '\t',
-      t4 = t3 + '\t',
-      abId = '#' + nameSpace + getArtboardFullName(ab, settings),
-      css = '';
-  css += t3 + abId + ' {\r';
-  css += t4 + 'position:relative;\r';
-  css += t4 + 'overflow:hidden;\r';
-  css += t3 + '}\r';
+  var abId = '#' + nameSpace + getArtboardFullName(ab, settings),
+      css = formatCssRule(abId, {
+        position: 'relative',
+        overflow: 'hidden'
+      });
+
+  if (isTrue(settings.include_resizer_css)) {
+    css += generateContainerQueryCss(ab, abId, settings);
+  }
 
   // classes for paragraph and character styles
   forEach(cssRules, function(cssBlock) {
-    css += t3 + abId + ' ' + cssBlock;
+    css += abId + ' ' + cssBlock;
   });
+  return css;
+}
+
+function generateContainerQueryCss(ab, abId, settings) {
+  var css = '';
+  var visibleRange = getArtboardVisibilityRange(ab, settings);
+  var isSmallest = visibleRange[0] === 0;
+  var isLargest = visibleRange[1] === Infinity;
+  var query;
+  if (isSmallest && isLargest) {
+    // single artboard: no query needed
+    return '';
+  }
+  // default visibility: smallest ab visible, others hidden
+  // (fallback in case browser doesn't support container queries)
+  if (!isSmallest) {
+    css += formatCssRule(abId, {display: 'none'});
+  }
+  // compose container query
+  if (isSmallest) {
+    query = '(width >= ' + (visibleRange[1] + 1) + 'px)';
+  } else {
+    query = '(width >= ' + visibleRange[0] + 'px)';
+    if (!isLargest) {
+      query += ' and (width < ' + (visibleRange[1] + 1) + 'px)';
+    }
+  }
+  css += '@container ' + getContainerQueryName() + ' ' + query + ' {\r';
+  css += formatCssRule(abId, { display: isSmallest ? 'none' : 'block' });
+  css += '}\r';
   return css;
 }
 
 // Get CSS styles that are common to all generated content
 function generatePageCss(containerId, settings) {
   var css = '';
-  var t2 = '\t';
-  var t3 = '\r\t\t';
-  var blockStart = t2 + '#' + containerId + ' ';
-  var blockEnd = '\r' + t2 + '}\r';
+  var blockStart = '#' + containerId;
+
+  if (isTrue(settings.include_resizer_css)) {
+    css += formatCssRule(blockStart, {
+      'container-type': 'inline-size',
+      'container-name': getContainerQueryName()
+    });
+  }
 
   if (settings.max_width) {
-    css += blockStart + '{';
-    css += t3 + 'max-width:' + settings.max_width + 'px;';
-    css += blockEnd;
+    css += formatCssRule(blockStart,
+      {'max-width': settings.max_width + 'px'});
   }
+
   if (isTrue(settings.center_html_output)) {
-    css += blockStart + ',\r' + blockStart + '.' + nameSpace + 'artboard {';
-    css += t3 + 'margin:0 auto;';
-    css += blockEnd;
+    css += formatCssRule(
+      blockStart + ',\r' + blockStart + ' .' + nameSpace + 'artboard',
+      {margin: '0 auto'});
   }
+
   if (settings.alt_text) {
-    css += blockStart + ' .' + nameSpace + 'aiAltText {';
-    css += t3 + 'position: absolute;';
-    css += t3 + 'left: -10000px;';
-    css += t3 + 'width: 1px;';
-    css += t3 + 'height: 1px;';
-    css += t3 + 'overflow: hidden;';
-    css += t3 + 'white-space: nowrap;';
-    css += blockEnd;
+    css += formatCssRule(blockStart + ' .' + nameSpace + 'aiAltText', {
+      position: 'absolute',
+      left: '-10000px',
+      width: '1px',
+      height: '1px',
+      overflow: 'hidden',
+      'white-space': 'nowrap'
+    });
   }
+
   if (settings.clickable_link !== '') {
-    css += blockStart + ' .' + nameSpace + 'ai2htmlLink {';
-    css += t3 + 'display: block;';
-    css += blockEnd;
+    css += formatCssRule(blockStart + ' .' + nameSpace + 'ai2htmlLink',
+      {display: 'block'});
   }
+
   // default <p> styles
-  css += blockStart + 'p {';
-  css += t3 + 'margin:0;';
+  css += formatCssRule(blockStart + ' p', {margin: '0'});
   if (isTrue(settings.testing_mode)) {
-    css += t3 + 'color: rgba(209, 0, 0, 0.5) !important;';
+    css += formatCssRule(blockStart + ' p',
+       {color: 'rgba(209, 0, 0, 0.5) !important'});
   }
-  css += blockEnd;
 
-  css += blockStart + '.' + nameSpace + 'aiAbs {';
-  css += t3 + 'position:absolute;';
-  css += blockEnd;
+  css += formatCssRule(blockStart + ' .' + nameSpace + 'aiAbs', {position: 'absolute'});
 
-  css += blockStart + '.' + nameSpace + 'aiImg {';
-  css += t3 + 'position:absolute;';
-  css += t3 + 'top:0;';
-  css += t3 + 'display:block;';
-  css += t3 + 'width:100% !important;';
-  css += blockEnd;
+  css += formatCssRule(blockStart + ' .' + nameSpace + 'aiImg', {
+    position: 'absolute',
+    top: '0',
+    display: 'block',
+    width: '100% !important'
+  });
 
-  css += blockStart + '.' + getSymbolClass() + ' {';
-  css += t3 + 'position: absolute;';
-  css += t3 + 'box-sizing: border-box;';
-  css += blockEnd;
+  css += formatCssRule(blockStart + ' .' + getSymbolClass(),
+    {position: 'absolute', 'box-sizing': 'border-box'});
 
-  css += blockStart + '.' + nameSpace + 'aiPointText p { white-space: nowrap; }\r';
+  css += formatCssRule(blockStart + ' .' + nameSpace + 'aiPointText p',
+    {'white-space': 'nowrap'});
   return css;
 }
 
@@ -4562,6 +4604,7 @@ function addCustomContent(content, customBlocks) {
   }
 }
 
+
 // Wrap content HTML in a <div>, add styles and resizer script, write to a file
 function generateOutputHtml(content, pageName, settings) {
   var linkSrc = settings.clickable_link || '';
@@ -4583,12 +4626,13 @@ function generateOutputHtml(content, pageName, settings) {
 
   progressBar.setTitle('Writing HTML output...');
 
-  if (isTrue(settings.include_resizer_script)) {
+  if (isTrue(settings.include_resizer_script)
+    // resizer CSS overrides the script setting
+    && !isTrue(settings.include_resizer_css)) {
     responsiveJs  = getResizerScript(containerId);
     containerClasses += ' ai2html-responsive';
   }
 
-  // comments
   commentBlock = '<!-- Generated by ai2html v' + scriptVersion + ' - ' +
     getDateTimeStamp() + ' -->\r' + '<!-- ai file: ' + doc.name + ' -->\r';
 
