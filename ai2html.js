@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.123.0';
+var scriptVersion = '0.123.1';
 
 // ================================================
 // ai2html and config settings
@@ -143,6 +143,7 @@ var nytOverrideSettings = {
   "settings_block": [
     "settings_version",
     "responsiveness",
+    "include_resizer_css", // adding to text block until we make it the default
     "image_format",
     // "write_image_files",
     // "max_width",

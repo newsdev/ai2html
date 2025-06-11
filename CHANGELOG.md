@@ -1,3 +1,6 @@
+### v0.123.1
+- Added `include_resizer_css` option to the settings text block for NYT users.
+
 ### v0.123.0
 - Bug fix: when using `output=multiple-files`, showing/hiding of artboards in each file should be independent of showing/hiding of artboards in other files.
 
