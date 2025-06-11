@@ -1,3 +1,6 @@
+### v0.123.0
+- Bug fix: when using `output=multiple-files`, showing/hiding of artboards in each file should be independent of showing/hiding of artboards in other files.
+
 ### v0.122.0
 - Added `include_resizer_css` option, which turns on CSS-only artboard resizing using container queries.
 - If a browser does not support container queries, the smallest artboard is displayed.

@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.122.0';
+var scriptVersion = '0.123.0';
 
 // ================================================
 // ai2html and config settings
@@ -534,8 +534,10 @@ try {
     createSettingsBlock(docSettings);
   }
 
-  // render the document
-  render(docSettings, textBlockData.code);
+  progressBar = new ProgressBar({name: 'Ai2html progress', steps: calcProgressBarSteps()});
+  validateArtboardNames(docSettings); // warn about duplicate artboard names
+
+  renderDocument(docSettings, textBlockData.code);
 } catch(e) {
   errors.push(formatError(e));
 }
@@ -578,30 +580,57 @@ if (errors.length > 0) {
 // ai2html render function
 // =================================
 
-function render(settings, customBlocks) {
-  // warn about duplicate artboard names
-  validateArtboardNames(docSettings);
-
+function renderDocument(settings, textBlockContent) {
   // Fix for issue #50
   // If a text range is selected when the script runs, it interferes
   // with script-driven selection. The fix is to clear this kind of selection.
   if (doc.selection && doc.selection.typename) {
     clearSelection();
   }
-
-  // ================================================
-  // Generate HTML, CSS and images for each artboard
-  // ================================================
-  progressBar = new ProgressBar({name: 'Ai2html progress', steps: calcProgressBarSteps()});
   unlockObjects(); // Unlock containers and clipping masks
   var masks = findMasks(); // identify all clipping masks and their contents
-  var fileContentArr = [];
+  var groups = groupArtboardsForOutput(settings);
+  if (groups.length === 0) {
+    error('No usable artboards were found');
+  }
+  forEach(groups, function(group) {
+    // TODO: consider if we want to add custom text block code to
+    // each output file. CSS and possibly JS could possibly be added to just one
+    // file.s=
+    renderArtboardGroup(group, masks, settings, textBlockContent);
+  });
 
-  forEachUsableArtboard(function(activeArtboard, abIndex) {
+  //=====================================
+  // Post-output operations
+  //=====================================
+  if (isTrue(settings.create_json_config_files)) {
+    // Create JSON config files, one for each .ai file
+    var jsonStr = generateJsonSettingsFileContent(settings);
+    var jsonPath = docPath + getRawDocumentName() + '.json';
+    saveTextFile(jsonPath, jsonStr);
+  } else if (isTrue(settings.create_config_file)) {
+    // Create one top-level config.yml file
+    // (This is being replaced by multiple JSON config files for NYT projects)
+    var yamlPath = docPath + (settings.config_file_path || 'config.yml'),
+        yamlStr = generateYamlFileContent(settings);
+    checkForOutputFolder(yamlPath.replace(/[^\/]+$/, ''), 'configFileFolder');
+    saveTextFile(yamlPath, yamlStr);
+  }
+
+  if (settings.cache_bust_token) {
+    incrementCacheBustToken(settings);
+  }
+}
+
+// render a group of artboards and save to a file
+function renderArtboardGroup(group, masks, settings, textBlockContent) {
+  var output = {html: '', js: '', css: ''};
+
+  forEach(group.artboards, function(activeArtboard) {
+    var abIndex = findArtboardIndex(activeArtboard);
     var abSettings = getArtboardSettings(activeArtboard);
     var docArtboardName = getDocumentArtboardName(activeArtboard);
     var textFrames, textData, imageData, specialData;
-    var artboardContent = {html: '', css: '', js: ''};
 
     doc.artboards.setActiveArtboardIndex(abIndex);
 
@@ -657,8 +686,8 @@ function render(settings, customBlocks) {
     // Finish generating artboard HTML and CSS
     //=====================================
 
-    artboardContent.html += '\r\t<!-- Artboard: ' + getArtboardName(activeArtboard) + ' -->\r' +
-       generateArtboardDiv(activeArtboard, settings) +
+    output.html += '\t<!-- Artboard: ' + getArtboardName(activeArtboard) + ' -->\r' +
+       generateArtboardDiv(activeArtboard, group, settings) +
        imageData.html +
        textData.html +
        '\t</div>\r';
@@ -670,53 +699,16 @@ function render(settings, customBlocks) {
       abStyles.push('> div { pointer-events: none; }\r');
       abStyles.push('> img { pointer-events: none; }\r');
     }
-    artboardContent.css += generateArtboardCss(activeArtboard, abStyles, settings);
-
-    var oname = settings.output == 'one-file' ? getRawDocumentName() : docArtboardName;
-    // kludge to identify legacy embed projects
-    if (settings.output == 'one-file' &&
-        settings.project_type == 'ai2html' &&
-        !isTrue(settings.create_json_config_files)) {
-      oname = 'index';
-    }
-    assignArtboardContentToFile(oname, artboardContent, fileContentArr);
+    output.css += generateArtboardCss(activeArtboard, group, abStyles, settings);
 
   }); // end artboard loop
 
-  if (fileContentArr.length === 0) {
-    error('No usable artboards were found');
-  }
-
   //=====================================
-  // Output html file(s)
+  // Output html file
   //=====================================
 
-  forEach(fileContentArr, function(fileContent) {
-    addCustomContent(fileContent, customBlocks);
-    generateOutputHtml(fileContent, fileContent.name, settings);
-  });
-
-  //=====================================
-  // Post-output operations
-  //=====================================
-
-  if (isTrue(settings.create_json_config_files)) {
-    // Create JSON config files, one for each .ai file
-    var jsonStr = generateJsonSettingsFileContent(settings);
-    var jsonPath = docPath + getRawDocumentName() + '.json';
-    saveTextFile(jsonPath, jsonStr);
-  } else if (isTrue(settings.create_config_file)) {
-    // Create one top-level config.yml file
-    // (This is being replaced by multiple JSON config files for NYT projects)
-    var yamlPath = docPath + (settings.config_file_path || 'config.yml'),
-        yamlStr = generateYamlFileContent(settings);
-    checkForOutputFolder(yamlPath.replace(/[^\/]+$/, ''), 'configFileFolder');
-    saveTextFile(yamlPath, yamlStr);
-  }
-
-  if (settings.cache_bust_token) {
-    incrementCacheBustToken(settings);
-  }
+  addTextBlockContent(output, textBlockContent);
+  generateOutputHtml(output, group, settings);
 
 } // end render()
 
@@ -1217,7 +1209,7 @@ function concatMessages(args) {
         msg += JSON.stringify(arg, function(k, v) {
           if (v === Infinity) return "Infinity";
           if (v === -Infinity) return "-Infinity";
-          if (Number.isNaN(v)) return "NaN";
+          if (v != v) return "NaN";
           return v;
         });
       } catch(e) {
@@ -1350,6 +1342,39 @@ function exportFunctionsForTesting() {
 function isTestedIllustratorVersion(version) {
   var majorNum = parseInt(version);
   return majorNum >= 18 && majorNum <= 29; // Illustrator CC 2014 through 2025
+}
+
+function groupArtboardsForOutput(settings) {
+  var groups = [];
+  forEachUsableArtboard(function(ab) {
+    var group, groupName;
+    if (settings.output == 'one-file') {
+      // single-file output: artboards share a single group
+      groupName = getRawDocumentName();
+      group = groups[0];
+    } else {
+      // multiple-file output: artboards are grouped by name
+      groupName = getDocumentArtboardName(ab);
+      group = find(groups, function(o) {
+        o.name == groupName;
+      });
+    }
+    if (!group) {
+      group = {
+        groupName: groupName,
+        artboards: []
+      };
+      groups.push(group);
+    }
+    group.artboards.push(ab);
+  });
+  // kludge for legacy embed projects
+  if (groups.length == 1 && settings.output == 'one-file' &&
+      settings.project_type == 'ai2html' &&
+      !isTrue(settings.create_json_config_files)) {
+    group[0].groupName = 'index';
+  }
+  return groups;
 }
 
 function validateArtboardNames(settings) {
@@ -1890,15 +1915,6 @@ function convertAiBounds(rect) {
   };
 }
 
-// Get numerical index of an artboard in the doc.artboards array
-function getArtboardId(ab) {
-  var id = 0;
-  forEachUsableArtboard(function(ab2, i) {
-    if (ab === ab2) id = i;
-  });
-  return id;
-}
-
 // Remove any annotations and colon separator from an object name
 function cleanObjectName(name) {
   return makeKeyword(name.replace( /^(.+):.*$/, "$1"));
@@ -1926,11 +1942,13 @@ function getRawDocumentName() {
   return doc.name.replace(/(.+)\.[aieps]+$/,"$1");
 }
 
-function getContainerQueryName() {
-  return nameSpace + makeDocumentSlug(getRawDocumentName()) + '-box';
+function getGroupContainerId(groupName) {
+  return nameSpace + groupName + '-box';
 }
 
-function getArtboardFullName(ab, settings) {
+// Prevent duplicate artboard names by appending width
+// (Assumes dupes have different widths and have been named to form a group)
+function getArtboardUniqueName(ab, settings) {
   var suffix = '';
   if (settings.grouped_artboards) {
     suffix = "-" + Math.round(convertAiBounds(ab.artboardRect).width);
@@ -1969,11 +1987,11 @@ function getArtboardWidth(ab) {
 // values are inclusive and rounded
 // example: [0, 599]  [600, Infinity]
 //
-function getArtboardVisibilityRange(ab, settings) {
+function getArtboardVisibilityRange(ab, group, settings) {
   var thisWidth = getArtboardWidth(ab);
   var minWidth, nextWidth;
   // find widths of smallest ab and next widest ab (if any)
-  forEach(getArtboardInfo(settings), function(info) {
+  forEach(getSortedArtboardInfo(group.artboards, settings), function(info) {
     var w = info.effectiveWidth;
     if (w > thisWidth && (!nextWidth || w < nextWidth)) {
       nextWidth = w;
@@ -1984,10 +2002,10 @@ function getArtboardVisibilityRange(ab, settings) {
 }
 
 // Get range of widths that an ab can be sized
-function getArtboardWidthRange(ab, settings) {
+function getArtboardWidthRange(ab, group, settings) {
   var responsiveness = getArtboardResponsiveness(ab, settings);
   var w = getArtboardWidth(ab);
-  var visibleRange = getArtboardVisibilityRange(ab, settings);
+  var visibleRange = getArtboardVisibilityRange(ab, group, settings);
   if (responsiveness == 'fixed') {
     return [visibleRange[0] === 0 ? 0 : w, w];
   }
@@ -1996,7 +2014,7 @@ function getArtboardWidthRange(ab, settings) {
 
 // Get [min, max] width range for the graphic (for optional config.yml output)
 function getWidthRangeForConfig(settings) {
-  var info = getArtboardInfo(settings);
+  var info = getSortedArtboardInfo(findUsableArtboards(), settings);
   var minAB = info[0];
   var maxAB = info[info.length - 1];
   var min, max;
@@ -2065,18 +2083,25 @@ function getArtboardResponsiveness(ab, settings) {
   return r;
 }
 
-// return array of data records about each usable artboard, sorted from narrow to wide
-function getArtboardInfo(settings) {
-  var artboards = [];
-  forEachUsableArtboard(function(ab, i) {
-    artboards.push({
+// return array of data records about each artboard, sorted from narrow to wide
+function getSortedArtboardInfo(artboards, settings) {
+  var arr = [];
+  forEach(artboards, function(ab) {
+    arr.push({
       effectiveWidth: getArtboardWidth(ab),
-      responsiveness: getArtboardResponsiveness(ab, settings),
-      id: i
+      responsiveness: getArtboardResponsiveness(ab, settings)
     });
   });
-  artboards.sort(function(a, b) {return a.effectiveWidth - b.effectiveWidth;});
-  return artboards;
+  arr.sort(function(a, b) {return a.effectiveWidth - b.effectiveWidth;});
+  return arr;
+}
+
+function findUsableArtboards() {
+  var arr = [];
+  forEachUsableArtboard(function(ab) {
+    arr.push(ab);
+  });
+  return arr;
 }
 
 function forEachUsableArtboard(cb) {
@@ -2089,7 +2114,11 @@ function forEachUsableArtboard(cb) {
   }
 }
 
-// Returns id of artboard with largest area
+function findArtboardIndex(ab) {
+  return indexOf(doc.artboards, ab);
+}
+
+// Returns id of artboard with largest area (for promo image)
 function findLargestArtboard() {
   var largestId = -1;
   var largestArea = 0;
@@ -2569,7 +2598,7 @@ function convertTextFrames(textFrames, ab, settings) {
   var pgStyles = [];
   var charStyles = [];
   var baseStyle = deriveTextStyleCss(frameData);
-  var idPrefix = nameSpace + 'ai' + getArtboardId(ab) + '-';
+  var idPrefix = nameSpace + 'ai' + findArtboardIndex(ab) + '-';
   var abBox = convertAiBounds(ab.artboardRect);
   var divs = map(frameData, function(obj, i) {
     var frame = textFrames[i];
@@ -3429,7 +3458,7 @@ function getCircleData(points) {
 // =================================
 
 function getArtboardImageName(ab, settings) {
-  return getArtboardFullName(ab, settings);
+  return getArtboardUniqueName(ab, settings);
 }
 
 function getLayerImageName(lyr, ab, settings) {
@@ -4205,23 +4234,11 @@ function injectCSSinSVG(content, css) {
 // ai2html output generation functions
 // ===================================
 
-// Add ab content to an output
-function assignArtboardContentToFile(name, abData, outputArr) {
-  var obj = find(outputArr, function(o) {return o.name == name;});
-  if (!obj) {
-    obj = {name: name, html: '', js: '', css: ''};
-    outputArr.push(obj);
-  }
-  obj.html += abData.html;
-  obj.js += abData.js;
-  obj.css += abData.css;
-}
-
-function generateArtboardDiv(ab, settings) {
-  var id = nameSpace + getArtboardFullName(ab, settings);
+function generateArtboardDiv(ab, group, settings) {
+  var id = nameSpace + getArtboardUniqueName(ab, settings);
   var classname = nameSpace + 'artboard';
-  var widthRange = getArtboardWidthRange(ab, settings);
-  var visibleRange = getArtboardVisibilityRange(ab, settings);
+  var widthRange = getArtboardWidthRange(ab, group, settings);
+  var visibleRange = getArtboardVisibilityRange(ab, group, settings);
   var abBox = convertAiBounds(ab.artboardRect);
   var aspectRatio = abBox.width / abBox.height;
   var inlineStyle = '';
@@ -4256,19 +4273,19 @@ function generateArtboardDiv(ab, settings) {
   }
   html += '>\r';
   // add spacer div
-  html += '<div style="' + inlineSpacerStyle + '"></div>\n';
+  html += '\t\t<div style="' + inlineSpacerStyle + '"></div>\n';
   return html;
 }
 
-function generateArtboardCss(ab, cssRules, settings) {
-  var abId = '#' + nameSpace + getArtboardFullName(ab, settings),
+function generateArtboardCss(ab, group, cssRules, settings) {
+  var abId = '#' + nameSpace + getArtboardUniqueName(ab, settings),
       css = formatCssRule(abId, {
         position: 'relative',
         overflow: 'hidden'
       });
 
   if (isTrue(settings.include_resizer_css)) {
-    css += generateContainerQueryCss(ab, abId, settings);
+    css += generateContainerQueryCss(ab, abId, group, settings);
   }
 
   // classes for paragraph and character styles
@@ -4278,9 +4295,9 @@ function generateArtboardCss(ab, cssRules, settings) {
   return css;
 }
 
-function generateContainerQueryCss(ab, abId, settings) {
+function generateContainerQueryCss(ab, abId, group, settings) {
   var css = '';
-  var visibleRange = getArtboardVisibilityRange(ab, settings);
+  var visibleRange = getArtboardVisibilityRange(ab, group, settings);
   var isSmallest = visibleRange[0] === 0;
   var isLargest = visibleRange[1] === Infinity;
   var query;
@@ -4302,21 +4319,21 @@ function generateContainerQueryCss(ab, abId, settings) {
       query += ' and (width < ' + (visibleRange[1] + 1) + 'px)';
     }
   }
-  css += '@container ' + getContainerQueryName() + ' ' + query + ' {\r';
+  css += '@container ' + getGroupContainerId(group.groupName) + ' ' + query + ' {\r';
   css += formatCssRule(abId, { display: isSmallest ? 'none' : 'block' });
   css += '}\r';
   return css;
 }
 
 // Get CSS styles that are common to all generated content
-function generatePageCss(containerId, settings) {
+function generatePageCss(containerId, group, settings) {
   var css = '';
   var blockStart = '#' + containerId;
 
-  if (isTrue(settings.include_resizer_css)) {
+  if (isTrue(settings.include_resizer_css) && group.artboards.length > 1) {
     css += formatCssRule(blockStart, {
       'container-type': 'inline-size',
-      'container-name': getContainerQueryName()
+      'container-name': containerId
     });
   }
 
@@ -4584,32 +4601,33 @@ function outputLocalPreviewPage(textForFile, localPreviewDestination, settings) 
   saveTextFile(localPreviewDestination, localPreviewHtml);
 }
 
-function addCustomContent(content, customBlocks) {
-  if (customBlocks.css) {
-    content.css += '\r\t/* Custom CSS */\r\t' + customBlocks.css.join('\r\t') + '\r';
+function addTextBlockContent(output, content) {
+  if (content.css) {
+    output.css += '\r/* Custom CSS */\r' + content.css.join('\r') + '\r';
   }
-  if (customBlocks['html-before']) {
-    content.html = '<!-- Custom HTML -->\r' + customBlocks['html-before'].join('\r') + '\r' + content.html + '\r';
+  if (content['html-before']) {
+    output.html += '<!-- Custom HTML -->\r' + content['html-before'].join('\r') + '\r' + output.html + '\r';
   }
-  if (customBlocks['html-after']) {
-    content.html += '\r<!-- Custom HTML -->\r' + customBlocks['html-after'].join('\r') + '\r';
+  if (content['html-after']) {
+    output.html += '\r<!-- Custom HTML -->\r' + content['html-after'].join('\r') + '\r';
   }
   // deprecated
-  if (customBlocks.html) {
-    content.html += '\r<!-- Custom HTML -->\r' + customBlocks.html.join('\r') + '\r';
+  if (content.html) {
+    output.html += '\r<!-- Custom HTML -->\r' + content.html.join('\r') + '\r';
   }
   // TODO: assumed JS contained in <script> tag -- verify this?
-  if (customBlocks.js) {
-    content.js += '\r<!-- Custom JS -->\r' + customBlocks.js.join('\r') + '\r';
+  if (content.js) {
+    output.js += '\r<!-- Custom JS -->\r' + content.js.join('\r') + '\r';
   }
 }
 
 
 // Wrap content HTML in a <div>, add styles and resizer script, write to a file
-function generateOutputHtml(content, pageName, settings) {
+function generateOutputHtml(content, group, settings) {
+  var pageName = group.groupName;
   var linkSrc = settings.clickable_link || '';
   var responsiveJs = '';
-  var containerId = nameSpace + makeDocumentSlug(pageName) + '-box';
+  var containerId = getGroupContainerId(pageName);
   var altTextId = containerId + '-img-desc';
   var textForFile, html, js, css, commentBlock;
   var htmlFileDestinationFolder, htmlFileDestination;
@@ -4658,11 +4676,11 @@ function generateOutputHtml(content, pageName, settings) {
   if (linkSrc) {
     html += '\t</a>\r';
   }
-  html += '\r</div>\r';
+  html += '</div>\r';
 
   // CSS
   css = '<style media="screen,print">\r' +
-    generatePageCss(containerId, settings) +
+    generatePageCss(containerId, group, settings) +
     content.css +
     '\r</style>\r';
 
