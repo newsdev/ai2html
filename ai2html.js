@@ -2008,7 +2008,14 @@ function getArtboardWidthRange(ab, group, settings) {
   var w = getArtboardWidth(ab);
   var visibleRange = getArtboardVisibilityRange(ab, group, settings);
   if (responsiveness == 'fixed') {
-    return [visibleRange[0] === 0 ? 0 : w, w];
+    if (visibleRange[0] === 0) {
+      // For the smallest artboard, use the actual artboard width, not the
+      // potentially overridden width
+      var actualW = convertAiBounds(ab.artboardRect).width
+      return [0, actualW];
+    } else {
+      return [w, w];
+    }
   }
   return visibleRange;
 }
