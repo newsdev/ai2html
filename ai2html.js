@@ -3559,7 +3559,7 @@ function convertSpecialLayers(activeArtboard, settings) {
 
 function makeVideoHtml(url, settings) {
   url = trim(url);
-  if (!/^https:/.test(url) || !/\.mp4$/.test(url)) {
+  if (!/\.mp4$/.test(url)) {
     return '';
   }
   var srcName = isTrue(settings.use_lazy_loader) ? 'data-src' : 'src';
