@@ -44,7 +44,7 @@ function main() {
 // - Update the version number in package.json
 // - Add an entry to CHANGELOG.md
 // - Run 'npm publish' to create a new GitHub release
-var scriptVersion = '0.123.1';
+var scriptVersion = '0.123.2';
 
 // ================================================
 // ai2html and config settings
@@ -136,8 +136,8 @@ var defaultSettings = {
 // These settings override the default settings in NYT preview/birdkit projects
 var nytOverrideSettings = {
   "image_source_path": "_assets/", // path for <img src="">
-  "include_resizer_script": true,
-  "include_resizer_css": false,
+  "include_resizer_script": false,
+  "include_resizer_css": true,
   "min_width": 280, // added as workaround for a scoop bug affecting ai2html-type graphics
   "accessibility": true,
   "settings_block": [
@@ -521,6 +521,7 @@ try {
     error('Ai2html is unable to run because you are editing an Opacity Mask.');
   }
 
+
   // initialize script settings
   doc = app.activeDocument;
   docPath = doc.path + '/';
@@ -530,6 +531,11 @@ try {
   docSlug = docSettings.project_name || makeDocumentSlug(getRawDocumentName());
   nameSpace = docSettings.namespace || nameSpace;
   extendFontList(fonts, docSettings.fonts || []);
+
+  // TODO: add placed file check
+  // if (detectBirdkitEnv()) {
+  //   checkBirdkitPlacedFiles();
+  // }
 
   if (!textBlockData.settings && isTrue(docSettings.create_settings_block)) {
     createSettingsBlock(docSettings);
@@ -1541,6 +1547,17 @@ function detectBirdkitEnv() {
   var configPath = docPath + '../birdkit.config.js';
   return fileExists(configPath);
 }
+
+function checkBirdkitPlacedFiles() {
+  forEach(doc.placedItems, function(item) {
+    var path = item.file.fsName || '';
+    var name = item.file.name;
+    if (!/\/ai\//.test(path)) {
+      error('A placed image (' + name + ') needs to be moved inside the ai/ folder of the project');
+    }
+  });
+}
+
 
 function applyBirdkitSettings(settings, projectType) {
   var packagePath = pathJoin(docPath, '..', 'package.json');

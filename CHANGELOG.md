@@ -1,3 +1,6 @@
+### v0.123.2
+- Make `include_resizer_css: true` the default for NYT users.
+
 ### v0.123.1
 - Added `include_resizer_css` option to the settings text block for NYT users.
 
