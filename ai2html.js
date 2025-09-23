@@ -1363,7 +1363,7 @@ function groupArtboardsForOutput(settings) {
       // multiple-file output: artboards are grouped by name
       groupName = getDocumentArtboardName(ab);
       group = find(groups, function(o) {
-        return o.groupName == groupName;
+        o.name == groupName;
       });
     }
     if (!group) {
