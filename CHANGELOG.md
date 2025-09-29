@@ -1,5 +1,5 @@
 ### v0.123.3
-- Bug fix: multiple files
+- Bug fix: `output:multiple-files` doesn't pick up multiple artboard sizes correctly. 
 
 ### v0.123.2
 - Make `include_resizer_css: true` the default for NYT users.
