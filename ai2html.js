@@ -3549,11 +3549,12 @@ function convertSpecialLayers(activeArtboard, settings) {
     if (objectIsHidden(lyr)) return;
     var str = getSpecialLayerText(lyr, activeArtboard);
     if (!str) return;
-    var html = makeVideoHtml(str, settings);
+    var name = lyr.name.replace(/:.*/, '')
+    var html = makeVideoHtml(str, settings, name);
     if (!html) {
       warn('Invalid video URL: ' + str);
     } else {
-      data.video = html;
+      data.video += html;
     }
     data.layers.push(lyr);
   });
@@ -3574,13 +3575,13 @@ function convertSpecialLayers(activeArtboard, settings) {
   return data.layers.length === 0 ? null : data;
 }
 
-function makeVideoHtml(url, settings) {
+function makeVideoHtml(url, settings, name) {
   url = trim(url);
   if (!/^https:/.test(url) || !/\.mp4$/.test(url)) {
     return '';
   }
   var srcName = isTrue(settings.use_lazy_loader) ? 'data-src' : 'src';
-  return '<video ' + srcName + '="' + url + '" autoplay muted loop playsinline style="top:0; width:100%; object-fit:contain; position:absolute"></video>';
+  return '<video class="g-' + name +'" ' + srcName + '="' + url + '" autoplay muted loop playsinline style="top:0; width:100%; object-fit:contain; position:absolute"></video>';
 }
 
 function getSpecialLayerText(lyr, ab) {
