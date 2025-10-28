@@ -175,6 +175,10 @@ describe('Utility function tests', function() {
     it('removes duplicate slashes', function() {
       assert.equal(lib.pathJoin('ai/', '/output/', 'image.svg'), 'ai/output/image.svg');
     })
+
+    it('retains leading slash in first argument', function() {
+      assert.equal(lib.pathJoin('/c/', '/output/', 'image.svg'), '/c/output/image.svg');
+    })
   })
 
   describe('pathSplit()', function() {

@@ -1005,10 +1005,13 @@ function applyTemplate(template, replacements) {
 // Similar to Node.js path.join()
 function pathJoin() {
   var path = '';
-  forEach(arguments, function(arg) {
+  forEach(arguments, function(arg, i) {
     if (!arg) return;
     arg = String(arg);
-    arg = arg.replace(/^\/+/, '').replace(/\/+$/, '');
+    if (i > 0){
+      arg = arg.replace(/^\/+/, ''); // leading
+    }
+    arg = arg.replace(/\/+$/, ''); // trailing
     if (path.length > 0) {
       path += '/';
     }
