@@ -1961,7 +1961,7 @@ function getRawDocumentName() {
 }
 
 function getGroupContainerId(groupName) {
-  return nameSpace + groupName + '-box';
+  return nameSpace + makeKeyword(groupName.replace(/ +/g,"-")) + '-box';
 }
 
 // Prevent duplicate artboard names by appending width
