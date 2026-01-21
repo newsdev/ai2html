@@ -1460,6 +1460,15 @@ function initSpecialTextBlocks() {
       // An error will be thrown if trying to hide a text frame inside a
       // locked layer. Solution: unlock any locked parent layers.
       if (objectIsLocked(thisFrame)) {
+        var parent = thisFrame.parent;
+        var lockedAncestors = [];
+        while (parent && parent.typename != 'Document') {
+          if (parent.locked) {
+            lockedAncestors.unshift(parent);
+          }
+          parent = parent.parent;
+        }
+        forEach(lockedAncestors, unlockObject);
         unlockObject(thisFrame);
       }
       hideTextFrame(thisFrame);
@@ -2236,14 +2245,6 @@ function objectIsLocked(obj) {
     obj = obj.parent;
   }
   return false;
-}
-
-function unlockObject(obj) {
-  // unlock parent first, to avoid "cannot be modified" error
-  if (obj && obj.typename != "Document") {
-    unlockObject(obj.parent);
-    obj.locked = false;
-  }
 }
 
 function getComputedOpacity(obj) {
