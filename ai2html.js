@@ -2243,6 +2243,7 @@ function unlockObject(obj) {
   if (obj && obj.typename != "Document") {
     unlockObject(obj.parent);
     obj.locked = false;
+    objectsToRelock.push(obj);
   }
 }
 
