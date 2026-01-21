@@ -3607,9 +3607,12 @@ function convertArtItems(activeArtboard, textFrames, masks, settings) {
 
   checkForOutputFolder(getImageFolder(settings), 'image_output_path');
 
+  var savedTextFrameState = []; 
   if (hideTextFrames) {
     for (i=0; i<textFrameCount; i++) {
-      textFrames[i].hidden = true;
+      savedTextFrameState.push([textFrames[i], textFrames[i].opacity]);
+      textFrames[i].opacity = 0;
+    }
     }
   }
 
@@ -3668,7 +3671,7 @@ function convertArtItems(activeArtboard, textFrames, masks, settings) {
   // unhide text frames
   if (hideTextFrames) {
     for (i=0; i<textFrameCount; i++) {
-      textFrames[i].hidden = false;
+      textFrames[i].opacity = savedTextFrameState[i][1];
     }
   }
 
