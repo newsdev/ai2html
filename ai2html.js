@@ -1322,7 +1322,7 @@ function exportFunctionsForTesting() {
     pathJoin,
     pathSplit,
     folderExists,
-    formatCss,
+    formatCssRule,
     getCssColor,
     readGitConfigFile,
     readYamlConfigFile,
