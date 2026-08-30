@@ -46,12 +46,12 @@ describe('Utility function tests', function() {
     });
   });
 
-  describe('formatCss()', function() {
-    it('converts an object containing css properties and values to a CSS block', function() {
+  describe('formatCssRule()', function() {
+    it('converts a selector and object containing css properties and values to a CSS rule block', function() {
       var obj = {
         'line-height': '18px'
       };
-      assert.equal(lib.formatCss(obj, '\t\t\t'), '\r\t\t\tline-height:18px;\r');
+      assert.equal(lib.formatCssRule('p', obj), 'p {\r\tline-height:18px;\r}\r');
     });
   });
 
